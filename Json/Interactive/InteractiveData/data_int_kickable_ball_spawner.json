@@ -1,0 +1,1244 @@
+{
+  "id": "int_kickable_ball_spawner",
+  "factionIndex": 4,
+  "name": "int_kickable_ball_spawner",
+  "bornTag": [],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": null,
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.ClickTriggerComponentForIntData, Gameplay.Beyond",
+      "propertyList": null,
+      "propertyStateData": [
+        {
+          "attackTags": 0,
+          "checkPerformTag": false,
+          "conditionExpression": "A",
+          "conditions": [
+            {
+              "conditionType": 1,
+              "gameEventsUpdateConfig": {
+                "events": [],
+                "needHide": false
+              },
+              "groupName": "A",
+              "levelEntityConfig": {
+                "isEnabled": false
+              },
+              "noUseConfig": {
+                "isUnlock": false
+              },
+              "propertyData": {
+                "bValue": false,
+                "compareType": 0,
+                "propertyName": "state",
+                "useBool": false,
+                "value": 0
+              },
+              "systemStateConfig": {
+                "succeed": false,
+                "systemState": 0,
+                "systemType": 0
+              },
+              "systemUnlockConfig": {
+                "isInvert": false,
+                "systemType": 0
+              },
+              "targetEntityConfig": {
+                "ignore": false,
+                "ignorePropertyName": "",
+                "propertyName": "",
+                "target": null,
+                "value": 0
+              }
+            }
+          ],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.4000000059604645,
+          "optionIcon": "",
+          "optionName": {
+            "key": "lang_int_create_kickable_ball"
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 0,
+          "triggerType": 1
+        },
+        {
+          "attackTags": 0,
+          "checkPerformTag": false,
+          "conditionExpression": "A",
+          "conditions": [
+            {
+              "conditionType": 1,
+              "gameEventsUpdateConfig": {
+                "events": [],
+                "needHide": false
+              },
+              "groupName": "A",
+              "levelEntityConfig": {
+                "isEnabled": false
+              },
+              "noUseConfig": {
+                "isUnlock": false
+              },
+              "propertyData": {
+                "bValue": false,
+                "compareType": 0,
+                "propertyName": "state",
+                "useBool": false,
+                "value": 0
+              },
+              "systemStateConfig": {
+                "succeed": false,
+                "systemState": 0,
+                "systemType": 0
+              },
+              "systemUnlockConfig": {
+                "isInvert": false,
+                "systemType": 0
+              },
+              "targetEntityConfig": {
+                "ignore": false,
+                "ignorePropertyName": "",
+                "propertyName": "",
+                "target": null,
+                "value": 0
+              }
+            }
+          ],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.4000000059604645,
+          "optionIcon": "",
+          "optionName": {
+            "key": "lang_int_reset_kickable_ball"
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 1,
+          "triggerType": 1
+        }
+      ],
+      "triggerBehaviourBase": null
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.KickableSpawnerComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "activate_option",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "show_effect_when_active",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "auto_spawn",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "pop_up_when_spawn",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "ball_popup_speed",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "auto_spawn_when_ball_destroy",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "template_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "int_tumble_weed"
+              }
+            ]
+          }
+        },
+        {
+          "key": "use_self_position",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "target_position",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "target_list",
+          "value": {
+            "type": 14,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "trigger_slot_id",
+          "value": {
+            "type": 17,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "destroy_self",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.TriggerObserverComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interactive_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_height",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1084227584,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1135869952,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle_offset",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "player_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_important",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "in_trigger_volume_performance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "a": 0,
+      "b": 0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveCommonPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "use_dynamic_res",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "dynamic_entity_id",
+          "value": {
+            "type": 26,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyDataList": [
+        {
+          "isProperty": false,
+          "propertyName": "active",
+          "propertyType": 4
+        },
+        {
+          "isProperty": false,
+          "propertyName": "pop_up_slug_ball",
+          "propertyType": 5
+        }
+      ],
+      "syncGameplayLock": false
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveHintPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "is_enable_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1106247680,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "Outline_SoftNormal_White"
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_interact_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_interact_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interact_outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_brushing",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_brushing_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1106247680,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "disable_when_has_perform_tag",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "special_mode_config",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_outline_name_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_outline_name_list",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_brushing_distance_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_min_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_max_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.ShowGuideComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1088421888,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "guide_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "guide_group_kickable_ball"
+              }
+            ]
+          }
+        },
+        {
+          "key": "id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "guide_text_kickable_ball"
+              }
+            ]
+          }
+        },
+        {
+          "key": "wiki_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "wiki_tut_adv_kickable_ball"
+              }
+            ]
+          }
+        },
+        {
+          "key": "duration",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "override_guide_timeliness",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "guide_trigger_by_state",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "center": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "radius": 7.0,
+      "shapeType": 0,
+      "size": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "1": "state"
+  },
+  "propertyKeyToIdMap": {
+    "state": 1
+  },
+  "relatedGuideTimestampGameVar": [
+    "guide_group_kickable_ball"
+  ],
+  "saveProperties": [
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {
+    "int_kickable_ball_spawner_rock": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_KickableSpawner": {
+          "value": [
+            {
+              "key": "activate_option",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 1,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "target_position",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1056964608,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "use_self_position",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_kickable_ball_spawner_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": true,
+        "value": [
+          "guide_group_kickable_ball"
+        ]
+      }
+    },
+    "int_kickable_ball_spawner_rock_snow": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_KickableSpawner": {
+          "value": [
+            {
+              "key": "activate_option",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 1,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "target_position",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1056964608,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "template_id",
+              "value": {
+                "type": 7,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "int_snow_ball"
+                  }
+                ]
+              }
+            },
+            {
+              "key": "use_self_position",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_kickable_ball_spawner_snow_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": true,
+        "value": [
+          "guide_group_kickable_ball"
+        ]
+      }
+    },
+    "int_kickable_ball_spawner_snow": {
+      "aoiRadiusType": {
+        "enabled": true,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": true,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_KickableSpawner": {
+          "value": [
+            {
+              "key": "template_id",
+              "value": {
+                "type": 7,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "int_snow_ball"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": true,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": true,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": true,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": true,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": null
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": true,
+        "value": [
+          "guide_group_kickable_ball"
+        ]
+      }
+    }
+  },
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

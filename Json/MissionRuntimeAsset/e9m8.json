@@ -1,0 +1,137 @@
+{
+  "missionId": "e9m8",
+  "missionName": {
+    "key": "e9m3_name"
+  },
+  "rewardId": "",
+  "missionType": 9,
+  "baseMissionImportance": 0,
+  "overrideImportance": 0,
+  "sortId": 0,
+  "charId": "",
+  "missionDescription": {
+    "key": "e9m3_desc_001"
+  },
+  "levelId": "map02_lv001",
+  "scope": 0,
+  "missionChapterBitmask": 2,
+  "skipMissionAcceptAnim": true,
+  "skipMissionCompleteAnim": true,
+  "questDic": {
+    "e9m8_q#1": {
+      "questId": "e9m8_q#1",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {},
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.GameConditionServerPlaceHolder, Gameplay.Beyond",
+            "uniqueId": "b169dfc8",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 3
+            },
+            "_progressToCompare": {
+              "constValue": 1
+            }
+          },
+          "description": {
+            "key": "objective_e9m3_1_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.EntityTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 1,
+                "reverse": true,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionPlayerInsideSphere, Gameplay.Beyond",
+                    "levelId": "dung02_dg003",
+                    "sphereCenter": {
+                      "x": -15.14084,
+                      "y": -3.862381E-05,
+                      "z": 304.4398
+                    },
+                    "sphereRadius": 100.0,
+                    "alwaysFalseWhenPlayerOnRope": false
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionPlayerInsideSphere, Gameplay.Beyond",
+                    "levelId": "dung02_dg003",
+                    "sphereCenter": {
+                      "x": -3.761501,
+                      "y": -366.0,
+                      "z": -695.3302
+                    },
+                    "sphereRadius": 120.0,
+                    "alwaysFalseWhenPlayerOnRope": false
+                  }
+                ]
+              },
+              "sceneId": "indie_dg005",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "trackScriptEntity": true,
+              "entityLogicId": 0,
+              "scriptId": 60002,
+              "entitySlotId": 40003
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [],
+      "flowIndex": 0
+    }
+  },
+  "actionMapRaw": {
+    "dataMap": {
+      "headerList": [],
+      "actionList": [],
+      "getterList": []
+    }
+  },
+  "mainPathQuests": [
+    "e9m8_q#1"
+  ],
+  "clientActionMapKey": [],
+  "clientActionMapValue": [],
+  "onMissionAcceptId": -1,
+  "onMissionCompletedId": -1,
+  "onMissionFailedId": -1,
+  "properties": [],
+  "propertyIdToKeyMap": {},
+  "propertyKeyToIdMap": {},
+  "isWrapperMission": false,
+  "useRewardWrapper": false,
+  "useLevelIdWrapper": false,
+  "overrideDescOnlyConsiderMainPath": false
+}

@@ -1,0 +1,821 @@
+{
+  "actionMap": {
+    "dataMap": {
+      "actionList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.ListAddValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 1,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "f18a1430",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 2,
+          "_list": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "group01"
+          },
+          "_value": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "$0@_entityOutput"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ShowUIToast_DevOnly, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 2,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "6760ec7f",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_duration": {
+            "constValue": -1.0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_info": {
+            "constValue": "",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfFalse, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 4,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "c3ffa75e",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 5,
+          "_value": {
+            "constValue": false,
+            "idRef": 7,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetBoolInvert, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 5,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "34a03698",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 6,
+          "_key": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "step2"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ShowUIToast_DevOnly, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 6,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "f26e2389",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_duration": {
+            "constValue": -1.0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_info": {
+            "constValue": "",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ShowUIToast_DevOnly, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 9,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "797cfee4",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 10,
+          "_duration": {
+            "constValue": -1.0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_info": {
+            "constValue": "",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CallServer, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 10,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "f94c3b09",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_callClientOutputUIDs": null,
+          "_eventArgsPtr": {
+            "constValue": {
+              "key": "event_args"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_eventName": {
+            "constValue": "#f94c3b09",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_useCustomEvent": false,
+          "_waitForCallback": true,
+          "_withEventArgs": false
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.Branch, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 18,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "c698d3cf",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_idList": [
+            13,
+            14
+          ]
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfFalse, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 13,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "8156bcd6",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 9,
+          "_value": {
+            "constValue": false,
+            "idRef": 12,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 14,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "9aa869d5",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 15,
+          "_value": {
+            "constValue": false,
+            "idRef": 12,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CallServer, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 15,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "19143646",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_callClientOutputUIDs": null,
+          "_eventArgsPtr": {
+            "constValue": {
+              "key": "event_args"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_eventName": {
+            "constValue": "#19143646",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_useCustomEvent": false,
+          "_waitForCallback": true,
+          "_withEventArgs": false
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CallServer, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 20,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "639e0b57",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_callClientOutputUIDs": null,
+          "_eventArgsPtr": {
+            "constValue": {
+              "key": "event_args"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_eventName": {
+            "constValue": "#639e0b57",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_useCustomEvent": false,
+          "_waitForCallback": true,
+          "_withEventArgs": false
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 24,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "b865415e",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 25,
+          "_key": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "step2"
+          },
+          "_value": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CallServer, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 25,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "e179eedb",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_callClientOutputUIDs": null,
+          "_eventArgsPtr": {
+            "constValue": {
+              "key": "event_args"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_eventName": {
+            "constValue": "#e179eedb",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_useCustomEvent": false,
+          "_waitForCallback": true,
+          "_withEventArgs": false
+        }
+      ],
+      "getterList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.GetterBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 7,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "a1475ef6",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_value": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "step2"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetterBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 12,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "fd275957",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_value": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "step2"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetterBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 12,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "fd275957",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_value": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "step2"
+          }
+        }
+      ],
+      "headerList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.LevelEvent.OnSpawnerEntitySpawn, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 0,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "4d4a115f",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 1,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_entityOutput": {
+            "paramTarget": 0,
+            "path": "$0@_entityOutput"
+          },
+          "_filterType": {
+            "constValue": 8,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_groupKeyFilter": {
+            "constValue": "G01",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_groupKeyOutput": {
+            "paramTarget": 0,
+            "path": "$0@_groupKeyOutput"
+          },
+          "_spawnerFilter": {
+            "constValue": {
+              "id": 0
+            },
+            "idRef": -1,
+            "paramSource": 200,
+            "path": "spawner"
+          },
+          "_waveKeyFilter": null,
+          "_waveKeyOutput": {
+            "paramTarget": 0,
+            "path": "$0@_waveKeyOutput"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.LevelEvent.OnEntityHpChanged, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 3,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "a7321d09",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": true,
+          "_nextID": 4,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_changedDirection": 0,
+          "_entityFilter": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "group01"
+          },
+          "_entityOutput": null,
+          "_hpRatio": {
+            "constValue": 0.6000000238418579,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.LevelEvent.OnEntityHpChanged, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 8,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "3de683e9",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": true,
+          "_nextID": 9,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_changedDirection": 0,
+          "_entityFilter": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "group01"
+          },
+          "_entityOutput": null,
+          "_hpRatio": {
+            "constValue": 0.800000011920929,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.LevelEvent.OnSpawnerEntityDie, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 17,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "df4c559e",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 18,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_entityOutput": {
+            "paramTarget": 0,
+            "path": "$17@_entityOutput"
+          },
+          "_filterType": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_groupKeyFilter": null,
+          "_groupKeyOutput": {
+            "paramTarget": 0,
+            "path": "$17@_groupKeyOutput"
+          },
+          "_spawnerFilter": {
+            "constValue": {
+              "id": 37400010004
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_waveKeyFilter": null,
+          "_waveKeyOutput": {
+            "paramTarget": 0,
+            "path": "$17@_waveKeyOutput"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnCustomEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 19,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "393ac80b",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 20,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_eventArgsPtr": {
+            "paramTarget": 0,
+            "path": "$19@_eventArgsPtr"
+          },
+          "_eventKey": {
+            "constValue": "BattleStart",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnCustomEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 23,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "ba9e56bb",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 24,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_eventArgsPtr": {
+            "paramTarget": 0,
+            "path": "$23@_eventArgsPtr"
+          },
+          "_eventKey": {
+            "constValue": "SubGameStart",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        }
+      ]
+    },
+    "paramBlackboard": {
+      "value": [
+        {
+          "key": "group01",
+          "value": {
+            "type": 14,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "step2",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "activeShapeList": [
+    {
+      "eulerAngles": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "offset": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "radius": 0.0,
+      "size": {
+        "x": 140.0,
+        "y": 120.0,
+        "z": 140.0
+      },
+      "type": 1
+    }
+  ],
+  "allowStartOnTravelPole": false,
+  "allowTick": false,
+  "enablePreload": false,
+  "endType": 1,
+  "enemies": {},
+  "exitBuffer": 0.0,
+  "exitBufferOverride": false,
+  "interactiveLocks": {},
+  "interactives": {},
+  "levelScriptType": 0,
+  "lstTemplatePath": null,
+  "maxStage": 0,
+  "modules": {
+    "37400010001": {
+      "$type": "Beyond.Gameplay.EncounterData, Gameplay.Beyond",
+      "disableWhenCompleted": true,
+      "id": 37400010001,
+      "activateMode": 2,
+      "activateModeAlter": 0,
+      "activateTriggerSlotId": 0,
+      "activateTriggerSlotIdAlter": 0,
+      "airWallList": null,
+      "airWallPtrList": null,
+      "battlePart": {
+        "completeDelay": 0.0,
+        "completeDelayMode": 0,
+        "completeDelayStrParam": "",
+        "completeMode": 0,
+        "dontHideDeadEnemyWhenComplete": false,
+        "exitTriggerSlotId": 0,
+        "keepHatred": true,
+        "protectEnemyBeforeBattlePart": true
+      },
+      "enemyList": null,
+      "introPart": {
+        "airWallShowTiming": 6,
+        "enemySpawnTiming": 6,
+        "fadeInDuration": 0.0,
+        "fadeOutDuration": 0.0,
+        "hasFadeIn": false,
+        "hasFadeOut": false,
+        "operaSegments": null,
+        "teleportMode": 0,
+        "teleportSlot0": {
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "eulerAngles": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        "teleportSlot1": {
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "eulerAngles": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        "teleportSlot2": {
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "eulerAngles": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        "teleportSlot3": {
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "eulerAngles": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        "teleportTiming": 0
+      },
+      "introPartAlter": null,
+      "introPartMode": 0,
+      "spawnerId": 37400010001,
+      "tailPart": null,
+      "tailPartMode": 0
+    }
+  },
+  "npcs": {},
+  "parentLevelScriptId": 0,
+  "properties": null,
+  "propertyIdToKeyMap": null,
+  "refWorldEntityIdList": null,
+  "resetModeWhenActive": 0,
+  "resetModeWhenEnd": 0,
+  "scriptId": 37400010001,
+  "startShapeList": null,
+  "startType": 1,
+  "taskMap": {
+    "712f9a96": {
+      "canBeTracked": true,
+      "conditionDict": {
+        "c0a6fd3c": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckLsmEncounterCompleted, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "c0a6fd3c",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "_lsm": {
+              "constValue": {
+                "id": 37400010001
+              },
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    }
+  },
+  "triggerVolumes": {}
+}

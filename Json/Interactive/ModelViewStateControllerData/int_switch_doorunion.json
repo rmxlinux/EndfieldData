@@ -1,0 +1,284 @@
+{
+  "cameraSignalSourceAssetHashes": [],
+  "clipAssetInfos": [
+    {
+      "animationClipHash": 223279590724259968,
+      "animationClipName": "int_eswitch_v2_light_disable"
+    },
+    {
+      "animationClipHash": 481637255533740263,
+      "animationClipName": "int_eswitch_v2_light_available"
+    },
+    {
+      "animationClipHash": 959469968185224163,
+      "animationClipName": "int_eswitch_v2_light_on"
+    }
+  ],
+  "effectIds": [],
+  "emissiveConfigHashes": [
+    240593204017854229,
+    33431984047889756,
+    1043473419393144112
+  ],
+  "modelAnimatorDatas": [
+    {
+      "layerFsmDatas": [
+        {
+          "hasAnimClip": true,
+          "index": 0,
+          "layerName": "Effect",
+          "stateDatas": [
+            {
+              "animationClipName": "int_eswitch_v2_light_disable",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 0.0,
+                  "emissiveConfigHash": 240593204017854229,
+                  "emissiveNodeName": "P_interactive_universalswitch+1_002_01",
+                  "isBlend": false,
+                  "isColorBlend": false
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "disable",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "available"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Off",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.875,
+                    "hasExitTime": false,
+                    "isFixedDuration": false,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "int_eswitch_v2_light_available",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 0.0,
+                  "emissiveConfigHash": 33431984047889756,
+                  "emissiveNodeName": "P_interactive_universalswitch+1_002_01",
+                  "isBlend": false,
+                  "isColorBlend": false
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "Off",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "available"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 1,
+                  "targetStateName": "disable",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.875,
+                    "hasExitTime": false,
+                    "isFixedDuration": false,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 1,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "On",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": false,
+                    "isFixedDuration": false,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "int_eswitch_v2_light_on",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 0.0,
+                  "emissiveConfigHash": 1043473419393144112,
+                  "emissiveNodeName": "P_interactive_universalswitch+1_002_01",
+                  "isBlend": false,
+                  "isColorBlend": false
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "On",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Off",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": false,
+                    "isFixedDuration": false,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        }
+      ],
+      "modelName": "P_interactive_universalswitch+1_002_01"
+    }
+  ],
+  "modelId": "int_switch_doorunion",
+  "preTickAnimator": false
+}

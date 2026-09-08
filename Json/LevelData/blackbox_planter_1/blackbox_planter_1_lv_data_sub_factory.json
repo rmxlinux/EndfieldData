@@ -1,0 +1,951 @@
+{
+  "airWalls": [],
+  "aiTransData": [],
+  "autoSpawnedInteractives": [],
+  "blackbox": {
+    "basic": {
+      "disableSwitchMode": false,
+      "domainGrade": 10,
+      "enterFactoryModeOnSceneLoaded": true,
+      "lockLogisticConveyor": false,
+      "lockLogisticConveyorBridge": false,
+      "lockLogisticConveyorConverger": true,
+      "lockLogisticConveyorSplitter": false,
+      "lockLogisticConveyorValve": false,
+      "lockLogisticPipe": true,
+      "lockLogisticPipeConnector": true,
+      "lockLogisticPipeConverger": true,
+      "lockLogisticPipeSplitter": true,
+      "lockLogisticPipeValve": true
+    },
+    "buildingCraft": null,
+    "completeCondition": {
+      "cannotCompleteWhenBlockedNodeExist": false,
+      "cannotCompleteWhenDanglingConveyorExist": true,
+      "cannotCompleteWhenOutOfPowerExist": false,
+      "cannotCompleteWhenPowerGenLessThanPowerCost": false
+    },
+    "discardItem": {
+      "forbidAllItemDiscard": false,
+      "forbidItems": [
+        "item_plant_moss_1",
+        "item_plant_moss_seed_1"
+      ]
+    },
+    "equipCraft": null,
+    "extraTask": [
+      {
+        "levelScriptId": 16400000001,
+        "taskId": "eed792d2"
+      }
+    ],
+    "failTask": [
+      {
+        "failInfo": {
+          "key": "target_blackbox_planter_1_failure_1_1"
+        },
+        "levelScriptId": 16400000001,
+        "taskId": "51017f5e"
+      }
+    ],
+    "generalAbility": null,
+    "introEffect": {
+      "delay": 1.0,
+      "introEffectName": "P_interactive_blackbox_01_test_pure_color",
+      "loopEffectName": "P_interactive_blackbox_01",
+      "position": {
+        "x": -111.0,
+        "y": 1.0,
+        "z": -149.0
+      }
+    },
+    "inventory": {
+      "bagContent": [
+        {
+          "count": 3,
+          "id": "item_port_power_diffuser_1"
+        },
+        {
+          "count": 8,
+          "id": "item_port_seedcol_1"
+        },
+        {
+          "count": 4,
+          "id": "item_port_planter_1"
+        }
+      ],
+      "bagSlotCount": 30,
+      "depotContent": [
+        {
+          "count": 0,
+          "id": "item_quartz_sand",
+          "infinite": true
+        },
+        {
+          "count": 15,
+          "id": "item_plant_moss_1",
+          "infinite": false
+        }
+      ],
+      "depotManualInOutLocked": false
+    },
+    "mainTask": [
+      {
+        "levelScriptId": 16400000001,
+        "taskId": "6c4f69bd"
+      }
+    ],
+    "manualCraft": {
+      "limitedManualCraftIds": []
+    },
+    "predefinedTemplates": [
+      {
+        "predefinedParam": {
+          "cache": {
+            "lockManualInOut": true
+          },
+          "common": {
+            "disable": false,
+            "forbidDelete": false,
+            "forbidMove": false,
+            "initialDoNotPlace": false,
+            "initialHide": false,
+            "isSocialBuilding": false,
+            "needRepair": false,
+            "repairNeedItem": [],
+            "socialBuildingConfig": {
+              "like": 0,
+              "ownerId": 0
+            }
+          },
+          "envGenWithActivator": null,
+          "fluidContainer": null,
+          "fluidReaction": null,
+          "gridBox": null,
+          "hub": null,
+          "miner": null,
+          "powerDiffuser": null,
+          "powerGate": null,
+          "powerPole": null,
+          "powerPort": null,
+          "producer": {
+            "enableModeSwitch": true,
+            "forbidLiquidMode": false,
+            "limitedFormulaIds": [
+              "seedcollector_plant_moss_1_1"
+            ],
+            "lockFormulaId": "seedcollector_plant_moss_1_1",
+            "modeCustom0": null,
+            "modeCustom1": null,
+            "modeUseCustom": false,
+            "useMode": "normal"
+          },
+          "selector": null,
+          "sewageTreatPlantExport": null,
+          "sewageTreatPlantImport": null,
+          "sign": null,
+          "travelPole": null,
+          "udPipe": null,
+          "valve": null
+        },
+        "templateId": "seedcollector_1"
+      },
+      {
+        "predefinedParam": {
+          "cache": {
+            "lockManualInOut": true
+          },
+          "common": {
+            "disable": false,
+            "forbidDelete": false,
+            "forbidMove": false,
+            "initialDoNotPlace": false,
+            "initialHide": false,
+            "isSocialBuilding": false,
+            "needRepair": false,
+            "repairNeedItem": [],
+            "socialBuildingConfig": {
+              "like": 0,
+              "ownerId": 0
+            }
+          },
+          "envGenWithActivator": null,
+          "fluidContainer": null,
+          "fluidReaction": null,
+          "gridBox": null,
+          "hub": null,
+          "miner": null,
+          "powerDiffuser": null,
+          "powerGate": null,
+          "powerPole": null,
+          "powerPort": null,
+          "producer": {
+            "enableModeSwitch": true,
+            "forbidLiquidMode": false,
+            "limitedFormulaIds": [
+              "planter_plant_moss_1_1"
+            ],
+            "lockFormulaId": "planter_plant_moss_1_1",
+            "modeCustom0": null,
+            "modeCustom1": null,
+            "modeUseCustom": false,
+            "useMode": "normal"
+          },
+          "selector": null,
+          "sewageTreatPlantExport": null,
+          "sewageTreatPlantImport": null,
+          "sign": null,
+          "travelPole": null,
+          "udPipe": null,
+          "valve": null
+        },
+        "templateId": "planter_1"
+      },
+      {
+        "predefinedParam": {
+          "cache": null,
+          "common": {
+            "disable": false,
+            "forbidDelete": false,
+            "forbidMove": false,
+            "initialDoNotPlace": false,
+            "initialHide": false,
+            "isSocialBuilding": false,
+            "needRepair": false,
+            "repairNeedItem": [],
+            "socialBuildingConfig": {
+              "like": 0,
+              "ownerId": 0
+            }
+          },
+          "envGenWithActivator": null,
+          "fluidContainer": null,
+          "fluidReaction": null,
+          "gridBox": null,
+          "hub": null,
+          "miner": null,
+          "powerDiffuser": {
+            "disablePowerPole": true
+          },
+          "powerGate": null,
+          "powerPole": null,
+          "powerPort": null,
+          "producer": null,
+          "selector": null,
+          "sewageTreatPlantExport": null,
+          "sewageTreatPlantImport": null,
+          "sign": null,
+          "travelPole": null,
+          "udPipe": null,
+          "valve": null
+        },
+        "templateId": "power_diffuser_1"
+      },
+      {
+        "predefinedParam": {
+          "cache": null,
+          "common": {
+            "disable": false,
+            "forbidDelete": false,
+            "forbidMove": false,
+            "initialDoNotPlace": false,
+            "initialHide": false,
+            "isSocialBuilding": false,
+            "needRepair": false,
+            "repairNeedItem": [],
+            "socialBuildingConfig": {
+              "like": 0,
+              "ownerId": 0
+            }
+          },
+          "envGenWithActivator": null,
+          "fluidContainer": null,
+          "fluidReaction": null,
+          "gridBox": null,
+          "hub": null,
+          "miner": null,
+          "powerDiffuser": null,
+          "powerGate": null,
+          "powerPole": {
+            "disablePowerDiffuser": true
+          },
+          "powerPort": null,
+          "producer": null,
+          "selector": null,
+          "sewageTreatPlantExport": null,
+          "sewageTreatPlantImport": null,
+          "sign": null,
+          "travelPole": null,
+          "udPipe": null,
+          "valve": null
+        },
+        "templateId": "power_pole_2"
+      }
+    ],
+    "presetBluePrints": {
+      "presetBpKey": null
+    },
+    "statistics": {
+      "limitedStatisticItemIds": [
+        "item_plant_moss_1",
+        "item_plant_moss_seed_1",
+        "item_bottled_rec_hp_1",
+        "item_quartz_glass",
+        "item_glass_bottle"
+      ]
+    }
+  },
+  "buildableCondition": null,
+  "cameraPoses": [],
+  "charPatrol": [],
+  "doodadGroup": [],
+  "dynamicOccludeAreas": [],
+  "enemies": [],
+  "enemyGroup": [],
+  "enemyPatrol": [],
+  "environmentVolumes": [],
+  "factoryMines": [],
+  "factoryPredefineData": {
+    "powerGates": []
+  },
+  "factoryRegions": [
+    {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 0,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "factory_region",
+      "entityType": 128,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 10000,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "areas": [
+        {
+          "fenceHeight": 0.0,
+          "index": 0,
+          "isMain": false,
+          "levelCnt": 1,
+          "levelData": [
+            {
+              "level": 1,
+              "levelBounds": [
+                {
+                  "size": {
+                    "m_X": 82,
+                    "m_Y": 30,
+                    "m_Z": 60
+                  },
+                  "start": {
+                    "m_X": -172,
+                    "m_Y": -3,
+                    "m_Z": -175
+                  }
+                }
+              ]
+            }
+          ],
+          "maxCnt": 0
+        }
+      ],
+      "buildableRange": [],
+      "buses": [],
+      "cropPanels": [],
+      "initialBelts": [],
+      "initialBuildings": [],
+      "isMainRegion": false,
+      "mines": [],
+      "powerStorageCapacity": 10000000,
+      "regionId": "region_blackbox_planter_1",
+      "roads": [],
+      "settlementAreas": []
+    }
+  ],
+  "functionArea": {
+    "baseData": [],
+    "functionAreaConditions": [],
+    "ranges": [],
+    "specificDatas": []
+  },
+  "guideHints": [
+    {
+      "beginGuideGroupId": "",
+      "defaultEnable": false,
+      "endGuideGroupId": "",
+      "fromInstKey": "planter_1",
+      "hintId": "conveyer_guide_3",
+      "segments": [
+        {
+          "m_X": 1,
+          "m_Y": 2
+        }
+      ],
+      "startFace": 1,
+      "startPoint": {
+        "m_X": -111,
+        "m_Y": 0,
+        "m_Z": -152
+      },
+      "toInstKey": "grinder_1",
+      "type": 0
+    },
+    {
+      "beginGuideGroupId": "",
+      "defaultEnable": false,
+      "endGuideGroupId": "",
+      "fromInstKey": "seedcollector_1",
+      "hintId": "conveyer_guide_2",
+      "segments": [
+        {
+          "m_X": 1,
+          "m_Y": 2
+        }
+      ],
+      "startFace": 1,
+      "startPoint": {
+        "m_X": -118,
+        "m_Y": 0,
+        "m_Z": -152
+      },
+      "toInstKey": "planter_1",
+      "type": 0
+    },
+    {
+      "beginGuideGroupId": "",
+      "defaultEnable": false,
+      "endGuideGroupId": "",
+      "fromInstKey": "planter_1",
+      "hintId": "conveyer_guide_4",
+      "segments": [
+        {
+          "m_X": 1,
+          "m_Y": 2
+        },
+        {
+          "m_X": 2,
+          "m_Y": 3
+        },
+        {
+          "m_X": 3,
+          "m_Y": 19
+        },
+        {
+          "m_X": 0,
+          "m_Y": 5
+        }
+      ],
+      "startFace": 1,
+      "startPoint": {
+        "m_X": -111,
+        "m_Y": 0,
+        "m_Z": -155
+      },
+      "toInstKey": "blackbox_hub",
+      "type": 0
+    },
+    {
+      "beginGuideGroupId": "",
+      "defaultEnable": false,
+      "endGuideGroupId": "",
+      "fromInstKey": "blackbox_hub",
+      "hintId": "conveyer_guide_1",
+      "segments": [
+        {
+          "m_X": 1,
+          "m_Y": 2
+        }
+      ],
+      "startFace": 1,
+      "startPoint": {
+        "m_X": -125,
+        "m_Y": 0,
+        "m_Z": -152
+      },
+      "toInstKey": "seedcollector_1",
+      "type": 0
+    }
+  ],
+  "interactiveLockData": [],
+  "interactives": [],
+  "levelIdNum": 164,
+  "levelScriptBriefDataDict": {},
+  "levelScriptDataPathDict": {},
+  "levelUIs": [],
+  "levelWideConfigs": {},
+  "mapVolumeDatas": [],
+  "missionAreas": [],
+  "npcAttractPointData": [],
+  "npcClusters": [],
+  "npcGroup": [],
+  "npcPatrol": [],
+  "npcs": [],
+  "patrols": [],
+  "predefinedParams": [
+    {
+      "instKey": "blackbox_hub",
+      "param": {
+        "cache": null,
+        "common": {
+          "disable": false,
+          "forbidDelete": true,
+          "forbidMove": true,
+          "initialDoNotPlace": false,
+          "initialHide": false,
+          "isSocialBuilding": false,
+          "needRepair": false,
+          "repairNeedItem": [],
+          "socialBuildingConfig": {
+            "like": 0,
+            "ownerId": 0
+          }
+        },
+        "envGenWithActivator": null,
+        "fluidContainer": null,
+        "fluidReaction": null,
+        "gridBox": null,
+        "hub": {
+          "powerGenerate": 100,
+          "powerSaveAmount": 100000,
+          "selectors": [
+            {
+              "currentSelectedItemId": "item_plant_moss_1",
+              "index": 0,
+              "lockSelectedItemId": false
+            },
+            {
+              "currentSelectedItemId": "item_quartz_sand",
+              "index": 2,
+              "lockSelectedItemId": false
+            }
+          ]
+        },
+        "miner": null,
+        "powerDiffuser": null,
+        "powerGate": null,
+        "powerPole": null,
+        "powerPort": null,
+        "producer": null,
+        "selector": null,
+        "sewageTreatPlantExport": null,
+        "sewageTreatPlantImport": null,
+        "sign": null,
+        "travelPole": null,
+        "udPipe": null,
+        "valve": null
+      }
+    },
+    {
+      "instKey": "grinder_1",
+      "param": {
+        "cache": {
+          "lockManualInOut": true
+        },
+        "common": {
+          "disable": false,
+          "forbidDelete": true,
+          "forbidMove": true,
+          "initialDoNotPlace": false,
+          "initialHide": false,
+          "isSocialBuilding": false,
+          "needRepair": false,
+          "repairNeedItem": [],
+          "socialBuildingConfig": {
+            "like": 0,
+            "ownerId": 0
+          }
+        },
+        "envGenWithActivator": null,
+        "fluidContainer": null,
+        "fluidReaction": null,
+        "gridBox": null,
+        "hub": null,
+        "miner": null,
+        "powerDiffuser": null,
+        "powerGate": null,
+        "powerPole": null,
+        "powerPort": null,
+        "producer": {
+          "enableModeSwitch": true,
+          "forbidLiquidMode": false,
+          "limitedFormulaIds": [
+            "grinder_plant_moss_powder_1_1"
+          ],
+          "lockFormulaId": "grinder_plant_moss_powder_1_1",
+          "modeCustom0": null,
+          "modeCustom1": null,
+          "modeUseCustom": false,
+          "useMode": "normal"
+        },
+        "selector": null,
+        "sewageTreatPlantExport": null,
+        "sewageTreatPlantImport": null,
+        "sign": null,
+        "travelPole": null,
+        "udPipe": null,
+        "valve": null
+      }
+    },
+    {
+      "instKey": "furnace_1",
+      "param": {
+        "cache": {
+          "lockManualInOut": true
+        },
+        "common": {
+          "disable": false,
+          "forbidDelete": true,
+          "forbidMove": true,
+          "initialDoNotPlace": false,
+          "initialHide": false,
+          "isSocialBuilding": false,
+          "needRepair": false,
+          "repairNeedItem": [],
+          "socialBuildingConfig": {
+            "like": 0,
+            "ownerId": 0
+          }
+        },
+        "envGenWithActivator": null,
+        "fluidContainer": null,
+        "fluidReaction": null,
+        "gridBox": null,
+        "hub": null,
+        "miner": null,
+        "powerDiffuser": null,
+        "powerGate": null,
+        "powerPole": null,
+        "powerPort": null,
+        "producer": {
+          "enableModeSwitch": true,
+          "forbidLiquidMode": false,
+          "limitedFormulaIds": [
+            "furnance_quartz_glass_1"
+          ],
+          "lockFormulaId": "furnance_quartz_glass_1",
+          "modeCustom0": null,
+          "modeCustom1": null,
+          "modeUseCustom": false,
+          "useMode": "normal"
+        },
+        "selector": null,
+        "sewageTreatPlantExport": null,
+        "sewageTreatPlantImport": null,
+        "sign": null,
+        "travelPole": null,
+        "udPipe": null,
+        "valve": null
+      }
+    },
+    {
+      "instKey": "shaper_1",
+      "param": {
+        "cache": {
+          "lockManualInOut": true
+        },
+        "common": {
+          "disable": false,
+          "forbidDelete": true,
+          "forbidMove": true,
+          "initialDoNotPlace": false,
+          "initialHide": false,
+          "isSocialBuilding": false,
+          "needRepair": false,
+          "repairNeedItem": [],
+          "socialBuildingConfig": {
+            "like": 0,
+            "ownerId": 0
+          }
+        },
+        "envGenWithActivator": null,
+        "fluidContainer": null,
+        "fluidReaction": null,
+        "gridBox": null,
+        "hub": null,
+        "miner": null,
+        "powerDiffuser": null,
+        "powerGate": null,
+        "powerPole": null,
+        "powerPort": null,
+        "producer": {
+          "enableModeSwitch": true,
+          "forbidLiquidMode": false,
+          "limitedFormulaIds": [
+            "shaper_glass_bottle_1"
+          ],
+          "lockFormulaId": "shaper_glass_bottle_1",
+          "modeCustom0": null,
+          "modeCustom1": null,
+          "modeUseCustom": false,
+          "useMode": "normal"
+        },
+        "selector": null,
+        "sewageTreatPlantExport": null,
+        "sewageTreatPlantImport": null,
+        "sign": null,
+        "travelPole": null,
+        "udPipe": null,
+        "valve": null
+      }
+    },
+    {
+      "instKey": "filling_1",
+      "param": {
+        "cache": {
+          "lockManualInOut": true
+        },
+        "common": {
+          "disable": false,
+          "forbidDelete": true,
+          "forbidMove": true,
+          "initialDoNotPlace": false,
+          "initialHide": false,
+          "isSocialBuilding": false,
+          "needRepair": false,
+          "repairNeedItem": [],
+          "socialBuildingConfig": {
+            "like": 0,
+            "ownerId": 0
+          }
+        },
+        "envGenWithActivator": null,
+        "fluidContainer": null,
+        "fluidReaction": null,
+        "gridBox": null,
+        "hub": null,
+        "miner": null,
+        "powerDiffuser": null,
+        "powerGate": null,
+        "powerPole": null,
+        "powerPort": null,
+        "producer": {
+          "enableModeSwitch": true,
+          "forbidLiquidMode": false,
+          "limitedFormulaIds": [
+            "filling_bottled_rec_hp_1_1"
+          ],
+          "lockFormulaId": "filling_bottled_rec_hp_1_1",
+          "modeCustom0": null,
+          "modeCustom1": null,
+          "modeUseCustom": false,
+          "useMode": "normal"
+        },
+        "selector": null,
+        "sewageTreatPlantExport": null,
+        "sewageTreatPlantImport": null,
+        "sign": null,
+        "travelPole": null,
+        "udPipe": null,
+        "valve": null
+      }
+    },
+    {
+      "instKey": "powerdiffuser_1",
+      "param": {
+        "cache": null,
+        "common": {
+          "disable": false,
+          "forbidDelete": true,
+          "forbidMove": true,
+          "initialDoNotPlace": false,
+          "initialHide": false,
+          "isSocialBuilding": false,
+          "needRepair": false,
+          "repairNeedItem": [],
+          "socialBuildingConfig": {
+            "like": 0,
+            "ownerId": 0
+          }
+        },
+        "envGenWithActivator": null,
+        "fluidContainer": null,
+        "fluidReaction": null,
+        "gridBox": null,
+        "hub": null,
+        "miner": null,
+        "powerDiffuser": {
+          "disablePowerPole": true
+        },
+        "powerGate": null,
+        "powerPole": null,
+        "powerPort": null,
+        "producer": null,
+        "selector": null,
+        "sewageTreatPlantExport": null,
+        "sewageTreatPlantImport": null,
+        "sign": null,
+        "travelPole": null,
+        "udPipe": null,
+        "valve": null
+      }
+    },
+    {
+      "instKey": "powerdiffuser_2",
+      "param": {
+        "cache": null,
+        "common": {
+          "disable": false,
+          "forbidDelete": true,
+          "forbidMove": true,
+          "initialDoNotPlace": false,
+          "initialHide": false,
+          "isSocialBuilding": false,
+          "needRepair": false,
+          "repairNeedItem": [],
+          "socialBuildingConfig": {
+            "like": 0,
+            "ownerId": 0
+          }
+        },
+        "envGenWithActivator": null,
+        "fluidContainer": null,
+        "fluidReaction": null,
+        "gridBox": null,
+        "hub": null,
+        "miner": null,
+        "powerDiffuser": {
+          "disablePowerPole": true
+        },
+        "powerGate": null,
+        "powerPole": null,
+        "powerPort": null,
+        "producer": null,
+        "selector": null,
+        "sewageTreatPlantExport": null,
+        "sewageTreatPlantImport": null,
+        "sign": null,
+        "travelPole": null,
+        "udPipe": null,
+        "valve": null
+      }
+    },
+    {
+      "instKey": "seedcollector_1",
+      "param": {
+        "cache": {
+          "lockManualInOut": true
+        },
+        "common": {
+          "disable": false,
+          "forbidDelete": true,
+          "forbidMove": true,
+          "initialDoNotPlace": false,
+          "initialHide": false,
+          "isSocialBuilding": false,
+          "needRepair": false,
+          "repairNeedItem": [],
+          "socialBuildingConfig": {
+            "like": 0,
+            "ownerId": 0
+          }
+        },
+        "envGenWithActivator": null,
+        "fluidContainer": null,
+        "fluidReaction": null,
+        "gridBox": null,
+        "hub": null,
+        "miner": null,
+        "powerDiffuser": null,
+        "powerGate": null,
+        "powerPole": null,
+        "powerPort": null,
+        "producer": {
+          "enableModeSwitch": true,
+          "forbidLiquidMode": false,
+          "limitedFormulaIds": [
+            "seedcollector_plant_moss_1_1"
+          ],
+          "lockFormulaId": "seedcollector_plant_moss_1_1",
+          "modeCustom0": null,
+          "modeCustom1": null,
+          "modeUseCustom": false,
+          "useMode": "normal"
+        },
+        "selector": null,
+        "sewageTreatPlantExport": null,
+        "sewageTreatPlantImport": null,
+        "sign": null,
+        "travelPole": null,
+        "udPipe": null,
+        "valve": null
+      }
+    },
+    {
+      "instKey": "planter_1",
+      "param": {
+        "cache": {
+          "lockManualInOut": true
+        },
+        "common": {
+          "disable": false,
+          "forbidDelete": true,
+          "forbidMove": true,
+          "initialDoNotPlace": false,
+          "initialHide": false,
+          "isSocialBuilding": false,
+          "needRepair": false,
+          "repairNeedItem": [],
+          "socialBuildingConfig": {
+            "like": 0,
+            "ownerId": 0
+          }
+        },
+        "envGenWithActivator": null,
+        "fluidContainer": null,
+        "fluidReaction": null,
+        "gridBox": null,
+        "hub": null,
+        "miner": null,
+        "powerDiffuser": null,
+        "powerGate": null,
+        "powerPole": null,
+        "powerPort": null,
+        "producer": {
+          "enableModeSwitch": true,
+          "forbidLiquidMode": false,
+          "limitedFormulaIds": [
+            "planter_plant_moss_1_1"
+          ],
+          "lockFormulaId": "planter_plant_moss_1_1",
+          "modeCustom0": null,
+          "modeCustom1": null,
+          "modeUseCustom": false,
+          "useMode": "normal"
+        },
+        "selector": null,
+        "sewageTreatPlantExport": null,
+        "sewageTreatPlantImport": null,
+        "sign": null,
+        "travelPole": null,
+        "udPipe": null,
+        "valve": null
+      }
+    }
+  ],
+  "riftVolumes": [],
+  "safeZone": {
+    "boxes": []
+  },
+  "sceneId": "blackbox_planter_1",
+  "sludgeDatas": [],
+  "spawners": [],
+  "specificData": null,
+  "splines": [],
+  "waterVolumes": [],
+  "worldWayPointData": []
+}

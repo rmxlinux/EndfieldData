@@ -1,0 +1,566 @@
+{
+  "actionGroupData": {
+    "passiveEventActions": [],
+    "timelineActions": [
+      {
+        "_endFrame": 3,
+        "_sequenceActionData": {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.GetAITransDataAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "aiTransKey": "ruanyi_centerpoint",
+              "saveTo": "tar"
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 1,
+              "advancedSelectorDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "center": 4,
+              "centerContextKey": "tar",
+              "centerMountPoint": 0,
+              "centerToGround": false,
+              "contextKey": "",
+              "selectorData": {
+                "finderData": {
+                  "$type": "Beyond.Gameplay.Core.Selector+RandomPointFinder+Data, Gameplay.Beyond",
+                  "angle": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 0.0
+                  },
+                  "extent2D": {
+                    "x": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    },
+                    "y": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    }
+                  },
+                  "localPlaneRotationEulers": {
+                    "x": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    },
+                    "y": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    },
+                    "z": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    }
+                  },
+                  "minRadius": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 8.0
+                  },
+                  "pointNum": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 1.0
+                  },
+                  "radius": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 25.0
+                  },
+                  "shape": 0,
+                  "snapToNavMesh": false,
+                  "useExtraJitter": false
+                },
+                "postProcessorData": [],
+                "validatorData": []
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 1,
+              "selectorOwnerContextKey": "tar",
+              "target": 0,
+              "targetGroupKey": "move_tar",
+              "useAdvancedDirectionSetting": false,
+              "useCenterEntityMountPoint": false
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        },
+        "_startFrame": 0,
+        "forceSyncAnimData": {
+          "forceSync": false,
+          "montageName": "",
+          "playbackSpeed": 0.0,
+          "targetFrame": 0
+        }
+      },
+      {
+        "_endFrame": 120,
+        "_sequenceActionData": {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.MoveToAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 2,
+              "autoScaled": false,
+              "blockRadius": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 1.0
+              },
+              "counterClockwise": false,
+              "directionType": 0,
+              "disableReachAutoEnd": false,
+              "dontClampDirToXZ": false,
+              "dontClampFaceToMoveDirToXZ": false,
+              "enableMaxDistanceCheckWhenMoveBack": false,
+              "enableXAxisMove": false,
+              "enableYAxisMove": false,
+              "extraRadiusForInt": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 1.5
+              },
+              "faceToMoveDir": true,
+              "fixAngle": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "fixDirectionType": 0,
+              "fixPosAngle": {
+                "x": {
+                  "blackboardKey": "",
+                  "useBlackboardKey": false,
+                  "value": 0.0
+                },
+                "y": {
+                  "blackboardKey": "",
+                  "useBlackboardKey": false,
+                  "value": 0.0
+                },
+                "z": {
+                  "blackboardKey": "",
+                  "useBlackboardKey": false,
+                  "value": 0.0
+                }
+              },
+              "fixPosLength": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 0.0
+              },
+              "ignoreAllCollision": true,
+              "ignoreCollisionLayer": {
+                "m_Mask": 0
+              },
+              "ignoreNavmesh": true,
+              "limitMoveDirRotateSpeed": false,
+              "manualTick": false,
+              "maxDistanceWhenMoveBack": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 5.0
+              },
+              "moveDirYRotateSpeed": 0.0,
+              "moveType": 1,
+              "overrideRotateRate": false,
+              "overrideStepOffset": false,
+              "rootMotionAnimKey": "",
+              "rootMotionScale": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 1.0
+              },
+              "rotateRate": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 0.0
+              },
+              "speed": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 5.0
+              },
+              "speedCurve": {
+                "preWrapMode": 8,
+                "postWrapMode": 8,
+                "keys": []
+              },
+              "speedType": 0,
+              "startOffsetFrame": 0,
+              "stepOffset": 0.0,
+              "stopByCliff": true,
+              "target": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "move_tar",
+                "targetSource": 2
+              },
+              "totalTime": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 4.0
+              },
+              "updateLatestMainCharacter": false,
+              "updateMoveTarget": true,
+              "useExtraBlockRadiusForInt": false,
+              "xAxisSpeed": {
+                "fixedSpeed": {
+                  "blackboardKey": "",
+                  "useBlackboardKey": false,
+                  "value": 0.0
+                },
+                "rootMotionAnimKey": "",
+                "rootMotionScale": {
+                  "blackboardKey": "",
+                  "useBlackboardKey": false,
+                  "value": 1.0
+                },
+                "speedCurve": {
+                  "preWrapMode": 8,
+                  "postWrapMode": 8,
+                  "keys": []
+                },
+                "speedType": 0
+              },
+              "yAxisSpeed": {
+                "fixedSpeed": {
+                  "blackboardKey": "",
+                  "useBlackboardKey": false,
+                  "value": 0.0
+                },
+                "rootMotionAnimKey": "",
+                "rootMotionScale": {
+                  "blackboardKey": "",
+                  "useBlackboardKey": false,
+                  "value": 1.0
+                },
+                "speedCurve": {
+                  "preWrapMode": 8,
+                  "postWrapMode": 8,
+                  "keys": []
+                },
+                "speedType": 0
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        },
+        "_startFrame": 3,
+        "forceSyncAnimData": {
+          "forceSync": false,
+          "montageName": "",
+          "playbackSpeed": 0.0,
+          "targetFrame": 0
+        }
+      },
+      {
+        "_endFrame": 150,
+        "_sequenceActionData": {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.CastSkill+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 3,
+              "caster": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              },
+              "inheritSourceSkillCastId": false,
+              "interruptCurSkillOnlyWhenTargetCastable": false,
+              "skillId": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": "eny_0111_rytokenw_skill_move"
+              },
+              "skipApplyCost": false,
+              "target": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        },
+        "_startFrame": 148,
+        "forceSyncAnimData": {
+          "forceSync": false,
+          "montageName": "",
+          "playbackSpeed": 0.0,
+          "targetFrame": 0
+        }
+      }
+    ]
+  },
+  "aiExclusiveFrame": 0,
+  "attackRangeType": 0,
+  "blackboard": [
+    {
+      "isDynamic": false,
+      "key": "atk_scale",
+      "valueDouble": 0.75,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "StunDuration",
+      "valueDouble": 3.0,
+      "valueStr": ""
+    }
+  ],
+  "buffInputBase": null,
+  "buffs": [],
+  "canCastInAir": false,
+  "canCastInWater": false,
+  "canDummyCast": true,
+  "canMove": false,
+  "cardAttributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "castData": {
+    "castAngle": 360.0,
+    "castDistance": {
+      "blackboardKey": "",
+      "useBlackboardKey": false,
+      "value": 0.0
+    },
+    "checkCastDistanceType": 0,
+    "checkHeightDiff": false,
+    "cooldownTime": 0.0,
+    "costData": {
+      "atbValueThreshold": 0.0,
+      "costType": 0,
+      "costValue": 0.0
+    },
+    "heightDiffLimit": {
+      "blackboardKey": "",
+      "useBlackboardKey": false,
+      "value": 0.0
+    },
+    "maxChargeTime": 1,
+    "rotateType": 1,
+    "startCdFrame": 0,
+    "useCustomCastDistance": false
+  },
+  "castType": 0,
+  "characterReturnToIdle": false,
+  "comboSkillUIBigSpriteName": "",
+  "comboSkillUISpriteName": "",
+  "dontInterruptCombo": false,
+  "dummyPositionOffset": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "durationFrame": 150,
+  "exclusiveFrame": 30,
+  "hittableAttackRange": 0.0,
+  "iconBgType": 0,
+  "iconId": "eny_0018_lbtough_skill03_projhit",
+  "level": 1,
+  "needEnemyOutOfScreenWarning": true,
+  "needEnemyOutOfScreenWarningOverrideValue": false,
+  "offsetRecordFrame": 0,
+  "overrideHittableObjAttackRange": false,
+  "overrideNeedEnemyOutOfScreenWarning": false,
+  "passiveSkillType": 0,
+  "rootMotionCliffCheck": true,
+  "selectStrategy": 0,
+  "showNotRecommendState": false,
+  "skillHighlightCondition": {
+    "actionData": [],
+    "onlyExecuteWhenSourceIsGuard": false,
+    "onlyExecuteWhenSourceIsMainChar": false
+  },
+  "skillId": "eny_0111_rytokenw_skill_move",
+  "skillName": "",
+  "skillSpecification": 0,
+  "skillTags": {
+    "predefinedTag": []
+  },
+  "smartTargetBuffFindSettings": {
+    "buffIdList": [],
+    "checkType": 0,
+    "tagQuery": {
+      "queryType": 0,
+      "tags": []
+    }
+  },
+  "smartTargetBuffIds": [],
+  "smartTargetSelectStrategy": 0,
+  "smartTargetTagQuery": {
+    "queryType": 0,
+    "tags": []
+  },
+  "switchToBuffConfig": {
+    "asSkillCast": true,
+    "buffs": [],
+    "buffSource": {
+      "advancedDirection": {
+        "clampToXZ": true,
+        "customSourceAndTarget": false,
+        "directionType": 0,
+        "invertDirection": false,
+        "source": null,
+        "sourceMountPoint": 0,
+        "target": null,
+        "targetMountPoint": 0
+      },
+      "centerContextKey": "",
+      "centerToGround": false,
+      "centerType": 0,
+      "enableAdvancedDirection": false,
+      "ownerContextKey": "",
+      "selectorData": {
+        "finderData": null,
+        "postProcessorData": [],
+        "validatorData": []
+      },
+      "selectorDirection": 0,
+      "selectorOwner": 1,
+      "target": 0,
+      "targetContextKey": "",
+      "targetGroupKey": "",
+      "targetSource": 4
+    },
+    "condition": {
+      "actionData": [],
+      "onlyExecuteWhenSourceIsGuard": false,
+      "onlyExecuteWhenSourceIsMainChar": false
+    },
+    "targets": {
+      "advancedDirection": {
+        "clampToXZ": true,
+        "customSourceAndTarget": false,
+        "directionType": 0,
+        "invertDirection": false,
+        "source": null,
+        "sourceMountPoint": 0,
+        "target": null,
+        "targetMountPoint": 0
+      },
+      "centerContextKey": "",
+      "centerToGround": false,
+      "centerType": 0,
+      "enableAdvancedDirection": false,
+      "ownerContextKey": "",
+      "selectorData": {
+        "finderData": null,
+        "postProcessorData": [],
+        "validatorData": []
+      },
+      "selectorDirection": 0,
+      "selectorOwner": 1,
+      "target": 0,
+      "targetContextKey": "",
+      "targetGroupKey": "",
+      "targetSource": 0
+    }
+  },
+  "switchToCenterBeforeCast": false,
+  "tagDuringAttach": {
+    "predefinedTag": []
+  },
+  "toggleBuffs": [],
+  "uiRangeHints": [],
+  "useAIExclusiveFrame": false
+}

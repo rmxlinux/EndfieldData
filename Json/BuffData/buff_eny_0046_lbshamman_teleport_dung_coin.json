@@ -1,0 +1,460 @@
+{
+  "abilityEventAction": [
+    {
+      "abilityEvent": 101,
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.Conditions.CheckTimedMarkerCondition+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 4,
+              "blackboardKey": "",
+              "checkTarget": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              },
+              "id": "coin",
+              "returnTrueIfNotExists": true,
+              "useBlackboardKey": false
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 5,
+              "asChildBuff": false,
+              "autoFinishByAction": false,
+              "buffIconDurationSource": {
+                "durationSourceType": 0,
+                "timedMarkerId": ""
+              },
+              "buffs": [
+                {
+                  "assignBlackboard": false,
+                  "assignItems": [],
+                  "buffId": "buff_eny_0046_lbshamman_dung_coin_kill",
+                  "buffIdKey": "",
+                  "readIdFromBlackboard": false
+                }
+              ],
+              "buffSource": 0,
+              "contextKey": "",
+              "count": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 1.0
+              },
+              "finishWithNextSkillIfNotInherited": true,
+              "inheritSkillIdList": [],
+              "inheritSourceSkillCastId": false,
+              "inheritSourceSkillCastInfo": true,
+              "isExtra": false,
+              "overrideBuffIconDuration": false,
+              "passTargetGroupsToBuff": false,
+              "targetSettings": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.CreateTimedMarker+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 6,
+              "autoFinishByAction": false,
+              "duration": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 0.5
+              },
+              "markerId": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": "coin"
+              },
+              "targetSettings": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              },
+              "useTimeDilationDt": false
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ]
+    },
+    {
+      "abilityEvent": 1,
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.SpawnInteractiveGoldCoin+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 7,
+              "count": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 4
+              },
+              "spawnPos": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ]
+    }
+  ],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [],
+  "buffEventAction": [
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.Conditions.CheckTagMatch+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 2,
+              "checkTarget": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              },
+              "query": {
+                "queryType": 2,
+                "tags": [
+                  {
+                    "tagId": 430405417
+                  }
+                ]
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 3,
+              "asChildBuff": false,
+              "autoFinishByAction": false,
+              "buffIconDurationSource": {
+                "durationSourceType": 0,
+                "timedMarkerId": ""
+              },
+              "buffs": [
+                {
+                  "assignBlackboard": false,
+                  "assignItems": [],
+                  "buffId": "buff_eny_0046_lbshamman_teleport_main_dung_coin",
+                  "buffIdKey": "",
+                  "readIdFromBlackboard": false
+                }
+              ],
+              "buffSource": 0,
+              "contextKey": "",
+              "count": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 1.0
+              },
+              "finishWithNextSkillIfNotInherited": true,
+              "inheritSkillIdList": [],
+              "inheritSourceSkillCastId": false,
+              "inheritSourceSkillCastInfo": true,
+              "isExtra": false,
+              "overrideBuffIconDuration": false,
+              "passTargetGroupsToBuff": false,
+              "targetSettings": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 1
+    }
+  ],
+  "damageModifier": [
+    {
+      "condition": {
+        "actionData": [
+          {
+            "$type": "Beyond.Gameplay.Core.NotNextCheckAction+Data, Gameplay.Beyond",
+            "isEnable": true,
+            "priorityLevel": 0,
+            "priorityOffset": 0,
+            "serverActionIndex": 0
+          },
+          {
+            "$type": "Beyond.Gameplay.Core.Conditions.CheckDamageTypeMask+Data, Gameplay.Beyond",
+            "isEnable": true,
+            "priorityLevel": 0,
+            "priorityOffset": 0,
+            "serverActionIndex": 1,
+            "damageTypeMask": 32
+          }
+        ],
+        "onlyExecuteWhenSourceIsGuard": false,
+        "onlyExecuteWhenSourceIsMainChar": false
+      },
+      "damageProcessors": [
+        {
+          "$type": "Beyond.Gameplay.Core.DamageScaleProcessor, Gameplay.Beyond",
+          "addition": {
+            "blackboardKey": "",
+            "useBlackboardKey": false,
+            "value": -1.0
+          },
+          "side": 1,
+          "zoneName": "ProdCalcZone"
+        }
+      ],
+      "enableSide": 1
+    }
+  ],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": 5.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_eny_0046_lbshamman_teleport_dung_coin",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 1,
+  "maxTriggerCnt": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": -1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 1,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 1.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "",
+    "stackingType": 2,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 3.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": true
+}

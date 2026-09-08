@@ -1,0 +1,854 @@
+{
+  "cameraSignalSourceAssetHashes": [],
+  "clipAssetInfos": [
+    {
+      "animationClipHash": 276534928209813189,
+      "animationClipName": "A_interactive_switchgear+1_001_03_closeidle_01"
+    },
+    {
+      "animationClipHash": 887998826168173275,
+      "animationClipName": "A_interactive_switchgear+1_001_03_open_01"
+    },
+    {
+      "animationClipHash": 882369487575224579,
+      "animationClipName": "A_interactive_switchgear+1_001_03_openidle_01"
+    },
+    {
+      "animationClipHash": 109299025716078589,
+      "animationClipName": "A_interactive_switchgear+1_001_03_close_01"
+    },
+    {
+      "animationClipHash": 513487294829749354,
+      "animationClipName": "int_eswitch_attacked_effect_off"
+    },
+    {
+      "animationClipHash": 823788728754860451,
+      "animationClipName": "int_eswitch_attacked_effect_blink"
+    },
+    {
+      "animationClipHash": 1003749017936587082,
+      "animationClipName": "int_eswitch_attacked_effect_on"
+    }
+  ],
+  "effectIds": [
+    "P_interactive_lazerlinestrikespot_01_Variant"
+  ],
+  "emissiveConfigHashes": [
+    33431984047889756,
+    1043473419393144112
+  ],
+  "modelAnimatorDatas": [
+    {
+      "layerFsmDatas": [
+        {
+          "hasAnimClip": true,
+          "index": 0,
+          "layerName": "BaseLayer",
+          "stateDatas": [
+            {
+              "animationClipName": "A_interactive_switchgear+1_001_03_closeidle_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 0.5,
+                  "emissiveConfigHash": 33431984047889756,
+                  "emissiveNodeName": "",
+                  "isBlend": true,
+                  "isColorBlend": false
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "Idle",
+              "stateType": 0,
+              "totalTime": 0.03333333507180214,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Begin",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 9.958773716789437e-08,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_interactive_switchgear+1_001_03_open_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 1.0,
+                  "emissiveConfigHash": 1043473419393144112,
+                  "emissiveNodeName": "",
+                  "isBlend": true,
+                  "isColorBlend": false
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": 477961814
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "Begin",
+              "stateType": 0,
+              "totalTime": 1.0000001192092896,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Loop",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_interactive_switchgear+1_001_03_openidle_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 0.5,
+                  "emissiveConfigHash": 1043473419393144112,
+                  "emissiveNodeName": "",
+                  "isBlend": false,
+                  "isColorBlend": false
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": true,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "Loop",
+              "stateType": 0,
+              "totalTime": 2.9666666984558105,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "End",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_interactive_switchgear+1_001_03_close_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 1.5,
+                  "emissiveConfigHash": 33431984047889756,
+                  "emissiveNodeName": "",
+                  "isBlend": true,
+                  "isColorBlend": false
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": 516054658
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "End",
+              "stateType": 0,
+              "totalTime": 1.6666669845581055,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        },
+        {
+          "hasAnimClip": true,
+          "index": 1,
+          "layerName": "Effect",
+          "stateDatas": [
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": true,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "conduit",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Off",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "IsAbilityActive"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Blink",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "IsAbilityActive"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "On",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "int_eswitch_attacked_effect_off",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "Off",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "IsAbilityActive"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Blink",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "IsAbilityActive"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "On",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "int_eswitch_attacked_effect_blink",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "Blink",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Off",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "int_eswitch_attacked_effect_on",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "On",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Off",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        },
+        {
+          "hasAnimClip": false,
+          "index": 0,
+          "layerName": "hit",
+          "stateDatas": [
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": true,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "idle",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 3
+                        },
+                        "isInvert": false,
+                        "key": "IsHit"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "hit",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEffectBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 0,
+                  "active": false,
+                  "dontFollowTrans": false,
+                  "effectAnimationState": 0,
+                  "effectId": "P_interactive_lazerlinestrikespot_01_Variant",
+                  "effectNodeName": "HitEffectPoint",
+                  "fireAndForget": true,
+                  "followRot": true,
+                  "force": false,
+                  "innerId": 0,
+                  "isLoadImmediately": false,
+                  "isPersistence": false
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "hit",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        }
+      ],
+      "modelName": "P_interactive_switchgear+1_001_03"
+    }
+  ],
+  "modelId": "int_switch_attack_v3_postmodel",
+  "preTickAnimator": false
+}

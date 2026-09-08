@@ -1,0 +1,132 @@
+{
+  "missionId": "hidden55_m0m3unlock",
+  "missionName": {},
+  "rewardId": "",
+  "missionType": 4,
+  "baseMissionImportance": 2,
+  "overrideImportance": 0,
+  "sortId": 0,
+  "charId": "",
+  "missionDescription": {},
+  "levelId": "",
+  "scope": 0,
+  "missionChapterBitmask": 0,
+  "skipMissionAcceptAnim": true,
+  "skipMissionCompleteAnim": true,
+  "questDic": {
+    "hidden55_m0m3unlock_q#2": {
+      "questId": "hidden55_m0m3unlock_q#2",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {},
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1000,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": false,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CombineCondition, Gameplay.Beyond",
+            "uniqueId": "0b54f9d0",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "conditionEvalString": "{0} and ({1} or {2})",
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.CheckAdventureLevel, Gameplay.Beyond",
+                "uniqueId": "ed71951a",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_comparer": {
+                  "constValue": 3
+                },
+                "_progressToCompare": {
+                  "constValue": 35
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.CheckMissionState, Gameplay.Beyond",
+                "uniqueId": "bc072678",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_missionId": {
+                  "constValue": "e3m6"
+                },
+                "_comparer": {
+                  "constValue": 0
+                },
+                "_targetMissionState": {
+                  "constValue": 3
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.CheckMissionState, Gameplay.Beyond",
+                "uniqueId": "e6d65690",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_missionId": {
+                  "constValue": "c27m5"
+                },
+                "_comparer": {
+                  "constValue": 0
+                },
+                "_targetMissionState": {
+                  "constValue": 3
+                }
+              }
+            ]
+          },
+          "description": {},
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [],
+      "flowIndex": 0
+    }
+  },
+  "actionMapRaw": {
+    "dataMap": {
+      "headerList": [],
+      "actionList": [],
+      "getterList": []
+    }
+  },
+  "mainPathQuests": [
+    "hidden55_m0m3unlock_q#2"
+  ],
+  "clientActionMapKey": [],
+  "clientActionMapValue": [],
+  "onMissionAcceptId": -1,
+  "onMissionCompletedId": -1,
+  "onMissionFailedId": -1,
+  "properties": [],
+  "propertyIdToKeyMap": {},
+  "propertyKeyToIdMap": {},
+  "isWrapperMission": false,
+  "useRewardWrapper": false,
+  "useLevelIdWrapper": false,
+  "overrideDescOnlyConsiderMainPath": true
+}

@@ -1,0 +1,906 @@
+{
+  "abilityEventAction": [],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [
+    {
+      "tagId": -1486085048
+    }
+  ],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [
+    {
+      "isDynamic": true,
+      "key": "swordIndex",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": true,
+      "key": "swordCnt",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": true,
+      "key": "isUlt",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "interval",
+      "valueDouble": 0.3,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "sword_range",
+      "valueDouble": 20.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": true,
+      "key": "atk_scale",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "poise",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "atb_return",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "usp_extra",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "atk_up_final",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "remain_sword_limit",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "final_rate",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    }
+  ],
+  "buffEventAction": [
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.SimpleCalcBBAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "key": "atk_scale",
+              "operation": 1,
+              "value1": {
+                "blackboardKey": "atk_scale",
+                "useBlackboardKey": true,
+                "value": 0.0
+              },
+              "value2": {
+                "blackboardKey": "atk_up_final",
+                "useBlackboardKey": true,
+                "value": 0.0
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 1,
+              "advancedSelectorDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "center": 0,
+              "centerContextKey": "",
+              "centerMountPoint": 0,
+              "centerToGround": false,
+              "contextKey": "",
+              "selectorData": {
+                "finderData": {
+                  "$type": "Beyond.Gameplay.Core.Selector+SmartTargetFinder+Data, Gameplay.Beyond",
+                  "limitFallbackRange": false,
+                  "range": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 0.0
+                  },
+                  "selectSetting": {
+                    "smartTargetBuffFindSettings": {
+                      "buffIdList": [],
+                      "checkType": 0,
+                      "tagQuery": {
+                        "queryType": 0,
+                        "tags": []
+                      }
+                    },
+                    "smartTargetBuffIds": [],
+                    "smartTargetSelectStrategy": 3,
+                    "smartTargetTagQuery": {
+                      "queryType": 0,
+                      "tags": [
+                        {
+                          "tagId": 1670936726
+                        }
+                      ]
+                    }
+                  },
+                  "useCustomRange": false
+                },
+                "postProcessorData": [],
+                "validatorData": []
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 1,
+              "selectorOwnerContextKey": "",
+              "target": 0,
+              "targetGroupKey": "swordTar",
+              "useAdvancedDirectionSetting": false,
+              "useCenterEntityMountPoint": false
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 2,
+              "alwaysNext": true,
+              "conditionAction": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.Conditions.CheckEntityNum+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 3,
+                    "checkTarget": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": "",
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": "",
+                      "selectorData": {
+                        "finderData": null,
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 0,
+                      "targetContextKey": "",
+                      "targetGroupKey": "swordTar",
+                      "targetSource": 2
+                    },
+                    "compareType": 4,
+                    "containsHittableTarget": false,
+                    "excludeDeadEntity": false,
+                    "minNum": 0,
+                    "storeKey": ""
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "failActions": {
+                "actionData": [],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "succeedActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 4,
+                    "advancedSelectorDirection": {
+                      "clampToXZ": true,
+                      "customSourceAndTarget": false,
+                      "directionType": 0,
+                      "invertDirection": false,
+                      "source": null,
+                      "sourceMountPoint": 0,
+                      "target": null,
+                      "targetMountPoint": 0
+                    },
+                    "center": 0,
+                    "centerContextKey": "",
+                    "centerMountPoint": 0,
+                    "centerToGround": true,
+                    "contextKey": "",
+                    "selectorData": {
+                      "finderData": {
+                        "$type": "Beyond.Gameplay.Core.Selector+OwnerSpawnedEntityFinder+Data, Gameplay.Beyond",
+                        "spawnedObjectType": 512
+                      },
+                      "postProcessorData": [],
+                      "validatorData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.Selector+TagValidator+Data, Gameplay.Beyond",
+                          "query": {
+                            "queryType": 0,
+                            "tags": [
+                              {
+                                "tagId": -1913169726
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "selectorDirection": 0,
+                    "selectorOwner": 0,
+                    "selectorOwnerContextKey": "",
+                    "target": 0,
+                    "targetGroupKey": "swordTar",
+                    "useAdvancedDirectionSetting": false,
+                    "useCenterEntityMountPoint": false
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 5,
+              "advancedSelectorDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "center": 0,
+              "centerContextKey": "swordTar",
+              "centerMountPoint": 0,
+              "centerToGround": false,
+              "contextKey": "",
+              "selectorData": {
+                "finderData": {
+                  "$type": "Beyond.Gameplay.Core.Selector+OwnerSpawnedEntityFinder+Data, Gameplay.Beyond",
+                  "spawnedObjectType": 512
+                },
+                "postProcessorData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.Selector+PriorityFilter+Data, Gameplay.Beyond",
+                    "buffFilterSettings": {
+                      "buffSettings": {
+                        "buffIdList": [],
+                        "checkType": 0,
+                        "tagQuery": {
+                          "queryType": 0,
+                          "tags": []
+                        }
+                      },
+                      "buffStackNumType": 0
+                    },
+                    "filterType": 5,
+                    "limitMaxNum": false,
+                    "maxNum": 0,
+                    "onlyReserveMaxPriorityTargets": false,
+                    "processTargetType": 0
+                  }
+                ],
+                "validatorData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.Selector+TagValidator+Data, Gameplay.Beyond",
+                    "query": {
+                      "queryType": 0,
+                      "tags": [
+                        {
+                          "tagId": -13979809
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 0,
+              "selectorOwnerContextKey": "",
+              "target": 0,
+              "targetGroupKey": "sword",
+              "useAdvancedDirectionSetting": false,
+              "useCenterEntityMountPoint": false
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 0
+    },
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.Conditions.CheckEntityNum+Data, Gameplay.Beyond",
+              "isEnable": false,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 6,
+              "checkTarget": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "sword",
+                "targetSource": 2
+              },
+              "compareType": 3,
+              "containsHittableTarget": false,
+              "excludeDeadEntity": false,
+              "minNum": 1,
+              "storeKey": "swordCnt"
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.CompareFloat+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 7,
+              "compare": 0,
+              "valueA": {
+                "blackboardKey": "swordIndex",
+                "useBlackboardKey": true,
+                "value": 0.0
+              },
+              "valueB": {
+                "blackboardKey": "EntityBB_SwordNum",
+                "useBlackboardKey": true,
+                "value": 0.0
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.PickTargetAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 8,
+              "contextKey": "swordInst",
+              "index": {
+                "blackboardKey": "swordIndex",
+                "useBlackboardKey": true,
+                "value": 0
+              },
+              "target": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "sword",
+                "targetSource": 2
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 9,
+              "asChildBuff": false,
+              "autoFinishByAction": false,
+              "buffIconDurationSource": {
+                "durationSourceType": 0,
+                "timedMarkerId": ""
+              },
+              "buffs": [
+                {
+                  "assignBlackboard": true,
+                  "assignItems": [
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "swordIndex",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "swordIndex",
+                      "useDirectValue": false
+                    },
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "EntityBB_SwordNum",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "swordCnt",
+                      "useDirectValue": false
+                    },
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "atk_scale",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "atk_scale",
+                      "useDirectValue": false
+                    },
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "poise",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "poise",
+                      "useDirectValue": false
+                    },
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "usp_extra",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "usp_extra",
+                      "useDirectValue": false
+                    },
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "remain_sword_limit",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "remain_sword_limit",
+                      "useDirectValue": false
+                    },
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "final_rate",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "final_rate",
+                      "useDirectValue": false
+                    }
+                  ],
+                  "buffId": "buff_chr_0030_zhuangfy_sword_triggerd",
+                  "buffIdKey": "",
+                  "readIdFromBlackboard": false
+                }
+              ],
+              "buffSource": 0,
+              "contextKey": "",
+              "count": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 1.0
+              },
+              "finishWithNextSkillIfNotInherited": true,
+              "inheritSkillIdList": [],
+              "inheritSourceSkillCastId": false,
+              "inheritSourceSkillCastInfo": true,
+              "isExtra": false,
+              "overrideBuffIconDuration": false,
+              "passTargetGroupsToBuff": false,
+              "targetSettings": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "swordInst",
+                "targetSource": 2
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.ModifyDynamicBlackboard+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 10,
+              "calculateType": 0,
+              "calculationTarget": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              },
+              "directValue": true,
+              "key": "swordIndex",
+              "operation": 1,
+              "value": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 1.0
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 1
+    },
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 11,
+              "advancedSelectorDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "center": 0,
+              "centerContextKey": "",
+              "centerMountPoint": 0,
+              "centerToGround": false,
+              "contextKey": "",
+              "selectorData": {
+                "finderData": {
+                  "$type": "Beyond.Gameplay.Core.Selector+SmartTargetFinder+Data, Gameplay.Beyond",
+                  "limitFallbackRange": false,
+                  "range": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 0.0
+                  },
+                  "selectSetting": {
+                    "smartTargetBuffFindSettings": {
+                      "buffIdList": [],
+                      "checkType": 0,
+                      "tagQuery": {
+                        "queryType": 0,
+                        "tags": []
+                      }
+                    },
+                    "smartTargetBuffIds": [],
+                    "smartTargetSelectStrategy": 3,
+                    "smartTargetTagQuery": {
+                      "queryType": 0,
+                      "tags": [
+                        {
+                          "tagId": 1670936726
+                        }
+                      ]
+                    }
+                  },
+                  "useCustomRange": false
+                },
+                "postProcessorData": [],
+                "validatorData": []
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 1,
+              "selectorOwnerContextKey": "",
+              "target": 0,
+              "targetGroupKey": "thunderTar",
+              "useAdvancedDirectionSetting": false,
+              "useCenterEntityMountPoint": false
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.FinishBuffAdvanced+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 12,
+              "buffOwner": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "thunderTar",
+                "targetSource": 2
+              },
+              "buffSettings": {
+                "buffIdList": [],
+                "checkType": 1,
+                "tagQuery": {
+                  "queryType": 0,
+                  "tags": [
+                    {
+                      "tagId": 1670936726
+                    }
+                  ]
+                }
+              },
+              "buffSource": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 1
+              },
+              "finishAll": true,
+              "finishLayerCnt": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 1.0
+              },
+              "finishSource": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 1
+              },
+              "isAbsorbed": false,
+              "isFinishedEarly": false,
+              "limitSource": false
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 2
+    }
+  ],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": 3.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_chr_0030_zhuangfy_normal_skill_trigger_sword",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 0,
+  "maxTriggerCnt": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 50
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 1,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "",
+    "stackingType": 2,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "interval",
+    "useBlackboardKey": true,
+    "value": 0.20000000298023224
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": true
+}

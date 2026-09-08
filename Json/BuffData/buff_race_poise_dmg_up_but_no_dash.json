@@ -1,0 +1,146 @@
+{
+  "abilityEventAction": [],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [
+      {
+        "attributeType": 26,
+        "formulaItem": 0,
+        "modifyAttributeType": 0,
+        "param": {
+          "blackboardKey": "poise_dmg_up",
+          "useBlackboardKey": true,
+          "value": 0.0
+        }
+      }
+    ],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [
+    {
+      "isDynamic": false,
+      "key": "poise_dmg_up",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "power_atk_dmg_up",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    }
+  ],
+  "buffEventAction": [],
+  "damageModifier": [
+    {
+      "condition": {
+        "actionData": [
+          {
+            "$type": "Beyond.Gameplay.Core.Conditions.CheckDamageDecorateMask+Data, Gameplay.Beyond",
+            "isEnable": true,
+            "priorityLevel": 0,
+            "priorityOffset": 0,
+            "serverActionIndex": 0,
+            "checkType": 2,
+            "mask": 4
+          }
+        ],
+        "onlyExecuteWhenSourceIsGuard": false,
+        "onlyExecuteWhenSourceIsMainChar": false
+      },
+      "damageProcessors": [
+        {
+          "$type": "Beyond.Gameplay.Core.DamageScaleProcessor, Gameplay.Beyond",
+          "addition": {
+            "blackboardKey": "power_atk_dmg_up",
+            "useBlackboardKey": true,
+            "value": 0.0
+          },
+          "side": 0,
+          "zoneName": "NormalCalcZone"
+        }
+      ],
+      "enableSide": 0
+    }
+  ],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 9999.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_race_poise_dmg_up_but_no_dash",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 1,
+  "maxTriggerCnt": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": -1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 1,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "",
+    "stackingType": 0,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": false
+}

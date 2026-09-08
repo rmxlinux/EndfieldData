@@ -1,0 +1,315 @@
+{
+  "abilityEventAction": [
+    {
+      "abilityEvent": 202,
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.Conditions.CheckBuffIdInContextAdvanced+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "blackboardKey": "",
+              "buffIdList": [],
+              "checkType": 1,
+              "query": {
+                "queryType": 0,
+                "tags": [
+                  {
+                    "tagId": -421286163
+                  }
+                ]
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.SaveCollectedBuffBbValue+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 1,
+              "blackboardKey": "duration",
+              "storeKey": "duration_dynamic"
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 2,
+              "alwaysNext": true,
+              "conditionAction": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.CompareFloat+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 3,
+                    "compare": 2,
+                    "valueA": {
+                      "blackboardKey": "duration_dynamic",
+                      "useBlackboardKey": true,
+                      "value": 0.0
+                    },
+                    "valueB": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    }
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "failActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.SimpleCalcBBAction+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 7,
+                    "key": "final_corrupt_rate",
+                    "operation": 1,
+                    "value1": {
+                      "blackboardKey": "corrupt_rate",
+                      "useBlackboardKey": true,
+                      "value": 0.0
+                    },
+                    "value2": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 1.0
+                    }
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.Core.Conditions.ModifyCollectedBuffBbValue+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 8,
+                    "addition": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    },
+                    "blackboardKey": "max_def_decrease",
+                    "directValue": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    },
+                    "multiplier": {
+                      "blackboardKey": "final_corrupt_rate",
+                      "useBlackboardKey": true,
+                      "value": 1.0
+                    },
+                    "useDirectValue": false
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "succeedActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.Conditions.ModifyCollectedBuffBbValue+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 4,
+                    "addition": {
+                      "blackboardKey": "duration_add",
+                      "useBlackboardKey": true,
+                      "value": 0.0
+                    },
+                    "blackboardKey": "duration",
+                    "directValue": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    },
+                    "multiplier": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 1.0
+                    },
+                    "useDirectValue": false
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.Core.SimpleCalcBBAction+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 5,
+                    "key": "final_corrupt_rate",
+                    "operation": 1,
+                    "value1": {
+                      "blackboardKey": "corrupt_rate",
+                      "useBlackboardKey": true,
+                      "value": 0.0
+                    },
+                    "value2": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 1.0
+                    }
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.Core.Conditions.ModifyCollectedBuffBbValue+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 6,
+                    "addition": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    },
+                    "blackboardKey": "max_def_decrease",
+                    "directValue": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    },
+                    "multiplier": {
+                      "blackboardKey": "final_corrupt_rate",
+                      "useBlackboardKey": true,
+                      "value": 1.0
+                    },
+                    "useDirectValue": false
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ]
+    }
+  ],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [
+    {
+      "isDynamic": false,
+      "key": "lv",
+      "valueDouble": 1.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "duration_add",
+      "valueDouble": 5.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "corrupt_rate",
+      "valueDouble": 0.1,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": true,
+      "key": "final_corrupt_rate",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": true,
+      "key": "duration_dynamic",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    }
+  ],
+  "buffEventAction": [],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": true,
+    "value": 30.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_chr_0032_lizhiyan_talent2",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 1,
+  "maxTriggerCnt": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": 1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 3,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "",
+    "stackingType": 7,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": -1.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": false
+}

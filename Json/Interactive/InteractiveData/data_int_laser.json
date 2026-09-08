@@ -1,0 +1,239 @@
+{
+  "id": "int_laser",
+  "factionIndex": 4,
+  "name": "int_laser",
+  "bornTag": [
+    {
+      "tagId": -1065332571
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_laser_unmove_01",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveLogicControllerComponentData, Gameplay.Beyond",
+      "logicType": 30,
+      "propertyList": [
+        {
+          "key": "logic_type",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 30,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "destroy_self",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAudioData, Gameplay.Beyond",
+      "propertyList": [],
+      "audioData": {
+        "audioNameDict": {},
+        "customAudioData": [
+          {
+            "audioEvent": "au_int_laser_emit",
+            "audioState": "laser_work",
+            "desc": "激光工作中"
+          },
+          {
+            "audioEvent": "au_int_laser_stop",
+            "audioState": "laser_stop",
+            "desc": "激光停止工作(用于打断工作状态)"
+          },
+          {
+            "audioEvent": "au_int_laser_hit",
+            "audioState": "laser_hit",
+            "desc": "激光击中"
+          }
+        ],
+        "openAudio": true,
+        "useActiveStencil": false,
+        "useAttackStencil": false,
+        "useCollectStencil": false,
+        "useCustomStencil": true,
+        "useDestroyStencil": false,
+        "useDynamicLevel": false,
+        "useInteractStencil": false,
+        "useRepairStencil": false,
+        "useTiggerStencil": false,
+        "useWorkStencil": false
+      }
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "damage",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "laser_base_angle",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "laser_head_angle",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "ratio",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "time",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "type",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "variable_1",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1084227584,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "9": "state",
+    "1025": "damage",
+    "1026": "time",
+    "1028": "variable_1",
+    "1029": "ratio",
+    "1030": "type",
+    "1031": "laser_base_angle",
+    "1032": "laser_head_angle"
+  },
+  "propertyKeyToIdMap": {
+    "damage": 1025,
+    "laser_base_angle": 1031,
+    "laser_head_angle": 1032,
+    "ratio": 1029,
+    "state": 9,
+    "time": 1026,
+    "type": 1030,
+    "variable_1": 1028
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {},
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

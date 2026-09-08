@@ -1,0 +1,303 @@
+{
+  "abilityEventAction": [
+    {
+      "abilityEvent": 208,
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.Conditions.CheckBuffIdInContextAdvanced+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "blackboardKey": "buffid",
+              "buffIdList": [
+                {
+                  "blackboardKey": "",
+                  "useBlackboardKey": false,
+                  "value": ""
+                }
+              ],
+              "checkType": 1,
+              "query": {
+                "queryType": 0,
+                "tags": [
+                  {
+                    "tagId": 1466867135
+                  },
+                  {
+                    "tagId": -421286163
+                  }
+                ]
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.GetTargetBuffBBAdvanced+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 1,
+              "blackboardKey": "addstack",
+              "buffSettings": {
+                "buffIdList": [
+                  ""
+                ],
+                "checkType": 3,
+                "tagQuery": {
+                  "queryType": 0,
+                  "tags": []
+                }
+              },
+              "desiredKey": "count",
+              "targetSettings": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 1,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 0
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 2,
+              "asChildBuff": true,
+              "autoFinishByAction": false,
+              "buffIconDurationSource": {
+                "durationSourceType": 0,
+                "timedMarkerId": ""
+              },
+              "buffs": [
+                {
+                  "assignBlackboard": true,
+                  "assignItems": [
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "spell_dmg_up",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "spell_dmg_up",
+                      "useDirectValue": false
+                    },
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "duration",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "duration",
+                      "useDirectValue": false
+                    },
+                    {
+                      "directValueType": 0,
+                      "inputValueKey": "max_stack",
+                      "numericValue": 0.0,
+                      "stringValue": "",
+                      "targetKey": "max_stack",
+                      "useDirectValue": false
+                    }
+                  ],
+                  "buffId": "buff_equipsuit_expend_spelldamage",
+                  "buffIdKey": "",
+                  "readIdFromBlackboard": false
+                }
+              ],
+              "buffSource": 1,
+              "contextKey": "",
+              "count": {
+                "blackboardKey": "addstack",
+                "useBlackboardKey": true,
+                "value": 1.0
+              },
+              "finishWithNextSkillIfNotInherited": true,
+              "inheritSkillIdList": [],
+              "inheritSourceSkillCastId": false,
+              "inheritSourceSkillCastInfo": true,
+              "isExtra": false,
+              "overrideBuffIconDuration": false,
+              "passTargetGroupsToBuff": false,
+              "targetSettings": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": {
+                    "$type": "Beyond.Gameplay.Core.Selector+CharacterTeamFinder+Data, Gameplay.Beyond"
+                  },
+                  "postProcessorData": [],
+                  "validatorData": [
+                    {
+                      "$type": "Beyond.Gameplay.Core.Selector+ExcludeOwnerValidator+Data, Gameplay.Beyond"
+                    }
+                  ]
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ]
+    }
+  ],
+  "addingCooldown": {
+    "blackboardKey": "cd",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [
+    {
+      "isDynamic": false,
+      "key": "spell_dmg_up",
+      "valueDouble": 0.2,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "max_stack",
+      "valueDouble": 4.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "duration",
+      "valueDouble": 10.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": true,
+      "key": "addstack",
+      "valueDouble": 1.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "buffid",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    }
+  ],
+  "buffEventAction": [],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_equipsuit_expend_spell01",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 1,
+  "maxTriggerCnt": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 1,
+    "maxStackCntKey": "max_stack",
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "",
+    "stackingType": 0,
+    "useMaxStackCntKey": true,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": true
+}

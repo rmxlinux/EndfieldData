@@ -1,0 +1,148 @@
+{
+  "abilityEventAction": [],
+  "addingCooldown": {
+    "blackboardKey": "cd",
+    "useBlackboardKey": true,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [
+      {
+        "attributeType": 30,
+        "formulaItem": 0,
+        "modifyAttributeType": 0,
+        "param": {
+          "blackboardKey": "heal_rate",
+          "useBlackboardKey": true,
+          "value": 0.0
+        }
+      }
+    ],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [
+    {
+      "isDynamic": false,
+      "key": "duration",
+      "valueDouble": 3.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "shelter",
+      "valueDouble": -0.2,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "liino_talent",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": false,
+      "key": "heal_rate",
+      "valueDouble": 0.1,
+      "valueStr": ""
+    }
+  ],
+  "buffEventAction": [],
+  "damageModifier": [
+    {
+      "condition": {
+        "actionData": [],
+        "onlyExecuteWhenSourceIsGuard": false,
+        "onlyExecuteWhenSourceIsMainChar": false
+      },
+      "damageProcessors": [
+        {
+          "$type": "Beyond.Gameplay.Core.DamageScaleProcessor, Gameplay.Beyond",
+          "addition": {
+            "blackboardKey": "shelter",
+            "useBlackboardKey": true,
+            "value": 0.0
+          },
+          "side": 1,
+          "zoneName": "ProdCalcZone"
+        }
+      ],
+      "enableSide": 1
+    }
+  ],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": 10.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_chr_0035_liino_talent_shelter_finishtime",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 1,
+  "maxTriggerCnt": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": -1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 1,
+    "maxStackCntKey": "",
+    "negatePriority": true,
+    "priority": 0.0,
+    "priorityKey": "shelter",
+    "stackEffects": [],
+    "stackingKey": "liino_talent",
+    "stackingType": 2,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": true
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": -1.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": true
+}

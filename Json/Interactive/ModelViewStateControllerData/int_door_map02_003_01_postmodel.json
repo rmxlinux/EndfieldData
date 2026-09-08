@@ -1,0 +1,377 @@
+{
+  "cameraSignalSourceAssetHashes": [],
+  "clipAssetInfos": [
+    {
+      "animationClipHash": 646571542068749884,
+      "animationClipName": "A_anm_map02_door+1_003_01_openidle_01"
+    },
+    {
+      "animationClipHash": 737049481909027728,
+      "animationClipName": "A_anm_map02_door+1_003_01_close_01"
+    },
+    {
+      "animationClipHash": 16564281951483702,
+      "animationClipName": "A_anm_map02_door+1_003_01_closeidle_01"
+    },
+    {
+      "animationClipHash": 529561574340658310,
+      "animationClipName": "A_anm_map02_door+1_003_01_open_01"
+    }
+  ],
+  "effectIds": [],
+  "emissiveConfigHashes": [],
+  "modelAnimatorDatas": [
+    {
+      "layerFsmDatas": [
+        {
+          "hasAnimClip": true,
+          "index": 0,
+          "layerName": "int_door_base_layer",
+          "stateDatas": [
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": true,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "Start",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 1,
+                  "targetStateName": "open",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "close",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_anm_map02_door+1_003_01_openidle_01",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "open",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "open_to_close",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_anm_map02_door+1_003_01_close_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": -101482041
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioSpatialAuidoBehaviourData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 13,
+                  "continuous": false,
+                  "dependBlackBoard": false,
+                  "dependFloatKey": "",
+                  "directSet": false,
+                  "targetClosePercentage": 1.0,
+                  "totalTime": 3.0
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "open_to_close",
+              "stateType": 0,
+              "totalTime": 3.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "close",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_anm_map02_door+1_003_01_closeidle_01",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "close",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "close_to_open",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_anm_map02_door+1_003_01_open_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": 1785776881
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioSpatialAuidoBehaviourData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 13,
+                  "continuous": false,
+                  "dependBlackBoard": false,
+                  "dependFloatKey": "",
+                  "directSet": false,
+                  "targetClosePercentage": 0.0,
+                  "totalTime": 2.8333332538604736
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "close_to_open",
+              "stateType": 0,
+              "totalTime": 2.8333332538604736,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "open",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        }
+      ],
+      "modelName": "$$ROOT$$"
+    }
+  ],
+  "modelId": "int_door_map02_003_01_postmodel",
+  "preTickAnimator": false
+}

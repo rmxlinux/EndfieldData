@@ -1,0 +1,724 @@
+{
+  "abilityEventAction": [],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [],
+  "buffEventAction": [
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.TyphoeaArcheryChipDataAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "extraArrowKey": "",
+              "extraRicochetKey": "",
+              "hasMachineGunFeatureKey": "",
+              "isRapidFireArrowKey": "",
+              "needSaveHasMachineGunFeature": true,
+              "needSaveProjectileID": true,
+              "needSaveRemainBounceCount": false,
+              "needSaveSkillTrajectoryType": false,
+              "needSaveSplitCountKey": false,
+              "projectileIDKey": "projID",
+              "remainBounceCountKey": "",
+              "saveAffix": true,
+              "skillTrajectoryTypeKey": "",
+              "splitCountKey": ""
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.SwitchAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 1,
+              "alwaysNext": true,
+              "choice": {
+                "blackboardKey": "projID",
+                "useBlackboardKey": true,
+                "value": 0.0
+              },
+              "options": [
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 2,
+                        "_canInterruptTimeMs": 0,
+                        "_intrptFadeDurationMs": 100,
+                        "_jumpToWhenPlayMs": 0,
+                        "_soundEvent": "au_typhoea_archery_on_lock_chip_mutiple",
+                        "_stopFadeDurationMs": 100,
+                        "_stopOnEnd": false,
+                        "_useTempEmitter": false,
+                        "followMountPoint": false,
+                        "mountPoint": 0,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        },
+                        "timeDilationFadeInDurationMs": 100,
+                        "timeDilationFadeOutDurationMs": 500,
+                        "timeDilationPauseThreshold": 0.699999988079071,
+                        "timeDilationSeekThreshold": 0.4000000059604645,
+                        "useTimeDilationPauseAndSeek": false,
+                        "useWeaponMountPoint": false,
+                        "weaponIndex": 0,
+                        "weaponMountPoint": 0
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 0.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 3,
+                        "_canInterruptTimeMs": 0,
+                        "_intrptFadeDurationMs": 100,
+                        "_jumpToWhenPlayMs": 0,
+                        "_soundEvent": "au_typhoea_archery_on_lock_chip_frozen",
+                        "_stopFadeDurationMs": 100,
+                        "_stopOnEnd": false,
+                        "_useTempEmitter": false,
+                        "followMountPoint": false,
+                        "mountPoint": 0,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        },
+                        "timeDilationFadeInDurationMs": 100,
+                        "timeDilationFadeOutDurationMs": 500,
+                        "timeDilationPauseThreshold": 0.699999988079071,
+                        "timeDilationSeekThreshold": 0.4000000059604645,
+                        "useTimeDilationPauseAndSeek": false,
+                        "useWeaponMountPoint": false,
+                        "weaponIndex": 0,
+                        "weaponMountPoint": 0
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 5.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 4,
+                        "_canInterruptTimeMs": 0,
+                        "_intrptFadeDurationMs": 100,
+                        "_jumpToWhenPlayMs": 0,
+                        "_soundEvent": "au_typhoea_archery_on_lock_chip_bomb",
+                        "_stopFadeDurationMs": 100,
+                        "_stopOnEnd": false,
+                        "_useTempEmitter": false,
+                        "followMountPoint": false,
+                        "mountPoint": 0,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        },
+                        "timeDilationFadeInDurationMs": 100,
+                        "timeDilationFadeOutDurationMs": 500,
+                        "timeDilationPauseThreshold": 0.699999988079071,
+                        "timeDilationSeekThreshold": 0.4000000059604645,
+                        "useTimeDilationPauseAndSeek": false,
+                        "useWeaponMountPoint": false,
+                        "weaponIndex": 0,
+                        "weaponMountPoint": 0
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 8.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 5,
+                        "_canInterruptTimeMs": 0,
+                        "_intrptFadeDurationMs": 100,
+                        "_jumpToWhenPlayMs": 0,
+                        "_soundEvent": "au_typhoea_archery_on_lock_main_01",
+                        "_stopFadeDurationMs": 100,
+                        "_stopOnEnd": false,
+                        "_useTempEmitter": false,
+                        "followMountPoint": false,
+                        "mountPoint": 0,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        },
+                        "timeDilationFadeInDurationMs": 100,
+                        "timeDilationFadeOutDurationMs": 500,
+                        "timeDilationPauseThreshold": 0.699999988079071,
+                        "timeDilationSeekThreshold": 0.4000000059604645,
+                        "useTimeDilationPauseAndSeek": false,
+                        "useWeaponMountPoint": false,
+                        "weaponIndex": 0,
+                        "weaponMountPoint": 0
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 10.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 6,
+                        "_canInterruptTimeMs": 0,
+                        "_intrptFadeDurationMs": 100,
+                        "_jumpToWhenPlayMs": 0,
+                        "_soundEvent": "au_typhoea_archery_on_lock_main_02",
+                        "_stopFadeDurationMs": 100,
+                        "_stopOnEnd": false,
+                        "_useTempEmitter": false,
+                        "followMountPoint": false,
+                        "mountPoint": 0,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        },
+                        "timeDilationFadeInDurationMs": 100,
+                        "timeDilationFadeOutDurationMs": 500,
+                        "timeDilationPauseThreshold": 0.699999988079071,
+                        "timeDilationSeekThreshold": 0.4000000059604645,
+                        "useTimeDilationPauseAndSeek": false,
+                        "useWeaponMountPoint": false,
+                        "weaponIndex": 0,
+                        "weaponMountPoint": 0
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 11.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 7,
+                        "_canInterruptTimeMs": 0,
+                        "_intrptFadeDurationMs": 100,
+                        "_jumpToWhenPlayMs": 0,
+                        "_soundEvent": "au_typhoea_archery_on_lock_main_02",
+                        "_stopFadeDurationMs": 100,
+                        "_stopOnEnd": false,
+                        "_useTempEmitter": false,
+                        "followMountPoint": false,
+                        "mountPoint": 0,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        },
+                        "timeDilationFadeInDurationMs": 100,
+                        "timeDilationFadeOutDurationMs": 500,
+                        "timeDilationPauseThreshold": 0.699999988079071,
+                        "timeDilationSeekThreshold": 0.4000000059604645,
+                        "useTimeDilationPauseAndSeek": false,
+                        "useWeaponMountPoint": false,
+                        "weaponIndex": 0,
+                        "weaponMountPoint": 0
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 99.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 8,
+                        "_canInterruptTimeMs": 0,
+                        "_intrptFadeDurationMs": 100,
+                        "_jumpToWhenPlayMs": 0,
+                        "_soundEvent": "au_typhoea_archery_on_lock_chip_penetrate",
+                        "_stopFadeDurationMs": 100,
+                        "_stopOnEnd": false,
+                        "_useTempEmitter": false,
+                        "followMountPoint": false,
+                        "mountPoint": 0,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        },
+                        "timeDilationFadeInDurationMs": 100,
+                        "timeDilationFadeOutDurationMs": 500,
+                        "timeDilationPauseThreshold": 0.699999988079071,
+                        "timeDilationSeekThreshold": 0.4000000059604645,
+                        "useTimeDilationPauseAndSeek": false,
+                        "useWeaponMountPoint": false,
+                        "weaponIndex": 0,
+                        "weaponMountPoint": 0
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 12.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 9,
+                        "_canInterruptTimeMs": 0,
+                        "_intrptFadeDurationMs": 100,
+                        "_jumpToWhenPlayMs": 0,
+                        "_soundEvent": "au_typhoea_archery_on_lock_chip_shield_breaker",
+                        "_stopFadeDurationMs": 100,
+                        "_stopOnEnd": false,
+                        "_useTempEmitter": false,
+                        "followMountPoint": false,
+                        "mountPoint": 0,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        },
+                        "timeDilationFadeInDurationMs": 100,
+                        "timeDilationFadeOutDurationMs": 500,
+                        "timeDilationPauseThreshold": 0.699999988079071,
+                        "timeDilationSeekThreshold": 0.4000000059604645,
+                        "useTimeDilationPauseAndSeek": false,
+                        "useWeaponMountPoint": false,
+                        "weaponIndex": 0,
+                        "weaponMountPoint": 0
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 14.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 10,
+                        "_canInterruptTimeMs": 0,
+                        "_intrptFadeDurationMs": 100,
+                        "_jumpToWhenPlayMs": 0,
+                        "_soundEvent": "au_typhoea_archery_on_lock_chip_shield_breaker",
+                        "_stopFadeDurationMs": 100,
+                        "_stopOnEnd": false,
+                        "_useTempEmitter": false,
+                        "followMountPoint": false,
+                        "mountPoint": 0,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        },
+                        "timeDilationFadeInDurationMs": 100,
+                        "timeDilationFadeOutDurationMs": 500,
+                        "timeDilationPauseThreshold": 0.699999988079071,
+                        "timeDilationSeekThreshold": 0.4000000059604645,
+                        "useTimeDilationPauseAndSeek": false,
+                        "useWeaponMountPoint": false,
+                        "weaponIndex": 0,
+                        "weaponMountPoint": 0
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 15.0
+                  }
+                }
+              ]
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 5
+    }
+  ],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": 2.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 150
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 2,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 2,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_common_typhoea_archery_on_lock_new",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 0,
+  "maxTriggerCnt": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 1,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "cryst_triggered",
+    "stackingType": 2,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": false
+}

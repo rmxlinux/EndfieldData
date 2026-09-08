@@ -1,0 +1,386 @@
+{
+  "abilityEventAction": [],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [],
+  "buffEventAction": [
+    {
+      "actions": [
+        {
+          "actionData": [],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 5
+    }
+  ],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": 15.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_eny_0095_ethillu_reallydead",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 1,
+  "maxTriggerCnt": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 1,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "buff_potion",
+    "stackingType": 2,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [
+    {
+      "_endFrame": 6,
+      "_sequenceActionData": {
+        "actionData": [
+          {
+            "$type": "Beyond.Gameplay.Core.Conditions.CheckBuffStackNum+Data, Gameplay.Beyond",
+            "isEnable": true,
+            "priorityLevel": 0,
+            "priorityOffset": 0,
+            "serverActionIndex": 0,
+            "buffId": {
+              "buffId": "buff_eny_0095_ethillu_absorb"
+            },
+            "checkTarget": {
+              "advancedDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "centerContextKey": "",
+              "centerToGround": false,
+              "centerType": 0,
+              "enableAdvancedDirection": false,
+              "ownerContextKey": "",
+              "selectorData": {
+                "finderData": null,
+                "postProcessorData": [],
+                "validatorData": []
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 1,
+              "target": 0,
+              "targetContextKey": "",
+              "targetGroupKey": "",
+              "targetSource": 1
+            },
+            "compareType": 4,
+            "value": {
+              "blackboardKey": "",
+              "useBlackboardKey": false,
+              "value": 1.0
+            }
+          },
+          {
+            "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+            "isEnable": true,
+            "priorityLevel": 0,
+            "priorityOffset": 0,
+            "serverActionIndex": 1,
+            "advancedSelectorDirection": {
+              "clampToXZ": true,
+              "customSourceAndTarget": false,
+              "directionType": 0,
+              "invertDirection": false,
+              "source": null,
+              "sourceMountPoint": 0,
+              "target": null,
+              "targetMountPoint": 0
+            },
+            "center": 0,
+            "centerContextKey": "",
+            "centerMountPoint": 0,
+            "centerToGround": false,
+            "contextKey": "",
+            "selectorData": {
+              "finderData": {
+                "$type": "Beyond.Gameplay.Core.Selector+CharacterTeamFinder+Data, Gameplay.Beyond"
+              },
+              "postProcessorData": [],
+              "validatorData": [
+                {
+                  "$type": "Beyond.Gameplay.Core.Selector+MainCharacterValidator+Data, Gameplay.Beyond"
+                }
+              ]
+            },
+            "selectorDirection": 0,
+            "selectorOwner": 1,
+            "selectorOwnerContextKey": "",
+            "target": 0,
+            "targetGroupKey": "tar",
+            "useAdvancedDirectionSetting": false,
+            "useCenterEntityMountPoint": false
+          },
+          {
+            "$type": "Beyond.Gameplay.Core.LaunchProjectile+Data, Gameplay.Beyond",
+            "isEnable": true,
+            "priorityLevel": 0,
+            "priorityOffset": 0,
+            "serverActionIndex": 2,
+            "alsoLaunchToHittableTarget": false,
+            "assignBlackboard": true,
+            "assignEntityBlackboard": false,
+            "assignPairs": [],
+            "castSkillOnBlock": false,
+            "castSkillOnFinish": false,
+            "castSkillOnHit": true,
+            "castSkillOnReach": false,
+            "emitMountPoint": 0,
+            "emitPos": {
+              "advancedDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "centerContextKey": "",
+              "centerToGround": false,
+              "centerType": 0,
+              "enableAdvancedDirection": false,
+              "ownerContextKey": "",
+              "selectorData": {
+                "finderData": null,
+                "postProcessorData": [],
+                "validatorData": []
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 1,
+              "target": 0,
+              "targetContextKey": "",
+              "targetGroupKey": "",
+              "targetSource": 4
+            },
+            "emitPosFixedOffset": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "emitPosOffsetForward": 1,
+            "emitPosRandomOffset": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "hitBoneFixedOffset": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "hitBoneOffsetForward": 1,
+            "hitBoneRandomOffset": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "hitMountPoint": 52,
+            "overrideEmitBone": false,
+            "overrideHitBone": true,
+            "presetPoints": [],
+            "projectileId": "projectile_eny_0095_ethillu_absorb",
+            "projectileSkillId": "eny_0095_ethillu_absorb_projhit",
+            "projectileSource": {
+              "advancedDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "centerContextKey": "",
+              "centerToGround": false,
+              "centerType": 0,
+              "enableAdvancedDirection": false,
+              "ownerContextKey": "",
+              "selectorData": {
+                "finderData": null,
+                "postProcessorData": [],
+                "validatorData": []
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 1,
+              "target": 0,
+              "targetContextKey": "",
+              "targetGroupKey": "",
+              "targetSource": 1
+            },
+            "skillIdOnBlock": "",
+            "skillIdOnFinish": "",
+            "skillIdOnReach": "",
+            "syncTimeScale": false,
+            "targetFilterMode": 0,
+            "targetFilterSettings": {
+              "advancedDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "centerContextKey": "",
+              "centerToGround": false,
+              "centerType": 0,
+              "enableAdvancedDirection": false,
+              "ownerContextKey": "",
+              "selectorData": {
+                "finderData": null,
+                "postProcessorData": [],
+                "validatorData": []
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 1,
+              "target": 0,
+              "targetContextKey": "",
+              "targetGroupKey": "",
+              "targetSource": 0
+            },
+            "targetSettings": {
+              "advancedDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "centerContextKey": "",
+              "centerToGround": false,
+              "centerType": 1,
+              "enableAdvancedDirection": false,
+              "ownerContextKey": "",
+              "selectorData": {
+                "finderData": {
+                  "$type": "Beyond.Gameplay.Core.Selector+FixedPointFinder+Data, Gameplay.Beyond",
+                  "positionOffset": {
+                    "x": 0.0,
+                    "y": 1.2000000476837158,
+                    "z": 10.0
+                  },
+                  "rotationOffset": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 1.0
+                  },
+                  "sampleRadius": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 0.0
+                  },
+                  "snapToNavmesh": false
+                },
+                "postProcessorData": [],
+                "validatorData": []
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 0,
+              "target": 0,
+              "targetContextKey": "",
+              "targetGroupKey": "tar",
+              "targetSource": 2
+            },
+            "useWeaponMp": false,
+            "weaponIndex": 0,
+            "weaponMp": 0
+          }
+        ],
+        "onlyExecuteWhenSourceIsGuard": false,
+        "onlyExecuteWhenSourceIsMainChar": false
+      },
+      "_startFrame": 0,
+      "forceSyncAnimData": {
+        "forceSync": false,
+        "montageName": "",
+        "playbackSpeed": 0.0,
+        "targetFrame": 0
+      }
+    }
+  ],
+  "triggerInterval": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": true
+}

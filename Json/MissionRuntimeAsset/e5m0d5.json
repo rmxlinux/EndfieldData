@@ -1,0 +1,144 @@
+{
+  "missionId": "e5m0d5",
+  "missionName": {
+    "key": "e5m0d5_name"
+  },
+  "rewardId": "",
+  "missionType": 4,
+  "baseMissionImportance": 2,
+  "overrideImportance": 0,
+  "sortId": 0,
+  "charId": "",
+  "missionDescription": {
+    "key": "e5m0d5_desc_001"
+  },
+  "levelId": "base01_lv001",
+  "scope": 0,
+  "missionChapterBitmask": 0,
+  "skipMissionAcceptAnim": false,
+  "skipMissionCompleteAnim": true,
+  "questDic": {
+    "e5m0d5_q#1": {
+      "questId": "e5m0d5_q#1",
+      "questType": 0,
+      "objectiveConditionNum": 0,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {},
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1000,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": true,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": false,
+      "objectiveList": [],
+      "needItemIds": [],
+      "prevQuestIdList": [],
+      "flowIndex": 0
+    },
+    "e5m0d5_q#2": {
+      "questId": "e5m0d5_q#2",
+      "questType": 2,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {},
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1000,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": true,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": false,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckAdventureLevel, Gameplay.Beyond",
+            "uniqueId": "e55bf52f",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 3
+            },
+            "_progressToCompare": {
+              "constValue": 43
+            }
+          },
+          "description": {
+            "key": "objective_e1m9d5_2_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.JumpToUITrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "jumpId": "jump_adventure_book",
+              "desc": {
+                "key": "ui_mis_hud_trackinginfo_adventure_book"
+              }
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "failedCondition": {
+        "$type": "Beyond.Gameplay.CheckQuestState, Gameplay.Beyond",
+        "uniqueId": "a0976e74",
+        "useCurrentScope": false,
+        "scopeMask": 1,
+        "useGraphScope": true,
+        "_questId": {
+          "constValue": "e5m0d5_q#1"
+        },
+        "_comparer": {
+          "constValue": 0
+        },
+        "_targetQuestState": {
+          "constValue": 3
+        }
+      },
+      "needItemIds": [],
+      "prevQuestIdList": [],
+      "flowIndex": 1
+    }
+  },
+  "actionMapRaw": {
+    "dataMap": {
+      "headerList": [],
+      "actionList": [],
+      "getterList": []
+    }
+  },
+  "mainPathQuests": [
+    "e5m0d5_q#1"
+  ],
+  "clientActionMapKey": [],
+  "clientActionMapValue": [],
+  "onMissionAcceptId": -1,
+  "onMissionCompletedId": -1,
+  "onMissionFailedId": -1,
+  "properties": [],
+  "propertyIdToKeyMap": {},
+  "propertyKeyToIdMap": {},
+  "isWrapperMission": false,
+  "useRewardWrapper": false,
+  "useLevelIdWrapper": false,
+  "overrideDescOnlyConsiderMainPath": false
+}

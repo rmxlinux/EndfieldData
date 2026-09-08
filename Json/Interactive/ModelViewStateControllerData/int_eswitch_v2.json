@@ -1,0 +1,587 @@
+{
+  "cameraSignalSourceAssetHashes": [],
+  "clipAssetInfos": [
+    {
+      "animationClipHash": 890589767888459047,
+      "animationClipName": "A_interactive_electricswitch+1_001_closeidle_01"
+    },
+    {
+      "animationClipHash": 1141059695561917723,
+      "animationClipName": "A_interactive_electricswitch+1_001_open_01"
+    },
+    {
+      "animationClipHash": 859935255986158747,
+      "animationClipName": "A_interactive_electricswitch+1_001_openidle_01"
+    },
+    {
+      "animationClipHash": 767245679283808151,
+      "animationClipName": "A_interactive_electricswitch+1_001_close_01"
+    },
+    {
+      "animationClipHash": 924439317144989607,
+      "animationClipName": "A_interactive_electricswitch+1_001_stuck_01"
+    },
+    {
+      "animationClipHash": 223279590724259968,
+      "animationClipName": "int_eswitch_v2_light_disable"
+    },
+    {
+      "animationClipHash": 481637255533740263,
+      "animationClipName": "int_eswitch_v2_light_available"
+    },
+    {
+      "animationClipHash": 959469968185224163,
+      "animationClipName": "int_eswitch_v2_light_on"
+    }
+  ],
+  "effectIds": [
+    "P_fxmap_lv001_common_spark_01"
+  ],
+  "emissiveConfigHashes": [],
+  "modelAnimatorDatas": [
+    {
+      "layerFsmDatas": [
+        {
+          "hasAnimClip": true,
+          "index": 0,
+          "layerName": "BaseLayer",
+          "stateDatas": [
+            {
+              "animationClipName": "A_interactive_electricswitch+1_001_closeidle_01",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": true,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "off_idle",
+              "stateType": 0,
+              "totalTime": 0.03333333507180214,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 1,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "off_to_on",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 3
+                        },
+                        "isInvert": false,
+                        "key": "trigger_stuck"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "trigger_stuck",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_interactive_electricswitch+1_001_open_01",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "off_to_on",
+              "stateType": 0,
+              "totalTime": 0.40000003576278687,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "on_idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_interactive_electricswitch+1_001_openidle_01",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": true,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "on_idle",
+              "stateType": 0,
+              "totalTime": 0.03333333507180214,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "on_to_off",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 3
+                        },
+                        "isInvert": false,
+                        "key": "trigger_stuck"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "trigger_stuck",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_interactive_electricswitch+1_001_close_01",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "on_to_off",
+              "stateType": 0,
+              "totalTime": 0.40000003576278687,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "off_idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_interactive_electricswitch+1_001_stuck_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEffectBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 0,
+                  "active": false,
+                  "dontFollowTrans": false,
+                  "effectAnimationState": 0,
+                  "effectId": "P_fxmap_lv001_common_spark_01",
+                  "effectNodeName": "",
+                  "fireAndForget": false,
+                  "followRot": true,
+                  "force": false,
+                  "innerId": 0,
+                  "isLoadImmediately": false,
+                  "isPersistence": false
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "trigger_stuck",
+              "stateType": 0,
+              "totalTime": 2.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "off_idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        },
+        {
+          "hasAnimClip": true,
+          "index": 1,
+          "layerName": "Effect",
+          "stateDatas": [
+            {
+              "animationClipName": "int_eswitch_v2_light_disable",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "disable",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "available"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Off",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.875,
+                    "hasExitTime": false,
+                    "isFixedDuration": false,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "int_eswitch_v2_light_available",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "Off",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "available"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 1,
+                  "targetStateName": "disable",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.875,
+                    "hasExitTime": false,
+                    "isFixedDuration": false,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 1,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "On",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": false,
+                    "isFixedDuration": false,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "int_eswitch_v2_light_on",
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "On",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "Off",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": false,
+                    "isFixedDuration": false,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        }
+      ],
+      "modelName": "P_interactive_electricswitch+1_001_01"
+    }
+  ],
+  "modelId": "int_eswitch_v2",
+  "preTickAnimator": false
+}

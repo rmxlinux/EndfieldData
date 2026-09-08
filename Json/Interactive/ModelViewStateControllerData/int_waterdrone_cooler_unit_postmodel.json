@@ -1,0 +1,1324 @@
+{
+  "cameraSignalSourceAssetHashes": [],
+  "clipAssetInfos": [
+    {
+      "animationClipHash": 342980364908486471,
+      "animationClipName": "A_iprop_map02_machine+1_001_02_closeidle_01"
+    },
+    {
+      "animationClipHash": 1052757004385163053,
+      "animationClipName": "A_iprop_map02_machine+1_001_02_open_01"
+    },
+    {
+      "animationClipHash": 271140035593839541,
+      "animationClipName": "A_iprop_map02_machine+1_001_02_openidle_01"
+    },
+    {
+      "animationClipHash": 705437607201441943,
+      "animationClipName": "A_iprop_map02_machine+1_001_02_close_01"
+    }
+  ],
+  "effectIds": [
+    "P_fxint_l_coolermachine_finish_801",
+    "P_fxint_l_coolermachine_overheat_801",
+    "P_fxint_l_coolermachine_normalstate_801",
+    "P_fxint_l_coolermachine_transfer_801",
+    "P_fxint_s_waterpistol_coolant_smoke_01"
+  ],
+  "emissiveConfigHashes": [
+    1146537554661916838,
+    367726622296899561,
+    1045342912533810259
+  ],
+  "modelAnimatorDatas": [
+    {
+      "layerFsmDatas": [
+        {
+          "hasAnimClip": true,
+          "index": 0,
+          "layerName": "Default",
+          "stateDatas": [
+            {
+              "animationClipName": "A_iprop_map02_machine+1_001_02_closeidle_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCSetActiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 3,
+                  "active": false,
+                  "gameObjName": "S_iprop_map02_machine+1_001_02_COL1_UM02"
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": true,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "off_idle",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "off_to_on",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_iprop_map02_machine+1_001_02_open_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCSetActiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 3,
+                  "active": true,
+                  "gameObjName": "S_iprop_map02_machine+1_001_02_COL1_UM02"
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": 2066115989
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "off_to_on",
+              "stateType": 0,
+              "totalTime": 1.3333333730697632,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "on_idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.25,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_iprop_map02_machine+1_001_02_openidle_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "au_int_hot_temperature_cooling_idle",
+                  "eAudioTriggerState": 7,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": 1457595679
+                  },
+                  "stopOnEnd": true,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": true,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "on_idle",
+              "stateType": 0,
+              "totalTime": 0.01666666753590107,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": true,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "on_to_off",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": "A_iprop_map02_machine+1_001_02_close_01",
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEffectBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 0,
+                  "active": false,
+                  "dontFollowTrans": false,
+                  "effectAnimationState": 0,
+                  "effectId": "P_fxint_l_coolermachine_finish_801",
+                  "effectNodeName": "Mesh_all",
+                  "fireAndForget": false,
+                  "followRot": true,
+                  "force": false,
+                  "innerId": 0,
+                  "isLoadImmediately": false,
+                  "isPersistence": false
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": 330614909
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": true,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "on_to_off",
+              "stateType": 0,
+              "totalTime": 1.9333332777023315,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "off_idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.25,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        },
+        {
+          "hasAnimClip": false,
+          "index": 0,
+          "layerName": "vfx",
+          "stateDatas": [
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEffectBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 0,
+                  "active": false,
+                  "dontFollowTrans": false,
+                  "effectAnimationState": 0,
+                  "effectId": "P_fxint_l_coolermachine_overheat_801",
+                  "effectNodeName": "Mesh_all",
+                  "fireAndForget": false,
+                  "followRot": true,
+                  "force": false,
+                  "innerId": 0,
+                  "isLoadImmediately": false,
+                  "isPersistence": false
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 0.20000000298023224,
+                  "emissiveConfigHash": 1146537554661916838,
+                  "emissiveNodeName": "",
+                  "isBlend": true,
+                  "isColorBlend": true
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": -1584991438
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "overheated",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "Status"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 2
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 1
+                  },
+                  "priority": 0,
+                  "targetStateName": "normal",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "Status"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "cooled",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEffectBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 0,
+                  "active": false,
+                  "dontFollowTrans": false,
+                  "effectAnimationState": 0,
+                  "effectId": "P_fxint_l_coolermachine_normalstate_801",
+                  "effectNodeName": "Mesh_all",
+                  "fireAndForget": false,
+                  "followRot": true,
+                  "force": false,
+                  "innerId": 0,
+                  "isLoadImmediately": false,
+                  "isPersistence": false
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEffectBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 0,
+                  "active": false,
+                  "dontFollowTrans": false,
+                  "effectAnimationState": 0,
+                  "effectId": "P_fxint_l_coolermachine_transfer_801",
+                  "effectNodeName": "Mesh_all",
+                  "fireAndForget": false,
+                  "followRot": true,
+                  "force": false,
+                  "innerId": 0,
+                  "isLoadImmediately": false,
+                  "isPersistence": false
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 0.20000000298023224,
+                  "emissiveConfigHash": 367726622296899561,
+                  "emissiveNodeName": "",
+                  "isBlend": true,
+                  "isColorBlend": true
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": -591215874
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "normal",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "Status"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "cooled",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 2
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "Status"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "turned_to_overheated",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEmissiveBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 2,
+                  "blendTime": 0.20000000298023224,
+                  "emissiveConfigHash": 1045342912533810259,
+                  "emissiveNodeName": "",
+                  "isBlend": true,
+                  "isColorBlend": true
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": -34346670
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "cooled",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "Status"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 2
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 1
+                  },
+                  "priority": 0,
+                  "targetStateName": "normal",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 2
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "Status"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 1
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "state"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "turned_to_overheated",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": -1584991438
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "turned_to_overheated",
+              "stateType": 0,
+              "totalTime": 0.05000000074505806,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "overheated",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 1.0,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        },
+        {
+          "hasAnimClip": false,
+          "index": 0,
+          "layerName": "smoke",
+          "stateDatas": [
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": true,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "idle",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "IsHit"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 2
+                          },
+                          "type": 2
+                        },
+                        "isInvert": false,
+                        "key": "Status"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "hit",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEffectBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 0,
+                  "active": false,
+                  "dontFollowTrans": false,
+                  "effectAnimationState": 0,
+                  "effectId": "P_fxint_s_waterpistol_coolant_smoke_01",
+                  "effectNodeName": "Mesh_all",
+                  "fireAndForget": false,
+                  "followRot": true,
+                  "force": false,
+                  "innerId": 0,
+                  "isLoadImmediately": false,
+                  "isPersistence": false
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCEffectBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 0,
+                  "active": false,
+                  "dontFollowTrans": false,
+                  "effectAnimationState": 0,
+                  "effectId": "P_fxint_s_waterpistol_coolant_smoke_01",
+                  "effectNodeName": "",
+                  "fireAndForget": false,
+                  "followRot": true,
+                  "force": false,
+                  "innerId": 0,
+                  "isLoadImmediately": false,
+                  "isPersistence": false
+                },
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": -113190739
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "hit",
+              "stateType": 0,
+              "totalTime": 0.5,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "IsHit"
+                      },
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 2
+                          },
+                          "type": 2
+                        },
+                        "isInvert": true,
+                        "key": "Status"
+                      }
+                    ],
+                    "logic": 1
+                  },
+                  "priority": 0,
+                  "targetStateName": "idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCAudioBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 1,
+                  "audioNodeName": "",
+                  "customAudioId": "",
+                  "eAudioTriggerState": 0,
+                  "isCustom": false,
+                  "isDirectlyPlay": true,
+                  "normalAudioId": {
+                    "_id": 982471034
+                  },
+                  "stopOnEnd": false,
+                  "transitionTime": 200
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "resume",
+              "stateType": 0,
+              "totalTime": 0.0833333358168602,
+              "transitions": []
+            }
+          ],
+          "weight": 1.0
+        },
+        {
+          "hasAnimClip": false,
+          "index": 0,
+          "layerName": "audio",
+          "stateDatas": [
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": true,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "idle",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "IsHit"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "behit",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "behit",
+              "stateType": 0,
+              "totalTime": 0.1666666716337204,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "IsHit"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "to_idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.0,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "to_idle",
+              "stateType": 0,
+              "totalTime": 0.1666666716337204,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.15000000596046448,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.8500000238418579,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        }
+      ],
+      "modelName": "$$ROOT$$"
+    }
+  ],
+  "modelId": "int_waterdrone_cooler_unit_postmodel",
+  "preTickAnimator": false
+}

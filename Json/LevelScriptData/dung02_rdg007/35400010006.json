@@ -1,0 +1,2144 @@
+{
+  "actionMap": {
+    "dataMap": {
+      "actionList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.AddBuffsToTargetsFromGodEntity, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 10,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "c56224a3",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 12,
+          "_blackboardKVPairList": null,
+          "_buffId": {
+            "constValue": "buff_common_undeadable",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_buffs": {
+            "paramTarget": 0,
+            "path": "$10@_buffs"
+          },
+          "_targets": {
+            "constValue": null,
+            "idRef": 81,
+            "paramSource": -1,
+            "path": null
+          },
+          "_useBlackboard": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SwitchAIBarkEnable, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 12,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "51b93089",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 13,
+          "_enable": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.IfElseAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 13,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "1d04d42c",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_condition": {
+            "constValue": true,
+            "idRef": 60,
+            "paramSource": -1,
+            "path": null
+          },
+          "_onFalseID": 14,
+          "_onTrueID": 35
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.AddBuffToTargetFromGodEntity, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 35,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "0cba9ede",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 15,
+          "_blackboardKVPairList": {
+            "constValue": [
+              {
+                "key": "usp_scalar",
+                "useString": false,
+                "valueFloat": 8.0,
+                "valueString": null
+              },
+              {
+                "key": "cd_scale",
+                "useString": false,
+                "valueFloat": 0.5,
+                "valueString": null
+              }
+            ],
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_buff": {
+            "paramTarget": 0,
+            "path": "$35@_buff"
+          },
+          "_buffId": {
+            "constValue": "buff_chr_0031_mifu_chrdg_addusp",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 86,
+            "paramSource": -1,
+            "path": null
+          },
+          "_useBlackboard": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.AddBuffToTargetFromGodEntity, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 14,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "8bd46bcf",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 15,
+          "_blackboardKVPairList": {
+            "constValue": [
+              {
+                "key": "usp_scalar",
+                "useString": false,
+                "valueFloat": 4.0,
+                "valueString": null
+              },
+              {
+                "key": "cd_scale",
+                "useString": false,
+                "valueFloat": 0.800000011920929,
+                "valueString": null
+              }
+            ],
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_buff": {
+            "paramTarget": 0,
+            "path": "$14@_buff"
+          },
+          "_buffId": {
+            "constValue": "buff_chr_0031_mifu_chrdg_addusp",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 84,
+            "paramSource": -1,
+            "path": null
+          },
+          "_useBlackboard": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.Split, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 15,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "dd24c0ce",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_idList": [
+            16,
+            19,
+            22,
+            25,
+            28,
+            31
+          ]
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.Split, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 15,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "dd24c0ce",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_idList": [
+            16,
+            19,
+            22,
+            25,
+            28,
+            31
+          ]
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 16,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "ad50c116",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 17,
+          "_value": {
+            "constValue": false,
+            "idRef": 39,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 19,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "08d56291",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 20,
+          "_value": {
+            "constValue": false,
+            "idRef": 43,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 22,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "93f171a1",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 23,
+          "_value": {
+            "constValue": false,
+            "idRef": 47,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 25,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "5461c796",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 26,
+          "_value": {
+            "constValue": false,
+            "idRef": 51,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 28,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "291118e8",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 29,
+          "_value": {
+            "constValue": false,
+            "idRef": 55,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 31,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "29ce8ebb",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 32,
+          "_value": {
+            "constValue": false,
+            "idRef": 59,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 17,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "82c0eb46",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 18,
+          "_value": {
+            "constValue": false,
+            "idRef": 63,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 20,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "018aa9bf",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 21,
+          "_value": {
+            "constValue": false,
+            "idRef": 65,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 23,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "84feed76",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 24,
+          "_value": {
+            "constValue": false,
+            "idRef": 67,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 26,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "96e7ac01",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 27,
+          "_value": {
+            "constValue": false,
+            "idRef": 69,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 29,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "30b094f8",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 30,
+          "_value": {
+            "constValue": false,
+            "idRef": 71,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 32,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "6b46ad04",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 33,
+          "_value": {
+            "constValue": false,
+            "idRef": 73,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.AddBuffToTargetFromGodEntity, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 18,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "460ad6f3",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_blackboardKVPairList": null,
+          "_buff": {
+            "paramTarget": 100,
+            "path": "master2Buff"
+          },
+          "_buffId": {
+            "constValue": "buff_chr_0031_mifu_chrdg_defensebuff",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 37,
+            "paramSource": -1,
+            "path": null
+          },
+          "_useBlackboard": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.AddBuffToTargetFromGodEntity, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 21,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "862dffb0",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_blackboardKVPairList": null,
+          "_buff": {
+            "paramTarget": 100,
+            "path": "master3Buff"
+          },
+          "_buffId": {
+            "constValue": "buff_chr_0031_mifu_chrdg_attackbuff",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 41,
+            "paramSource": -1,
+            "path": null
+          },
+          "_useBlackboard": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.AddBuffToTargetFromGodEntity, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 24,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "e215fc66",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_blackboardKVPairList": null,
+          "_buff": {
+            "paramTarget": 100,
+            "path": "helaoBuff"
+          },
+          "_buffId": {
+            "constValue": "buff_chr_0031_mifu_chrdg_physicdamagebuff",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 45,
+            "paramSource": -1,
+            "path": null
+          },
+          "_useBlackboard": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.AddBuffToTargetFromGodEntity, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 27,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "89dbece7",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_blackboardKVPairList": null,
+          "_buff": {
+            "paramTarget": 100,
+            "path": "endminBuff"
+          },
+          "_buffId": {
+            "constValue": "buff_chr_0031_mifu_chrdg_physicdamagebuff",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 49,
+            "paramSource": -1,
+            "path": null
+          },
+          "_useBlackboard": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.AddBuffToTargetFromGodEntity, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 30,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "b45e6537",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_blackboardKVPairList": null,
+          "_buff": {
+            "paramTarget": 100,
+            "path": "informantBuff"
+          },
+          "_buffId": {
+            "constValue": "buff_chr_0031_mifu_chrdg_attackbuff",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 53,
+            "paramSource": -1,
+            "path": null
+          },
+          "_useBlackboard": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.AddBuffToTargetFromGodEntity, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 33,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "7d03a315",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_blackboardKVPairList": null,
+          "_buff": {
+            "paramTarget": 100,
+            "path": "discipleBuff"
+          },
+          "_buffId": {
+            "constValue": "buff_chr_0031_mifu_chrdg_defensebuff",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 57,
+            "paramSource": -1,
+            "path": null
+          },
+          "_useBlackboard": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.FinishBuff, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 34,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "3a3590d0",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 35,
+          "_buff": {
+            "constValue": {
+              "ptr": {
+                "cachedUid": 0,
+                "obj": null
+              }
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "$14@_buff"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.FinishBuff, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 75,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "a3635085",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 76,
+          "_buff": {
+            "constValue": {
+              "ptr": {
+                "cachedUid": 0,
+                "obj": null
+              }
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "master2Buff"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.FinishBuff, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 76,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "ba0b11f8",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 77,
+          "_buff": {
+            "constValue": {
+              "ptr": {
+                "cachedUid": 0,
+                "obj": null
+              }
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "master3Buff"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.FinishBuff, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 77,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "f3dc0b11",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 78,
+          "_buff": {
+            "constValue": {
+              "ptr": {
+                "cachedUid": 0,
+                "obj": null
+              }
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "informantBuff"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.FinishBuff, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 78,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "da19099b",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 79,
+          "_buff": {
+            "constValue": {
+              "ptr": {
+                "cachedUid": 0,
+                "obj": null
+              }
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "endminBuff"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.FinishBuff, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 79,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "4aeb7b31",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 80,
+          "_buff": {
+            "constValue": {
+              "ptr": {
+                "cachedUid": 0,
+                "obj": null
+              }
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "discipleBuff"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.FinishBuff, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 80,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "5ec5a922",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_buff": {
+            "constValue": {
+              "ptr": {
+                "cachedUid": 0,
+                "obj": null
+              }
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "helaoBuff"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.FinishBuffs, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 11,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "2c6f6350",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_buffs": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "$10@_buffs"
+          }
+        }
+      ],
+      "getterList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.GetSquadMembers, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 81,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "079c0a82",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "containMainCharacter": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckMissionOrQuestIsComplete, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 60,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "b09a2b7a",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_isQuest": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_missionId": {
+            "constValue": "c31m3d5_q#6",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 86,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "7b7fe942",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_index": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_list": {
+            "constValue": null,
+            "idRef": 85,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 84,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "8db98ff1",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_index": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_list": {
+            "constValue": null,
+            "idRef": 83,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetSquadMembers, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 85,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "39dac996",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "containMainCharacter": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetSquadMembers, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 83,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "4228b497",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "containMainCharacter": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 39,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "e7a7212d",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 38,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 43,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "9fbc333c",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 42,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 47,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "409d50a7",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 46,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 51,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "adde159d",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 50,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 55,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "3d441c92",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 54,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 59,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "691e78e4",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 58,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 38,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "ad1c14f9",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "master2TalkFinished",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 63,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "d42e1b09",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 62,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 42,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "4b275211",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "master3TalkFinished",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 65,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "19559807",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 64,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 46,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "cd30e32b",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "helaoTalkFinished",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 67,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "951ee171",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 66,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 50,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "77470d01",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "betFinished",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 69,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "958843aa",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 68,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 54,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "0b4df289",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "infoTalkFinished",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 71,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "49f16159",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 70,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 58,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "c35db2a4",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "discipleTalkFinished",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BooleanCompare, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 73,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "387faab2",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_comparer": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_valueA": {
+            "constValue": false,
+            "idRef": 72,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 62,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "c486604e",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "master2BuffDisabled",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 37,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "8f1b9cee",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_index": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_list": {
+            "constValue": null,
+            "idRef": 36,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 64,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "d7baca64",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "master3BuffDisabled",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 41,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "c56fd0df",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_index": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_list": {
+            "constValue": null,
+            "idRef": 40,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 66,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "858f155d",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "helaoBuffDisabled",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 45,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "be2a9229",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_index": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_list": {
+            "constValue": null,
+            "idRef": 44,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 68,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "eb940a2f",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "endminBuffDisabled",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 49,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "814d60a7",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_index": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_list": {
+            "constValue": null,
+            "idRef": 48,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 70,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "76bce48a",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "infoBuffDisabled",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 53,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "010f16bb",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_index": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_list": {
+            "constValue": null,
+            "idRef": 52,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 72,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "e7a014e0",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "discipleBuffDisabled",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 35400010011,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 57,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "9d55b22f",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_index": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_list": {
+            "constValue": null,
+            "idRef": 56,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetSquadMembers, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 36,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "6b404f5d",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "containMainCharacter": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetSquadMembers, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 40,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "5f4c2b34",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "containMainCharacter": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetSquadMembers, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 44,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "b40b7f88",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "containMainCharacter": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetSquadMembers, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 48,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "de44cb63",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "containMainCharacter": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetSquadMembers, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 52,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "6584439c",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "containMainCharacter": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetSquadMembers, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 56,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "f5a8f083",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "containMainCharacter": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        }
+      ],
+      "headerList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnLeaderEnterTriggerVolume, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 9,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "608603a1",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": true,
+          "_nextID": 10,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_triggerSlotIdFilter": {
+            "constValue": 80001,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_triggerSlotIdOutput": null
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.LevelEvent.OnQuestStateChanged, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 61,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "c28a27b4",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": true,
+          "_nextID": 34,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_filtedNewState": {
+            "constValue": 3,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_filtedQuestId": {
+            "constValue": "c31m3d5_q#6",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_newState": null,
+          "_oldState": null,
+          "_questId": null
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnCustomEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 74,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "32323a11",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 75,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_eventArgsPtr": {
+            "paramTarget": 0,
+            "path": "$74@_eventArgsPtr"
+          },
+          "_eventKey": {
+            "constValue": "ClearBuffs",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.LevelEvent.OnQuestStateChanged, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 82,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "53f03083",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": true,
+          "_nextID": 11,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_filtedNewState": {
+            "constValue": 3,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_filtedQuestId": {
+            "constValue": "c31m3d5_q#EncounterPart2",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_newState": null,
+          "_oldState": null,
+          "_questId": null
+        }
+      ]
+    },
+    "paramBlackboard": {
+      "value": [
+        {
+          "key": "master2Buff",
+          "value": {
+            "type": 32,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "master3Buff",
+          "value": {
+            "type": 32,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "informantBuff",
+          "value": {
+            "type": 32,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "endminBuff",
+          "value": {
+            "type": 32,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "discipleBuff",
+          "value": {
+            "type": 32,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "helaoBuff",
+          "value": {
+            "type": 32,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "activeShapeList": [
+    {
+      "eulerAngles": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "offset": {
+        "x": -11.695526123046875,
+        "y": 55.923824310302734,
+        "z": -23.380279541015625
+      },
+      "radius": 178.0,
+      "size": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "type": 2
+    }
+  ],
+  "allowStartOnTravelPole": false,
+  "allowTick": false,
+  "enablePreload": false,
+  "endType": 1,
+  "enemies": {},
+  "exitBuffer": 0.0,
+  "exitBufferOverride": false,
+  "interactiveLocks": {},
+  "interactives": {},
+  "levelScriptType": 0,
+  "lstTemplatePath": null,
+  "maxStage": 0,
+  "modules": {},
+  "npcs": {},
+  "parentLevelScriptId": 0,
+  "properties": null,
+  "propertyIdToKeyMap": null,
+  "refWorldEntityIdList": null,
+  "resetModeWhenActive": 0,
+  "resetModeWhenEnd": 0,
+  "scriptId": 35400010006,
+  "startShapeList": null,
+  "startType": 1,
+  "taskMap": {
+    "d1f28f9e": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "7f4264a3": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckQuestState, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "7f4264a3",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_questId": {
+              "constValue": "c31m3d5_q#3",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_targetQuestState": {
+              "constValue": 3,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    }
+  },
+  "triggerVolumes": {
+    "80001": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -11.695526123046875,
+            "y": 55.923824310302734,
+            "z": -23.380279541015625
+          },
+          "radius": 120.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "shapeType": 2,
+          "size": {
+            "x": 3.0,
+            "y": 3.0,
+            "z": 3.0
+          }
+        }
+      ],
+      "slotId": 80001,
+      "triggerCountLimit": 1,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    }
+  }
+}

@@ -1,0 +1,274 @@
+{
+  "actionMap": {
+    "dataMap": {
+      "actionList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.RepeatEntityPtrListAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 2,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "d4204d4f",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_doID": 3,
+          "_entity": {
+            "paramTarget": 0,
+            "path": "$2@_entity"
+          },
+          "_entityList": {
+            "constValue": [
+              {
+                "logicId": 23100400014,
+                "slotId": 0,
+                "useSlotId": false
+              },
+              {
+                "logicId": 23100400015,
+                "slotId": 0,
+                "useSlotId": false
+              },
+              {
+                "logicId": 23100400016,
+                "slotId": 0,
+                "useSlotId": false
+              }
+            ],
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_reverse": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.EntityCastSkill, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 3,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "72fda33e",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_entity": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "$2@_entity"
+          },
+          "_forceCast": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_result": {
+            "paramTarget": 0,
+            "path": "$3@_result"
+          },
+          "_skillId": {
+            "constValue": "eny_0121_klbud_skill04",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetEntity": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 4,
+            "paramSource": -1,
+            "path": null
+          },
+          "_targetPosition": null,
+          "_targetType": {
+            "constValue": 1,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        }
+      ],
+      "getterList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.GetMainCharacter, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 4,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "ae39f5c6",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true
+        }
+      ],
+      "headerList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.LevelEvent.OnEnemyInFight, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 1,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "249a03ee",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": true,
+          "_nextID": 2,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_entityFilter": {
+            "constValue": [
+              {
+                "logicId": 23100400014,
+                "slotId": 0,
+                "useSlotId": false
+              },
+              {
+                "logicId": 23100400015,
+                "slotId": 0,
+                "useSlotId": false
+              },
+              {
+                "logicId": 23100400016,
+                "slotId": 0,
+                "useSlotId": false
+              }
+            ],
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_entityOutput": null
+        }
+      ]
+    },
+    "paramBlackboard": {
+      "value": []
+    }
+  },
+  "activeShapeList": [
+    {
+      "eulerAngles": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "offset": {
+        "x": -207.29080200195312,
+        "y": 175.58970642089844,
+        "z": 1266.68505859375
+      },
+      "radius": 110.0,
+      "size": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "type": 2
+    }
+  ],
+  "allowStartOnTravelPole": false,
+  "allowTick": false,
+  "enablePreload": false,
+  "endType": 1,
+  "enemies": {},
+  "exitBuffer": 0.0,
+  "exitBufferOverride": false,
+  "interactiveLocks": {},
+  "interactives": {},
+  "levelScriptType": 0,
+  "lstTemplatePath": null,
+  "maxStage": 0,
+  "modules": {},
+  "npcs": {},
+  "parentLevelScriptId": 0,
+  "properties": null,
+  "propertyIdToKeyMap": null,
+  "refWorldEntityIdList": null,
+  "resetModeWhenActive": 0,
+  "resetModeWhenEnd": 0,
+  "scriptId": 23100400007,
+  "startShapeList": null,
+  "startType": 1,
+  "taskMap": {
+    "640cf38e": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "a6de29d0": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckMonsterKilled, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "a6de29d0",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_enemyIds": {
+              "constValue": [
+                {
+                  "logicId": 23100400014,
+                  "slotId": 0,
+                  "useSlotId": false
+                },
+                {
+                  "logicId": 23100400015,
+                  "slotId": 0,
+                  "useSlotId": false
+                },
+                {
+                  "logicId": 23100400016,
+                  "slotId": 0,
+                  "useSlotId": false
+                }
+              ],
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_sceneId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "_targetValue": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "needKillAll": true
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    }
+  },
+  "triggerVolumes": {}
+}

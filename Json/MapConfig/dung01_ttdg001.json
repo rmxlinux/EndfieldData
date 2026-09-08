@@ -1,0 +1,53 @@
+{
+  "mapIdStr": "dung01_ttdg001",
+  "mapId": 398,
+  "isSeamless": false,
+  "sideGridNum": 2,
+  "levelIds": [
+    403,
+    403,
+    403,
+    403
+  ],
+  "streamingMapConfigPath": "dung01_ttdg001/dung01_ttdg001_art_streaming.asset",
+  "facSystemSkip": false,
+  "sceneStates": {
+    "Default": 0,
+    "Rain": 1
+  },
+  "sceneStateConditions": [
+    {
+      "stateName": "Default",
+      "condition": {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckMapVar, Gameplay.Beyond",
+        "belongMapId": "dung01_ttdg001",
+        "mapVarName": "dung01_ttdg_rain",
+        "compareOperator": 0,
+        "compareTarget": 0
+      }
+    },
+    {
+      "stateName": "Rain",
+      "condition": {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckMapVar, Gameplay.Beyond",
+        "belongMapId": "dung01_ttdg001",
+        "mapVarName": "dung01_ttdg_rain",
+        "compareOperator": 0,
+        "compareTarget": 1
+      }
+    }
+  ],
+  "levelStrIds": [
+    "dung01_ttdg001"
+  ],
+  "domainName": "domain_1",
+  "mapVarNumId2Name": {
+    "1": "dung01_ttdg_npc_group01",
+    "2": "dung01_ttdg_rain"
+  },
+  "mapVarName2NumId": {
+    "dung01_ttdg_npc_group01": 1,
+    "dung01_ttdg_rain": 2
+  },
+  "mapVarClientDefaultValues": {}
+}

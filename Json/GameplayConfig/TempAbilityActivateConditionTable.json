@@ -1,0 +1,68 @@
+{
+  "XiraniteNexus": {
+    "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+    "conditionOperator": 0,
+    "reverse": false,
+    "subConditions": [
+      {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+        "checkLevelId": "map02_lv008"
+      },
+      {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 1,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.SimpleConditionCheckPortableDeviceEquipped, Gameplay.Beyond",
+            "itemId": "item_device_xiranite_nexus_1"
+          },
+          {
+            "$type": "Beyond.Gameplay.SimpleConditionCheckPortableDeviceEquipped, Gameplay.Beyond",
+            "itemId": "item_device_xiranite_nexus_2"
+          },
+          {
+            "$type": "Beyond.Gameplay.SimpleConditionCheckPortableDeviceEquipped, Gameplay.Beyond",
+            "itemId": "item_device_xiranite_nexus_3"
+          }
+        ]
+      }
+    ]
+  },
+  "TyphoeaArchery": {
+    "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+    "conditionOperator": 1,
+    "reverse": false,
+    "subConditions": [
+      {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 0,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+            "checkLevelId": "map02_lv009"
+          },
+          {
+            "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+            "questId": "c34m1_q#14",
+            "compareOperator": 0,
+            "compareTarget": 3
+          }
+        ]
+      },
+      {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+        "checkLevelId": "dung02_rdg009"
+      },
+      {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+        "checkLevelId": "dung02_rdg013"
+      },
+      {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+        "checkLevelId": "dung02_rdg015"
+      }
+    ]
+  }
+}

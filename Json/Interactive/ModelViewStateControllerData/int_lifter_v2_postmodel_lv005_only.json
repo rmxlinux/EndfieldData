@@ -1,0 +1,403 @@
+{
+  "cameraSignalSourceAssetHashes": [
+    573621888622665223
+  ],
+  "clipAssetInfos": [],
+  "effectIds": [],
+  "emissiveConfigHashes": [],
+  "modelAnimatorDatas": [
+    {
+      "layerFsmDatas": [
+        {
+          "hasAnimClip": false,
+          "index": 0,
+          "layerName": "MovingLayer",
+          "stateDatas": [
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": true,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": true,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "idle",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "moving"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "idle2move",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCCameraImpulseBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 14,
+                  "impulseDefinitionData": {
+                    "amplitudeGain": 0.05000000074505806,
+                    "cameraShake2D": false,
+                    "customImpulseShape": {
+                      "preWrapMode": 8,
+                      "postWrapMode": 8,
+                      "keys": []
+                    },
+                    "directionMode": 0,
+                    "dissipationDistance": 10.0,
+                    "dissipationMode": 2,
+                    "dissipationRate": 0.0,
+                    "frequencyGain": 10.0,
+                    "impactRadius": 10.0,
+                    "impulseChannel": 1,
+                    "impulseDuration": 0.20000000298023224,
+                    "impulseShape": 2,
+                    "impulseType": 3,
+                    "propagationSpeed": 343.0,
+                    "randomize": true,
+                    "rawSignalPath": "Assets/Beyond/DynamicAssets/GameData/SkillData/Curve/FixedSignal_CamShake_SinX.asset",
+                    "repeatMode": 1,
+                    "timeEnvelope": {
+                      "m_AttackShape": {
+                        "preWrapMode": 8,
+                        "postWrapMode": 8,
+                        "keys": []
+                      },
+                      "m_AttackTime": 0.0,
+                      "m_DecayShape": {
+                        "preWrapMode": 8,
+                        "postWrapMode": 8,
+                        "keys": []
+                      },
+                      "m_DecayTime": 0.10000000149011612,
+                      "m_HoldForever": false,
+                      "m_ScaleWithImpact": false,
+                      "m_SustainTime": 0.05000000074505806
+                    }
+                  },
+                  "nodeName": "",
+                  "positionOffset": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  },
+                  "rawSignalHash": 573621888622665223,
+                  "realCameraShake2D": false,
+                  "releaseWhenActionEnds": false
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "idle2move",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "moving"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 1,
+                  "targetStateName": "move2idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "moving",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.10000000149011612,
+                    "hasExitTime": true,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": true,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "moving",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": false,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "moving"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "move2idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            },
+            {
+              "animationClipName": null,
+              "basedParamKey": null,
+              "behaviors": [
+                {
+                  "$type": "Beyond.Gameplay.Core.ModelViewStateController.MVSCCameraImpulseBehaviorData, Gameplay.Beyond",
+                  "canLoopActive": false,
+                  "needForceExecute": false,
+                  "normalizedTimeFlowBasedActive": false,
+                  "time": 0.0,
+                  "timeFlowSwitch": 0,
+                  "type": 14,
+                  "impulseDefinitionData": {
+                    "amplitudeGain": 0.05000000074505806,
+                    "cameraShake2D": false,
+                    "customImpulseShape": {
+                      "preWrapMode": 8,
+                      "postWrapMode": 8,
+                      "keys": []
+                    },
+                    "directionMode": 0,
+                    "dissipationDistance": 10.0,
+                    "dissipationMode": 2,
+                    "dissipationRate": 0.0,
+                    "frequencyGain": 10.0,
+                    "impactRadius": 10.0,
+                    "impulseChannel": 1,
+                    "impulseDuration": 0.20000000298023224,
+                    "impulseShape": 2,
+                    "impulseType": 3,
+                    "propagationSpeed": 343.0,
+                    "randomize": true,
+                    "rawSignalPath": "Assets/Beyond/DynamicAssets/GameData/SkillData/Curve/FixedSignal_CamShake_SinX.asset",
+                    "repeatMode": 1,
+                    "timeEnvelope": {
+                      "m_AttackShape": {
+                        "preWrapMode": 8,
+                        "postWrapMode": 8,
+                        "keys": []
+                      },
+                      "m_AttackTime": 0.0,
+                      "m_DecayShape": {
+                        "preWrapMode": 8,
+                        "postWrapMode": 8,
+                        "keys": []
+                      },
+                      "m_DecayTime": 0.10000000149011612,
+                      "m_HoldForever": false,
+                      "m_ScaleWithImpact": false,
+                      "m_SustainTime": 0.05000000074505806
+                    }
+                  },
+                  "nodeName": "",
+                  "positionOffset": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  },
+                  "rawSignalHash": 573621888622665223,
+                  "realCameraShake2D": false,
+                  "releaseWhenActionEnds": false
+                }
+              ],
+              "clipSegments": null,
+              "isComplexAnimation": false,
+              "isEmpty": false,
+              "isHaveClip": false,
+              "isLoop": false,
+              "isSpeedBasedByParam": false,
+              "isStartingNode": false,
+              "isSyncedWithGlobalTime": false,
+              "smoothTime": 0.20000000298023224,
+              "speed": 1.0,
+              "speedBasedParamKey": null,
+              "stateName": "move2idle",
+              "stateType": 0,
+              "totalTime": 0.0,
+              "transitions": [
+                {
+                  "conditionGroup": {
+                    "conditions": [
+                      {
+                        "comparison": 0,
+                        "conditionValue": {
+                          "conditionValue": {
+                            "boolValue": true,
+                            "floatValue": 0.0,
+                            "intValue": 0
+                          },
+                          "type": 0
+                        },
+                        "isInvert": false,
+                        "key": "moving"
+                      }
+                    ],
+                    "logic": 0
+                  },
+                  "priority": 1,
+                  "targetStateName": "idle2move",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.75,
+                    "hasExitTime": false,
+                    "isFixedDuration": true,
+                    "offset": 0.0
+                  }
+                },
+                {
+                  "conditionGroup": {
+                    "conditions": [],
+                    "logic": 0
+                  },
+                  "priority": 0,
+                  "targetStateName": "idle",
+                  "transitionSetting": {
+                    "blendCurve": null,
+                    "blendDuration": 0.0,
+                    "blendInCurve": null,
+                    "blendMode": 0,
+                    "blendOutCurve": null,
+                    "easeType": 1,
+                    "exitTime": 0.10000000149011612,
+                    "hasExitTime": true,
+                    "isFixedDuration": false,
+                    "offset": 0.0
+                  }
+                }
+              ]
+            }
+          ],
+          "weight": 1.0
+        }
+      ],
+      "modelName": "platform"
+    }
+  ],
+  "modelId": "int_lifter_v2_postmodel_lv005_only",
+  "preTickAnimator": false
+}

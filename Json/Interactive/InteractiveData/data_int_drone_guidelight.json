@@ -1,0 +1,242 @@
+{
+  "id": "int_drone_guidelight",
+  "factionIndex": 4,
+  "name": "int_drone_guidelight",
+  "bornTag": [
+    {
+      "tagId": -27687248
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_drone_guidelight",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveLogicControllerComponentData, Gameplay.Beyond",
+      "logicType": 39,
+      "propertyList": [
+        {
+          "key": "logic_type",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 39,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "destroy_self",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAudioData, Gameplay.Beyond",
+      "propertyList": [],
+      "audioData": {
+        "audioNameDict": {
+          "4": [
+            "au_int_drone_guidelight_active"
+          ],
+          "6": [
+            "au_int_drone_guidelight_idle"
+          ]
+        },
+        "customAudioData": [
+          {
+            "audioEvent": "au_int_drone_guidelight_lighting_open",
+            "audioState": "custom1",
+            "desc": "无人机打开照明灯"
+          }
+        ],
+        "openAudio": true,
+        "useActiveStencil": true,
+        "useAttackStencil": false,
+        "useCollectStencil": false,
+        "useCustomStencil": true,
+        "useDestroyStencil": false,
+        "useDynamicLevel": false,
+        "useInteractStencil": false,
+        "useRepairStencil": false,
+        "useTiggerStencil": false,
+        "useWorkStencil": true
+      }
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [],
+  "dataMap": {
+    "actionList": [
+      {
+        "$type": "Beyond.Gameplay.Actions.InteractiveSetModelViewState, Gameplay.Beyond",
+        "_dontLogWarning": false,
+        "_ID": 2,
+        "_releaseWhenExecutionFinished": false,
+        "_uid": "ed2b921d",
+        "scopeMask": 1,
+        "useCurrentScope": true,
+        "useGraphScope": true,
+        "_nextID": -1,
+        "_stateName": {
+          "constValue": "trigger_relax",
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        },
+        "_target": {
+          "constValue": {
+            "logicId": 0,
+            "slotId": 0,
+            "useSlotId": false
+          },
+          "idRef": -1,
+          "paramSource": 1001,
+          "path": null
+        }
+      }
+    ],
+    "getterList": [
+      {
+        "$type": "Beyond.Gameplay.Actions.InteractiveCheckState, Gameplay.Beyond",
+        "_dontLogWarning": false,
+        "_ID": 0,
+        "_releaseWhenExecutionFinished": false,
+        "_uid": "b734ed94",
+        "scopeMask": 1,
+        "useCurrentScope": false,
+        "useGraphScope": true,
+        "_comparer": {
+          "constValue": 0,
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        },
+        "_target": {
+          "constValue": {
+            "logicId": 0,
+            "slotId": 0,
+            "useSlotId": false
+          },
+          "idRef": -1,
+          "paramSource": 1001,
+          "path": null
+        },
+        "_value": {
+          "constValue": 1,
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        }
+      }
+    ],
+    "headerList": [
+      {
+        "$type": "Beyond.Gameplay.Actions.EntityEvent.OnInteractiveStateChanged, Gameplay.Beyond",
+        "_dontLogWarning": false,
+        "_ID": 1,
+        "_releaseWhenExecutionFinished": false,
+        "_uid": "5b1f2646",
+        "scopeMask": 1,
+        "useCurrentScope": false,
+        "useGraphScope": true,
+        "_filterLevel": 0,
+        "_filterMask": 0,
+        "_filterMode": false,
+        "_nextID": 2,
+        "_priority": 0,
+        "_triggerActiveDuring": 0,
+        "_validate": {
+          "constValue": true,
+          "idRef": 0,
+          "paramSource": -1,
+          "path": null
+        },
+        "_targetEntity": null,
+        "_targetEntityList": {
+          "constValue": null,
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        },
+        "_targetEntityListOutput": null,
+        "_triggerTarget": 0,
+        "_oldValue": {
+          "paramTarget": 0,
+          "path": "$1@_oldValue"
+        },
+        "_value": {
+          "paramTarget": 0,
+          "path": "$1@_value"
+        }
+      }
+    ]
+  },
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "1": "state"
+  },
+  "propertyKeyToIdMap": {
+    "state": 1
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {},
+  "tempProperties": [],
+  "useGlobalVar": false,
+  "useMapVar": false
+}

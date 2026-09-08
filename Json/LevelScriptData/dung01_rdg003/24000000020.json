@@ -1,0 +1,2040 @@
+{
+  "actionMap": {
+    "dataMap": {
+      "actionList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.EntityCastSkill, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 2,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "075d8359",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 3,
+          "_entity": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 40013,
+              "useSlotId": true
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_forceCast": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_result": {
+            "paramTarget": 0,
+            "path": "$2@_result"
+          },
+          "_skillId": {
+            "constValue": "chr_0016_laevat_dung_spawn_abilityentity",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetEntity": null,
+          "_targetPosition": {
+            "constValue": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "idRef": 26,
+            "paramSource": -1,
+            "path": null
+          },
+          "_targetType": {
+            "constValue": 2,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.EntityCastSkill, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 3,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "61a58ca8",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_entity": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 40014,
+              "useSlotId": true
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_forceCast": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_result": {
+            "paramTarget": 0,
+            "path": "$3@_result"
+          },
+          "_skillId": {
+            "constValue": "chr_0016_laevat_dung_spawn_abilityentity",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetEntity": null,
+          "_targetPosition": {
+            "constValue": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "idRef": 27,
+            "paramSource": -1,
+            "path": null
+          },
+          "_targetType": {
+            "constValue": 2,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.IfElseAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 5,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "be250474",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_condition": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "$4@_inFight"
+          },
+          "_onFalseID": 11,
+          "_onTrueID": 6
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 6,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "daad54d5",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 7,
+          "_key": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "InFight"
+          },
+          "_value": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 11,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "9b892d55",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_key": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "InFight"
+          },
+          "_value": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.RaiseCustomScriptEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 7,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "561c3f12",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 8,
+          "_eventArgsPtr": {
+            "constValue": {
+              "key": null
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_eventKey": {
+            "constValue": "SpawnBuff",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_receiver": {
+            "constValue": {
+              "scriptId": 0,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 1002,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.WaitForSeconds, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 8,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "677c967a",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 9,
+          "_seconds": {
+            "constValue": 3.0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 9,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "377ee89a",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 10,
+          "_value": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 300,
+            "path": "bossAlive"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ManuallyStartGuideGroup, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 10,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "e48be344",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_groupId": {
+            "constValue": "guide_laevat_dung01_rdg003_hint2",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.RepeatEntityPtrListAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 13,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "726fb21a",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": 15,
+          "_doID": 14,
+          "_entity": {
+            "paramTarget": 0,
+            "path": "$13@_entity"
+          },
+          "_entityList": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 200,
+            "path": "posList"
+          },
+          "_reverse": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListAddValueEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 14,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "b88f59b9",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_list": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "posListTemp"
+          },
+          "_value": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "$13@_entity"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.WhileAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 15,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "8e864d17",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_condition": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "InFight"
+          },
+          "_doID": 16
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.WaitForSeconds, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 16,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "a58ef91b",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 17,
+          "_seconds": {
+            "constValue": 10.0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.IfElseAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 17,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "4718fe52",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": 20,
+          "_condition": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "hasRoom"
+          },
+          "_onFalseID": 0,
+          "_onTrueID": 18
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.EntityCastSkill, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 18,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "d3baa398",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 19,
+          "_entity": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 21,
+            "paramSource": -1,
+            "path": null
+          },
+          "_forceCast": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_result": {
+            "paramTarget": 0,
+            "path": "$18@_result"
+          },
+          "_skillId": {
+            "constValue": "chr_0016_laevat_dung_spawn_abilityentity",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetEntity": null,
+          "_targetPosition": {
+            "constValue": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "idRef": 22,
+            "paramSource": -1,
+            "path": null
+          },
+          "_targetType": {
+            "constValue": 2,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 20,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "571b9311",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_key": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "hasRoom"
+          },
+          "_value": {
+            "constValue": false,
+            "idRef": 25,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListRemoveEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 19,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "66701d00",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_list": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "posListTemp"
+          },
+          "_value": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 21,
+            "paramSource": -1,
+            "path": null
+          }
+        }
+      ],
+      "getterList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.GetEntityPosition, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 26,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "210cc6db",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 40013,
+              "useSlotId": true
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetEntityPosition, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 27,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "59d42ce3",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 40014,
+              "useSlotId": true
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetRandomItemEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 21,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "3f99d7af",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_list": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "posListTemp"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.GetEntityPosition, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 22,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "a8c5d550",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 0,
+              "useSlotId": false
+            },
+            "idRef": 21,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BoolGetterInvert, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 25,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "b4ca6b0e",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_value": {
+            "constValue": false,
+            "idRef": 24,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.IntEqual, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 24,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "1bf7faf7",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_valueA": {
+            "constValue": 0,
+            "idRef": 23,
+            "paramSource": -1,
+            "path": null
+          },
+          "_valueB": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ListGetLengthEntityPtr, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 23,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "548cc948",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_list": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 100,
+            "path": "posListTemp"
+          }
+        }
+      ],
+      "headerList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnScriptActive, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 1,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "4c4bb79e",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 2,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.LevelEvent.OnSquadInFightChanged, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 4,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "a7b06e92",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 5,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_inFight": {
+            "paramTarget": 0,
+            "path": "$4@_inFight"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnCustomEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 12,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "bf830954",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 13,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_eventArgsPtr": {
+            "paramTarget": 0,
+            "path": "$12@_eventArgsPtr"
+          },
+          "_eventKey": {
+            "constValue": "SpawnBuff",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        }
+      ]
+    },
+    "paramBlackboard": {
+      "value": [
+        {
+          "key": "InFight",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "hasRoom",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "posListTemp",
+          "value": {
+            "type": 14,
+            "valueArray": []
+          }
+        }
+      ]
+    }
+  },
+  "activeShapeList": [
+    {
+      "eulerAngles": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "offset": {
+        "x": 200.39060974121094,
+        "y": -202.65699768066406,
+        "z": 50.34394454956055
+      },
+      "radius": 100.0,
+      "size": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "type": 2
+    }
+  ],
+  "allowStartOnTravelPole": false,
+  "allowTick": false,
+  "enablePreload": false,
+  "endType": 1,
+  "enemies": {},
+  "exitBuffer": 0.0,
+  "exitBufferOverride": false,
+  "interactiveLocks": {},
+  "interactives": {
+    "40001": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 203.34300231933594,
+        "y": -202.35699462890625,
+        "z": 62.89099884033203
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40002": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 204.88900756835938,
+        "y": -202.35699462890625,
+        "z": 40.41299819946289
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40003": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 182.7830047607422,
+        "y": -202.35699462890625,
+        "z": 60.28099822998047
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40004": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 199.88099670410156,
+        "y": -202.35699462890625,
+        "z": 52.18600082397461
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40005": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 181.0760040283203,
+        "y": -202.35699462890625,
+        "z": 35.27799987792969
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40006": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 208.55299377441406,
+        "y": -202.35699462890625,
+        "z": 45.50699996948242
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40007": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 189.4720001220703,
+        "y": -202.35699462890625,
+        "z": 67.3759994506836
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40008": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 195.78900146484375,
+        "y": -202.35699462890625,
+        "z": 49.834999084472656
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40009": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 197.46499633789062,
+        "y": -202.35699462890625,
+        "z": 36.611000061035156
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40010": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 207.27000427246094,
+        "y": -202.35699462890625,
+        "z": 52.6879997253418
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40013": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 194.21099853515625,
+        "y": -202.35699462890625,
+        "z": 59.79199981689453
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40014": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 24000000020,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": 186.7429962158203,
+        "y": -202.35699462890625,
+        "z": 41.05799865722656
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 60.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "active_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "chr_0016_laevat_dung_spawn_abilityentity"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    }
+  },
+  "levelScriptType": 0,
+  "lstTemplatePath": null,
+  "maxStage": 0,
+  "modules": {},
+  "npcs": {},
+  "parentLevelScriptId": 0,
+  "properties": null,
+  "propertyIdToKeyMap": null,
+  "refWorldEntityIdList": null,
+  "resetModeWhenActive": 0,
+  "resetModeWhenEnd": 0,
+  "scriptId": 24000000020,
+  "startShapeList": null,
+  "startType": 1,
+  "taskMap": {
+    "2b3f7ff9": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "679aa4b5": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckQuestState, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "679aa4b5",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_questId": {
+              "constValue": "c16m4d5_q#25",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_targetQuestState": {
+              "constValue": 3,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    }
+  },
+  "triggerVolumes": {}
+}

@@ -1,0 +1,192 @@
+{
+  "missionId": "c35m1",
+  "missionName": {
+    "key": "c35m1_name"
+  },
+  "rewardId": "reward_mission_c35m1",
+  "missionType": 1,
+  "baseMissionImportance": 1,
+  "importanceOverrideCondition": {
+    "$type": "Beyond.Gameplay.SimpleConditionCheckTimeTableInRange, Gameplay.Beyond",
+    "timeId": "time_CharacterGuide_liino"
+  },
+  "overrideImportance": 0,
+  "recommendedCondition": {
+    "$type": "Beyond.Gameplay.SimpleConditionCheckTimeTableInRange, Gameplay.Beyond",
+    "timeId": "time_CharacterGuide_liino"
+  },
+  "sortId": 0,
+  "charId": "chr_0035_liino",
+  "missionDescription": {
+    "key": "c35m1_desc_001"
+  },
+  "levelId": "map01_lv001",
+  "scope": 0,
+  "missionChapterBitmask": 1,
+  "skipMissionAcceptAnim": false,
+  "skipMissionCompleteAnim": true,
+  "questDic": {
+    "c35m1_q#Dungeon": {
+      "questId": "c35m1_q#Dungeon",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "c35m1_desc_001"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckMissionState, Gameplay.Beyond",
+            "uniqueId": "710e1e30",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_missionId": {
+              "constValue": "c35m1d5"
+            },
+            "_comparer": {
+              "constValue": 0
+            },
+            "_targetMissionState": {
+              "constValue": 3
+            }
+          },
+          "description": {
+            "key": "objective_c35m1_2_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.EntityTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map01_lv001",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "trackScriptEntity": true,
+              "entityLogicId": 0,
+              "scriptId": 710037,
+              "entitySlotId": 40001
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "c35m1_q#IntroSNS"
+      ],
+      "flowIndex": 0
+    },
+    "c35m1_q#IntroSNS": {
+      "questId": "c35m1_q#IntroSNS",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "c35m1_desc_001"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.GameConditionServerPlaceHolder, Gameplay.Beyond",
+            "uniqueId": "5fef254e",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0
+            },
+            "_progressToCompare": {
+              "constValue": 1
+            }
+          },
+          "description": {
+            "key": "objective_c35m1_1_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.SnsTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "snsDialogId": "sns_c35m1_1"
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [],
+      "flowIndex": 0
+    }
+  },
+  "actionMapRaw": {
+    "dataMap": {
+      "headerList": [],
+      "actionList": [],
+      "getterList": []
+    }
+  },
+  "mainPathQuests": [
+    "c35m1_q#IntroSNS",
+    "c35m1_q#Dungeon"
+  ],
+  "clientActionMapKey": [],
+  "clientActionMapValue": [],
+  "onMissionAcceptId": -1,
+  "onMissionCompletedId": -1,
+  "onMissionFailedId": -1,
+  "properties": [],
+  "propertyIdToKeyMap": {},
+  "propertyKeyToIdMap": {},
+  "isWrapperMission": false,
+  "useRewardWrapper": false,
+  "useLevelIdWrapper": false,
+  "externalInfo": {
+    "$type": "Beyond.Gameplay.MissionSystem+MissionExternalInfoKiteStation, Gameplay.Beyond",
+    "snapshotQuestIds": [],
+    "snapshotIdentifyKeys": []
+  },
+  "overrideDescOnlyConsiderMainPath": true
+}

@@ -1,0 +1,698 @@
+{
+  "id": "int_platform_automove_airwall",
+  "factionIndex": 4,
+  "name": "int_platform_automove_airwall",
+  "bornTag": [
+    {
+      "tagId": -1672050065
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_movingplat_rock_01_postmodel",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveCommonPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "use_dynamic_res",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "dynamic_entity_id",
+          "value": {
+            "type": 26,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyDataList": [
+        {
+          "isProperty": false,
+          "propertyName": "IsMoving",
+          "propertyType": 4
+        },
+        {
+          "isProperty": false,
+          "propertyName": "PlayerStepOn",
+          "propertyType": 5
+        },
+        {
+          "isProperty": true,
+          "propertyName": "have_airwall",
+          "propertyType": 0
+        }
+      ],
+      "syncGameplayLock": false
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.StepOnTriggerComponentForIntData, Gameplay.Beyond",
+      "propertyList": null,
+      "propertyStateData": [
+        {
+          "attackTags": 0,
+          "checkPerformTag": false,
+          "conditionExpression": "",
+          "conditions": [],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 1.0,
+          "optionIcon": "",
+          "optionName": {
+            "key": ""
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 0,
+          "triggerType": 5
+        }
+      ],
+      "triggerBehaviourBase": null
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAutoMovePlatformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "destroy_self",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.CustomCurveMoveComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "spline_id",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "curve_move_pause_resume",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "speed",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "use_curve_control_speed",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "speed_variation_curve_key",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "tween",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "curve_move_direction",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "use_rotate_damping",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "rotate_damping",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "curve_move_up_direction",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "curve_move_mode",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "curve_is_reverse",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "sync_speed_to_audio",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "audio_key",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "au_rtpc_moving_lotus_speed"
+              }
+            ]
+          }
+        },
+        {
+          "key": "sync_speed_to_perform",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "speed_to_perform_scale_factor",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "curve_start_index",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "curve_target_index",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "initial_phase",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "curve_start_index_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "curve_target_index_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "curve_time_control_speed_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "curve_segment_fixed_duration",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "curve_segment_speed",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "curve_node_index_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "wait_for_nearby_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "curve_node_wait_time_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "curve_move_suppress_start_key_node",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.ShowGuideComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "guide_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "wiki_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "duration",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "override_guide_timeliness",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "guide_trigger_by_state",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "center": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "radius": 0.0,
+      "shapeType": 0,
+      "size": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "have_airwall",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "1": "state",
+    "1026": "have_airwall"
+  },
+  "propertyKeyToIdMap": {
+    "have_airwall": 1026,
+    "state": 1
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {
+    "int_platform_stone_automove_airwall": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_RockGroup_Joinable_Airwall_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    }
+  },
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

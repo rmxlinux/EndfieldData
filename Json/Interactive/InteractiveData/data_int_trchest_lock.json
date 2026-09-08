@@ -1,0 +1,1250 @@
+{
+  "id": "int_trchest_lock",
+  "factionIndex": 4,
+  "name": "int_trchest_lock",
+  "bornTag": [
+    {
+      "tagId": -278599427
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_trchest_lock_postmodel",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.TriggerObserverComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interactive_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_height",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1127481344,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle_offset",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "player_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_important",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "in_trigger_volume_performance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "a": 0,
+      "b": 0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAudioData, Gameplay.Beyond",
+      "propertyList": [],
+      "audioData": {
+        "audioNameDict": {
+          "17": [
+            "au_int_trchest_lock_open"
+          ]
+        },
+        "customAudioData": [
+          {
+            "audioEvent": "au_int_trchest_lock_projection",
+            "audioState": "on_bubble_reached",
+            "desc": "解开卡扣然后投影（第1和第2个卡扣解开都调用这个接口）"
+          },
+          {
+            "audioEvent": "au_int_trchest_lock_unlock",
+            "audioState": "on_unlocked",
+            "desc": "全部（第三个）卡扣解锁后投影消散"
+          }
+        ],
+        "openAudio": true,
+        "useActiveStencil": false,
+        "useAttackStencil": false,
+        "useCollectStencil": false,
+        "useCustomStencil": true,
+        "useDestroyStencil": false,
+        "useDynamicLevel": false,
+        "useInteractStencil": true,
+        "useRepairStencil": false,
+        "useTiggerStencil": false,
+        "useWorkStencil": false
+      }
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.ShowGuideComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1090519040,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1090519040,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1095761920,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "guide_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "guide_group_locked_box"
+              }
+            ]
+          }
+        },
+        {
+          "key": "id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "guide_text_locked_box_title_1"
+              }
+            ]
+          }
+        },
+        {
+          "key": "wiki_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "wiki_tut_adv_locked_box"
+              }
+            ]
+          }
+        },
+        {
+          "key": "duration",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "override_guide_timeliness",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "guide_trigger_by_state",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "center": {
+        "x": 0.0,
+        "y": 1.0,
+        "z": 0.0
+      },
+      "radius": 13.0,
+      "shapeType": 2,
+      "size": {
+        "x": 8.0,
+        "y": 2.0,
+        "z": 8.0
+      }
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveHintPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "is_enable_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1106247680,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_interact_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_interact_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interact_outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_brushing",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_brushing_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1106247680,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "disable_when_has_perform_tag",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "special_mode_config",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_outline_name_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_outline_name_list",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_brushing_distance_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_min_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_max_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveCommonPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "use_dynamic_res",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "dynamic_entity_id",
+          "value": {
+            "type": 26,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyDataList": [
+        {
+          "isProperty": false,
+          "propertyName": "unlockProgress",
+          "propertyType": 1
+        },
+        {
+          "isProperty": false,
+          "propertyName": "locked",
+          "propertyType": 4
+        },
+        {
+          "isProperty": false,
+          "propertyName": "unlockState",
+          "propertyType": 0
+        }
+      ],
+      "syncGameplayLock": false
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.PlayerInteractPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "animation_key",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "CharIntPerform_QuickFix"
+              }
+            ]
+          }
+        },
+        {
+          "key": "position",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "rotation",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "wait_time",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1056964608,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "available_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.ClickTriggerComponentForIntData, Gameplay.Beyond",
+      "propertyList": null,
+      "propertyStateData": [
+        {
+          "attackTags": 0,
+          "checkPerformTag": false,
+          "conditionExpression": "",
+          "conditions": [],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.0,
+          "optionIcon": "",
+          "optionName": {
+            "key": "lang_int_trchest_common_option"
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 0,
+          "triggerType": 1
+        }
+      ],
+      "triggerBehaviourBase": null
+    },
+    {
+      "$type": "Beyond.Gameplay.LockableTreasureComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "destroy_self",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "reward_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "bark_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "bark_action_open_chest_valuable"
+              }
+            ]
+          }
+        },
+        {
+          "key": "collect_info",
+          "value": {
+            "type": 28,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "condition_cnt",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "time_limited",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "trchest_type",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.Interactive3DUIComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "start_shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "start_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "start_radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1114636288,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "start_size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "exit_shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "exit_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "exit_radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "exit_size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_trigger_once",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "trigger_once_min_duration",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "immune_to_global_disable",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "default_enabled_3dui",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "icon",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "icon_map_chest"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 4.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "bark_id",
+      "value": {
+        "type": 7,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "bark_action_open_chest_valuable"
+          }
+        ]
+      }
+    },
+    {
+      "key": "collect_info",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "condition_cnt",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "is_interactable_in_lock_state",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "option_2",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "lang_int_trigger_dialog_option"
+          }
+        ]
+      }
+    },
+    {
+      "key": "option_general",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "lang_int_trchest_common_option"
+          }
+        ]
+      }
+    },
+    {
+      "key": "reward_id",
+      "value": {
+        "type": 7,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "time_limited",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "trchest_type",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "1": "state",
+    "2": "is_locked",
+    "1027": "option_general",
+    "1028": "reward_id",
+    "1029": "collect_info",
+    "1030": "trchest_type",
+    "1031": "option_2",
+    "1032": "is_interactable_in_lock_state",
+    "1033": "condition_cnt",
+    "1034": "time_limited",
+    "1035": "bark_id"
+  },
+  "propertyKeyToIdMap": {
+    "bark_id": 1035,
+    "collect_info": 1029,
+    "condition_cnt": 1033,
+    "is_interactable_in_lock_state": 1032,
+    "is_locked": 2,
+    "option_2": 1031,
+    "option_general": 1027,
+    "reward_id": 1028,
+    "state": 1,
+    "time_limited": 1034,
+    "trchest_type": 1030
+  },
+  "relatedGuideTimestampGameVar": [
+    "guide_group_locked_box"
+  ],
+  "saveProperties": [
+    {
+      "key": "is_locked",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {},
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

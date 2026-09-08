@@ -1,0 +1,1143 @@
+{
+  "id": "int_water_volume_transferer",
+  "factionIndex": 4,
+  "name": "int_water_volume_transferer",
+  "bornTag": [
+    {
+      "tagId": 1538154000
+    },
+    {
+      "tagId": 1774214830
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_water_volume_transferer_tall_postmodel",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.ClickTriggerComponentForIntData, Gameplay.Beyond",
+      "propertyList": null,
+      "propertyStateData": [
+        {
+          "attackTags": 0,
+          "checkPerformTag": false,
+          "conditionExpression": "A",
+          "conditions": [
+            {
+              "conditionType": 1,
+              "gameEventsUpdateConfig": {
+                "events": [],
+                "needHide": false
+              },
+              "groupName": "A",
+              "levelEntityConfig": {
+                "isEnabled": false
+              },
+              "noUseConfig": {
+                "isUnlock": false
+              },
+              "propertyData": {
+                "bValue": false,
+                "compareType": 0,
+                "propertyName": "done_once",
+                "useBool": true,
+                "value": 0
+              },
+              "systemStateConfig": {
+                "succeed": false,
+                "systemState": 0,
+                "systemType": 0
+              },
+              "systemUnlockConfig": {
+                "isInvert": false,
+                "systemType": 0
+              },
+              "targetEntityConfig": {
+                "ignore": false,
+                "ignorePropertyName": "",
+                "propertyName": "",
+                "target": null,
+                "value": 0
+              }
+            }
+          ],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.0,
+          "optionIcon": "",
+          "optionName": {
+            "key": "lang_int_collection_eswitch_option"
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 0,
+          "triggerType": 1
+        }
+      ],
+      "triggerBehaviourBase": null
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveWaterVolumeTransfererComponentData, Gameplay.Beyond",
+      "propertyList": []
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveCommonPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "use_dynamic_res",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "dynamic_entity_id",
+          "value": {
+            "type": 26,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyDataList": [
+        {
+          "isProperty": true,
+          "propertyName": "done_once",
+          "propertyType": 4
+        },
+        {
+          "isProperty": false,
+          "propertyName": "Status",
+          "propertyType": 0
+        },
+        {
+          "isProperty": false,
+          "propertyName": "EffectStatus",
+          "propertyType": 0
+        }
+      ],
+      "syncGameplayLock": false
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.TriggerObserverComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1085485875,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interactive_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_height",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1084227584,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1135869952,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle_offset",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "player_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_important",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "in_trigger_volume_performance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "a": 0,
+      "b": 0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.SimpleAnimatorComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAudioData, Gameplay.Beyond",
+      "propertyList": [],
+      "audioData": {
+        "audioNameDict": {
+          "4": [
+            "au_int_water_volume_transferer_start"
+          ],
+          "5": [
+            "au_int_water_volume_transferer_working"
+          ],
+          "6": [
+            "au_int_water_volume_transferer_end"
+          ]
+        },
+        "customAudioData": [],
+        "openAudio": true,
+        "useActiveStencil": false,
+        "useAttackStencil": false,
+        "useCollectStencil": false,
+        "useCustomStencil": false,
+        "useDestroyStencil": false,
+        "useDynamicLevel": false,
+        "useInteractStencil": false,
+        "useRepairStencil": false,
+        "useTiggerStencil": false,
+        "useWorkStencil": true
+      }
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.PlayerInteractPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "animation_key",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "CharIntPerform_Ipad"
+              }
+            ]
+          }
+        },
+        {
+          "key": "position",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "rotation",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "wait_time",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1056964608,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "available_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.ShowGuideComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1085485875,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1086324736,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1095761920,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "guide_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "guide_group_drain_valves"
+              }
+            ]
+          }
+        },
+        {
+          "key": "id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "guide_text_drain_valves_title_1"
+              }
+            ]
+          }
+        },
+        {
+          "key": "wiki_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "wiki_tut_adv_drain_valves"
+              }
+            ]
+          }
+        },
+        {
+          "key": "duration",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "override_guide_timeliness",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "guide_trigger_by_state",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "center": {
+        "x": 0.0,
+        "y": 2.0,
+        "z": -0.800000011920929
+      },
+      "radius": 13.0,
+      "shapeType": 2,
+      "size": {
+        "x": 10.0,
+        "y": 6.0,
+        "z": 10.0
+      }
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveHintPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "is_enable_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1106247680,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "Outline_SoftNormal_White"
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_interact_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_interact_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interact_outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_brushing",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_brushing_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1106247680,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "disable_when_has_perform_tag",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "special_mode_config",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_outline_name_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_outline_name_list",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_brushing_distance_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_min_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_max_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        }
+      ]
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "effect_name",
+      "value": {
+        "type": 7,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "P_map02_lv001_tapflow_01"
+          }
+        ]
+      }
+    },
+    {
+      "key": "effect_name_2",
+      "value": {
+        "type": 7,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "P_map02_lv001_poolsplash_01"
+          }
+        ]
+      }
+    },
+    {
+      "key": "effect_name_3",
+      "value": {
+        "type": 7,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "P_waterdecal_bubble"
+          }
+        ]
+      }
+    },
+    {
+      "key": "height",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1077936128,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "is_do_once",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "key",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "ui_msc_water_volume_transferer_tips_1"
+          }
+        ]
+      }
+    },
+    {
+      "key": "key_2",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "ui_msc_water_volume_transferer_tips_2"
+          }
+        ]
+      }
+    },
+    {
+      "key": "key_3",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "ui_msc_water_volume_transferer_tips_3"
+          }
+        ]
+      }
+    },
+    {
+      "key": "position",
+      "value": {
+        "type": 11,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "target_position",
+      "value": {
+        "type": 11,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "transferer_type",
+      "value": {
+        "type": 7,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "large"
+          }
+        ]
+      }
+    },
+    {
+      "key": "water_volume_from",
+      "value": {
+        "type": 56,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "water_volume_to",
+      "value": {
+        "type": 56,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "18": "done_once",
+    "1030": "is_do_once",
+    "1031": "water_volume_from",
+    "1032": "water_volume_to",
+    "1033": "key",
+    "1034": "key_2",
+    "1035": "key_3",
+    "1036": "position",
+    "1037": "effect_name",
+    "1038": "target_position",
+    "1039": "effect_name_2",
+    "1040": "effect_name_3",
+    "1041": "height",
+    "1043": "transferer_type"
+  },
+  "propertyKeyToIdMap": {
+    "done_once": 18,
+    "effect_name": 1037,
+    "effect_name_2": 1039,
+    "effect_name_3": 1040,
+    "height": 1041,
+    "is_do_once": 1030,
+    "key": 1033,
+    "key_2": 1034,
+    "key_3": 1035,
+    "position": 1036,
+    "target_position": 1038,
+    "transferer_type": 1043,
+    "water_volume_from": 1031,
+    "water_volume_to": 1032
+  },
+  "relatedGuideTimestampGameVar": [
+    "guide_group_drain_valves"
+  ],
+  "saveProperties": [
+    {
+      "key": "done_once",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {
+    "int_water_volume_transferer_short": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [
+        {
+          "key": "effect_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "P_map02_lv001_tapflow_02"
+              }
+            ]
+          }
+        },
+        {
+          "key": "effect_name_2",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "P_map02_lv001_poolsplash_02"
+              }
+            ]
+          }
+        },
+        {
+          "key": "transferer_type",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "small"
+              }
+            ]
+          }
+        }
+      ],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_water_volume_transferer_short_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": true,
+        "value": [
+          "guide_group_drain_valves"
+        ]
+      }
+    }
+  },
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

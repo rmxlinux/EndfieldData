@@ -1,0 +1,208 @@
+{
+  "actionMap": {
+    "dataMap": {
+      "actionList": [],
+      "getterList": [],
+      "headerList": []
+    },
+    "paramBlackboard": {
+      "value": []
+    }
+  },
+  "maxStage": 1,
+  "properties": [
+    {
+      "key": "StartSubGame",
+      "value": {
+        "type": 7,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "StartEntity",
+      "value": {
+        "type": 13,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "Spawner",
+      "value": {
+        "type": 50,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "ExitEntity",
+      "value": {
+        "type": 13,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "lt:p:2e792cbf:430031c5",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "lt:p:c16b4866:a641947e",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "lt:mp:2e792cbf:430031c5",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "lt:mp:c16b4866:a641947e",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "propertyIdToKeyMap": {
+    "6": "lt:p:2e792cbf:430031c5",
+    "10": "lt:p:c16b4866:a641947e",
+    "1025": "StartSubGame",
+    "1026": "StartEntity",
+    "1027": "Spawner",
+    "1028": "ExitEntity",
+    "1031": "lt:mp:2e792cbf:430031c5",
+    "1035": "lt:mp:c16b4866:a641947e"
+  },
+  "taskMap": {
+    "2e792cbf": {
+      "canBeTracked": true,
+      "conditionDict": {
+        "430031c5": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckMonsterSpawnerComplete, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "430031c5",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "spawnerId": {
+              "constValue": {
+                "id": 0
+              },
+              "idRef": -1,
+              "paramSource": 19,
+              "path": "Spawner"
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    },
+    "c16b4866": {
+      "canBeTracked": true,
+      "conditionDict": {
+        "a641947e": {
+          "condition": {
+            "$type": "Beyond.Gameplay.InteractiveCheckInt, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "a641947e",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_compareValue": {
+              "constValue": 1,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_entityId": {
+              "constValue": {
+                "logicId": 0,
+                "slotId": 0,
+                "useSlotId": false
+              },
+              "idRef": -1,
+              "paramSource": 19,
+              "path": "StartEntity"
+            },
+            "_key": {
+              "constValue": "state",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    }
+  },
+  "templateId": "LST_Sdg_Task_Graph"
+}

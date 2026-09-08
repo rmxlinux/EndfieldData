@@ -1,0 +1,659 @@
+{
+  "missionId": "e7m1",
+  "missionName": {
+    "key": "e7m1_name"
+  },
+  "rewardId": "reward_mission_e7m1",
+  "missionType": 0,
+  "baseMissionImportance": 0,
+  "overrideImportance": 0,
+  "sortId": 0,
+  "charId": "",
+  "missionDescription": {
+    "key": "e7m1_desc_001"
+  },
+  "levelId": "map02_lv003",
+  "scope": 0,
+  "missionChapterBitmask": 2,
+  "skipMissionAcceptAnim": false,
+  "skipMissionCompleteAnim": false,
+  "questDic": {
+    "e7m1_q#1": {
+      "questId": "e7m1_q#1",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {
+        "key": "e7m1_desc_002"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckMissionState, Gameplay.Beyond",
+            "uniqueId": "68f92516",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_missionId": {
+              "constValue": "e7m1d5"
+            },
+            "_comparer": {
+              "constValue": 0
+            },
+            "_targetMissionState": {
+              "constValue": 3
+            }
+          },
+          "description": {
+            "key": "objective_e7m1_12_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.EntityTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map02_lv001",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "trackScriptEntity": true,
+              "entityLogicId": 0,
+              "scriptId": 90004,
+              "entitySlotId": 40001
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [],
+      "flowIndex": 1
+    },
+    "e7m1_q#10": {
+      "questId": "e7m1_q#10",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "e7m1_desc_003"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": true,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.ReachDestination, Gameplay.Beyond",
+            "uniqueId": "f64c3848",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_areaId": {
+              "constValue": "ware_teleporter"
+            },
+            "_mapId": {
+              "constValue": "map02_lv002"
+            }
+          },
+          "description": {
+            "key": "objective_e7m1_7_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.EntityTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map02_lv002",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "trackScriptEntity": false,
+              "entityLogicId": 60090,
+              "scriptId": 0,
+              "entitySlotId": 0
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "e7m1_q#1"
+      ],
+      "flowIndex": 1
+    },
+    "e7m1_q#11": {
+      "questId": "e7m1_q#11",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {},
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": true,
+      "ignoreQuestCompleteAnim": true,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CombineCondition, Gameplay.Beyond",
+            "uniqueId": "758d30ce",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "conditionEvalString": "{0} or {1}",
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.ReachDestination, Gameplay.Beyond",
+                "uniqueId": "b5fd0041",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_areaId": {
+                  "constValue": "ware_step1"
+                },
+                "_mapId": {
+                  "constValue": "map02_lv002"
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.ReachDestination, Gameplay.Beyond",
+                "uniqueId": "f8f7663b",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_areaId": {
+                  "constValue": "travelpole"
+                },
+                "_mapId": {
+                  "constValue": "map02_lv002"
+                }
+              }
+            ]
+          },
+          "description": {
+            "key": "objective_e7m1_7_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.MissionAreaTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map02_lv002",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "missionAreaId": "ware_step1"
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "e7m1_q#10"
+      ],
+      "flowIndex": 1
+    },
+    "e7m1_q#13": {
+      "questId": "e7m1_q#13",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {},
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CombineCondition, Gameplay.Beyond",
+            "uniqueId": "173b32e7",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "conditionEvalString": "{0} or {1}",
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.ReachDestination, Gameplay.Beyond",
+                "uniqueId": "512477e3",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_areaId": {
+                  "constValue": "ware_mifu"
+                },
+                "_mapId": {
+                  "constValue": "map02_lv002"
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.ReachDestination, Gameplay.Beyond",
+                "uniqueId": "813e5d63",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_areaId": {
+                  "constValue": "travelpole"
+                },
+                "_mapId": {
+                  "constValue": "map02_lv002"
+                }
+              }
+            ]
+          },
+          "description": {
+            "key": "objective_e7m1_9_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.NpcProxyTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map02_lv002",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "npcProxyId": "mifu_map02_e7m1warehouse"
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "e7m1_q#16"
+      ],
+      "flowIndex": 1
+    },
+    "e7m1_q#14": {
+      "questId": "e7m1_q#14",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {},
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckTalkOptionFinish, Gameplay.Beyond",
+            "uniqueId": "ffa3275a",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_dialogId": {
+              "constValue": "dlg_e7m1_7"
+            },
+            "_finishId": {
+              "constValue": -1
+            }
+          },
+          "description": {
+            "key": "objective_e7m1_7_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.NpcProxyTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map02_lv002",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "npcProxyId": "mifu_map02_e7m1warehouse"
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "e7m1_q#13"
+      ],
+      "flowIndex": 1
+    },
+    "e7m1_q#16": {
+      "questId": "e7m1_q#16",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {},
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": true,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CombineCondition, Gameplay.Beyond",
+            "uniqueId": "d98a2a08",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "conditionEvalString": "{0} or {1}",
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.ReachDestination, Gameplay.Beyond",
+                "uniqueId": "2fa0d56a",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_areaId": {
+                  "constValue": "ware_step2"
+                },
+                "_mapId": {
+                  "constValue": "map02_lv002"
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.ReachDestination, Gameplay.Beyond",
+                "uniqueId": "79c69be1",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_areaId": {
+                  "constValue": "travelpole"
+                },
+                "_mapId": {
+                  "constValue": "map02_lv002"
+                }
+              }
+            ]
+          },
+          "description": {
+            "key": "objective_e7m1_7_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.MissionAreaTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map02_lv002",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "missionAreaId": "ware_step2"
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "e7m1_q#11"
+      ],
+      "flowIndex": 1
+    },
+    "e7m1_q#17": {
+      "questId": "e7m1_q#17",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "e7m2_desc_001"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.ReachDestination, Gameplay.Beyond",
+            "uniqueId": "e40da710",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_areaId": {
+              "constValue": "warehouse_out2indoor"
+            },
+            "_mapId": {
+              "constValue": "map02_lv002"
+            }
+          },
+          "description": {
+            "key": "objective_e7m2_1_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.NpcProxyTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map02_lv002",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "npcProxyId": "mifu_map02_e7m1warehouse"
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "e7m1_q#14"
+      ],
+      "flowIndex": 1
+    },
+    "e7m1_q#18": {
+      "questId": "e7m1_q#18",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {},
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1000,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": false,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.GameConditionServerPlaceHolder, Gameplay.Beyond",
+            "uniqueId": "2354a05a",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0
+            },
+            "_progressToCompare": {
+              "constValue": 1
+            }
+          },
+          "description": {
+            "key": "objective_e7m1_12_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.EntityTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map02_lv001",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "trackScriptEntity": true,
+              "entityLogicId": 0,
+              "scriptId": 90004,
+              "entitySlotId": 40001
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [],
+      "flowIndex": 0
+    }
+  },
+  "actionMapRaw": {
+    "dataMap": {
+      "headerList": [],
+      "actionList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.PlayRadio, Gameplay.Beyond",
+          "_ID": 5,
+          "_uid": "f8a84837",
+          "_radioId": {
+            "constValue": "radio_e7m1_7"
+          },
+          "_fromBegin": {
+            "constValue": true
+          },
+          "_index": {
+            "constValue": -1
+          },
+          "_onlyOnce": {
+            "constValue": false
+          },
+          "_noFlushAfterLoading": {
+            "constValue": false
+          }
+        }
+      ],
+      "getterList": []
+    }
+  },
+  "mainPathQuests": [
+    "e7m1_q#18"
+  ],
+  "clientActionMapKey": [
+    {
+      "questId": "e7m1_q#10",
+      "action": 1
+    }
+  ],
+  "clientActionMapValue": [
+    5
+  ],
+  "onMissionAcceptId": -1,
+  "onMissionCompletedId": -1,
+  "onMissionFailedId": -1,
+  "properties": [],
+  "propertyIdToKeyMap": {},
+  "propertyKeyToIdMap": {},
+  "isWrapperMission": false,
+  "useRewardWrapper": false,
+  "useLevelIdWrapper": false,
+  "overrideDescOnlyConsiderMainPath": false
+}

@@ -1,0 +1,854 @@
+{
+  "id": "int_kickable_ball_receiver",
+  "factionIndex": 4,
+  "name": "int_kickable_ball_receiver",
+  "bornTag": [],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_kickable_ball_receiver_postmodel",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveKickableReceiverComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "check_kickable_template",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "receive_ball_template_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "acceleration_speed",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "disable_adsorption_when_full",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "destroy_vfx_when_full",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "ball_popup_delay",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "ball_popup_apex_height",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "ball_popup_landing_local_position",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "highlight_duration",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "slug_highlight_vfx",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "P_common_interactive_white_asset"
+              }
+            ]
+          }
+        },
+        {
+          "key": "should_show_3d_ui",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveCommonPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "use_dynamic_res",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "dynamic_entity_id",
+          "value": {
+            "type": 26,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyDataList": [
+        {
+          "isProperty": false,
+          "propertyName": "pop_up_slug_ball",
+          "propertyType": 5
+        },
+        {
+          "isProperty": false,
+          "propertyName": "receive_slug_ball",
+          "propertyType": 5
+        },
+        {
+          "isProperty": false,
+          "propertyName": "active",
+          "propertyType": 4
+        }
+      ],
+      "syncGameplayLock": false
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.TriggerObserverAllEntityComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1058642330,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1058642330,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "key_2",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 32,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "key",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "key_3",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveHintPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "is_enable_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_interact_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_interact_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interact_outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_brushing",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_brushing_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "disable_when_has_perform_tag",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "special_mode_config",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_outline_name_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_outline_name_list",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_brushing_distance_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_min_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_max_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.Interactive3DUIComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "start_shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "start_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "start_radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1090519040,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "start_size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "exit_shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "exit_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "exit_radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "exit_size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_trigger_once",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "trigger_once_min_duration",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "immune_to_global_disable",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "default_enabled_3dui",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "icon",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "1": "state"
+  },
+  "propertyKeyToIdMap": {
+    "state": 1
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {
+    "int_kickable_ball_receiver_snow": {
+      "aoiRadiusType": {
+        "enabled": true,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": true,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": true,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": true,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": true,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": true,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_kickable_ball_receiver_snow_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    }
+  },
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

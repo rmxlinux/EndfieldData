@@ -1,0 +1,681 @@
+{
+  "id": "int_water_volume_floater",
+  "factionIndex": 4,
+  "name": "int_water_volume_floater",
+  "bornTag": [
+    {
+      "tagId": -371157063
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_water_volume_floater_postmodel",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.SimpleAnimatorComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BelongToWaterVolumeComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "water_volume",
+          "value": {
+            "type": 56,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_locked",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "lock_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "surface_offset",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "ground_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAudioData, Gameplay.Beyond",
+      "propertyList": [],
+      "audioData": {
+        "audioNameDict": {},
+        "customAudioData": [
+          {
+            "audioEvent": "au_int_water_volume_floater_sway",
+            "audioState": "shake",
+            "desc": "角色站在漂浮物上时颤动音频"
+          }
+        ],
+        "openAudio": true,
+        "useActiveStencil": false,
+        "useAttackStencil": false,
+        "useCollectStencil": false,
+        "useCustomStencil": true,
+        "useDestroyStencil": false,
+        "useDynamicLevel": false,
+        "useInteractStencil": false,
+        "useRepairStencil": false,
+        "useTiggerStencil": false,
+        "useWorkStencil": false
+      }
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveCommonPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "use_dynamic_res",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "dynamic_entity_id",
+          "value": {
+            "type": 26,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyDataList": [
+        {
+          "isProperty": false,
+          "propertyName": "PlayerStepOn",
+          "propertyType": 5
+        },
+        {
+          "isProperty": false,
+          "propertyName": "PlayerStepOff",
+          "propertyType": 5
+        },
+        {
+          "isProperty": false,
+          "propertyName": "CanMove",
+          "propertyType": 4
+        }
+      ],
+      "syncGameplayLock": false
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.StepOnTriggerComponentForIntData, Gameplay.Beyond",
+      "propertyList": null,
+      "propertyStateData": [
+        {
+          "attackTags": 0,
+          "checkPerformTag": false,
+          "conditionExpression": "",
+          "conditions": [],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.0,
+          "optionIcon": "",
+          "optionName": {
+            "key": ""
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 0,
+          "triggerType": 5
+        }
+      ],
+      "triggerBehaviourBase": null
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveWaterFloaterComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "entity_list",
+          "value": {
+            "type": 14,
+            "valueArray": []
+          }
+        }
+      ]
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "effect_list",
+      "value": {
+        "type": 8,
+        "valueArray": []
+      }
+    },
+    {
+      "key": "entity_list",
+      "value": {
+        "type": 14,
+        "valueArray": []
+      }
+    },
+    {
+      "key": "is_locked",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [
+    {
+      "mountPoint": 151,
+      "name": "Cube"
+    }
+  ],
+  "propertyIdToKeyMap": {
+    "1027": "is_locked",
+    "1028": "entity_list",
+    "1029": "effect_list"
+  },
+  "propertyKeyToIdMap": {
+    "effect_list": 1029,
+    "entity_list": 1028,
+    "is_locked": 1027
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [],
+  "templateVariant": {
+    "int_floating_raft": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_floating_raft_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": [
+          {
+            "mountPoint": 151,
+            "name": "Cube"
+          }
+        ]
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_water_floater_artgroup01": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_water_floater_artgroup01"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": [
+          {
+            "mountPoint": 151,
+            "name": "Cube"
+          }
+        ]
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_water_volume_floater_01": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_water_volume_floater_01_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": [
+          {
+            "mountPoint": 151,
+            "name": "Cube"
+          }
+        ]
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_water_volume_floater_02": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_water_volume_floater_02_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": [
+          {
+            "mountPoint": 151,
+            "name": "Cube"
+          }
+        ]
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_water_volume_floater_03": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_water_volume_floater_03_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": [
+          {
+            "mountPoint": 151,
+            "name": "Cube"
+          }
+        ]
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_water_volume_floater_hongshan": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_water_volume_floater_hongshan_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": [
+          {
+            "mountPoint": 151,
+            "name": "Cube"
+          }
+        ]
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_water_volume_floater_ice_01": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_platform_automove_ice_01_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_water_volume_floater_ice_02": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_platform_automove_ice_02_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": [
+          {
+            "mountPoint": 151,
+            "name": "Cube"
+          }
+        ]
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    }
+  },
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

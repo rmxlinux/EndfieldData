@@ -1,0 +1,448 @@
+{
+  "airWalls": [
+    {
+      "bounds": {
+        "m_center": {
+          "x": -823.4738159179688,
+          "y": 235.16966247558594,
+          "z": -1323.346923828125
+        },
+        "m_size": {
+          "x": 187.861572265625,
+          "y": 31.0,
+          "z": 226.260986328125
+        }
+      },
+      "checkData": {
+        "checkType": 0,
+        "missionData": null
+      },
+      "defaultOn": false,
+      "groupId": 10100310001,
+      "polyLineWalls": [
+        {
+          "bounds": {
+            "m_center": {
+              "x": -823.4738159179688,
+              "y": 235.16966247558594,
+              "z": -1323.346923828125
+            },
+            "m_size": {
+              "x": 186.861572265625,
+              "y": 30.0,
+              "z": 225.260986328125
+            }
+          },
+          "disableDefaultEffect": false,
+          "enableNavObstacle": true,
+          "heightRange": {
+            "x": 220.16966247558594,
+            "y": 250.16966247558594
+          },
+          "overrideEffectId": "",
+          "posList": [
+            {
+              "x": -797.5001831054688,
+              "y": -1210.7164306640625
+            },
+            {
+              "x": -877.4435424804688,
+              "y": -1213.288330078125
+            },
+            {
+              "x": -906.3857421875,
+              "y": -1258.94580078125
+            },
+            {
+              "x": -916.9046020507812,
+              "y": -1421.80712890625
+            },
+            {
+              "x": -802.672607421875,
+              "y": -1424.2083740234375
+            },
+            {
+              "x": -756.9796142578125,
+              "y": -1435.9774169921875
+            },
+            {
+              "x": -742.1748657226562,
+              "y": -1402.668212890625
+            },
+            {
+              "x": -739.2467041015625,
+              "y": -1353.2406005859375
+            },
+            {
+              "x": -741.2318725585938,
+              "y": -1319.11865234375
+            },
+            {
+              "x": -730.0430297851562,
+              "y": -1253.2178955078125
+            },
+            {
+              "x": -797.5001831054688,
+              "y": -1210.7164306640625
+            }
+          ],
+          "pushDis": 2.0,
+          "pushWarnDis": 5.0,
+          "usage": 4,
+          "visualHeightRange": {
+            "x": 220.16966247558594,
+            "y": 220.16966247558594
+          }
+        }
+      ],
+      "pushBackRadioId": "radio_f1m18d3_15",
+      "scriptId": 0,
+      "slotId": 0
+    }
+  ],
+  "aiTransData": [],
+  "autoSpawnedInteractives": [],
+  "blackbox": null,
+  "buildableCondition": null,
+  "cameraPoses": [],
+  "charPatrol": [],
+  "doodadGroup": [],
+  "dynamicOccludeAreas": [],
+  "enemies": [],
+  "enemyGroup": [],
+  "enemyPatrol": [
+    {
+      "enemyPatrolLoopType": 0,
+      "patrolId": 10100310001,
+      "points": [
+        {
+          "actions": [],
+          "patrolGait": 0,
+          "position": {
+            "x": -855.4199829101562,
+            "y": 232.60848999023438,
+            "z": -1354.0999755859375
+          }
+        }
+      ]
+    }
+  ],
+  "environmentVolumes": [],
+  "factoryMines": [],
+  "factoryPredefineData": {
+    "powerGates": []
+  },
+  "factoryRegions": [],
+  "functionArea": {
+    "baseData": [
+      {
+        "bufferDistance": 0.0,
+        "defaultOff": false,
+        "euler": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "functionType": 11,
+        "hasCondition": false,
+        "index": 0,
+        "offset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "posList": null,
+        "postion": {
+          "x": -835.6500244140625,
+          "y": 227.11329650878906,
+          "z": -1246.72998046875
+        },
+        "radius": 25.0,
+        "shapeType": 2,
+        "size": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "uniqueId": 10100313001
+      }
+    ],
+    "functionAreaConditions": [
+      {
+        "conditionRuntimeBase": {
+          "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+          "conditionOperator": 0,
+          "reverse": false,
+          "subConditions": [
+            {
+              "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+              "conditionOperator": 0,
+              "reverse": false,
+              "subConditions": [
+                {
+                  "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                  "compareOperator": 0,
+                  "compareTarget": 2,
+                  "missionId": "f1m18d4"
+                },
+                {
+                  "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                  "conditionOperator": 0,
+                  "reverse": false,
+                  "subConditions": [
+                    {
+                      "$type": "Beyond.Gameplay.SimpleConditionCheckMissionNotPaused, Gameplay.Beyond",
+                      "missionId": "f1m18d4"
+                    },
+                    {
+                      "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                      "compareOperator": 0,
+                      "compareTarget": 2,
+                      "missionId": "f1m18d4"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+              "conditionOperator": 0,
+              "reverse": true,
+              "subConditions": [
+                {
+                  "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                  "compareOperator": 0,
+                  "compareTarget": 3,
+                  "missionId": "f1m18d4"
+                }
+              ]
+            }
+          ]
+        },
+        "uniqueId": 10100313001
+      }
+    ],
+    "ranges": [
+      {
+        "m_center": {
+          "x": -835.6500244140625,
+          "y": 227.11329650878906,
+          "z": -1246.72998046875
+        },
+        "m_size": {
+          "x": 50.0,
+          "y": 50.0,
+          "z": 50.0
+        }
+      }
+    ],
+    "specificDatas": [
+      {
+        "$type": "Beyond.Gameplay.LevelFunctionAreaData+HideEntityByTypeParams, Gameplay.Beyond",
+        "entityTypes": 2,
+        "logicIdWhitelist": [],
+        "npcTypes": 0,
+        "proxyWhitelist": []
+      }
+    ]
+  },
+  "guideHints": [],
+  "interactiveLockData": [],
+  "interactives": [],
+  "levelIdNum": 101,
+  "levelScriptBriefDataDict": {
+    "10100310000": {
+      "dataPath": {
+        "hash": -8513451224198242104
+      },
+      "levelScriptType": 1,
+      "maxStage": 2,
+      "parentLevelScriptId": 0,
+      "properties": [
+        {
+          "key": "lt:p:b645e7cc:45b42853",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "lt:p:cfe7c099:485d3ba1",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "lt:mp:b645e7cc:45b42853",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 3,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "lt:mp:cfe7c099:485d3ba1",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 3,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyIdToKeyMap": {
+        "1": "lt:p:b645e7cc:45b42853",
+        "3": "lt:p:cfe7c099:485d3ba1",
+        "1026": "lt:mp:b645e7cc:45b42853",
+        "1028": "lt:mp:cfe7c099:485d3ba1"
+      },
+      "refWorldEntityIdList": null,
+      "scriptId": 10100310000
+    },
+    "10100310001": {
+      "dataPath": {
+        "hash": -413880424257358934
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 10100310001
+    },
+    "10100310002": {
+      "dataPath": {
+        "hash": -7326263432159175855
+      },
+      "levelScriptType": 1,
+      "maxStage": 3,
+      "parentLevelScriptId": 0,
+      "properties": [
+        {
+          "key": "lt:p:9ec4eec6:7c31adcf",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "lt:mp:9ec4eec6:7c31adcf",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyIdToKeyMap": {
+        "1": "lt:p:9ec4eec6:7c31adcf",
+        "1026": "lt:mp:9ec4eec6:7c31adcf"
+      },
+      "refWorldEntityIdList": null,
+      "scriptId": 10100310002
+    },
+    "10100310005": {
+      "dataPath": {
+        "hash": -7379020929569040771
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 10100310005
+    },
+    "10100310006": {
+      "dataPath": {
+        "hash": 4006004274921773502
+      },
+      "levelScriptType": 1,
+      "maxStage": 2,
+      "parentLevelScriptId": 0,
+      "properties": [
+        {
+          "key": "lt:p:3ab9b601:4701e64c",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "lt:mp:3ab9b601:4701e64c",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 3,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyIdToKeyMap": {
+        "1": "lt:p:3ab9b601:4701e64c",
+        "1026": "lt:mp:3ab9b601:4701e64c"
+      },
+      "refWorldEntityIdList": null,
+      "scriptId": 10100310006
+    }
+  },
+  "levelScriptDataPathDict": {},
+  "levelUIs": [],
+  "levelWideConfigs": {},
+  "mapVolumeDatas": [],
+  "missionAreas": [],
+  "npcAttractPointData": [],
+  "npcClusters": [],
+  "npcGroup": [],
+  "npcPatrol": [],
+  "npcs": [],
+  "patrols": [],
+  "predefinedParams": [],
+  "riftVolumes": [],
+  "safeZone": {
+    "boxes": []
+  },
+  "sceneId": "map02_lv001",
+  "sludgeDatas": [],
+  "spawners": [],
+  "specificData": null,
+  "splines": [],
+  "waterVolumes": [],
+  "worldWayPointData": []
+}

@@ -1,0 +1,191 @@
+{
+  "actionMap": {
+    "dataMap": {
+      "actionList": [],
+      "getterList": [],
+      "headerList": []
+    },
+    "paramBlackboard": {
+      "value": []
+    }
+  },
+  "activeShapeList": [
+    {
+      "eulerAngles": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "offset": {
+        "x": -81.4022445678711,
+        "y": 142.2144775390625,
+        "z": 33.24797058105469
+      },
+      "radius": 0.0,
+      "size": {
+        "x": 142.0,
+        "y": 112.0,
+        "z": 145.5
+      },
+      "type": 1
+    }
+  ],
+  "allowStartOnTravelPole": false,
+  "allowTick": false,
+  "enablePreload": false,
+  "endType": 1,
+  "enemies": {},
+  "exitBuffer": 0.0,
+  "exitBufferOverride": false,
+  "interactiveLocks": {},
+  "interactives": {},
+  "levelScriptType": 0,
+  "lstTemplatePath": null,
+  "maxStage": 0,
+  "modules": {
+    "26200000002": {
+      "$type": "Beyond.Gameplay.EncounterData, Gameplay.Beyond",
+      "disableWhenCompleted": true,
+      "id": 26200000002,
+      "activateMode": 1,
+      "activateModeAlter": 0,
+      "activateTriggerSlotId": 80004,
+      "activateTriggerSlotIdAlter": 0,
+      "airWallList": null,
+      "airWallPtrList": [
+        {
+          "logicId": 26200000029,
+          "slotId": 80003,
+          "useSlotId": true
+        }
+      ],
+      "battlePart": {
+        "completeDelay": 0.0,
+        "completeDelayMode": 0,
+        "completeDelayStrParam": "",
+        "completeMode": 0,
+        "dontHideDeadEnemyWhenComplete": false,
+        "exitTriggerSlotId": 80005,
+        "keepHatred": true,
+        "protectEnemyBeforeBattlePart": true
+      },
+      "enemyList": null,
+      "introPart": null,
+      "introPartAlter": null,
+      "introPartMode": 2,
+      "spawnerId": 26200000002,
+      "tailPart": null,
+      "tailPartMode": 0
+    }
+  },
+  "npcs": {},
+  "parentLevelScriptId": 0,
+  "properties": null,
+  "propertyIdToKeyMap": null,
+  "refWorldEntityIdList": null,
+  "resetModeWhenActive": 0,
+  "resetModeWhenEnd": 0,
+  "scriptId": 26200000029,
+  "startShapeList": null,
+  "startType": 1,
+  "taskMap": {
+    "243d9404": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "f999e304": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckMonsterSpawnerComplete, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "f999e304",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "spawnerId": {
+              "constValue": {
+                "id": 26200000002
+              },
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    }
+  },
+  "triggerVolumes": {
+    "80004": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -81.46224212646484,
+            "y": 141.53480529785156,
+            "z": 31.457969665527344
+          },
+          "radius": 3.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 269.83599853515625,
+            "z": 0.0
+          },
+          "shapeType": 1,
+          "size": {
+            "x": 20.0,
+            "y": 10.0,
+            "z": 40.0
+          }
+        }
+      ],
+      "slotId": 80004,
+      "triggerCountLimit": 0,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    },
+    "80005": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -81.44676971435547,
+            "y": 141.88748168945312,
+            "z": 32.110328674316406
+          },
+          "radius": 3.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 90.0,
+            "z": 0.0
+          },
+          "shapeType": 1,
+          "size": {
+            "x": 25.0,
+            "y": 12.0,
+            "z": 45.0
+          }
+        }
+      ],
+      "slotId": 80005,
+      "triggerCountLimit": 0,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    }
+  }
+}

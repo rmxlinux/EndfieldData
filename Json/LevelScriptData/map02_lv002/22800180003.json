@@ -1,0 +1,4206 @@
+{
+  "actionMap": {
+    "dataMap": {
+      "actionList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.StartDialogAndTeleportAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 16,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "c2e69f33",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 17,
+          "afterMask": {
+            "constValue": {
+              "audioBlackScreenBehaviour": {
+                "presetBehaviour": 1,
+                "customRetainFlags": 2,
+                "isOverrideFadeInTime": false,
+                "overrideFadeInTimeSeconds": 0.0,
+                "isOverrideFadeOutTime": false,
+                "overrideFadeOutTimeSeconds": 0.0
+              },
+              "curve": null,
+              "fadeInDuration": 0.5,
+              "fadeOutDuration": 0.5,
+              "maskType": 1,
+              "useCurve": false
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "beforeMask": {
+            "constValue": {
+              "audioBlackScreenBehaviour": {
+                "presetBehaviour": 1,
+                "customRetainFlags": 2,
+                "isOverrideFadeInTime": false,
+                "overrideFadeInTimeSeconds": 0.0,
+                "isOverrideFadeOutTime": false,
+                "overrideFadeOutTimeSeconds": 0.0
+              },
+              "curve": null,
+              "fadeInDuration": 0.5,
+              "fadeOutDuration": 0.5,
+              "maskType": 1,
+              "useCurve": false
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "levelIdStr": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 1000,
+            "path": null
+          },
+          "position": {
+            "constValue": {
+              "x": -853.739990234375,
+              "y": 265.2799987792969,
+              "z": -90.91000366210938
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "rotationEuler": {
+            "constValue": {
+              "x": 0.0,
+              "y": 172.3800048828125,
+              "z": 0.0
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "teleportId": {
+            "constValue": "TpForLs_22800180003_c2e69f33",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "teleportUIType": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_dialogId": {
+            "constValue": "dlg_e7m1_6",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.WaitForSeconds, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 17,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "7e75ae18",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 18,
+          "_seconds": {
+            "constValue": 1.5,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.PlayRadio, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 18,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "11635a5f",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 19,
+          "_fromBegin": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_index": {
+            "constValue": -1,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_noFlushAfterLoading": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_onlyOnce": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_radioId": {
+            "constValue": "radio_e7m1_6",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CallServer, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 19,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "6d5a983c",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_callClientOutputUIDs": null,
+          "_eventArgsPtr": {
+            "constValue": {
+              "key": "event_args"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_eventName": {
+            "constValue": "#6d5a983c",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_useCustomEvent": false,
+          "_waitForCallback": true,
+          "_withEventArgs": false
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.IfElseAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 23,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "8f1f10b4",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_condition": {
+            "constValue": true,
+            "idRef": 51,
+            "paramSource": -1,
+            "path": null
+          },
+          "_onFalseID": 24,
+          "_onTrueID": 0
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetEnemyAIMode, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 24,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "49f0ea4f",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 25,
+          "_mode": {
+            "constValue": 4,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 30001,
+              "useSlotId": true
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetEnemyAIMode, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 25,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "9d07ff5a",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 26,
+          "_mode": {
+            "constValue": 4,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 30002,
+              "useSlotId": true
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetEnemyAIMode, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 26,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "22daa7ea",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 27,
+          "_mode": {
+            "constValue": 4,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 30003,
+              "useSlotId": true
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetEnemyAIMode, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 27,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "0fef010e",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 28,
+          "_mode": {
+            "constValue": 4,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 30004,
+              "useSlotId": true
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetEnemyAIMode, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 28,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "31fc8b2f",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 29,
+          "_mode": {
+            "constValue": 4,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "logicId": 0,
+              "slotId": 30008,
+              "useSlotId": true
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CallServer, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 29,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "dcdb55a3",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_callClientOutputUIDs": null,
+          "_eventArgsPtr": {
+            "constValue": {
+              "key": "event_args"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_eventName": {
+            "constValue": "#dcdb55a3",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_useCustomEvent": false,
+          "_waitForCallback": true,
+          "_withEventArgs": false
+        }
+      ],
+      "getterList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckMissionOrQuestIsComplete, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 51,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "7eb62b34",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_isQuest": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_missionId": {
+            "constValue": "e7m1d5_q#7",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        }
+      ],
+      "headerList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnLeaderEnterTriggerVolume, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 15,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "5a0e9ae8",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": true,
+          "_nextID": 16,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_triggerSlotIdFilter": {
+            "constValue": 80002,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_triggerSlotIdOutput": {
+            "paramTarget": 0,
+            "path": "$15@_triggerSlotIdOutput"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnLeaderEnterTriggerVolume, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 22,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "e19b8f63",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": true,
+          "_nextID": 23,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_triggerSlotIdFilter": {
+            "constValue": 80003,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_triggerSlotIdOutput": {
+            "paramTarget": 0,
+            "path": "$22@_triggerSlotIdOutput"
+          }
+        }
+      ]
+    },
+    "paramBlackboard": {
+      "value": []
+    }
+  },
+  "activeShapeList": [
+    {
+      "eulerAngles": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "offset": {
+        "x": -829.0217895507812,
+        "y": 247.33999633789062,
+        "z": 24.519691467285156
+      },
+      "radius": 210.0,
+      "size": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "type": 2
+    }
+  ],
+  "allowStartOnTravelPole": false,
+  "allowTick": false,
+  "enablePreload": false,
+  "endType": 1,
+  "enemies": {
+    "30001": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 22800180003,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "eny_0053_hsmob",
+      "entityType": 16,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -861.81298828125,
+        "y": 265.27899169921875,
+        "z": -91.28600311279297
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 68.54900360107422,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "aiBlackboard": null,
+      "bornBehaviorData": null,
+      "bornTemplateId": "Performance01",
+      "buffs": [],
+      "enemyDefaultActionType": 0,
+      "enemyGroupId": 180002,
+      "enemyPatrolId": 0,
+      "extraDelayToRecycleTime": null,
+      "idleBreakAnimations": null,
+      "isDangerousEnemy": false,
+      "level": 40,
+      "overrideAIAttrData": null,
+      "overrideAIConfig": "",
+      "overrideIdleBreak": false,
+      "patrolCfgType": 0,
+      "respawnable": true
+    },
+    "30002": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 22800180003,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "eny_0053_hsmob",
+      "entityType": 16,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -860.739990234375,
+        "y": 265.27899169921875,
+        "z": -92.69999694824219
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 33.04399871826172,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "aiBlackboard": null,
+      "bornBehaviorData": null,
+      "bornTemplateId": "Performance01",
+      "buffs": [],
+      "enemyDefaultActionType": 0,
+      "enemyGroupId": 180002,
+      "enemyPatrolId": 0,
+      "extraDelayToRecycleTime": null,
+      "idleBreakAnimations": null,
+      "isDangerousEnemy": false,
+      "level": 40,
+      "overrideAIAttrData": null,
+      "overrideAIConfig": "",
+      "overrideIdleBreak": false,
+      "patrolCfgType": 0,
+      "respawnable": true
+    },
+    "30003": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 22800180003,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "eny_0053_hsmob",
+      "entityType": 16,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -861.89697265625,
+        "y": 265.27899169921875,
+        "z": -89.9540023803711
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 89.47000122070312,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "aiBlackboard": null,
+      "bornBehaviorData": null,
+      "bornTemplateId": "Performance02",
+      "buffs": [],
+      "enemyDefaultActionType": 0,
+      "enemyGroupId": 180002,
+      "enemyPatrolId": 0,
+      "extraDelayToRecycleTime": null,
+      "idleBreakAnimations": null,
+      "isDangerousEnemy": false,
+      "level": 40,
+      "overrideAIAttrData": null,
+      "overrideAIConfig": "",
+      "overrideIdleBreak": false,
+      "patrolCfgType": 0,
+      "respawnable": true
+    },
+    "30004": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 22800180003,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "eny_0084_hshunt",
+      "entityType": 16,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -858.4500122070312,
+        "y": 265.27899169921875,
+        "z": -92.4000015258789
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 297.04901123046875,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "aiBlackboard": null,
+      "bornBehaviorData": null,
+      "bornTemplateId": "Talk02",
+      "buffs": [],
+      "enemyDefaultActionType": 0,
+      "enemyGroupId": 180002,
+      "enemyPatrolId": 0,
+      "extraDelayToRecycleTime": null,
+      "idleBreakAnimations": null,
+      "isDangerousEnemy": false,
+      "level": 40,
+      "overrideAIAttrData": null,
+      "overrideAIConfig": "",
+      "overrideIdleBreak": false,
+      "patrolCfgType": 0,
+      "respawnable": true
+    },
+    "30008": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 22800180003,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "eny_0084_hshunt",
+      "entityType": 16,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -858.239990234375,
+        "y": 265.27899169921875,
+        "z": -89.83000183105469
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 232.77699279785156,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "aiBlackboard": null,
+      "bornBehaviorData": null,
+      "bornTemplateId": "Levelact01",
+      "buffs": [],
+      "enemyDefaultActionType": 0,
+      "enemyGroupId": 180002,
+      "enemyPatrolId": 0,
+      "extraDelayToRecycleTime": null,
+      "idleBreakAnimations": null,
+      "isDangerousEnemy": false,
+      "level": 40,
+      "overrideAIAttrData": null,
+      "overrideAIConfig": "",
+      "overrideIdleBreak": false,
+      "patrolCfgType": 0,
+      "respawnable": true
+    },
+    "30009": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 22800180003,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "eny_0084_hshunt",
+      "entityType": 16,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -838.4400024414062,
+        "y": 266.40301513671875,
+        "z": -107.25
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 193.72799682617188,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "aiBlackboard": null,
+      "bornBehaviorData": null,
+      "bornTemplateId": "Levelact02",
+      "buffs": [],
+      "enemyDefaultActionType": 0,
+      "enemyGroupId": 180001,
+      "enemyPatrolId": 0,
+      "extraDelayToRecycleTime": null,
+      "idleBreakAnimations": null,
+      "isDangerousEnemy": false,
+      "level": 40,
+      "overrideAIAttrData": null,
+      "overrideAIConfig": "",
+      "overrideIdleBreak": false,
+      "patrolCfgType": 0,
+      "respawnable": true
+    },
+    "30012": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 22800180003,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "eny_0053_hsmob",
+      "entityType": 16,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -830.552001953125,
+        "y": 266.2120056152344,
+        "z": -90.9990005493164
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 333.1199951171875,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "aiBlackboard": null,
+      "bornBehaviorData": null,
+      "bornTemplateId": "Levelact01",
+      "buffs": [],
+      "enemyDefaultActionType": 0,
+      "enemyGroupId": 180001,
+      "enemyPatrolId": 0,
+      "extraDelayToRecycleTime": null,
+      "idleBreakAnimations": null,
+      "isDangerousEnemy": false,
+      "level": 40,
+      "overrideAIAttrData": null,
+      "overrideAIConfig": "",
+      "overrideIdleBreak": false,
+      "patrolCfgType": 0,
+      "respawnable": true
+    },
+    "30014": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 22800180003,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "eny_0084_hshunt",
+      "entityType": 16,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -843.916015625,
+        "y": 265.1889953613281,
+        "z": -102.24800109863281
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 25.340999603271484,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "aiBlackboard": null,
+      "bornBehaviorData": null,
+      "bornTemplateId": null,
+      "buffs": [],
+      "enemyDefaultActionType": 0,
+      "enemyGroupId": 180001,
+      "enemyPatrolId": 22800180011,
+      "extraDelayToRecycleTime": null,
+      "idleBreakAnimations": null,
+      "isDangerousEnemy": false,
+      "level": 40,
+      "overrideAIAttrData": null,
+      "overrideAIConfig": "",
+      "overrideIdleBreak": false,
+      "patrolCfgType": 0,
+      "respawnable": true
+    },
+    "30015": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 22800180003,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "eny_0053_hsmob",
+      "entityType": 16,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -825.2620239257812,
+        "y": 266.31201171875,
+        "z": -109.9000015258789
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 120.21499633789062,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "aiBlackboard": null,
+      "bornBehaviorData": null,
+      "bornTemplateId": "Talk01",
+      "buffs": [],
+      "enemyDefaultActionType": 0,
+      "enemyGroupId": 180001,
+      "enemyPatrolId": 0,
+      "extraDelayToRecycleTime": null,
+      "idleBreakAnimations": null,
+      "isDangerousEnemy": false,
+      "level": 40,
+      "overrideAIAttrData": null,
+      "overrideAIConfig": "",
+      "overrideIdleBreak": false,
+      "patrolCfgType": 0,
+      "respawnable": true
+    }
+  },
+  "exitBuffer": 0.0,
+  "exitBufferOverride": false,
+  "interactiveLocks": {},
+  "interactives": {
+    "40001": {
+      "aoiRadiusType": 2,
+      "belongLevelScriptId": 22800180003,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_footprint_group",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -829.489990234375,
+        "y": 265.2300109863281,
+        "z": -83.72000122070312
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 216.33599853515625,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {},
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "effect_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "P_common_footprint_left"
+              }
+            ]
+          }
+        },
+        {
+          "key": "effect_name_2",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "P_common_footprint_right"
+              }
+            ]
+          }
+        },
+        {
+          "key": "hide_when_scan_ends",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "position_list",
+          "value": {
+            "type": 12,
+            "valueArray": [
+              {
+                "valueBit64": -1001065326,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763819,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027393472,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001075196,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767167,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027615218,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001082844,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767596,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027842474,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001076434,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767153,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1028053808,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001049582,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767132,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1028146204,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001022052,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767213,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1028097044,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000997639,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767172,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027964798,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000973812,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027825640,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000950599,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027679756,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000954548,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027646306,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000973253,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027550328,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000975510,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765360,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027315604,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000981813,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765296,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027085894,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000993562,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132762777,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026875348,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001020756,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026925390,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001045474,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027054060,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001069540,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027189950,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001084259,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132762777,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027385676,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001067584,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132762777,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027387682,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001045003,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027237504,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001021806,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027092804,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000995434,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132762777,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026991724,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000967159,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765074,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026933748,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000937878,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132764859,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026907694,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000908757,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765231,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026874720,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000880041,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761970,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026826204,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000852358,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761970,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026746644,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000826002,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132762810,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026642322,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000802589,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766907,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026513144,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000799542,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766223,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026301326,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000815219,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026355412,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000828640,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026296910,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000827757,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026124620,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000831824,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026205936,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000833807,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026423118,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000810341,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026369034,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000804032,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766907,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026335148,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000821543,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026385078,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000835533,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026221644,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000842333,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026030728,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000855298,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026012950,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000847645,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026177722,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000818228,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026168286,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000788991,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765292,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026138160,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000759815,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026104296,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000730751,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026068574,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000709266,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026067828,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000690719,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765368,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025979754,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000715251,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025849366,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000742319,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025821586,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000749843,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766408,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025842374,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000751526,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026075040,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000720167,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026346076,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000699151,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026181354,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000688622,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025976918,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000708482,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025806468,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000736745,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025783250,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000754271,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025949076,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000748977,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026178406,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000826369,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026375676,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001068664,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767152,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027467140,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001078161,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767136,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027690020,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001084627,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027919666,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001068126,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767215,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1028095602,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001039826,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767118,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1028155012,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001013839,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767036,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1028054210,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000989648,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132767596,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027919052,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000965993,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027778050,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000943260,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027627304,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000963906,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027669570,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000974165,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027472304,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000976903,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765347,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027237834,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000984415,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765268,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027010580,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001002886,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132762777,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026861612,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001029051,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026967668,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001053751,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027096480,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001076401,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027246026,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001084150,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766121,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027459262,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001060004,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027338192,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001037445,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027187664,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1001013409,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761937,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1027052250,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000986167,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765761,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026969348,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000957445,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132764859,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026921916,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000928115,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132764859,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026899818,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000899136,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765320,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026860388,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000870612,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761970,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026804534,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000843533,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132761970,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026712024,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000817144,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132764761,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026611382,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000799359,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766223,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026440714,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000804680,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766907,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026310670,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000820979,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026376372,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000828625,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026237146,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000827392,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026075394,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000833458,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026277320,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000825711,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026428350,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000802817,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132766907,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026332762,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000809286,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026356424,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000828800,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026354384,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000837888,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026156592,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000844925,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025971918,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000858676,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026086484,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000837824,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026179428,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000808461,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026159338,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000779259,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132765292,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026126690,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000750087,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026094366,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000721433,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026052424,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000699563,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132771972,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026055410,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000698447,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025931084,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000724129,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025815540,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000746322,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025873078,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000751844,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025917878,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000750056,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026152780,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000713101,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026291850,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000692871,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132772497,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026121038,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000693843,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025910526,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000717349,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025773124,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000745695,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1025815206,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000754126,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026027648,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000742672,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132763873,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026238406,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1000826369,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132769927,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1026375676,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "rotation_list",
+          "value": {
+            "type": 12,
+            "valueArray": [
+              {
+                "valueBit64": 1135747263,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1100011620,
+                "valueString": null
+              },
+              {
+                "valueBit64": 862301278,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135746352,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1100192390,
+                "valueString": null
+              },
+              {
+                "valueBit64": 862301760,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135775413,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1096450252,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1293584041,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1060996177,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134168785,
+                "valueString": null
+              },
+              {
+                "valueBit64": 866903767,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1070493296,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1133270630,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1276819937,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065729015,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131263906,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1274068123,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065397431,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131066012,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1293600791,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065567139,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130957692,
+                "valueString": null
+              },
+              {
+                "valueBit64": 862271561,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1066573699,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130757628,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1034684040,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1115970633,
+                "valueString": null
+              },
+              {
+                "valueBit64": 837103345,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135712885,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1126986176,
+                "valueString": null
+              },
+              {
+                "valueBit64": 853933259,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135794092,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1127114272,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1267485512,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1085743949,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1126544132,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1272135785,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1087880279,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1123995784,
+                "valueString": null
+              },
+              {
+                "valueBit64": 879150948,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135861662,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1114347434,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1297357930,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1061557984,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1114072833,
+                "valueString": null
+              },
+              {
+                "valueBit64": 853881913,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135866075,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1111704302,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1318768895,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135393170,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1095485404,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1263430349,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1085348943,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130860829,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1084965303,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130768133,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1074292766,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131132792,
+                "valueString": null
+              },
+              {
+                "valueBit64": 862279552,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135553620,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132158842,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135804996,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132564693,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1078217235,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132759223,
+                "valueString": null
+              },
+              {
+                "valueBit64": 883696197,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1084488638,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132588608,
+                "valueString": null
+              },
+              {
+                "valueBit64": 879106644,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1083589354,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132423195,
+                "valueString": null
+              },
+              {
+                "valueBit64": 887485558,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1040359919,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131739823,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135568748,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131846506,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1259853287,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1089332674,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1129220331,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1268309950,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1133964525,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1121136192,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1227282975,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134201241,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1115210967,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1229599920,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1109084603,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1127336439,
+                "valueString": null
+              },
+              {
+                "valueBit64": 899434096,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1111236317,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1127772727,
+                "valueString": null
+              },
+              {
+                "valueBit64": 900210233,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135134770,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1094334038,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1250430064,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135599301,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135051897,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1276668458,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1105494496,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131425942,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1249740624,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134082891,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1114974155,
+                "valueString": null
+              },
+              {
+                "valueBit64": 910525089,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134446386,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1118887748,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1231170510,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1105897161,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1126369866,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1236981280,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1108335858,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1126364594,
+                "valueString": null
+              },
+              {
+                "valueBit64": 898471133,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135781252,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1104081105,
+                "valueString": null
+              },
+              {
+                "valueBit64": 870674538,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1077357934,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1133078442,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1263789538,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1076182141,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132725982,
+                "valueString": null
+              },
+              {
+                "valueBit64": 870673021,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1074994164,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132650282,
+                "valueString": null
+              },
+              {
+                "valueBit64": 870669852,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1069461778,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132679192,
+                "valueString": null
+              },
+              {
+                "valueBit64": 875295242,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1074148612,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132565552,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": -2147483648,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132372582,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 857431885,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1124397370,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1478152481,
+                "valueString": null
+              },
+              {
+                "valueBit64": 852125655,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1122729338,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1280229426,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1111867166,
+                "valueString": null
+              },
+              {
+                "valueBit64": 677719777,
+                "valueString": null
+              },
+              {
+                "valueBit64": -2147483648,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1112258704,
+                "valueString": null
+              },
+              {
+                "valueBit64": -2147483648,
+                "valueString": null
+              },
+              {
+                "valueBit64": 865602375,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135695927,
+                "valueString": null
+              },
+              {
+                "valueBit64": 658126357,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1080880786,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130027722,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1276794480,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1080965663,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130261049,
+                "valueString": null
+              },
+              {
+                "valueBit64": 879078122,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1064879897,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1125969556,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1288967812,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135852076,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1123337343,
+                "valueString": null
+              },
+              {
+                "valueBit64": 862269833,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1287743386,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1116853850,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1486541089,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1297174912,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1082970402,
+                "valueString": null
+              },
+              {
+                "valueBit64": 642287875,
+                "valueString": null
+              },
+              {
+                "valueBit64": 846222720,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134892626,
+                "valueString": null
+              },
+              {
+                "valueBit64": 652553955,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135396809,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1123655607,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1246658964,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135742043,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1101059686,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1272166022,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135751405,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1099201076,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1276795896,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135792023,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1083292200,
+                "valueString": null
+              },
+              {
+                "valueBit64": 873891829,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1067984556,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1133807750,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1268433329,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1069385852,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1133169360,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1276820870,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065511313,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131167685,
+                "valueString": null
+              },
+              {
+                "valueBit64": 862271531,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065413780,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131029180,
+                "valueString": null
+              },
+              {
+                "valueBit64": 862271472,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065730029,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130914920,
+                "valueString": null
+              },
+              {
+                "valueBit64": 866904699,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1068602106,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130434979,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1276821482,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135835677,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1118446392,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135730071,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1127224237,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1274043569,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135866336,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1126714576,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1327157508,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1088587521,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1126353311,
+                "valueString": null
+              },
+              {
+                "valueBit64": 883766569,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1072855811,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1117708444,
+                "valueString": null
+              },
+              {
+                "valueBit64": 870665974,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135856805,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1113717183,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1301991342,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1071782378,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1113749184,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1276818748,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135723368,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1109039579,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135333126,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134471734,
+                "valueString": null
+              },
+              {
+                "valueBit64": 896459199,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1085817475,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130774172,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1083791839,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130821909,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1259995980,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135806997,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131611310,
+                "valueString": null
+              },
+              {
+                "valueBit64": 862277604,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135549712,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132387136,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1054817812,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132698457,
+                "valueString": null
+              },
+              {
+                "valueBit64": 858514544,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1079586517,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132694602,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1085736970,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132558308,
+                "valueString": null
+              },
+              {
+                "valueBit64": 892125012,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1076876681,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132220502,
+                "valueString": null
+              },
+              {
+                "valueBit64": 879063653,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135815272,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131611342,
+                "valueString": null
+              },
+              {
+                "valueBit64": 862275527,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135501982,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131733058,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1246806516,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1096198267,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1128410783,
+                "valueString": null
+              },
+              {
+                "valueBit64": 887856357,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134069402,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1115932537,
+                "valueString": null
+              },
+              {
+                "valueBit64": 910657313,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134280359,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1116626342,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1230178030,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1109907357,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1127603116,
+                "valueString": null
+              },
+              {
+                "valueBit64": 889640702,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1115251239,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1127265744,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1236756002,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135119766,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1091511589,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1246063152,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1106187420,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132158476,
+                "valueString": null
+              },
+              {
+                "valueBit64": 897854087,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1103046804,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1131261186,
+                "valueString": null
+              },
+              {
+                "valueBit64": 897231597,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134162707,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1115848007,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1223956134,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1093192692,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1125265156,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1251401808,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1107183389,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1126459273,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1257845008,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1109322778,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1125939309,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135715033,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1095913227,
+                "valueString": null
+              },
+              {
+                "valueBit64": 870709037,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1076896956,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132875749,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1075836897,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132689818,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1257283529,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1074380721,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132643502,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1081512803,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132657710,
+                "valueString": null
+              },
+              {
+                "valueBit64": 879080388,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134362893,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132270120,
+                "valueString": null
+              },
+              {
+                "valueBit64": 908390337,
+                "valueString": null
+              },
+              {
+                "valueBit64": -2147483648,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132597825,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 844906711,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1123687393,
+                "valueString": null
+              },
+              {
+                "valueBit64": 652553953,
+                "valueString": null
+              },
+              {
+                "valueBit64": -2147483648,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1122064512,
+                "valueString": null
+              },
+              {
+                "valueBit64": -2147483648,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1274063144,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132551959,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1469763871,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1296212738,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1079958135,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1536872737,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1271986163,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135447027,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1080985598,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1130567919,
+                "valueString": null
+              },
+              {
+                "valueBit64": 879078202,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1080787061,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1129866090,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1268406250,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135866317,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1124920004,
+                "valueString": null
+              },
+              {
+                "valueBit64": 845491966,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1147209088,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1121038822,
+                "valueString": null
+              },
+              {
+                "valueBit64": 808182568,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1277642538,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1113991851,
+                "valueString": null
+              },
+              {
+                "valueBit64": 673964841,
+                "valueString": null
+              },
+              {
+                "valueBit64": -2147483648,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135688700,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 839962994,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1134331861,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1511706911,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1135396809,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1123655607,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1246658964,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "scale",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "split_index",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 60,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "levelScriptType": 0,
+  "lstTemplatePath": null,
+  "maxStage": 0,
+  "modules": {},
+  "npcs": {},
+  "parentLevelScriptId": 0,
+  "properties": null,
+  "propertyIdToKeyMap": null,
+  "refWorldEntityIdList": null,
+  "resetModeWhenActive": 0,
+  "resetModeWhenEnd": 0,
+  "scriptId": 22800180003,
+  "startShapeList": null,
+  "startType": 1,
+  "taskMap": {
+    "7cb04a2d": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "1b5871a7": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckQuestState, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "1b5871a7",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_questId": {
+              "constValue": "e7m1d5_q#7",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_targetQuestState": {
+              "constValue": 3,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    },
+    "939856a4": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "e739271a": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckQuestState, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "e739271a",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_questId": {
+              "constValue": "e7m1d5_q#2",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_targetQuestState": {
+              "constValue": 3,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    },
+    "afdc73f8": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "24ecacc4": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckRepeatableTalkFinish, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "24ecacc4",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_dialogId": {
+              "constValue": "dlg_e7m1_6",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_finishId": {
+              "constValue": -1,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    }
+  },
+  "triggerVolumes": {
+    "80001": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -829.0217895507812,
+            "y": 247.33999633789062,
+            "z": 24.519691467285156
+          },
+          "radius": 100.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "shapeType": 2,
+          "size": {
+            "x": 3.0,
+            "y": 3.0,
+            "z": 3.0
+          }
+        }
+      ],
+      "slotId": 80001,
+      "triggerCountLimit": 1,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    },
+    "80002": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -840.2017822265625,
+            "y": 265.15191650390625,
+            "z": -93.09030151367188
+          },
+          "radius": 60.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "shapeType": 2,
+          "size": {
+            "x": 3.0,
+            "y": 3.0,
+            "z": 3.0
+          }
+        }
+      ],
+      "slotId": 80002,
+      "triggerCountLimit": 1,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    },
+    "80003": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -859.9017944335938,
+            "y": 265.2785949707031,
+            "z": -96.76029968261719
+          },
+          "radius": 3.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "shapeType": 1,
+          "size": {
+            "x": 25.0,
+            "y": 20.0,
+            "z": 25.0
+          }
+        }
+      ],
+      "slotId": 80003,
+      "triggerCountLimit": 1,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    },
+    "80005": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -843.8017578125,
+            "y": 252.32664489746094,
+            "z": -22.450305938720703
+          },
+          "radius": 3.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "shapeType": 1,
+          "size": {
+            "x": 13.0,
+            "y": 13.0,
+            "z": 13.0
+          }
+        }
+      ],
+      "slotId": 80005,
+      "triggerCountLimit": 1,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    },
+    "80006": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -840.0908203125,
+            "y": 252.184814453125,
+            "z": -11.570308685302734
+          },
+          "radius": 3.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "shapeType": 1,
+          "size": {
+            "x": 5.0,
+            "y": 20.0,
+            "z": 5.0
+          }
+        }
+      ],
+      "slotId": 80006,
+      "triggerCountLimit": 1,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    },
+    "80007": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -835.081787109375,
+            "y": 252.184814453125,
+            "z": -11.570308685302734
+          },
+          "radius": 3.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "shapeType": 1,
+          "size": {
+            "x": 5.0,
+            "y": 10.0,
+            "z": 5.0
+          }
+        }
+      ],
+      "slotId": 80007,
+      "triggerCountLimit": 1,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    }
+  }
+}

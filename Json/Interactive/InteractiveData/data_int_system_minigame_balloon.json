@@ -1,0 +1,1632 @@
+{
+  "id": "int_system_minigame_balloon",
+  "factionIndex": 4,
+  "name": "int_system_minigame_balloon",
+  "bornTag": [],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_system_balloon_small_1_postmodel",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.TriggerZoneComponentForIntData, Gameplay.Beyond",
+      "propertyList": null,
+      "propertyStateData": [
+        {
+          "attackTags": 0,
+          "checkPerformTag": true,
+          "conditionExpression": "",
+          "conditions": [],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.0,
+          "optionIcon": "",
+          "optionName": {
+            "key": ""
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 0,
+          "triggerType": 2
+        }
+      ],
+      "triggerBehaviourBase": null
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.MinigameBalloonSystemComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "system_inst_key",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "system_int_relative_cam_types",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "system_int_relative_cam_ids",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "system_int_option_icon_keys",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "system_int_option_icon_values",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "reward_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "destroy_self",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "subMinigameIds",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "systemLockedRadioId",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "radio_gm02m17_4"
+              }
+            ]
+          }
+        },
+        {
+          "key": "systemDisabledRadioId",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "target_list",
+          "value": {
+            "type": 14,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "paneDescTxt",
+          "value": {
+            "type": 28,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "ui_msc_balloon_item_info_default"
+              }
+            ]
+          }
+        },
+        {
+          "key": "useBlackScreenOnStateChange",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveCommonPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "use_dynamic_res",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "dynamic_entity_id",
+          "value": {
+            "type": 26,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyDataList": [
+        {
+          "isProperty": false,
+          "propertyName": "Active",
+          "propertyType": 4
+        },
+        {
+          "isProperty": false,
+          "propertyName": "Unlock",
+          "propertyType": 4
+        },
+        {
+          "isProperty": false,
+          "propertyName": "Enabled",
+          "propertyType": 4
+        },
+        {
+          "isProperty": false,
+          "propertyName": "isDead",
+          "propertyType": 5
+        }
+      ],
+      "syncGameplayLock": false
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.TriggerObserverComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1056964608,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1084227584,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1082130432,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interactive_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_height",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1084227584,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1135869952,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle_offset",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "player_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_important",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "in_trigger_volume_performance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "a": 0,
+      "b": 0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveHintPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "is_enable_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "Outline_SoftNormal_White"
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_interact_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_interact_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interact_outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_brushing",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_brushing_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "disable_when_has_perform_tag",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "special_mode_config",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_outline_name_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_outline_name_list",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_brushing_distance_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_min_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_max_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveDynamicAINavComponentData, Gameplay.Beyond",
+      "propertyList": [],
+      "obstacleType": 1
+    }
+  ],
+  "delayRecyclePerformTime": 5.0,
+  "delayToRecycleTime": 20.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "position",
+      "value": {
+        "type": 11,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1050253722,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "rotation",
+      "value": {
+        "type": 11,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": null,
+  "facOccDis": 1.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "7": "state",
+    "1027": "position",
+    "1028": "rotation"
+  },
+  "propertyKeyToIdMap": {
+    "position": 1027,
+    "rotation": 1028,
+    "state": 7
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {
+    "int_system_balloon_big_1": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_MinigameBalloonSystem": {
+          "value": [
+            {
+              "key": "paneDescTxt",
+              "value": {
+                "type": 28,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "ui_msc_balloon_item_info_big_1"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": -1082130432,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1073741824,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "radius",
+              "value": {
+                "type": 5,
+                "valueArray": [
+                  {
+                    "valueBit64": 1090519040,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "shape",
+              "value": {
+                "type": 3,
+                "valueArray": [
+                  {
+                    "valueBit64": 2,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1086324736,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1082130432,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1086324736,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 7.0
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_system_balloon_big_1_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_system_balloon_big_2_1": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_MinigameBalloonSystem": {
+          "value": [
+            {
+              "key": "paneDescTxt",
+              "value": {
+                "type": 28,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "ui_msc_balloon_item_info_big_2"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1065353216,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1092616192,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1073741824,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1092616192,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 7.0
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_system_balloon_big_2_1_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_system_balloon_big_2_3": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_MinigameBalloonSystem": {
+          "value": [
+            {
+              "key": "paneDescTxt",
+              "value": {
+                "type": 28,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "ui_msc_balloon_item_info_big_3"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1092616192,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1065353216,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1092616192,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 7.0
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_system_balloon_big_2_3_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_system_balloon_mid_1": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_MinigameBalloonSystem": {
+          "value": [
+            {
+              "key": "paneDescTxt",
+              "value": {
+                "type": 28,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "ui_msc_balloon_item_info_mid_1"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "radius",
+              "value": {
+                "type": 5,
+                "valueArray": [
+                  {
+                    "valueBit64": 1075838976,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1092616192,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1065353216,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1088421888,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 3.0
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_system_balloon_mid_1_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_system_balloon_mid_2": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_MinigameBalloonSystem": {
+          "value": [
+            {
+              "key": "paneDescTxt",
+              "value": {
+                "type": 28,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "ui_msc_balloon_item_info_mid_2"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1087373312,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1065353216,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1087373312,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 3.0
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_system_balloon_mid_2_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_system_balloon_mid_3": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_MinigameBalloonSystem": {
+          "value": [
+            {
+              "key": "paneDescTxt",
+              "value": {
+                "type": 28,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "ui_msc_balloon_item_info_mid_3"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": -1090519040,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1056964608,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "radius",
+              "value": {
+                "type": 5,
+                "valueArray": [
+                  {
+                    "valueBit64": 1073741824,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1091567616,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1065353216,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1084227584,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 3.0
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_system_balloon_mid_3_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_system_balloon_small_2": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_MinigameBalloonSystem": {
+          "value": [
+            {
+              "key": "paneDescTxt",
+              "value": {
+                "type": 28,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "ui_msc_balloon_item_info_small_2"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 1.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_system_balloon_small_2_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_system_balloon_small_3": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_MinigameBalloonSystem": {
+          "value": [
+            {
+              "key": "paneDescTxt",
+              "value": {
+                "type": 28,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "ui_msc_balloon_item_info_small_3"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1084227584,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1065353216,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1084227584,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 1.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_system_balloon_small_3_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_system_balloon_small_4": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_MinigameBalloonSystem": {
+          "value": [
+            {
+              "key": "paneDescTxt",
+              "value": {
+                "type": 28,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "ui_msc_balloon_item_info_small_4"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1071644672,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1088421888,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1056964608,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1082130432,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 1.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_system_balloon_small_4_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    }
+  },
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

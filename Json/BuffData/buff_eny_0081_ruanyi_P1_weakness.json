@@ -1,0 +1,743 @@
+{
+  "abilityEventAction": [
+    {
+      "abilityEvent": 21,
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.FinishBuffAdvanced+Data, Gameplay.Beyond",
+              "isEnable": false,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 8,
+              "buffOwner": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 0
+              },
+              "buffSettings": {
+                "buffIdList": [
+                  "buff_eny_0081_ruanyi_P1_weakness"
+                ],
+                "checkType": 0,
+                "tagQuery": {
+                  "queryType": 0,
+                  "tags": []
+                }
+              },
+              "buffSource": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 1
+              },
+              "finishAll": true,
+              "finishLayerCnt": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 1.0
+              },
+              "finishSource": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 1
+              },
+              "isAbsorbed": false,
+              "isFinishedEarly": false,
+              "limitSource": false
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ]
+    }
+  ],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [
+    {
+      "isDynamic": true,
+      "key": "num",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    }
+  ],
+  "buffEventAction": [
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.SaveBuffStackNumAdvanced+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "buffSettings": {
+                "buffIdList": [
+                  "buff_eny_0081_ruanyi_P1_weakness"
+                ],
+                "checkType": 0,
+                "tagQuery": {
+                  "queryType": 0,
+                  "tags": []
+                }
+              },
+              "buffStackNumType": 0,
+              "checkTarget": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              },
+              "key": "num",
+              "limitSkillCastId": false
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.SwitchAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 1,
+              "alwaysNext": true,
+              "choice": {
+                "blackboardKey": "num",
+                "useBlackboardKey": true,
+                "value": 0.0
+              },
+              "options": [
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 2,
+                        "asChildBuff": true,
+                        "autoFinishByAction": false,
+                        "buffIconDurationSource": {
+                          "durationSourceType": 0,
+                          "timedMarkerId": ""
+                        },
+                        "buffs": [
+                          {
+                            "assignBlackboard": false,
+                            "assignItems": [],
+                            "buffId": "buff_eny_0081_ruanyi_P1_weakness_1",
+                            "buffIdKey": "",
+                            "readIdFromBlackboard": false
+                          }
+                        ],
+                        "buffSource": 1,
+                        "contextKey": "",
+                        "count": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 1.0
+                        },
+                        "finishWithNextSkillIfNotInherited": true,
+                        "inheritSkillIdList": [],
+                        "inheritSourceSkillCastId": false,
+                        "inheritSourceSkillCastInfo": true,
+                        "isExtra": false,
+                        "overrideBuffIconDuration": false,
+                        "passTargetGroupsToBuff": false,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        }
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 0.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 3,
+                        "asChildBuff": true,
+                        "autoFinishByAction": false,
+                        "buffIconDurationSource": {
+                          "durationSourceType": 0,
+                          "timedMarkerId": ""
+                        },
+                        "buffs": [
+                          {
+                            "assignBlackboard": false,
+                            "assignItems": [],
+                            "buffId": "buff_eny_0081_ruanyi_P1_weakness_2",
+                            "buffIdKey": "",
+                            "readIdFromBlackboard": false
+                          }
+                        ],
+                        "buffSource": 1,
+                        "contextKey": "",
+                        "count": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 1.0
+                        },
+                        "finishWithNextSkillIfNotInherited": true,
+                        "inheritSkillIdList": [],
+                        "inheritSourceSkillCastId": false,
+                        "inheritSourceSkillCastInfo": true,
+                        "isExtra": false,
+                        "overrideBuffIconDuration": false,
+                        "passTargetGroupsToBuff": false,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        }
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 2.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 4,
+                        "asChildBuff": true,
+                        "autoFinishByAction": false,
+                        "buffIconDurationSource": {
+                          "durationSourceType": 0,
+                          "timedMarkerId": ""
+                        },
+                        "buffs": [
+                          {
+                            "assignBlackboard": false,
+                            "assignItems": [],
+                            "buffId": "buff_eny_0081_ruanyi_P1_weakness_3",
+                            "buffIdKey": "",
+                            "readIdFromBlackboard": false
+                          }
+                        ],
+                        "buffSource": 1,
+                        "contextKey": "",
+                        "count": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 1.0
+                        },
+                        "finishWithNextSkillIfNotInherited": true,
+                        "inheritSkillIdList": [],
+                        "inheritSourceSkillCastId": false,
+                        "inheritSourceSkillCastInfo": true,
+                        "isExtra": false,
+                        "overrideBuffIconDuration": false,
+                        "passTargetGroupsToBuff": false,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        }
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 3.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 5,
+                        "asChildBuff": true,
+                        "autoFinishByAction": false,
+                        "buffIconDurationSource": {
+                          "durationSourceType": 0,
+                          "timedMarkerId": ""
+                        },
+                        "buffs": [
+                          {
+                            "assignBlackboard": false,
+                            "assignItems": [],
+                            "buffId": "buff_eny_0081_ruanyi_P1_weakness_4",
+                            "buffIdKey": "",
+                            "readIdFromBlackboard": false
+                          }
+                        ],
+                        "buffSource": 1,
+                        "contextKey": "",
+                        "count": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 1.0
+                        },
+                        "finishWithNextSkillIfNotInherited": true,
+                        "inheritSkillIdList": [],
+                        "inheritSourceSkillCastId": false,
+                        "inheritSourceSkillCastInfo": true,
+                        "isExtra": false,
+                        "overrideBuffIconDuration": false,
+                        "passTargetGroupsToBuff": false,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        }
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 4.0
+                  }
+                },
+                {
+                  "actionData": {
+                    "actionData": [
+                      {
+                        "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+                        "isEnable": true,
+                        "priorityLevel": 0,
+                        "priorityOffset": 0,
+                        "serverActionIndex": 6,
+                        "asChildBuff": true,
+                        "autoFinishByAction": false,
+                        "buffIconDurationSource": {
+                          "durationSourceType": 0,
+                          "timedMarkerId": ""
+                        },
+                        "buffs": [
+                          {
+                            "assignBlackboard": false,
+                            "assignItems": [],
+                            "buffId": "buff_eny_0081_ruanyi_P1_weakness_5",
+                            "buffIdKey": "",
+                            "readIdFromBlackboard": false
+                          }
+                        ],
+                        "buffSource": 1,
+                        "contextKey": "",
+                        "count": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 1.0
+                        },
+                        "finishWithNextSkillIfNotInherited": true,
+                        "inheritSkillIdList": [],
+                        "inheritSourceSkillCastId": false,
+                        "inheritSourceSkillCastInfo": true,
+                        "isExtra": false,
+                        "overrideBuffIconDuration": false,
+                        "passTargetGroupsToBuff": false,
+                        "targetSettings": {
+                          "advancedDirection": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "centerContextKey": "",
+                          "centerToGround": false,
+                          "centerType": 0,
+                          "enableAdvancedDirection": false,
+                          "ownerContextKey": "",
+                          "selectorData": {
+                            "finderData": null,
+                            "postProcessorData": [],
+                            "validatorData": []
+                          },
+                          "selectorDirection": 0,
+                          "selectorOwner": 1,
+                          "target": 0,
+                          "targetContextKey": "",
+                          "targetGroupKey": "",
+                          "targetSource": 4
+                        }
+                      }
+                    ],
+                    "onlyExecuteWhenSourceIsGuard": false,
+                    "onlyExecuteWhenSourceIsMainChar": false
+                  },
+                  "value": {
+                    "blackboardKey": "",
+                    "useBlackboardKey": false,
+                    "value": 5.0
+                  }
+                }
+              ]
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 7
+    },
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.PlaySoundAction+PlaySoundActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 7,
+              "_canInterruptTimeMs": 0,
+              "_intrptFadeDurationMs": 100,
+              "_jumpToWhenPlayMs": 0,
+              "_soundEvent": "au_eny_0081_ruanyi_skill_weakness",
+              "_stopFadeDurationMs": 100,
+              "_stopOnEnd": false,
+              "_useTempEmitter": false,
+              "followMountPoint": false,
+              "mountPoint": 0,
+              "targetSettings": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "",
+                "targetSource": 4
+              },
+              "timeDilationFadeInDurationMs": 100,
+              "timeDilationFadeOutDurationMs": 500,
+              "timeDilationPauseThreshold": 0.699999988079071,
+              "timeDilationSeekThreshold": 0.4000000059604645,
+              "useTimeDilationPauseAndSeek": false,
+              "useWeaponMountPoint": false,
+              "weaponIndex": 0,
+              "weaponMountPoint": 0
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 0
+    }
+  ],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 20.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_eny_0081_ruanyi_P1_weakness",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 0,
+  "maxTriggerCnt": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 5,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "",
+    "stackingType": 8,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "timer",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": true
+}

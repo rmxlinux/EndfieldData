@@ -1,0 +1,579 @@
+{
+  "abilityEventAction": [],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [
+    {
+      "isDynamic": true,
+      "key": "behit",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    },
+    {
+      "isDynamic": true,
+      "key": "random_tar",
+      "valueDouble": 0.0,
+      "valueStr": ""
+    }
+  ],
+  "buffEventAction": [
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.GetAITransDataAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "aiTransKey": "ruanyi_skillpoint01",
+              "saveTo": "skillpoint"
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.GetAITransDataAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 1,
+              "aiTransKey": "ruanyi_centerpoint",
+              "saveTo": "center"
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 2,
+              "advancedSelectorDirection": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "center": 0,
+              "centerContextKey": "",
+              "centerMountPoint": 0,
+              "centerToGround": false,
+              "contextKey": "",
+              "selectorData": {
+                "finderData": {
+                  "$type": "Beyond.Gameplay.Core.Selector+InFightEnemyFinder+Data, Gameplay.Beyond"
+                },
+                "postProcessorData": [],
+                "validatorData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.Selector+TagValidator+Data, Gameplay.Beyond",
+                    "query": {
+                      "queryType": 0,
+                      "tags": [
+                        {
+                          "tagId": 1987514642
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "selectorDirection": 0,
+              "selectorOwner": 1,
+              "selectorOwnerContextKey": "",
+              "target": 0,
+              "targetGroupKey": "ruanyi",
+              "useAdvancedDirectionSetting": false,
+              "useCenterEntityMountPoint": false
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 3,
+              "alwaysNext": true,
+              "conditionAction": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.CheckDistanceCondition+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 4,
+                    "containsHittableObj": false,
+                    "distance": 20.0,
+                    "includeTargetRadius": false,
+                    "lessThan": true,
+                    "source": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": "",
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": "",
+                      "selectorData": {
+                        "finderData": null,
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 0,
+                      "targetContextKey": "",
+                      "targetGroupKey": "center",
+                      "targetSource": 2
+                    },
+                    "target": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": "",
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": "",
+                      "selectorData": {
+                        "finderData": null,
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 0,
+                      "targetContextKey": "",
+                      "targetGroupKey": "ruanyi",
+                      "targetSource": 2
+                    }
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "failActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 6,
+                    "advancedSelectorDirection": {
+                      "clampToXZ": true,
+                      "customSourceAndTarget": false,
+                      "directionType": 0,
+                      "invertDirection": false,
+                      "source": null,
+                      "sourceMountPoint": 0,
+                      "target": null,
+                      "targetMountPoint": 0
+                    },
+                    "center": 4,
+                    "centerContextKey": "ruanyi",
+                    "centerMountPoint": 0,
+                    "centerToGround": false,
+                    "contextKey": "center",
+                    "selectorData": {
+                      "finderData": {
+                        "$type": "Beyond.Gameplay.Core.Selector+FixedPointFinder+Data, Gameplay.Beyond",
+                        "positionOffset": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "z": 8.0
+                        },
+                        "rotationOffset": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "z": 0.0,
+                          "w": 1.0
+                        },
+                        "sampleRadius": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 0.0
+                        },
+                        "snapToNavmesh": true
+                      },
+                      "postProcessorData": [],
+                      "validatorData": []
+                    },
+                    "selectorDirection": 2,
+                    "selectorOwner": 4,
+                    "selectorOwnerContextKey": "ruanyi",
+                    "target": 4,
+                    "targetGroupKey": "tele_point",
+                    "useAdvancedDirectionSetting": false,
+                    "useCenterEntityMountPoint": false
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "succeedActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 5,
+                    "advancedSelectorDirection": {
+                      "clampToXZ": false,
+                      "customSourceAndTarget": false,
+                      "directionType": 1,
+                      "invertDirection": false,
+                      "source": {
+                        "advancedDirection": {
+                          "clampToXZ": true,
+                          "customSourceAndTarget": false,
+                          "directionType": 0,
+                          "invertDirection": false,
+                          "source": null,
+                          "sourceMountPoint": 0,
+                          "target": null,
+                          "targetMountPoint": 0
+                        },
+                        "centerContextKey": "",
+                        "centerToGround": false,
+                        "centerType": 0,
+                        "enableAdvancedDirection": false,
+                        "ownerContextKey": "",
+                        "selectorData": {
+                          "finderData": null,
+                          "postProcessorData": [],
+                          "validatorData": []
+                        },
+                        "selectorDirection": 0,
+                        "selectorOwner": 1,
+                        "target": 0,
+                        "targetContextKey": "",
+                        "targetGroupKey": "center",
+                        "targetSource": 4
+                      },
+                      "sourceMountPoint": 0,
+                      "target": {
+                        "advancedDirection": {
+                          "clampToXZ": true,
+                          "customSourceAndTarget": false,
+                          "directionType": 0,
+                          "invertDirection": false,
+                          "source": null,
+                          "sourceMountPoint": 0,
+                          "target": null,
+                          "targetMountPoint": 0
+                        },
+                        "centerContextKey": "",
+                        "centerToGround": false,
+                        "centerType": 0,
+                        "enableAdvancedDirection": false,
+                        "ownerContextKey": "",
+                        "selectorData": {
+                          "finderData": null,
+                          "postProcessorData": [],
+                          "validatorData": []
+                        },
+                        "selectorDirection": 0,
+                        "selectorOwner": 1,
+                        "target": 0,
+                        "targetContextKey": "",
+                        "targetGroupKey": "skillpoint",
+                        "targetSource": 2
+                      },
+                      "targetMountPoint": 0
+                    },
+                    "center": 4,
+                    "centerContextKey": "ruanyi",
+                    "centerMountPoint": 0,
+                    "centerToGround": true,
+                    "contextKey": "skillpoint",
+                    "selectorData": {
+                      "finderData": {
+                        "$type": "Beyond.Gameplay.Core.Selector+RandomPointFinder+Data, Gameplay.Beyond",
+                        "angle": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 90.0
+                        },
+                        "extent2D": {
+                          "x": {
+                            "blackboardKey": "",
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          },
+                          "y": {
+                            "blackboardKey": "",
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          }
+                        },
+                        "localPlaneRotationEulers": {
+                          "x": {
+                            "blackboardKey": "",
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          },
+                          "y": {
+                            "blackboardKey": "",
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          },
+                          "z": {
+                            "blackboardKey": "",
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          }
+                        },
+                        "minRadius": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 7.0
+                        },
+                        "pointNum": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 1.0
+                        },
+                        "radius": {
+                          "blackboardKey": "",
+                          "useBlackboardKey": false,
+                          "value": 10.0
+                        },
+                        "shape": 1,
+                        "snapToNavMesh": true,
+                        "useExtraJitter": false
+                      },
+                      "postProcessorData": [],
+                      "validatorData": []
+                    },
+                    "selectorDirection": 3,
+                    "selectorOwner": 4,
+                    "selectorOwnerContextKey": "ruanyi",
+                    "target": 4,
+                    "targetGroupKey": "tele_point",
+                    "useAdvancedDirectionSetting": false,
+                    "useCenterEntityMountPoint": false
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.TeleportAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 7,
+              "actionOnTargetPointInvalid": {
+                "actionData": [],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "allowCheckMainCharPosToDestPathAvailable": false,
+              "checkMaxDistance": true,
+              "clampDirToXZ": true,
+              "ignoreNavmeshLink": true,
+              "maxDistance": 100.0,
+              "radius": {
+                "blackboardKey": "",
+                "useBlackboardKey": false,
+                "value": 0.0
+              },
+              "snapToFloor": true,
+              "teleportTo": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "tele_point",
+                "targetSource": 2
+              },
+              "throughWall": false
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.SelfRotateAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 8,
+              "advancedDirectionSettings": {
+                "clampToXZ": true,
+                "customSourceAndTarget": false,
+                "directionType": 0,
+                "invertDirection": false,
+                "source": null,
+                "sourceMountPoint": 0,
+                "target": null,
+                "targetMountPoint": 0
+              },
+              "ignoreImmobilized": false,
+              "immediateRotate": true,
+              "isRootMotionScale": false,
+              "overrideRotateRate": false,
+              "rootMotion": false,
+              "rootMotionAnimKey": "",
+              "rootMotionDirectionType": 1,
+              "rootMotionStartFrame": 0,
+              "rotateDirType": 0,
+              "rotateRate": 0.0,
+              "rotateType": 0,
+              "targetSettings": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": "",
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": "",
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": "",
+                "targetGroupKey": "ruanyi",
+                "targetSource": 2
+              },
+              "useAdvancedDirectionSetting": false
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 0
+    }
+  ],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 1.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_eny_0081_ruanyi_skill_01_teleover",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 0,
+  "maxTriggerCnt": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": -1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 0,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 1.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "ruanyi_abilityentity",
+    "stackingType": 0,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": -1.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": true
+}

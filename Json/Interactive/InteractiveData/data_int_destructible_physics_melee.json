@@ -1,0 +1,1573 @@
+{
+  "id": "int_destructible_physics_melee",
+  "factionIndex": 4,
+  "name": "int_destructible_physics_melee",
+  "bornTag": [
+    {
+      "tagId": 1717826765
+    },
+    {
+      "tagId": 152398297
+    },
+    {
+      "tagId": -1843522611
+    },
+    {
+      "tagId": -1959005098
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_obstaclerock+1_001_02_postmodel",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.HittableComponentForIntData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "extent",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1075838976,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1075838976,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1055957975,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1056964608,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "height",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "load_from_table",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "active_skill",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "passive_skill",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "skill_blackboard",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "battle_enable_extra_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "bomb_check_ignore_raycast",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "use_self_blackboard",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "play_battle_hit_effect",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "trigger_hit_cd",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "disable_added_buff",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "skill_blackboard_self",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        }
+      ],
+      "battleShapeData": {
+        "_center": {
+          "x": 0.0,
+          "y": 0.4699999988079071,
+          "z": 0.0
+        },
+        "_centerXKey": null,
+        "_centerYKey": null,
+        "_centerZKey": null,
+        "_extent": {
+          "x": 3.0,
+          "y": 2.5,
+          "z": 2.5
+        },
+        "_extentXKey": null,
+        "_extentYKey": null,
+        "_extentZKey": null,
+        "_height": 1.0,
+        "_heightKey": null,
+        "_radius": 0.5,
+        "_radiusKey": null,
+        "_rotationOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "_shape": 0,
+        "_useCenterKey": false,
+        "_useExtentKey": false
+      },
+      "enableExtraCheck": false
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.SimpleAnimatorComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAudioData, Gameplay.Beyond",
+      "propertyList": [],
+      "audioData": {
+        "audioNameDict": {
+          "13": [
+            "au_int_destructible_physics_bigwooden_boom"
+          ]
+        },
+        "customAudioData": [],
+        "openAudio": true,
+        "useActiveStencil": false,
+        "useAttackStencil": false,
+        "useCollectStencil": false,
+        "useCustomStencil": false,
+        "useDestroyStencil": true,
+        "useDynamicLevel": false,
+        "useInteractStencil": false,
+        "useRepairStencil": false,
+        "useTiggerStencil": false,
+        "useWorkStencil": false
+      }
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.AttackTriggerComponentForIntData, Gameplay.Beyond",
+      "propertyList": null,
+      "propertyStateData": [
+        {
+          "attackTags": 2,
+          "checkPerformTag": false,
+          "conditionExpression": "",
+          "conditions": [],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.0,
+          "optionIcon": "",
+          "optionName": {
+            "key": ""
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 0,
+          "triggerType": 3
+        },
+        {
+          "attackTags": 4,
+          "checkPerformTag": false,
+          "conditionExpression": "",
+          "conditions": [],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.0,
+          "optionIcon": "",
+          "optionName": {
+            "key": ""
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 1,
+          "triggerType": 3
+        },
+        {
+          "attackTags": 8,
+          "checkPerformTag": false,
+          "conditionExpression": "",
+          "conditions": [],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.0,
+          "optionIcon": "",
+          "optionName": {
+            "key": ""
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 2,
+          "triggerType": 3
+        }
+      ],
+      "triggerBehaviourBase": null
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveDestructibleComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "allow_physical",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "allow_bomb",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "allow_interactive_damage",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "reward_entities",
+          "value": {
+            "type": 14,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveCommonPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "use_dynamic_res",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "dynamic_entity_id",
+          "value": {
+            "type": 26,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "propertyDataList": [
+        {
+          "isProperty": false,
+          "propertyName": "isDead",
+          "propertyType": 5
+        }
+      ],
+      "syncGameplayLock": false
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractivePhysicsDestructibleComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "node_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "P_shards_obstaclerock+1_001_02"
+              }
+            ]
+          }
+        },
+        {
+          "key": "apply_freeze",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "freeze_time",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveHintPerformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "is_enable_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_outline_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_interact_outline",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_interact_outline_fx_name",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interact_outline_fx_name",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_enable_brushing",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_override_brushing_distance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "min_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "max_brushing_distance",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "disable_when_has_perform_tag",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "special_mode_config",
+          "value": {
+            "type": 4,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "override_special_mode_list",
+          "value": {
+            "type": 4,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_outline_name_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_outline_name_list",
+          "value": {
+            "type": 8,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "is_override_special_mode_brushing_distance_list",
+          "value": {
+            "type": 2,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_min_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "override_special_mode_brushing_max_distance_list",
+          "value": {
+            "type": 6,
+            "valueArray": []
+          }
+        }
+      ]
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 3.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "allow_bomb",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "allow_physical",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "freeze_time",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1073741824,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "reward_entities",
+      "value": {
+        "type": 14,
+        "valueArray": []
+      }
+    },
+    {
+      "key": "wait_time",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1077936128,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "6": "state",
+    "1025": "allow_bomb",
+    "1026": "allow_physical",
+    "1027": "wait_time",
+    "1028": "freeze_time",
+    "1029": "reward_entities"
+  },
+  "propertyKeyToIdMap": {
+    "allow_bomb": 1025,
+    "allow_physical": 1026,
+    "freeze_time": 1028,
+    "reward_entities": 1029,
+    "state": 6,
+    "wait_time": 1027
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {
+    "int_rock_map02_ice_001_05": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_HittableComponentForInt": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": -1067450368,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "extent",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1088421888,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractiveDestructible": {
+          "value": [
+            {
+              "key": "allow_interactive_damage",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 1,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractiveHintPerform": {
+          "value": [
+            {
+              "key": "is_enable_brushing",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 1,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractivePhysicsDestructible": {
+          "value": [
+            {
+              "key": "node_name",
+              "value": {
+                "type": 7,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "P_shards_map02_ice+1_001_01"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_rock_map02_ice_001_05_postmodel"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_shards_woodenbox+1_001_01": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_HittableComponentForInt": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1065353216,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "extent",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1075838976,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1075838976,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1075838976,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractivePhysicsDestructible": {
+          "value": [
+            {
+              "key": "node_name",
+              "value": {
+                "type": 7,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "P_shards_destructible+1_001_01"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_woodenbox_001_01_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_shards_woodenbox+1_001_02": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_HittableComponentForInt": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1065353216,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "extent",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1077936128,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1075838976,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1082549862,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractivePhysicsDestructible": {
+          "value": [
+            {
+              "key": "node_name",
+              "value": {
+                "type": 7,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "P_shards_destructible+1_001_02"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_woodenbox_001_02_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_woodenbox_003_01": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_HittableComponentForInt": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1061158912,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "extent",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractiveDestructible": {
+          "value": [
+            {
+              "key": "allow_interactive_damage",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 1,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractivePhysicsDestructible": {
+          "value": [
+            {
+              "key": "node_name",
+              "value": {
+                "type": 7,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "P_shards_dung01_rdg007box+1_001_01"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_woodenbox_003_01_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_woodenbox_003_02": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_HittableComponentForInt": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1061158912,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "extent",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractiveDestructible": {
+          "value": [
+            {
+              "key": "allow_interactive_damage",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 1,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractivePhysicsDestructible": {
+          "value": [
+            {
+              "key": "node_name",
+              "value": {
+                "type": 7,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "P_shards_dung01_rdg007box+1_001_02"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_woodenbox_003_02_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_woodenbox_003_03": {
+      "aoiRadiusType": {
+        "enabled": true,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": true,
+        "value": [
+          {
+            "tagId": 1717826765
+          },
+          {
+            "tagId": 152398297
+          },
+          {
+            "tagId": -1843522611
+          },
+          {
+            "tagId": -1959005098
+          }
+        ]
+      },
+      "componentDiffProperties": {
+        "Comp_HittableComponentForInt": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1061158912,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "extent",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 1069547520,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractiveDestructible": {
+          "value": [
+            {
+              "key": "allow_interactive_damage",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 1,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_InteractivePhysicsDestructible": {
+          "value": [
+            {
+              "key": "node_name",
+              "value": {
+                "type": 7,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": "P_shards_dung01_rdg007box+1_001_03"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": true,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": true,
+        "value": 3.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": true,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": true,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": true,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_woodenbox_003_03_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    }
+  },
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

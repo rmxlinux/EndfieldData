@@ -1,0 +1,465 @@
+{
+  "id": "int_rotateplatform",
+  "factionIndex": 4,
+  "name": "int_rotateplatform",
+  "bornTag": [
+    {
+      "tagId": -1672050065
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_rotateplatform_02",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveLogicControllerComponentData, Gameplay.Beyond",
+      "logicType": 25,
+      "propertyList": [
+        {
+          "key": "logic_type",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 25,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAudioData, Gameplay.Beyond",
+      "propertyList": [],
+      "audioData": {
+        "audioNameDict": {},
+        "customAudioData": [
+          {
+            "audioEvent": "au_int_rotateplatform_rotate_normal_start",
+            "audioState": "RotateNormalStart",
+            "desc": "普通旋转时的Start"
+          },
+          {
+            "audioEvent": "au_int_rotateplatform_rotate_normal_loop",
+            "audioState": "RotateNormalLoop",
+            "desc": "普通旋转时的旋转Loop"
+          },
+          {
+            "audioEvent": "au_int_rotateplatform_rotate_normal_end",
+            "audioState": "RotateNormalEnd",
+            "desc": "普通旋转时的End"
+          },
+          {
+            "audioEvent": "au_int_rotateplatform_rotate_near_end",
+            "audioState": "RotateNearEnd",
+            "desc": "缺旋转到正确位置时的End"
+          },
+          {
+            "audioEvent": "au_int_rotateplatform_rotate_over_start",
+            "audioState": "RotateOverStart",
+            "desc": "从正确位置转开时的Start"
+          },
+          {
+            "audioEvent": "au_int_rotateplatform_port_extense",
+            "audioState": "PortExtense",
+            "desc": "转到正确位置时伸出接口"
+          },
+          {
+            "audioEvent": "au_int_rotateplatform_port_retract",
+            "audioState": "PortRetract",
+            "desc": "从正确位置转开时缩回接口"
+          }
+        ],
+        "openAudio": true,
+        "useActiveStencil": false,
+        "useAttackStencil": false,
+        "useCollectStencil": false,
+        "useCustomStencil": true,
+        "useDestroyStencil": false,
+        "useDynamicLevel": false,
+        "useInteractStencil": false,
+        "useRepairStencil": false,
+        "useTiggerStencil": false,
+        "useWorkStencil": false
+      }
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "circle_total_step",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 4,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "distance",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1112014848,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "is_clockwise",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "is_in",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "model_group_id",
+      "value": {
+        "type": 7,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "belt_rocks"
+          }
+        ]
+      }
+    },
+    {
+      "key": "move_speed",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1073741824,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "rotate_speed",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1106247680,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "target_list",
+      "value": {
+        "type": 14,
+        "valueArray": []
+      }
+    },
+    {
+      "key": "target_step",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "toast_failed",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": {
+    "actionList": [
+      {
+        "$type": "Beyond.Gameplay.Actions.CheckBoolIfTrue, Gameplay.Beyond",
+        "_dontLogWarning": false,
+        "_ID": 4,
+        "_releaseWhenExecutionFinished": false,
+        "_uid": "c6328f41",
+        "scopeMask": 1,
+        "useCurrentScope": true,
+        "useGraphScope": true,
+        "_nextID": 5,
+        "_value": {
+          "constValue": false,
+          "idRef": -1,
+          "paramSource": 300,
+          "path": "is_rotating"
+        }
+      },
+      {
+        "$type": "Beyond.Gameplay.Actions.CallServer, Gameplay.Beyond",
+        "_dontLogWarning": false,
+        "_ID": 5,
+        "_releaseWhenExecutionFinished": false,
+        "_uid": "5760354c",
+        "scopeMask": 1,
+        "useCurrentScope": true,
+        "useGraphScope": true,
+        "_nextID": -1,
+        "_callClientOutputUIDs": null,
+        "_eventArgsPtr": {
+          "constValue": {
+            "key": "event_args"
+          },
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        },
+        "_eventName": {
+          "constValue": "#5760354c",
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        },
+        "_useCustomEvent": false,
+        "_waitForCallback": true,
+        "_withEventArgs": false
+      },
+      {
+        "$type": "Beyond.Gameplay.RotatePlatform, Gameplay.Beyond",
+        "_dontLogWarning": false,
+        "_ID": 10,
+        "_releaseWhenExecutionFinished": false,
+        "_uid": "18dd215f",
+        "scopeMask": 1,
+        "useCurrentScope": true,
+        "useGraphScope": true,
+        "_nextID": -1
+      }
+    ],
+    "getterList": [],
+    "headerList": [
+      {
+        "$type": "Beyond.Gameplay.Actions.EntityEvent.OnEntityStart, Gameplay.Beyond",
+        "_dontLogWarning": false,
+        "_ID": 3,
+        "_releaseWhenExecutionFinished": false,
+        "_uid": "c99f14d5",
+        "scopeMask": 1,
+        "useCurrentScope": false,
+        "useGraphScope": true,
+        "_filterLevel": 0,
+        "_filterMask": 0,
+        "_filterMode": false,
+        "_nextID": 4,
+        "_priority": 0,
+        "_triggerActiveDuring": 0,
+        "_validate": {
+          "constValue": true,
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        },
+        "_targetEntity": null,
+        "_targetEntityList": {
+          "constValue": null,
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        },
+        "_targetEntityListOutput": null,
+        "_triggerTarget": 0
+      },
+      {
+        "$type": "Beyond.Gameplay.Actions.EntityEvent.OnCustomEventNew, Gameplay.Beyond",
+        "_dontLogWarning": false,
+        "_ID": 9,
+        "_releaseWhenExecutionFinished": false,
+        "_uid": "803b41c8",
+        "scopeMask": 1,
+        "useCurrentScope": false,
+        "useGraphScope": true,
+        "_filterLevel": 0,
+        "_filterMask": 0,
+        "_filterMode": false,
+        "_nextID": 10,
+        "_priority": 0,
+        "_triggerActiveDuring": 0,
+        "_validate": {
+          "constValue": true,
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        },
+        "_targetEntity": null,
+        "_targetEntityList": {
+          "constValue": null,
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        },
+        "_targetEntityListOutput": null,
+        "_triggerTarget": 0,
+        "_eventArgsPtr": null,
+        "_eventKey": {
+          "constValue": "#803b41c8",
+          "idRef": -1,
+          "paramSource": 0,
+          "path": null
+        }
+      }
+    ]
+  },
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "8": "state",
+    "14": "is_rotating",
+    "1027": "target_list",
+    "1028": "distance",
+    "1029": "model_group_id",
+    "1030": "circle_total_step",
+    "1031": "target_step",
+    "1033": "move_speed",
+    "1034": "rotate_speed",
+    "1035": "is_in",
+    "1036": "is_clockwise",
+    "1037": "toast_failed"
+  },
+  "propertyKeyToIdMap": {
+    "circle_total_step": 1030,
+    "distance": 1028,
+    "is_clockwise": 1036,
+    "is_in": 1035,
+    "is_rotating": 14,
+    "model_group_id": 1029,
+    "move_speed": 1033,
+    "rotate_speed": 1034,
+    "state": 8,
+    "target_list": 1027,
+    "target_step": 1031,
+    "toast_failed": 1037
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [
+    {
+      "key": "is_rotating",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {
+    "int_rotateplatform2": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": false,
+        "value": null
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    }
+  },
+  "tempProperties": [],
+  "useGlobalVar": false,
+  "useMapVar": false
+}

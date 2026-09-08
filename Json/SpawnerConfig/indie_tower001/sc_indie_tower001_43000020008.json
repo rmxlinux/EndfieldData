@@ -1,0 +1,214 @@
+{
+  "configId": "sc_indie_tower001_43000020008",
+  "enemyLibrary": [
+    {
+      "bornBehaviorData": null,
+      "bornBuffList": [
+        {
+          "blackboard": [],
+          "buffId": "buff_common_born"
+        },
+        {
+          "blackboard": [
+            {
+              "key": "ratio",
+              "useString": false,
+              "valueFloat": 3.0,
+              "valueString": null
+            }
+          ],
+          "buffId": "buff_dung_maxhp_01"
+        },
+        {
+          "blackboard": [
+            {
+              "key": "id",
+              "useString": false,
+              "valueFloat": 2.0,
+              "valueString": null
+            },
+            {
+              "key": "tar_1",
+              "useString": false,
+              "valueFloat": 1.0,
+              "valueString": null
+            },
+            {
+              "key": "tar_2",
+              "useString": false,
+              "valueFloat": 0.0,
+              "valueString": null
+            },
+            {
+              "key": "tar_3",
+              "useString": false,
+              "valueFloat": 0.0,
+              "valueString": null
+            }
+          ],
+          "buffId": "buff_eny_0089_wgreflect_base_tower010"
+        },
+        {
+          "blackboard": [
+            {
+              "key": "superarmor",
+              "useString": false,
+              "valueFloat": 35.0,
+              "valueString": null
+            }
+          ],
+          "buffId": "buff_common_superarmor"
+        },
+        {
+          "blackboard": [
+            {
+              "key": "value_int",
+              "useString": false,
+              "valueFloat": 1.0,
+              "valueString": null
+            }
+          ],
+          "buffId": "buff_dung_maxpoisemulti"
+        }
+      ],
+      "bornTemplateId": null,
+      "enemyId": "eny_0089_wgreflec_tower010",
+      "enemyLevel": 75,
+      "forceToBattle": false,
+      "key": "D081A5C6",
+      "overrideAIConfig": "EnemyEnterBattle",
+      "patrolGait": 0,
+      "preWarnAudioEventKey": "au_interactive_monsterspawn_wg_1s",
+      "preWarnEffectFixedRotation": {
+        "enabled": false,
+        "value": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      "preWarnEffectKey": "P_fxbat_monsterspawn_wg_01",
+      "preWarnTime": 1.0
+    }
+  ],
+  "routeMap": {
+    "9": {
+      "patrolData": {
+        "actions": [],
+        "addBornPositionAsCheckpoint": true,
+        "bornMoveStyle": 0,
+        "bornOverrideSpeed": 4.0,
+        "bornPositionWaitDuration": 0.0,
+        "changePlayerMoveStyle": false,
+        "coolDownBetweenWalkAndStop": 1.0,
+        "enableBornAction": false,
+        "enableBornSpeedOverride": false,
+        "forbidNpcInteract": true,
+        "forcePlayerMoveStyle": 0,
+        "id": 0,
+        "inLocalSpace": false,
+        "isLimitPlayerActionWhenGaitLimit": false,
+        "isStopDistance": false,
+        "isUseCatmull": false,
+        "limitPlayerActionType": -1,
+        "loop": 0,
+        "motionEnterDis": 10.0,
+        "motionType": 3,
+        "moveStyleWithoutLead": 0,
+        "pauseActionWhenPatrolDisabled": false,
+        "playerChangeLimitDelayTime": 0.0,
+        "runAheadRadius": 0.0,
+        "runBehindRadius": 0.0,
+        "snap": 1,
+        "sprintAheadRadius": 0.0,
+        "sprintBehindRadius": 0.0,
+        "stop2WalkBufferTime": 0.0,
+        "stopWalkInplace": false,
+        "turnCheck": false,
+        "turnCheckAngle": 45.0,
+        "turnCheckDis": 30.0,
+        "turnCheckTime": 5.0,
+        "turnRadio": 0.800000011920929,
+        "usePatrolPointEnterGaitAsLimitGait": false,
+        "useWorldOffset": false,
+        "waitDistance": 0.0,
+        "worldOffset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      "routeId": 9
+    }
+  },
+  "settings": {
+    "autoComplete": false,
+    "enemyLevelUseLevelGrade": false,
+    "forbidDrop": true,
+    "noNavmeshMove": false,
+    "preloadEffectKeyList": [
+      "P_fxbat_monsterspawn_common_01_asset"
+    ],
+    "stopExploreMusic": true
+  },
+  "waveMap": {
+    "1": {
+      "deadlineBeginDeltaTime": 0.0,
+      "groupMap": {
+        "1": {
+          "actionMap": {
+            "1": {
+              "$type": "Beyond.Gameplay.SpawnerActions+SpawnMonsterFromTemplateV2, Gameplay.Beyond",
+              "actionId": 9,
+              "timestamp": 1.0,
+              "faceMainCharacter": true,
+              "libraryKey": "D081A5C6",
+              "position": {
+                "x": 1.430511474609375e-06,
+                "y": 0.19238969683647156,
+                "z": 13.500000953674316
+              },
+              "randomizeEndPointRadius": 0.0,
+              "randomizeRadius": 0.0,
+              "rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "routeId": 9,
+              "spawnCount": 1,
+              "spawnInterval": 0.0,
+              "startPointInvalid": false
+            },
+            "2": {
+              "$type": "Beyond.Gameplay.SpawnerActions+Pause, Gameplay.Beyond",
+              "actionId": 38,
+              "timestamp": 1.100000023841858,
+              "pauseKey": "Ps"
+            }
+          },
+          "deadlineBeginDeltaTime": 0.0,
+          "groupBackUpCount": 1,
+          "groupId": 2,
+          "groupKey": "G00",
+          "groupMaxCount": 1,
+          "groupMode": 0,
+          "groupModeKillCount": 0,
+          "groupModeTargetKey": null,
+          "hasDeadlineBegin": false,
+          "limitGroupMaxCount": false,
+          "timestamp": 0.0
+        }
+      },
+      "hasDeadlineBegin": false,
+      "isHidden": false,
+      "repeatable": true,
+      "timestamp": 1.5,
+      "waveId": 1,
+      "waveKey": null,
+      "waveMode": 0,
+      "waveModeKillCount": 0,
+      "waveModeTargetKey": null
+    }
+  }
+}

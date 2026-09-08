@@ -1,0 +1,1425 @@
+{
+  "id": "int_movingplat",
+  "factionIndex": 4,
+  "name": "int_movingplat",
+  "bornTag": [
+    {
+      "tagId": 602820708
+    },
+    {
+      "tagId": -1672050065
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_movingplat_4mx4m",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.ClickTriggerComponentForIntData, Gameplay.Beyond",
+      "propertyList": null,
+      "propertyStateData": [
+        {
+          "attackTags": 0,
+          "checkPerformTag": false,
+          "conditionExpression": "A&&B",
+          "conditions": [
+            {
+              "conditionType": 1,
+              "gameEventsUpdateConfig": {
+                "events": [],
+                "needHide": false
+              },
+              "groupName": "A",
+              "levelEntityConfig": {
+                "isEnabled": false
+              },
+              "noUseConfig": {
+                "isUnlock": false
+              },
+              "propertyData": {
+                "bValue": true,
+                "compareType": 0,
+                "propertyName": "allow_turnon_inside",
+                "useBool": true,
+                "value": 0
+              },
+              "systemStateConfig": {
+                "succeed": false,
+                "systemState": 0,
+                "systemType": 0
+              },
+              "systemUnlockConfig": {
+                "isInvert": false,
+                "systemType": 0
+              },
+              "targetEntityConfig": {
+                "ignore": false,
+                "ignorePropertyName": "",
+                "propertyName": "",
+                "target": null,
+                "value": 0
+              }
+            },
+            {
+              "conditionType": 1,
+              "gameEventsUpdateConfig": {
+                "events": [],
+                "needHide": false
+              },
+              "groupName": "B",
+              "levelEntityConfig": {
+                "isEnabled": false
+              },
+              "noUseConfig": {
+                "isUnlock": false
+              },
+              "propertyData": {
+                "bValue": false,
+                "compareType": 1,
+                "propertyName": "state",
+                "useBool": false,
+                "value": 1
+              },
+              "systemStateConfig": {
+                "succeed": false,
+                "systemState": 0,
+                "systemType": 0
+              },
+              "systemUnlockConfig": {
+                "isInvert": false,
+                "systemType": 0
+              },
+              "targetEntityConfig": {
+                "ignore": false,
+                "ignorePropertyName": "",
+                "propertyName": "",
+                "target": null,
+                "value": 0
+              }
+            }
+          ],
+          "eventId": "",
+          "expectedNewValue": 0,
+          "hasCustomLevelEvent": false,
+          "ignoreClientExpectedValue": false,
+          "ignoreInSpace": false,
+          "invokeOnceBeforeEndScan": true,
+          "isContinuous": false,
+          "logicCD": 0.0,
+          "optionIcon": "",
+          "optionName": {
+            "key": "lang_int_movingplat_option"
+          },
+          "performTag": 1,
+          "stepOnForceTrigger": false,
+          "stepOnStayTime": 0.0,
+          "triggerBasePropertyChanged": false,
+          "triggerId": 0,
+          "triggerType": 1
+        }
+      ],
+      "triggerBehaviourBase": null
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveMovingPlatformComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "allow_turnon_inside",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "delay",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "speed",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "wait_time",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "current_pos_index",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.TriggerObserverComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "shape",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "center",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "size",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 1082130432,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1073741824,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1082130432,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "interactive_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_offset",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_area_height",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1084227584,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1135869952,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "check_angle_offset",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "player_direction_check",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "is_important",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "in_trigger_volume_performance",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "a": 0,
+      "b": 0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.KeepRelativeOffsetComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "value_bool",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "dont_log_error",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "target_list",
+          "value": {
+            "type": 14,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "follow_type",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "position_list",
+          "value": {
+            "type": 12,
+            "valueArray": []
+          }
+        },
+        {
+          "key": "rotation_list",
+          "value": {
+            "type": 12,
+            "valueArray": []
+          }
+        }
+      ]
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAudioData, Gameplay.Beyond",
+      "propertyList": [],
+      "audioData": {
+        "audioNameDict": {},
+        "customAudioData": [
+          {
+            "audioEvent": "au_int_movingplat_start",
+            "audioState": "start_move",
+            "desc": "开始移动"
+          },
+          {
+            "audioEvent": "au_int_movingplat_turn",
+            "audioState": "change_direction",
+            "desc": "对于停留时间小于一个阈值（0.2s）的移动平台，将其【单次移动结束+第二次移动开始】合并为转换方向"
+          },
+          {
+            "audioEvent": "au_int_movingplat_end",
+            "audioState": "stop",
+            "desc": "结束移动"
+          }
+        ],
+        "openAudio": true,
+        "useActiveStencil": false,
+        "useAttackStencil": false,
+        "useCollectStencil": false,
+        "useCustomStencil": true,
+        "useDestroyStencil": false,
+        "useDynamicLevel": false,
+        "useInteractStencil": false,
+        "useRepairStencil": false,
+        "useTiggerStencil": false,
+        "useWorkStencil": false
+      }
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "allow_turnon_inside",
+      "value": {
+        "type": 1,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "delay",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "option_general",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "lang_int_movingplat_option"
+          }
+        ]
+      }
+    },
+    {
+      "key": "position_list",
+      "value": {
+        "type": 12,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1084143698,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1092857364,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "speed",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1077936128,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "wait_time",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1077936128,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "6": "state",
+    "7": "current_pos_index",
+    "1027": "position_list",
+    "1032": "speed",
+    "1033": "allow_turnon_inside",
+    "1034": "wait_time",
+    "1035": "option_general",
+    "1036": "delay"
+  },
+  "propertyKeyToIdMap": {
+    "allow_turnon_inside": 1033,
+    "current_pos_index": 7,
+    "delay": 1036,
+    "option_general": 1035,
+    "position_list": 1027,
+    "speed": 1032,
+    "state": 6,
+    "wait_time": 1034
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [
+    {
+      "key": "current_pos_index",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "state",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 1,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {
+    "int_elevator_rdg003": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_InteractiveMovingPlatform": {
+          "value": [
+            {
+              "key": "allow_turnon_inside",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "state",
+              "value": {
+                "type": 3,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "wait_time",
+              "value": {
+                "type": 5,
+                "valueArray": [
+                  {
+                    "valueBit64": 1056964608,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [
+        {
+          "key": "allow_turnon_inside",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "delay",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "position_list",
+          "value": {
+            "type": 12,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1084143698,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1092857364,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "speed",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "wait_time",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1056964608,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "current_pos_index",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_rdg003_movable_platform"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_moving_cube_rdg003": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {
+        "Comp_InteractiveMovingPlatform": {
+          "value": [
+            {
+              "key": "allow_turnon_inside",
+              "value": {
+                "type": 1,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "cur_pos_index",
+              "value": {
+                "type": 3,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "state",
+              "value": {
+                "type": 3,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "wait_time",
+              "value": {
+                "type": 5,
+                "valueArray": [
+                  {
+                    "valueBit64": 1056964608,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Comp_TriggerObserver": {
+          "value": [
+            {
+              "key": "center",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            },
+            {
+              "key": "size",
+              "value": {
+                "type": 11,
+                "valueArray": [
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  },
+                  {
+                    "valueBit64": 0,
+                    "valueString": null
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [
+        {
+          "key": "allow_turnon_inside",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "delay",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "position_list",
+          "value": {
+            "type": 12,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1084143698,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1092857364,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "speed",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1077936128,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "wait_time",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1056964608,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "current_pos_index",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_moving_cubeRoom_rdg003"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_movingplat_5mx5m": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_movingplat_5mx5m"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_movingplat_carneArm": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_movingplat_craneArm_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_movingplat_lb": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_movingplat_lb_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_movingplat_mute": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_movingplat_4mx4m"
+      },
+      "mountPoints": {
+        "enabled": false,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_movingplat_rdg005": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": false,
+        "value": null
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    },
+    "int_movingplat_v2": {
+      "aoiRadiusType": {
+        "enabled": false,
+        "value": 0
+      },
+      "bornTag": {
+        "enabled": false,
+        "value": []
+      },
+      "componentDiffProperties": {},
+      "delayRecyclePerformTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "delayToRecycleTime": {
+        "enabled": false,
+        "value": 0.0
+      },
+      "diffProperties": [],
+      "facOccDis": {
+        "enabled": false,
+        "value": 0.5
+      },
+      "factionIndex": {
+        "enabled": false,
+        "value": 4
+      },
+      "globalVarDiff": [],
+      "hideInDialog": {
+        "enabled": false,
+        "value": false
+      },
+      "mapVarDiff": [],
+      "modelId": {
+        "enabled": true,
+        "value": "int_movingplat_4mx4m_new_postmodel"
+      },
+      "mountPoints": {
+        "enabled": true,
+        "value": []
+      },
+      "relatedGuideTimestampGameVar": {
+        "enabled": false,
+        "value": null
+      }
+    }
+  },
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

@@ -1,0 +1,713 @@
+{
+  "airWalls": [],
+  "aiTransData": [],
+  "autoSpawnedInteractives": [],
+  "blackbox": null,
+  "buildableCondition": null,
+  "cameraPoses": [],
+  "charPatrol": [],
+  "doodadGroup": [],
+  "dynamicOccludeAreas": [],
+  "enemies": [],
+  "enemyGroup": [],
+  "enemyPatrol": [],
+  "environmentVolumes": [],
+  "factoryMines": [],
+  "factoryPredefineData": {
+    "powerGates": []
+  },
+  "factoryRegions": [],
+  "functionArea": {
+    "baseData": [],
+    "functionAreaConditions": [],
+    "ranges": [],
+    "specificDatas": []
+  },
+  "guideHints": [],
+  "interactiveLockData": [
+    {
+      "locks": [
+        {
+          "interactiveId": 0,
+          "miniGameIds": [
+            "M01L01_gm01m8_mid_1_1"
+          ],
+          "optionUnlock": {
+            "key": "lang_int_fix_option"
+          },
+          "overrideViewConfigHash": null,
+          "panelBtnTxt": {
+            "key": null
+          },
+          "panelDecoTxt": {
+            "key": null
+          },
+          "panelDesc": {
+            "key": "ui_msc_puzzle_robot_detail"
+          },
+          "panelDescTitle": {
+            "key": null
+          },
+          "panelIconSpritePath": "",
+          "panelTextConfigured": true,
+          "panelTitle": {
+            "key": "lang_robot_v4_0061"
+          },
+          "questId": null,
+          "seamlessBlendToPerf": false,
+          "skipSubmitBoard": false,
+          "submitId": null,
+          "toastFailed": {
+            "key": "lang_int_fix_failed_toast"
+          },
+          "toastSuccess": {
+            "key": "lang_int_fix_success_toast"
+          },
+          "unlockType": 2
+        }
+      ],
+      "logicIdGlobal": 2100120014
+    }
+  ],
+  "interactives": [
+    {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 0,
+      "createState": 1,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_fixable_robot",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 2100120014,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -586.0989990234375,
+        "y": 81.6050033569336,
+        "z": -272.31500244140625
+      },
+      "rotation": {
+        "x": 2.490999937057495,
+        "y": 181.1909942626953,
+        "z": 0.625
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "97": [
+          {
+            "key": "destroy_self",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "132": [
+          {
+            "key": "override_special_mode_list",
+            "value": {
+              "type": 4,
+              "valueArray": []
+            }
+          },
+          {
+            "key": "is_override_special_mode_outline_name_list",
+            "value": {
+              "type": 2,
+              "valueArray": []
+            }
+          },
+          {
+            "key": "override_special_mode_outline_name_list",
+            "value": {
+              "type": 8,
+              "valueArray": []
+            }
+          },
+          {
+            "key": "is_override_special_mode_brushing_distance_list",
+            "value": {
+              "type": 2,
+              "valueArray": []
+            }
+          },
+          {
+            "key": "override_special_mode_brushing_min_distance_list",
+            "value": {
+              "type": 6,
+              "valueArray": []
+            }
+          },
+          {
+            "key": "override_special_mode_brushing_max_distance_list",
+            "value": {
+              "type": 6,
+              "valueArray": []
+            }
+          }
+        ],
+        "160": [
+          {
+            "key": "override_guide_timeliness",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 1,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+            "compareOperator": 0,
+            "compareTarget": 1,
+            "missionId": "gm01m8"
+          },
+          {
+            "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+            "compareOperator": 0,
+            "compareTarget": 2,
+            "missionId": "gm01m8"
+          }
+        ]
+      },
+      "properties": []
+    }
+  ],
+  "levelIdNum": 21,
+  "levelScriptBriefDataDict": {
+    "2100120000": {
+      "dataPath": {
+        "hash": -4545918496339210984
+      },
+      "levelScriptType": 0,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [
+        {
+          "key": "isEnemy",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        }
+      ],
+      "propertyIdToKeyMap": {
+        "11": "isEnemy"
+      },
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120000
+    },
+    "2100120003": {
+      "dataPath": {
+        "hash": 1117094919565352471
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120003
+    },
+    "2100120005": {
+      "dataPath": {
+        "hash": -1898664235238101273
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120005
+    },
+    "2100120006": {
+      "dataPath": {
+        "hash": -4647019166209691773
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120006
+    },
+    "2100120010": {
+      "dataPath": {
+        "hash": 5546535268482385443
+      },
+      "levelScriptType": 0,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [
+        {
+          "key": "m1m6",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        }
+      ],
+      "propertyIdToKeyMap": {
+        "1": "m1m6"
+      },
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120010
+    },
+    "2100120011": {
+      "dataPath": {
+        "hash": -4872055125823336174
+      },
+      "levelScriptType": 0,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [
+        {
+          "key": "Spawned",
+          "value": {
+            "type": 1,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        }
+      ],
+      "propertyIdToKeyMap": {
+        "1": "Spawned"
+      },
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120011
+    },
+    "2100120014": {
+      "dataPath": {
+        "hash": -1687840434018671483
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120014
+    },
+    "2100120015": {
+      "dataPath": {
+        "hash": 7972776554961236340
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120015
+    },
+    "2100120016": {
+      "dataPath": {
+        "hash": 2977065153925351654
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120016
+    },
+    "2100120017": {
+      "dataPath": {
+        "hash": 7554996250228547307
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120017
+    },
+    "2100120018": {
+      "dataPath": {
+        "hash": 3941007969835155205
+      },
+      "levelScriptType": 0,
+      "maxStage": 3,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": [
+        2100120014
+      ],
+      "scriptId": 2100120018
+    },
+    "2100120019": {
+      "dataPath": {
+        "hash": -2200344298952216569
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120019
+    },
+    "2100120020": {
+      "dataPath": {
+        "hash": 9217776210269287142
+      },
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 2100120020
+    }
+  },
+  "levelScriptDataPathDict": {},
+  "levelUIs": [],
+  "levelWideConfigs": {},
+  "mapVolumeDatas": [],
+  "missionAreas": [],
+  "npcAttractPointData": [],
+  "npcClusters": [],
+  "npcGroup": [],
+  "npcPatrol": [
+    {
+      "bornMoveStyle": 0,
+      "bornOverrideSpeed": 4.0,
+      "enableBornAction": false,
+      "enableBornSpeedOverride": false,
+      "forbidNpcInteract": true,
+      "leadConfigSoName": "",
+      "loop": 0,
+      "patrolId": 120000,
+      "pauseActionWhenPatrolDisabled": false,
+      "points": [
+        {
+          "actions": [],
+          "enterGait": -1,
+          "position": {
+            "x": -585.63720703125,
+            "y": 81.50289154052734,
+            "z": -271.11468505859375
+          }
+        },
+        {
+          "actions": [],
+          "enterGait": -1,
+          "position": {
+            "x": -578.0594482421875,
+            "y": 81.44154357910156,
+            "z": -271.2237243652344
+          }
+        },
+        {
+          "actions": [],
+          "enterGait": -1,
+          "position": {
+            "x": -573.1953125,
+            "y": 81.74295043945312,
+            "z": -276.07080078125
+          }
+        },
+        {
+          "actions": [],
+          "enterGait": -1,
+          "position": {
+            "x": -567.722900390625,
+            "y": 81.70755767822266,
+            "z": -283.13299560546875
+          }
+        },
+        {
+          "actions": [],
+          "enterGait": -1,
+          "position": {
+            "x": -562.9998168945312,
+            "y": 81.79149627685547,
+            "z": -285.83184814453125
+          }
+        },
+        {
+          "actions": [],
+          "enterGait": -1,
+          "position": {
+            "x": -560.4467163085938,
+            "y": 81.64321899414062,
+            "z": -287.4582824707031
+          }
+        },
+        {
+          "actions": [
+            {
+              "actionEndType": 0,
+              "animKeyTag": {
+                "tagId": 0
+              },
+              "animMaskType": 0,
+              "animName": "",
+              "configMovementStyle": false,
+              "configSnap": false,
+              "duration": 0.0,
+              "eventBBDataPairs": [],
+              "eventKey": null,
+              "eventToLevelType": 0,
+              "ignoreAnimDis": 0.0,
+              "movementStyle": 0,
+              "npcPlayAnimationTimeEndForceToIdle": false,
+              "overrideSpeed": false,
+              "overrideSpeedValue": 4.0,
+              "radioId": "",
+              "radioWaitTime": 0.0,
+              "radius": 0.0,
+              "repeatAnim": false,
+              "rootMotion": true,
+              "rotationOffset": 0.0,
+              "rotationY": 270.0,
+              "snapToGround": 0,
+              "subActionData": null,
+              "type": 2,
+              "waitTime": 0.0
+            },
+            {
+              "actionEndType": 0,
+              "animKeyTag": {
+                "tagId": 0
+              },
+              "animMaskType": 0,
+              "animName": "",
+              "configMovementStyle": false,
+              "configSnap": false,
+              "duration": 0.0,
+              "eventBBDataPairs": [],
+              "eventKey": null,
+              "eventToLevelType": 0,
+              "ignoreAnimDis": 0.0,
+              "movementStyle": 0,
+              "npcPlayAnimationTimeEndForceToIdle": false,
+              "overrideSpeed": false,
+              "overrideSpeedValue": 4.0,
+              "radioId": "radio_gm01m8_9",
+              "radioWaitTime": 0.0,
+              "radius": 0.0,
+              "repeatAnim": false,
+              "rootMotion": false,
+              "rotationOffset": 0.0,
+              "rotationY": 0.0,
+              "snapToGround": 0,
+              "subActionData": {
+                "$type": "Beyond.Gameplay.Core.PatrolSubActionEnvTalkData, Gameplay.Beyond",
+                "envTalkId": "envTalk_gm01m8_1",
+                "npcId": "npc_gentleman_efengineer_a_05_g01_map01_lv001_gm01m8_001",
+                "overrideNpc": false
+              },
+              "type": 5,
+              "waitTime": 0.0
+            },
+            {
+              "actionEndType": 0,
+              "animKeyTag": {
+                "tagId": 0
+              },
+              "animMaskType": 0,
+              "animName": "",
+              "configMovementStyle": false,
+              "configSnap": false,
+              "duration": 3.0,
+              "eventBBDataPairs": [],
+              "eventKey": null,
+              "eventToLevelType": 0,
+              "ignoreAnimDis": 0.0,
+              "movementStyle": 0,
+              "npcPlayAnimationTimeEndForceToIdle": false,
+              "overrideSpeed": false,
+              "overrideSpeedValue": 4.0,
+              "radioId": "",
+              "radioWaitTime": 0.0,
+              "radius": 0.0,
+              "repeatAnim": false,
+              "rootMotion": false,
+              "rotationOffset": 0.0,
+              "rotationY": 0.0,
+              "snapToGround": 0,
+              "subActionData": null,
+              "type": 1,
+              "waitTime": 0.0
+            }
+          ],
+          "enterGait": -1,
+          "position": {
+            "x": -548.4951171875,
+            "y": 81.74503326416016,
+            "z": -296.04412841796875
+          }
+        },
+        {
+          "actions": [],
+          "enterGait": -1,
+          "position": {
+            "x": -539.9951171875,
+            "y": 81.56356811523438,
+            "z": -300.45587158203125
+          }
+        },
+        {
+          "actions": [],
+          "enterGait": -1,
+          "position": {
+            "x": -533.2393798828125,
+            "y": 81.78091430664062,
+            "z": -308.5360107421875
+          }
+        },
+        {
+          "actions": [
+            {
+              "actionEndType": 0,
+              "animKeyTag": {
+                "tagId": 0
+              },
+              "animMaskType": 0,
+              "animName": "",
+              "configMovementStyle": false,
+              "configSnap": false,
+              "duration": 0.0,
+              "eventBBDataPairs": [],
+              "eventKey": null,
+              "eventToLevelType": 0,
+              "ignoreAnimDis": 0.0,
+              "movementStyle": 0,
+              "npcPlayAnimationTimeEndForceToIdle": false,
+              "overrideSpeed": false,
+              "overrideSpeedValue": 4.0,
+              "radioId": "",
+              "radioWaitTime": 0.0,
+              "radius": 0.0,
+              "repeatAnim": false,
+              "rootMotion": true,
+              "rotationOffset": 0.0,
+              "rotationY": 270.0,
+              "snapToGround": 0,
+              "subActionData": null,
+              "type": 2,
+              "waitTime": 0.0
+            },
+            {
+              "actionEndType": 0,
+              "animKeyTag": {
+                "tagId": 0
+              },
+              "animMaskType": 0,
+              "animName": "",
+              "configMovementStyle": false,
+              "configSnap": false,
+              "duration": 0.0,
+              "eventBBDataPairs": [],
+              "eventKey": null,
+              "eventToLevelType": 0,
+              "ignoreAnimDis": 0.0,
+              "movementStyle": 0,
+              "npcPlayAnimationTimeEndForceToIdle": false,
+              "overrideSpeed": false,
+              "overrideSpeedValue": 4.0,
+              "radioId": "radio_gm01m8_10",
+              "radioWaitTime": 0.0,
+              "radius": 0.0,
+              "repeatAnim": false,
+              "rootMotion": false,
+              "rotationOffset": 0.0,
+              "rotationY": 0.0,
+              "snapToGround": 0,
+              "subActionData": {
+                "$type": "Beyond.Gameplay.Core.PatrolSubActionEnvTalkData, Gameplay.Beyond",
+                "envTalkId": "envTalk_gm01m8_2",
+                "npcId": "npc_gentleman_efengineer_a_05_g01_map01_lv001_gm01m8_001",
+                "overrideNpc": false
+              },
+              "type": 5,
+              "waitTime": 0.0
+            }
+          ],
+          "enterGait": -1,
+          "position": {
+            "x": -527.19384765625,
+            "y": 82.11219024658203,
+            "z": -312.9654846191406
+          }
+        }
+      ]
+    }
+  ],
+  "npcs": [],
+  "patrols": [],
+  "predefinedParams": [],
+  "riftVolumes": [],
+  "safeZone": {
+    "boxes": []
+  },
+  "sceneId": "map01_lv001",
+  "sludgeDatas": [],
+  "spawners": [],
+  "specificData": null,
+  "splines": [],
+  "waterVolumes": [],
+  "worldWayPointData": []
+}

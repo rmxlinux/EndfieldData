@@ -1,0 +1,6403 @@
+{
+  "actionMap": {
+    "dataMap": {
+      "actionList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.Split, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 4,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "2abe9573",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_idList": [
+            5,
+            14
+          ]
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetMainCharHpBarActive, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 5,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "c3502b29",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 6,
+          "_active": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.PostAudioStatusEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 14,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "4b78c1f2",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 15,
+          "_onlyTriggerExitAfterNodeTriggered": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_statusEnterEvent": {
+            "constValue": "au_music_dung02_rcdg_mute",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_statusExitEvent": {
+            "constValue": "au_music_dung02_rcdg_unmute",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Core.ApplyMovementSettingModifier, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 6,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "39c68b97",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 7,
+          "modifierName": {
+            "constValue": "MSM_Fallslow",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.BlockAutoMusicChange, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 15,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "f7808307",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 16,
+          "_blockHandle": {
+            "paramTarget": 0,
+            "path": "$15@_blockHandle"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ShowSceneDecorationNew, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 7,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "9c18e535",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 8,
+          "_targetDynamicEntity": {
+            "constValue": 40400000002,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_visible": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ManualSetMusicState, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 16,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "d0589b42",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 17,
+          "_baseState": {
+            "constValue": 10,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_battleIntensityState": {
+            "constValue": 2,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_battleState": {
+            "constValue": 1,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ShowSceneDecorationNew, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 8,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "2ce9b17d",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 9,
+          "_targetDynamicEntity": {
+            "constValue": 40600000002,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_visible": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.PostMusicEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 17,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "65c7b384",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_musicEvent": {
+            "constValue": "au_music_dung02_rcdg003_explore_opening",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_musicEventOnRelease": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_musicEventType": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_playingId": {
+            "paramTarget": 0,
+            "path": "$17@_playingId"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ShowSceneDecorationNew, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 9,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "359fac45",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 10,
+          "_targetDynamicEntity": {
+            "constValue": 40700000002,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_visible": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ShowSceneDecorationNew, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 10,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "893e200e",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 11,
+          "_targetDynamicEntity": {
+            "constValue": 42100000002,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_visible": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CheckBoolIfFalse, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 11,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "2a49a49f",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 12,
+          "_value": {
+            "constValue": false,
+            "idRef": 28,
+            "paramSource": -1,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetEnablePlayerAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 12,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "1557151f",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 13,
+          "_actionMask": {
+            "constValue": -1,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_advanced": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_enablePlayerInput": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetEnablePlayerMove, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 13,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "bb6d943d",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_enable": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.Split, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 19,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "d607b45c",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_idList": [
+            20,
+            23
+          ]
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetEnablePlayerAction, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 20,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "5aeceea6",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 21,
+          "_actionMask": {
+            "constValue": -1,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_advanced": {
+            "constValue": false,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_enablePlayerInput": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.PostMusicEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 23,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "301dc79d",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_musicEvent": {
+            "constValue": "au_music_dung02_rcdg003_explore_general",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_musicEventOnRelease": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_musicEventType": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_playingId": {
+            "paramTarget": 0,
+            "path": "$23@_playingId"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetEnablePlayerMove, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 21,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "ee8ff6d6",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": 22,
+          "_enable": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.SetCharSkillButtonActive, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 22,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "49d29884",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_disabledSkills": {
+            "constValue": -1,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.CallServer, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 30,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "b5350d6f",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_callClientOutputUIDs": null,
+          "_eventArgsPtr": {
+            "constValue": {
+              "key": "event_args"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_eventName": {
+            "constValue": "#b5350d6f",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_useCustomEvent": false,
+          "_waitForCallback": true,
+          "_withEventArgs": false
+        },
+        {
+          "$type": "Beyond.Gameplay.MarkTaskConditionFailed, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 48,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "92be79a6",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_taskObjective": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_taskPtr": {
+            "constValue": {
+              "key": "1894e753"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.MarkTaskConditionFailed, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 52,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "6ce08b72",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_taskObjective": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_taskPtr": {
+            "constValue": {
+              "key": "59440c5d"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.MarkTaskConditionFailed, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 56,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "67d58d40",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_taskObjective": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_taskPtr": {
+            "constValue": {
+              "key": "da19c6fc"
+            },
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.PostMusicEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 63,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "d839fb42",
+          "scopeMask": 1,
+          "useCurrentScope": true,
+          "useGraphScope": true,
+          "_nextID": -1,
+          "_musicEvent": {
+            "constValue": "au_music_dung02_rcdg003_explore_ending",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_musicEventOnRelease": {
+            "constValue": null,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_musicEventType": {
+            "constValue": 0,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_playingId": {
+            "paramTarget": 0,
+            "path": "$63@_playingId"
+          }
+        }
+      ],
+      "getterList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.GetLevelScriptPropertyGenericBool, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 28,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "eeb75b81",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_path": {
+            "constValue": "start",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_target": {
+            "constValue": {
+              "scriptId": 0,
+              "_levelId_k__BackingField": 0
+            },
+            "idRef": -1,
+            "paramSource": 1002,
+            "path": null
+          }
+        }
+      ],
+      "headerList": [
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnScriptActive, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 3,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "d1f89a69",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 4,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0
+        },
+        {
+          "$type": "Beyond.Gameplay.OnSubGameStart, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 18,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "b1de6306",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 19,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "filterSubGameId": null,
+          "outSubGameId": {
+            "paramTarget": 0,
+            "path": "$18@outSubGameId"
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnLeaderEnterTriggerVolume, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 29,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "64424fb5",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": true,
+          "_nextID": 30,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_triggerSlotIdFilter": {
+            "constValue": 80001,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_triggerSlotIdOutput": null
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnCustomEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 47,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "847321b6",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 48,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_eventArgsPtr": null,
+          "_eventKey": {
+            "constValue": "#847321b6",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnCustomEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 51,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "b294c2e4",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 52,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_eventArgsPtr": null,
+          "_eventKey": {
+            "constValue": "#b294c2e4",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnCustomEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 55,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "451996c6",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 56,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_eventArgsPtr": null,
+          "_eventKey": {
+            "constValue": "#451996c6",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        },
+        {
+          "$type": "Beyond.Gameplay.Actions.ScriptEvent.OnCustomEvent, Gameplay.Beyond",
+          "_dontLogWarning": false,
+          "_ID": 62,
+          "_releaseWhenExecutionFinished": false,
+          "_uid": "e3223dc9",
+          "scopeMask": 1,
+          "useCurrentScope": false,
+          "useGraphScope": true,
+          "_filterLevel": 0,
+          "_filterMask": 0,
+          "_filterMode": false,
+          "_nextID": 63,
+          "_priority": 0,
+          "_triggerActiveDuring": 0,
+          "_validate": {
+            "constValue": true,
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          },
+          "_targetScript": null,
+          "_triggerTarget": 0,
+          "_eventArgsPtr": null,
+          "_eventKey": {
+            "constValue": "#e3223dc9",
+            "idRef": -1,
+            "paramSource": 0,
+            "path": null
+          }
+        }
+      ]
+    },
+    "paramBlackboard": {
+      "value": []
+    }
+  },
+  "activeShapeList": [
+    {
+      "eulerAngles": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "offset": {
+        "x": -1494.1300048828125,
+        "y": 605.8900146484375,
+        "z": -335.79998779296875
+      },
+      "radius": 850.0,
+      "size": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "type": 2
+    }
+  ],
+  "allowStartOnTravelPole": false,
+  "allowTick": false,
+  "enablePreload": false,
+  "endType": 1,
+  "enemies": {},
+  "exitBuffer": 0.0,
+  "exitBufferOverride": false,
+  "interactiveLocks": {},
+  "interactives": {
+    "40002": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_race_finish_goal",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1276.8590087890625,
+        "y": 301.7409973144531,
+        "z": -336.6300048828125
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 100.63999938964844,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "5": [
+          {
+            "key": "dont_log_error",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40003": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_white",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1415.7030029296875,
+        "y": 420.2019958496094,
+        "z": -336.8699951171875
+      },
+      "rotation": {
+        "x": 352.20098876953125,
+        "y": 270.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 23,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "speed",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1056964608,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "use_rotate_damping",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "rotate_damping",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_move_mode",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40003,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          },
+          {
+            "key": "canMove",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40004": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_black",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1359.43505859375,
+        "y": 402.510009765625,
+        "z": -263.16400146484375
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 207.93600463867188,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 25,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "speed",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1077936128,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_move_direction",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "use_rotate_damping",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "rotate_damping",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_move_mode",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40004,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          },
+          {
+            "key": "canMove",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40005": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_white",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1213.0909423828125,
+        "y": 431.8500061035156,
+        "z": -262.2099914550781
+      },
+      "rotation": {
+        "x": 347.8919982910156,
+        "y": 281.63299560546875,
+        "z": 357.2569885253906
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 26,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40005,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40006": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_white",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1229.3499755859375,
+        "y": 392.3139953613281,
+        "z": -415.92999267578125
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 66.64199829101562,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 27,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40006,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40007": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_white",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1273.22998046875,
+        "y": 394.70001220703125,
+        "z": -422.3500061035156
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 59.21799850463867,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 28,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40007,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40008": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_white",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1313.010009765625,
+        "y": 374.760009765625,
+        "z": -354.2200012207031
+      },
+      "rotation": {
+        "x": 346.3760070800781,
+        "y": 132.23399353027344,
+        "z": 0.7039999961853027
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 29,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40008,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40009": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_white",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1220.5699462890625,
+        "y": 391.8800048828125,
+        "z": -407.010009765625
+      },
+      "rotation": {
+        "x": 338.1669921875,
+        "y": 189.96299743652344,
+        "z": 356.2619934082031
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 30,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40009,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40010": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_black",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1213.22998046875,
+        "y": 402.7699890136719,
+        "z": -356.70001220703125
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 31,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "speed",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1090519040,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_move_direction",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_target_index",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 5,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1101004800,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_node_index_list",
+            "value": {
+              "type": 4,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "wait_for_nearby_list",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_node_wait_time_list",
+            "value": {
+              "type": 6,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_move_suppress_start_key_node",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40010,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          },
+          {
+            "key": "canMove",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40011": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_white",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1276.469970703125,
+        "y": 362.2799987792969,
+        "z": -324.2080078125
+      },
+      "rotation": {
+        "x": 352.4620056152344,
+        "y": 174.36500549316406,
+        "z": 0.7419999837875366
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 32,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "speed",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1077936128,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_move_mode",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40011,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40012": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_white",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1235.447021484375,
+        "y": 426.07501220703125,
+        "z": -268.5989990234375
+      },
+      "rotation": {
+        "x": 349.9670104980469,
+        "y": 304.7309875488281,
+        "z": 359.9070129394531
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 26,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40012,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40013": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_balloon_longpaopao_white",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1355.56005859375,
+        "y": 403.32598876953125,
+        "z": -289.42999267578125
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 26,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "230": [
+          {
+            "key": "slot_id",
+            "value": {
+              "type": 17,
+              "valueArray": [
+                {
+                  "valueBit64": 40013,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "dungeon_id",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "dung02_rcdg003"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40014": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1393.791015625,
+        "y": 406.0409851074219,
+        "z": -336.2900085449219
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -995256401,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1137383385,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1012391584,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40015": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1346.365966796875,
+        "y": 402.6650085449219,
+        "z": -257.1700134277344
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -996252877,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1137988222,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1015064822,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40017": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1217.5030517578125,
+        "y": 399.6390075683594,
+        "z": -354.4020080566406
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -996769055,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1136887545,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1010506466,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40018": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1268.8199462890625,
+        "y": 397.55999755859375,
+        "z": -420.5799865722656
+      },
+      "rotation": {
+        "x": 90.0,
+        "y": 241.17799377441406,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -996140897,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1137028629,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1009436723,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40021": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_jumpmachine",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1329.60400390625,
+        "y": 404.760009765625,
+        "z": -257.3219909667969
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.800000011920929,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": ""
+                }
+              ]
+            }
+          }
+        ],
+        "169": [
+          {
+            "key": "height",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1105199104,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "input_affect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "jump_once_enter",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "target_position",
+          "value": {
+            "type": 11,
+            "valueArray": [
+              {
+                "valueBit64": -996263710,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1137983110,
+                "valueString": null
+              },
+              {
+                "valueBit64": -1015029911,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40022": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_accelerate_buff",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1362.6839599609375,
+        "y": 403.8009948730469,
+        "z": -310.5580139160156
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "50": [
+          {
+            "key": "duration",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1097859072,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "override_guide_timeliness",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "guide_trigger_by_state",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40023": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_accelerate_buff",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1216.7900390625,
+        "y": 426.7560119628906,
+        "z": -292.8500061035156
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "50": [
+          {
+            "key": "override_guide_timeliness",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "guide_trigger_by_state",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40024": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_accelerate_buff",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1246.5999755859375,
+        "y": 391.0539855957031,
+        "z": -416.67999267578125
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "50": [
+          {
+            "key": "override_guide_timeliness",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "guide_trigger_by_state",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40030": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_accelerate_buff",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1267.0999755859375,
+        "y": 424.6440124511719,
+        "z": -255.33999633789062
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "50": [
+          {
+            "key": "override_guide_timeliness",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "guide_trigger_by_state",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40032": {
+      "aoiRadiusType": 2,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_platform_automove_wltech",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1235.219970703125,
+        "y": 424.6440124511719,
+        "z": -268.94000244140625
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 1.8459999561309814,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "50": [
+          {
+            "key": "override_guide_timeliness",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "guide_trigger_by_state",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "107": [
+          {
+            "key": "spline_id",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 10,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "curve_move_pause_resume",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "speed",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1073741824,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "distance",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1073741824,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1084227584,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40034": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_accelerate_buff",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1388.739990234375,
+        "y": 406.1860046386719,
+        "z": -336.260986328125
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "50": [
+          {
+            "key": "duration",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1097859072,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "override_guide_timeliness",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "guide_trigger_by_state",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40035": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_accelerate_buff",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1308.9000244140625,
+        "y": 374.2640075683594,
+        "z": -354.6199951171875
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "50": [
+          {
+            "key": "override_guide_timeliness",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "guide_trigger_by_state",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40036": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1363.2099609375,
+        "y": 402.70001220703125,
+        "z": -280.0799865722656
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "passive_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "int_interact_banana_trap_spawn_abilityentity_passive"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40041": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1361.9599609375,
+        "y": 402.70001220703125,
+        "z": -277.9200134277344
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "passive_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "int_interact_banana_trap_spawn_abilityentity_passive"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40044": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1359.2099609375,
+        "y": 402.70001220703125,
+        "z": -279.1400146484375
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "passive_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "int_interact_banana_trap_spawn_abilityentity_passive"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40047": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1357.43994140625,
+        "y": 402.70001220703125,
+        "z": -277.9200134277344
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "passive_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "int_interact_banana_trap_spawn_abilityentity_passive"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40049": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_battle_common",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1361.1600341796875,
+        "y": 402.70001220703125,
+        "z": -281.5299987792969
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "13": [
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "passive_skill",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "int_interact_banana_trap_spawn_abilityentity_passive"
+                }
+              ]
+            }
+          },
+          {
+            "key": "bomb_check_ignore_raycast",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "play_battle_hit_effect",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "trigger_hit_cd",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "disable_added_buff",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40052": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1319.125,
+        "y": 425.3500061035156,
+        "z": -255.4600067138672
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 90.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1092616192,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1092616192,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -995960930,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1138305598,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1015056095,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40053": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1302.738037109375,
+        "y": 434.3299865722656,
+        "z": -255.47300720214844
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 90.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1092616192,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1092616192,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -996114599,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1138216796,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1015049074,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40054": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1283.97998046875,
+        "y": 431.6199951171875,
+        "z": -255.5800018310547
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 90.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1092616192,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1092616192,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -996252877,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1137988222,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1015064822,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40055": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1216.6910400390625,
+        "y": 427.010009765625,
+        "z": -315.5899963378906
+      },
+      "rotation": {
+        "x": 270.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -996665829,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1137835377,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1012368016,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40057": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1216.6910400390625,
+        "y": 419.9800109863281,
+        "z": -336.9800109863281
+      },
+      "rotation": {
+        "x": 270.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -996659176,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1137168834,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1011797121,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40058": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1280.76904296875,
+        "y": 395.3599853515625,
+        "z": -426.4360046386719
+      },
+      "rotation": {
+        "x": 90.0,
+        "y": 241.17799377441406,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -995918050,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1136850908,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1009420445,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40061": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1438.22998046875,
+        "y": 438.4200134277344,
+        "z": -336.5899963378906
+      },
+      "rotation": {
+        "x": 90.0,
+        "y": 90.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -994961326,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1138123408,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1012380810,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40063": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1424.760009765625,
+        "y": 428.7699890136719,
+        "z": -336.5899963378906
+      },
+      "rotation": {
+        "x": 90.0,
+        "y": 90.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -995068232,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1137814078,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1012380810,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40065": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_checkpoint",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1411.7099609375,
+        "y": 419.3299865722656,
+        "z": -336.5899963378906
+      },
+      "rotation": {
+        "x": 90.0,
+        "y": 90.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "shape",
+            "value": {
+              "type": 3,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "radius",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1082130432,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "size",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1065353216,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1088421888,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "62": [
+          {
+            "key": "use_level_event_trigger",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_trigger",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "231": [
+          {
+            "key": "target_position",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": -995215024,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": 1137378625,
+                  "valueString": null
+                },
+                {
+                  "valueBit64": -1012390626,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": [
+        {
+          "key": "state",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "40066": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_empty_interact",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1204.0899658203125,
+        "y": 391.0539855957031,
+        "z": -393.7900085449219
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "5": [
+          {
+            "key": "dont_log_error",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "47": [
+          {
+            "key": "available_list",
+            "value": {
+              "type": 4,
+              "valueArray": []
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    },
+    "40067": {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 40700000002,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_empty_interact",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 0,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1307.9720458984375,
+        "y": 389.9360046386719,
+        "z": -426.9330139160156
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "5": [
+          {
+            "key": "dont_log_error",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": null
+                }
+              ]
+            }
+          }
+        ],
+        "47": [
+          {
+            "key": "available_list",
+            "value": {
+              "type": 4,
+              "valueArray": []
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": null,
+      "properties": []
+    }
+  },
+  "levelScriptType": 0,
+  "lstTemplatePath": null,
+  "maxStage": 0,
+  "modules": {},
+  "npcs": {},
+  "parentLevelScriptId": 0,
+  "properties": null,
+  "propertyIdToKeyMap": null,
+  "refWorldEntityIdList": null,
+  "resetModeWhenActive": 0,
+  "resetModeWhenEnd": 0,
+  "scriptId": 40700000002,
+  "startShapeList": null,
+  "startType": 1,
+  "taskMap": {
+    "1894e753": {
+      "canBeTracked": true,
+      "conditionDict": {
+        "042fc984": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CombineCondition, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "042fc984",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "conditionEvalString": "{0} and {1}",
+            "subConditions": []
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        },
+        "08b542c0": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckGameInstStartDuration, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "08b542c0",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_compareOperator": {
+              "constValue": 4,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_progressToCompare": {
+              "constValue": 300,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "subGameId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1005,
+              "path": null
+            }
+          },
+          "isMainObjective": false,
+          "objectiveEnum": 0
+        },
+        "bfd019c3": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckLevelScriptPropertyBool, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "bfd019c3",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_key": {
+              "constValue": "arrive",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_mapId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "_scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "_value": {
+              "constValue": true,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": false,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    },
+    "2a73e95f": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "822989ca": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckGameInstStartDuration, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "822989ca",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_compareOperator": {
+              "constValue": 3,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_progressToCompare": {
+              "constValue": 150,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "subGameId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1005,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    },
+    "40a4dc2c": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "a9aac09c": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckGameInstStartDuration, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "a9aac09c",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_compareOperator": {
+              "constValue": 3,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_progressToCompare": {
+              "constValue": 300,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "subGameId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1005,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    },
+    "59440c5d": {
+      "canBeTracked": true,
+      "conditionDict": {
+        "41733d3c": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CombineCondition, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "41733d3c",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "conditionEvalString": "{0} and {1}",
+            "subConditions": []
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        },
+        "ed7c914c": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckGameInstStartDuration, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "ed7c914c",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_compareOperator": {
+              "constValue": 4,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_progressToCompare": {
+              "constValue": 200,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "subGameId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1005,
+              "path": null
+            }
+          },
+          "isMainObjective": false,
+          "objectiveEnum": 0
+        },
+        "fa170499": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckLevelScriptPropertyBool, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "fa170499",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_key": {
+              "constValue": "arrive",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_mapId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "_scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "_value": {
+              "constValue": true,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": false,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    },
+    "63af1852": {
+      "canBeTracked": false,
+      "conditionDict": {
+        "3065adc0": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckGameInstStartDuration, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "3065adc0",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_compareOperator": {
+              "constValue": 3,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_progressToCompare": {
+              "constValue": 200,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "subGameId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1005,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    },
+    "8837accc": {
+      "canBeTracked": true,
+      "conditionDict": {
+        "a942eab6": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckLevelScriptPropertyBool, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "a942eab6",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_key": {
+              "constValue": "arrive",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_mapId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "_scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "_value": {
+              "constValue": true,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    },
+    "da19c6fc": {
+      "canBeTracked": true,
+      "conditionDict": {
+        "19cfba36": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CombineCondition, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "19cfba36",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "conditionEvalString": "{0} and {1}",
+            "subConditions": []
+          },
+          "isMainObjective": true,
+          "objectiveEnum": 0
+        },
+        "507ade3d": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckGameInstStartDuration, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "507ade3d",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_compareOperator": {
+              "constValue": 4,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_progressToCompare": {
+              "constValue": 150,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "levelId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "subGameId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1005,
+              "path": null
+            }
+          },
+          "isMainObjective": false,
+          "objectiveEnum": 0
+        },
+        "e08d6d73": {
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckLevelScriptPropertyBool, Gameplay.Beyond",
+            "scopeMask": 1,
+            "uniqueId": "e08d6d73",
+            "useCurrentScope": false,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 0,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_key": {
+              "constValue": "arrive",
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            },
+            "_mapId": {
+              "constValue": null,
+              "idRef": -1,
+              "paramSource": 1000,
+              "path": null
+            },
+            "_scriptId": {
+              "constValue": {
+                "scriptId": 0,
+                "_levelId_k__BackingField": 0
+              },
+              "idRef": -1,
+              "paramSource": 1002,
+              "path": null
+            },
+            "_value": {
+              "constValue": true,
+              "idRef": -1,
+              "paramSource": 0,
+              "path": null
+            }
+          },
+          "isMainObjective": false,
+          "objectiveEnum": 0
+        }
+      },
+      "needManualCheck": false,
+      "taskType": 0
+    }
+  },
+  "triggerVolumes": {
+    "80001": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -1466.8328857421875,
+            "y": 436.7076721191406,
+            "z": -336.13433837890625
+          },
+          "radius": 3.0,
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "shapeType": 1,
+          "size": {
+            "x": 17.600000381469727,
+            "y": 7.829999923706055,
+            "z": 20.229999542236328
+          }
+        }
+      ],
+      "slotId": 80001,
+      "triggerCountLimit": 1,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    },
+    "80002": {
+      "$type": "Beyond.Gameplay.LevelScriptTriggerVolumeDataForLeader, Gameplay.Beyond",
+      "enterCheckOnGround": false,
+      "exitShapeStartIndex": -1,
+      "isImportant": false,
+      "shapeList": [
+        {
+          "polyLinePoints": [],
+          "position": {
+            "x": -1276.887939453125,
+            "y": 301.7409362792969,
+            "z": -336.8456726074219
+          },
+          "radius": 6.5,
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "shapeType": 2,
+          "size": {
+            "x": 3.0,
+            "y": 3.0,
+            "z": 3.0
+          }
+        }
+      ],
+      "slotId": 80002,
+      "triggerCountLimit": 1,
+      "triggerOnPole": false,
+      "waitSrvRes": false
+    }
+  }
+}

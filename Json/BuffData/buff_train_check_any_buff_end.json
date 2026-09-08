@@ -1,0 +1,217 @@
+{
+  "abilityEventAction": [],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [
+    {
+      "isDynamic": false,
+      "key": "buffID_1",
+      "valueDouble": 0.0,
+      "valueStr": "#"
+    },
+    {
+      "isDynamic": false,
+      "key": "buffID_2",
+      "valueDouble": 0.0,
+      "valueStr": "#"
+    },
+    {
+      "isDynamic": false,
+      "key": "buffID_3",
+      "valueDouble": 0.0,
+      "valueStr": "#"
+    },
+    {
+      "isDynamic": false,
+      "key": "buffID_4",
+      "valueDouble": 0.0,
+      "valueStr": "#"
+    },
+    {
+      "isDynamic": false,
+      "key": "buffID_5",
+      "valueDouble": 0.0,
+      "valueStr": "#"
+    },
+    {
+      "isDynamic": true,
+      "key": "buffID",
+      "valueDouble": 0.0,
+      "valueStr": "#"
+    }
+  ],
+  "buffEventAction": [
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.EventListenerAction+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "abilityActionMap": [
+                {
+                  "abilityEvent": 203,
+                  "actions": [
+                    {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.Conditions.CheckBuffIdInContextAdvanced+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 1,
+                          "blackboardKey": "buffID",
+                          "buffIdList": [
+                            {
+                              "blackboardKey": "buffID_1",
+                              "useBlackboardKey": true,
+                              "value": ""
+                            },
+                            {
+                              "blackboardKey": "buffID_2",
+                              "useBlackboardKey": true,
+                              "value": ""
+                            },
+                            {
+                              "blackboardKey": "buffID_3",
+                              "useBlackboardKey": true,
+                              "value": ""
+                            },
+                            {
+                              "blackboardKey": "buffID_4",
+                              "useBlackboardKey": true,
+                              "value": ""
+                            },
+                            {
+                              "blackboardKey": "buffID_5",
+                              "useBlackboardKey": true,
+                              "value": ""
+                            }
+                          ],
+                          "checkType": 0,
+                          "query": {
+                            "queryType": 0,
+                            "tags": []
+                          }
+                        },
+                        {
+                          "$type": "Beyond.Gameplay.Core.SendBattleSignalToLevel+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 2,
+                          "doubleValue": {
+                            "blackboardKey": "",
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          },
+                          "signalId": {
+                            "blackboardKey": "buff_end",
+                            "useBlackboardKey": false,
+                            "value": "buff_end"
+                          }
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 5
+    }
+  ],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": 100.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 100
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_train_check_any_buff_end",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 1,
+  "maxTriggerCnt": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": -1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 4,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "",
+    "stackingType": 7,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "1",
+    "useBlackboardKey": false,
+    "value": 1.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": false
+}

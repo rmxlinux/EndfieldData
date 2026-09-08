@@ -1,0 +1,655 @@
+{
+  "id": "int_crane_tower",
+  "factionIndex": 4,
+  "name": "int_crane_tower",
+  "bornTag": [
+    {
+      "tagId": -27687248
+    }
+  ],
+  "componentList": [
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveRootComponentData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.View.InteractiveModelComponentData, Gameplay.Beyond",
+      "bornFadeInTime": 1.0,
+      "enableBornFadeIn": false,
+      "modelId": "int_crane_tower_postmodel",
+      "modelScale": 1.0
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.BaseControllerData, Gameplay.Beyond"
+    },
+    {
+      "$type": "Beyond.Gameplay.Core.InteractiveAudioData, Gameplay.Beyond",
+      "propertyList": [],
+      "audioData": {
+        "audioNameDict": {},
+        "customAudioData": [
+          {
+            "audioEvent": "au_int_crane_horizontal_start",
+            "audioState": "start_hor",
+            "desc": "塔吊整体转动"
+          },
+          {
+            "audioEvent": "au_int_crane_horizontal_end",
+            "audioState": "end_hor",
+            "desc": "塔吊整体停止转动"
+          },
+          {
+            "audioEvent": "au_int_crane_vertical_start",
+            "audioState": "start_ver",
+            "desc": "抬升集装箱"
+          },
+          {
+            "audioEvent": "au_int_crane_vertical_end",
+            "audioState": "end_ver",
+            "desc": "停止抬升"
+          },
+          {
+            "audioEvent": "au_int_crane_rotating_start",
+            "audioState": "start_r",
+            "desc": "开始旋转集装箱"
+          },
+          {
+            "audioEvent": "au_int_crane_rotating_end",
+            "audioState": "end_r",
+            "desc": "结束旋转集装箱"
+          }
+        ],
+        "openAudio": true,
+        "useActiveStencil": false,
+        "useAttackStencil": false,
+        "useCollectStencil": false,
+        "useCustomStencil": true,
+        "useDestroyStencil": false,
+        "useDynamicLevel": false,
+        "useInteractStencil": false,
+        "useRepairStencil": false,
+        "useTiggerStencil": false,
+        "useWorkStencil": false
+      }
+    },
+    {
+      "$type": "Beyond.Gameplay.CraneTowerComponentData, Gameplay.Beyond",
+      "propertyList": [
+        {
+          "key": "state_1_min",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state_2_min",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state_3_min",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state_1_max",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state_2_max",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 2,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state_3_max",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 5,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "position_list",
+          "value": {
+            "type": 6,
+            "valueArray": [
+              {
+                "valueBit64": 1101004800,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1106247680,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1109393408,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "rotation_list",
+          "value": {
+            "type": 6,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1106247680,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1114636288,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "euler_angles",
+          "value": {
+            "type": 6,
+            "valueArray": [
+              {
+                "valueBit64": 1110704128,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1119092736,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1124532224,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1127481344,
+                "valueString": null
+              },
+              {
+                "valueBit64": 1132920832,
+                "valueString": null
+              },
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1097859072,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "radius_2",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1106247680,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "move_speed",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1065353216,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "rotate_speed",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "rotate_speed_2",
+          "value": {
+            "type": 5,
+            "valueArray": [
+              {
+                "valueBit64": 1092616192,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "target",
+          "value": {
+            "type": 13,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "toast_failed",
+          "value": {
+            "type": 28,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "lang_int_crane_resist_toast"
+              }
+            ]
+          }
+        },
+        {
+          "key": "toast_failed_2",
+          "value": {
+            "type": 28,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "lang_int_crane_resist_factory_toast"
+              }
+            ]
+          }
+        },
+        {
+          "key": "state_1",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state_2",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        },
+        {
+          "key": "state_3",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": null
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "delayRecyclePerformTime": 0.0,
+  "delayToRecycleTime": 0.0,
+  "enableBornFadeIn": false,
+  "fadeInTime": 1.0,
+  "sendDieEvent": false,
+  "allGlobalSaveProperties": [],
+  "allMapSaveProperties": [],
+  "aoiRadiusType": 0,
+  "configProperties": [
+    {
+      "key": "euler_angles",
+      "value": {
+        "type": 6,
+        "valueArray": [
+          {
+            "valueBit64": 1110704128,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1119092736,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1124532224,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1127481344,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1132920832,
+            "valueString": null
+          },
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "move_speed",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1065353216,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "position_list",
+      "value": {
+        "type": 6,
+        "valueArray": [
+          {
+            "valueBit64": 1101004800,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1106247680,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1109393408,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "radius",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1097859072,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "radius_2",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1106247680,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "rotate_speed",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1092616192,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "rotate_speed_2",
+      "value": {
+        "type": 5,
+        "valueArray": [
+          {
+            "valueBit64": 1092616192,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "rotation_list",
+      "value": {
+        "type": 6,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1106247680,
+            "valueString": null
+          },
+          {
+            "valueBit64": 1114636288,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "target",
+      "value": {
+        "type": 13,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "toast_failed",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "lang_int_crane_resist_toast"
+          }
+        ]
+      }
+    },
+    {
+      "key": "toast_failed_2",
+      "value": {
+        "type": 28,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": "lang_int_crane_resist_factory_toast"
+          }
+        ]
+      }
+    }
+  ],
+  "dataMap": null,
+  "facOccDis": 0.5,
+  "hideInDialog": false,
+  "mountPoints": [],
+  "propertyIdToKeyMap": {
+    "12": "step_1",
+    "13": "step_2",
+    "14": "step_3",
+    "20": "state_1",
+    "21": "state_2",
+    "22": "state_3",
+    "1025": "euler_angles",
+    "1026": "position_list",
+    "1027": "rotate_speed",
+    "1028": "move_speed",
+    "1033": "target",
+    "1034": "rotation_list",
+    "1035": "rotate_speed_2",
+    "1039": "radius",
+    "1040": "radius_2",
+    "1041": "toast_failed",
+    "1043": "toast_failed_2"
+  },
+  "propertyKeyToIdMap": {
+    "euler_angles": 1025,
+    "move_speed": 1028,
+    "position_list": 1026,
+    "radius": 1039,
+    "radius_2": 1040,
+    "rotate_speed": 1027,
+    "rotate_speed_2": 1035,
+    "rotation_list": 1034,
+    "state_1": 20,
+    "state_2": 21,
+    "state_3": 22,
+    "step_1": 12,
+    "step_2": 13,
+    "step_3": 14,
+    "target": 1033,
+    "toast_failed": 1041,
+    "toast_failed_2": 1043
+  },
+  "relatedGuideTimestampGameVar": null,
+  "saveProperties": [
+    {
+      "key": "step_1",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "step_2",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "step_3",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "state_1",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "state_2",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "state_3",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": null
+          }
+        ]
+      }
+    }
+  ],
+  "templateVariant": {},
+  "tempProperties": null,
+  "useGlobalVar": false,
+  "useMapVar": false
+}

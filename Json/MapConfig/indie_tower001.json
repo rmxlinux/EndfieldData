@@ -1,0 +1,45 @@
+{
+  "mapIdStr": "indie_tower001",
+  "mapId": 425,
+  "isSeamless": false,
+  "sideGridNum": 2,
+  "levelIds": [
+    430,
+    430,
+    430,
+    430
+  ],
+  "streamingMapConfigPath": "indie_tower001/indie_tower001_art_streaming.asset",
+  "facSystemSkip": true,
+  "sceneStates": {
+    "tower001_battle": 1,
+    "tower001_default": 0
+  },
+  "sceneStateConditions": [
+    {
+      "stateName": "tower001_default",
+      "condition": {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckGlobalVar, Gameplay.Beyond",
+        "globalVarName": "tower001_state_tobattle",
+        "compareOperator": 0,
+        "compareTarget": 0
+      }
+    },
+    {
+      "stateName": "tower001_battle",
+      "condition": {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckGlobalVar, Gameplay.Beyond",
+        "globalVarName": "tower001_state_tobattle",
+        "compareOperator": 0,
+        "compareTarget": 1
+      }
+    }
+  ],
+  "levelStrIds": [
+    "indie_tower001"
+  ],
+  "domainName": "domain_1",
+  "mapVarNumId2Name": {},
+  "mapVarName2NumId": {},
+  "mapVarClientDefaultValues": {}
+}
