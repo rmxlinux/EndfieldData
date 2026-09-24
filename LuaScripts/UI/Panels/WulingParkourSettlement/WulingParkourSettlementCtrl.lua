@@ -108,11 +108,16 @@ WulingParkourSettlementCtrl._RefreshResultInfos = HL.Method() << function(self)
     end
 
     self.m_passTime = GameInstance.player.parkourSystem:GetBestPassTimeBySubGameId(self.m_dungeonId)
+    local currentPassTime = 0
+    local subGame = GameWorld.worldInfo.subGame
+    if subGame then
+        currentPassTime = subGame.passTimeMs
+    end
     self.m_resultCells:Refresh(2,function(cell, luaIndex)
         if luaIndex == 1 then
             cell.headIcon:LoadSprite("Common", "icon_settlement_wuling_parkour_score")
             cell.goalTxt.text = Language.LUA_PARKOUR_SETTLEMENT_RESULT_DESC_TIME
-            cell.resultDescText.text = self.m_passTime > 0 and UIUtils.getLeftTimeToSecond(math.floor(self.m_passTime / 1000)) or "--:--"
+            cell.resultDescText.text = currentPassTime > 0 and UIUtils.getLeftTimeToSecond(math.floor(currentPassTime / 1000)) or "--:--"
             local lastBestPassTime = GameInstance.player.parkourSystem.lastBestPassTime
             local showNewRecord = self.m_passTime > 0 and (lastBestPassTime == 0 or self.m_passTime < lastBestPassTime)
             if showNewRecord then

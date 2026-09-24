@@ -26,7 +26,7 @@ InventoryCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.ON_CHANGE_SPACESHIP_DOMAIN_ID] = 'OnChangeSpaceshipDomainId',
     [MessageConst.ON_ITEM_BAG_TOGGLE_ABANDON_DROP] = 'OnToggleAbandonDropValid',
-    [MessageConst.ON_REFRESH_PHASE_LEVEL] = '_RefreshWeekRaidStyle',
+    [MessageConst.ON_REFRESH_PHASE_LEVEL] = '_OnRefreshPhaseLevel',
 }
 
 
@@ -406,6 +406,10 @@ InventoryCtrl._InitDepot = HL.Method() << function(self)
             cell.item.canSetQuickBar = true
         end,
     })
+end
+
+InventoryCtrl._RefreshDepot = HL.Method() << function(self)
+    self.m_depotInited = false
 end
 
 InventoryCtrl._RefreshSwitchDepotState = HL.Method() << function(self)
@@ -1338,6 +1342,11 @@ end
 InventoryCtrl.m_weekRaidConvertRate = HL.Field(HL.Any)
 
 InventoryCtrl.m_weekRaidBlur = HL.Field(CS.Beyond.UI.FullScreenSceneBlurMarker)
+
+InventoryCtrl._OnRefreshPhaseLevel = HL.Method() << function(self)
+    self:_RefreshWeekRaidStyle()
+    self:_RefreshDepot()
+end
 
 InventoryCtrl._RefreshWeekRaidStyle = HL.Method() << function(self)
     local inWeekRaid = Utils.isInWeekRaid()

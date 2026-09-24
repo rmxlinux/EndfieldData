@@ -1,0 +1,318 @@
+{
+  "abilityEventAction": [],
+  "addingCooldown": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [
+    {
+      "isDynamic": false,
+      "key": "combo",
+      "valueDouble": 1.0,
+      "valueStr": ""
+    }
+  ],
+  "buffEventAction": [
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "alwaysNext": true,
+              "conditionAction": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.CompareFloat+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 1,
+                    "compare": 2,
+                    "valueA": {
+                      "blackboardKey": "combo",
+                      "useBlackboardKey": true,
+                      "value": 0.0
+                    },
+                    "valueB": {
+                      "blackboardKey": "",
+                      "useBlackboardKey": false,
+                      "value": 1.0
+                    }
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "failActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.PlayAnimationAction+PlayAnimationActionData, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 4,
+                    "animName": "ComboSkill_1",
+                    "blendDuration": 0.0,
+                    "blendOut": 0.0,
+                    "blendOutNextStateHash": 0,
+                    "duration": 1.333333969116211,
+                    "executeOnNormalEndOnly": false,
+                    "exitToIdle": false,
+                    "onEndAction": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.PlayAnimationAction+PlayAnimationActionData, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 5,
+                          "animName": "NormalSkill_Loop_01",
+                          "blendDuration": 0.0,
+                          "blendOut": 0.0,
+                          "blendOutNextStateHash": 0,
+                          "duration": 1.0,
+                          "executeOnNormalEndOnly": true,
+                          "exitToIdle": false,
+                          "onEndAction": {
+                            "actionData": [],
+                            "onlyExecuteWhenSourceIsGuard": false,
+                            "onlyExecuteWhenSourceIsMainChar": false
+                          },
+                          "playbackSpeed": 1.0,
+                          "startTime": 0.0,
+                          "startTimeBlackboardKey": "",
+                          "useStartTimeBlackboardKey": false
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    },
+                    "playbackSpeed": 1.0,
+                    "startTime": 0.0,
+                    "startTimeBlackboardKey": "",
+                    "useStartTimeBlackboardKey": false
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "succeedActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.PlayAnimationAction+PlayAnimationActionData, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 2,
+                    "animName": "ComboSkill_2",
+                    "blendDuration": 0.0,
+                    "blendOut": 0.0,
+                    "blendOutNextStateHash": 0,
+                    "duration": 1.3333330154418945,
+                    "executeOnNormalEndOnly": true,
+                    "exitToIdle": false,
+                    "onEndAction": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.PlayAnimationAction+PlayAnimationActionData, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 3,
+                          "animName": "NormalSkill_Loop_02",
+                          "blendDuration": 0.0,
+                          "blendOut": 0.0,
+                          "blendOutNextStateHash": 0,
+                          "duration": 1.0,
+                          "executeOnNormalEndOnly": false,
+                          "exitToIdle": false,
+                          "onEndAction": {
+                            "actionData": [],
+                            "onlyExecuteWhenSourceIsGuard": false,
+                            "onlyExecuteWhenSourceIsMainChar": false
+                          },
+                          "playbackSpeed": 1.0,
+                          "startTime": 0.0,
+                          "startTimeBlackboardKey": "",
+                          "useStartTimeBlackboardKey": false
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    },
+                    "playbackSpeed": 1.0,
+                    "startTime": 0.0,
+                    "startTimeBlackboardKey": "",
+                    "useStartTimeBlackboardKey": false
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        },
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.CharWeaponVisibleAction+CharWeaponVisibleActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 6,
+              "includeAllWeapons": false,
+              "overrideVFX": false,
+              "showVFX": false,
+              "vfxOverrideConfig": {
+                "enableToFightAppearParticleFx": false,
+                "enableToFightAppearRendererFx": false,
+                "enableToIdleAppearParticleFx": false,
+                "enableToIdleAppearRendererFx": false,
+                "enableToIdleAppearRendererFx2": false,
+                "enableToIdleAppearRendererFx3": false,
+                "enableToIdleAppearRendererFx4": false,
+                "enableToIdleDisappearParticleFx": false,
+                "enableToIdleDisappearRendererFx": false,
+                "toFightAppearParticleFx": "",
+                "toFightAppearRendererFx": "",
+                "toIdleAppearParticleFx": "",
+                "toIdleAppearRendererFx": "",
+                "toIdleAppearRendererFx2": "",
+                "toIdleAppearRendererFx3": "",
+                "toIdleAppearRendererFx4": "",
+                "toIdleDisappearParticleFx": "",
+                "toIdleDisappearRendererFx": ""
+              },
+              "visible": false,
+              "weaponIndex": 11
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.CharWeaponVisibleAction+CharWeaponVisibleActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 7,
+              "includeAllWeapons": false,
+              "overrideVFX": false,
+              "showVFX": false,
+              "vfxOverrideConfig": {
+                "enableToFightAppearParticleFx": false,
+                "enableToFightAppearRendererFx": false,
+                "enableToIdleAppearParticleFx": false,
+                "enableToIdleAppearRendererFx": false,
+                "enableToIdleAppearRendererFx2": false,
+                "enableToIdleAppearRendererFx3": false,
+                "enableToIdleAppearRendererFx4": false,
+                "enableToIdleDisappearParticleFx": false,
+                "enableToIdleDisappearRendererFx": false,
+                "toFightAppearParticleFx": "",
+                "toFightAppearRendererFx": "",
+                "toIdleAppearParticleFx": "",
+                "toIdleAppearRendererFx": "",
+                "toIdleAppearRendererFx2": "",
+                "toIdleAppearRendererFx3": "",
+                "toIdleAppearRendererFx4": "",
+                "toIdleDisappearParticleFx": "",
+                "toIdleDisappearRendererFx": ""
+              },
+              "visible": false,
+              "weaponIndex": 0
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 5
+    }
+  ],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": true,
+    "value": 6.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 200
+    },
+    "_spritePath": "",
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_chr_0038_purrche_combo_anim",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 1,
+  "maxTriggerCnt": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": 1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 999,
+    "maxStackCntKey": "",
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": "",
+    "stackEffects": [],
+    "stackingKey": "",
+    "stackingType": 7,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "",
+    "useBlackboardKey": false,
+    "value": -1.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": true
+}
