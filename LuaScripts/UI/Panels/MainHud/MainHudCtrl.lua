@@ -420,6 +420,8 @@ MainHudCtrl.OnClose = HL.Override() << function(self)
         GameObject.Destroy(self.m_characterLockedBar.gameObject)
     end
     self.m_characterLockedBar = nil
+    
+    self:_ClearV1d5CellCache()
 end
 
 
@@ -2636,6 +2638,14 @@ MainHudCtrl._SetV1d5Visible = HL.Method(HL.Boolean) << function(self, visible)
     end
     self.m_v1d5Visible = visible
     self.view.v1d5TimerNode.gameObject:SetActive(visible)
+end
+
+MainHudCtrl._ClearV1d5CellCache = HL.Method() << function(self)
+    if not self.m_v1d5Cells then
+        return
+    end
+    self.m_v1d5Cells:ClearAll()
+    self.m_v1d5Cells = nil
 end
 
 
