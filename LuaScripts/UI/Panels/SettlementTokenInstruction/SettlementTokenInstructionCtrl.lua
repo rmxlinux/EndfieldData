@@ -109,20 +109,28 @@ SettlementTokenInstructionCtrl._InitData = HL.Method(HL.Any) << function(self, a
         self.m_info.activityEnhanceRate = activityEnhanceRate
         self.m_info.activityName = activityCfg.name
     end
-    
+    self:_RecalcProduceSpeed()
+end
+
+SettlementTokenInstructionCtrl._RecalcProduceSpeed = HL.Method() << function(self)
     self.m_info.totalEnhance = self.m_info.officerEnhanceRate + self.m_info.tdGainEffect + self.m_info.timeLimitTdGainEffect + self.m_info.activityEnhanceRate
     self.m_info.speedHasEnhance = self.m_info.totalEnhance ~= 0
-    self.m_info.totalProduceSpeed = math.floor(basicProduceSpeed * (100 + self.m_info.totalEnhance) / 100)
+    self.m_info.totalProduceSpeed = math.floor(self.m_info.basicProduceSpeed * (100 + self.m_info.totalEnhance) / 100)
     self.m_info.filledMoneyTime = self:_GetFilledMoneyTime()
-    
 end
 
 SettlementTokenInstructionCtrl._UpdateDefenseGainEffect = HL.Method() << function(self)
+    self.m_info.hasTimeLimitTdGainEffect = false
+    self.m_info.timeLimitTdEffectLevelName = ""
+    self.m_info.timeLimitTdGainEffect = 0
+    self.m_info.tdGainEffectExpirationTs = 0
+    self.m_info.tdGainEffectLevelName = ""
+    self.m_info.tdGainEffect = 0
     local settlementData = settlementSystem:GetUnlockSettlementData(self.m_stlId)
     if settlementData == nil then
         return
     end
-    if settlementData ~= nil and DateTimeUtils.GetCurrentTimestampBySeconds() < settlementData.tdGainEffectExpirationTs then
+    if DateTimeUtils.GetCurrentTimestampBySeconds() < settlementData.tdGainEffectExpirationTs then
         self.m_info.hasTimeLimitTdGainEffect = true
         self.m_info.timeLimitTdEffectLevelName = self:_GetLevelGroupName(settlementData.timeLimitTdGainEffectByTdId)
         self.m_info.timeLimitTdGainEffect = settlementData.timeLimitTdGainEffect
@@ -148,6 +156,7 @@ SettlementTokenInstructionCtrl._InitUI = HL.Method() << function(self)
 end
 
 SettlementTokenInstructionCtrl._RefreshAllUI = HL.Method() << function(self)
+    self:_ResetBuffNodeSplitLine()
     self.view.curOwnMoneyTxt.text = self.m_info.curMoney
     self.view.maxOwnMoneyTxt.text = "/" .. self.m_info.maxMoney
     self.view.moneyIconImg1:LoadSprite(UIConst.UI_SPRITE_WALLET, self.m_info.moneyIcon)
@@ -221,8 +230,7 @@ SettlementTokenInstructionCtrl._RefreshGainEffect = HL.Method() << function(self
         self.view.manualDefenseNode.gainSpeedTxt.text = string.format(Language.LUA_TD_LEVEL_COMPLETED_FORMAT, self.m_info.timeLimitTdEffectLevelName)
         self.view.manualDefenseNode.buffManNumTxt.text = string.format("%d%%", math.floor(self.m_info.timeLimitTdGainEffect))
         self.view.manualDefenseNode.durationNode:InitCountDownText(self.m_info.tdGainEffectExpirationTs, function()
-            self:_UpdateDefenseGainEffect()
-            self:_RefreshGainEffect()
+            self:_OnTimeLimitGainEffectExpired()
         end, UIUtils.getLeftTimeToSecond)
         self:_TryHandleFirstBuffNode(self.view.manualDefenseNode)
     end
@@ -234,6 +242,12 @@ SettlementTokenInstructionCtrl._RefreshGainEffect = HL.Method() << function(self
         self.view.defensivePlanNode.buffNumTxt.text = string.format("%d%%", math.floor(self.m_info.tdGainEffect))
         self:_TryHandleFirstBuffNode(self.view.defensivePlanNode)
     end
+end
+
+SettlementTokenInstructionCtrl._OnTimeLimitGainEffectExpired = HL.Method() << function(self)
+    self:_UpdateDefenseGainEffect()
+    self:_RecalcProduceSpeed()
+    self:_RefreshAllUI()
 end
 
 
@@ -261,6 +275,14 @@ SettlementTokenInstructionCtrl._GetLevelGroupName = HL.Method(HL.String).Return(
         end
     end
     return levelName
+end
+
+SettlementTokenInstructionCtrl._ResetBuffNodeSplitLine = HL.Method() << function(self)
+    self.m_isFirstBuffNode = true
+    self.view.officerNode.splitLine.gameObject:SetActive(true)
+    self.view.manualDefenseNode.splitLine.gameObject:SetActive(true)
+    self.view.defensivePlanNode.splitLine.gameObject:SetActive(true)
+    self.view.activityNode.splitLine.gameObject:SetActive(true)
 end
 
 SettlementTokenInstructionCtrl._TryHandleFirstBuffNode = HL.Method(HL.Any) << function(self, node)

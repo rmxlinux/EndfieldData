@@ -367,6 +367,7 @@ DomainPOIOverviewCtrl._OnRefreshContentCell = HL.Method(HL.Any, HL.Number, HL.Nu
     end
     
     levelNode.gotoTaskBtn.onClick:RemoveAllListeners()
+    levelNode.gotoCustomBtn.onClick:RemoveAllListeners()
     if contentInfo.isLvMax then
         
         levelNode.stateController:SetState("LevelDesc")
@@ -393,6 +394,12 @@ DomainPOIOverviewCtrl._OnRefreshContentCell = HL.Method(HL.Any, HL.Number, HL.Nu
             if contentInfo.upgradeCostMoney > self.m_info.domainMoneyCount then
                 levelNode.costMoneyNumTxt.color = self.view.config.MONEY_NOT_ENOUGH_COLOR
             end
+        elseif contentInfo.customLvUpGoFunc then
+            levelNode.stateController:SetState("CustomGoto")
+            levelNode.gotoCustomBtn.onClick:AddListener(function()
+                contentInfo.customLvUpGoFunc()
+            end)
+            levelNode.gotoCustomText.text = contentInfo.customLvUpGoText
         else
             
             levelNode.stateController:SetState("LevelDesc")

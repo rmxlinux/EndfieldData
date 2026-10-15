@@ -8,14 +8,15 @@ function FactoryUtils.curPowerIsEnough()
     return not FactoryUtils.getCurRegionPowerInfo().isStopByPower
 end
 
-function FactoryUtils.getBuildingStateType(nodeId)
+function FactoryUtils.getBuildingStateType(nodeId, chapterId)
     
     local spBuilding = GameInstance.player.facSpMachineSystem:GetNode(nodeId)
     if spBuilding and spBuilding:IsIdle() then
         return GEnums.FacBuildingState.Idle
     end
 
-    return GameInstance.remoteFactoryManager:QueryBuildingState(Utils.getCurrentChapterId(), nodeId, false)
+    chapterId = chapterId or Utils.getCurrentChapterId()
+    return GameInstance.remoteFactoryManager:QueryBuildingState(chapterId, nodeId, false)
 end
 
 
@@ -83,23 +84,13 @@ function FactoryUtils.isLogistic(itemId)
     return valid, valid and data.logisticId or nil
 end
 
-
 function FactoryUtils.isInBuildMode()
-    local opened, ctrl = UIManager:IsOpen(PanelId.FacBuildMode)
-    if opened then
-        return ctrl.m_mode ~= FacConst.FAC_BUILD_MODE.Normal, ctrl.m_mode
-    else
-        return false
-    end
+    local mode = LuaSystemManager.factory:GetBuildMode()
+    return mode ~= FacConst.FAC_BUILD_MODE.Normal, mode
 end
 
 function FactoryUtils.isMovingBuilding()
-    local opened, ctrl = UIManager:IsOpen(PanelId.FacBuildMode)
-    if opened then
-        return ctrl.m_buildingNodeId ~= nil
-    else
-        return false
-    end
+    return LuaSystemManager.factory:GetMovingBuildingNodeId() ~= nil
 end
 
 
@@ -1596,6 +1587,146 @@ end
 
 
 
+function FactoryUtils.getBuildingHubCraftList(itemId)
+    local succ, craftIds = Tables.factoryItemAsHubCraftOutcomeTable:TryGetValue(itemId)
+    if succ and craftIds.list.Count > 0 then
+        local craftId = craftIds.list[0]
+        if GameInstance.player.facSpMachineSystem:IsCraftUnlocked(craftId) then
+            return craftId
+        end
+    end
+end
+
+
+function FactoryUtils.canConsumeMaterialToPlaceBuilding()
+    return not Utils.isInBlackbox() and Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub)
+end
+
+local function addBuildingMaterial(list, id, count)
+    if count <= 0 then
+        return
+    end
+    for _, bundle in ipairs(list) do
+        if bundle.id == id then
+            bundle.count = bundle.count + count
+            return
+        end
+    end
+    table.insert(list, { id = id, count = count })
+end
+
+local function addReservedMaterial(reserved, id, count)
+    if count <= 0 then
+        return
+    end
+    reserved[id] = (reserved[id] or 0) + count
+end
+
+local function getAvailableMaterialCount(id, reserved)
+    return Utils.getItemCount(id, true, true) - (reserved[id] or 0)
+end
+
+local function collectCraftIngredients(craftData, maxIncomeNum)
+    local ingredients = {}
+    for index = 1, maxIncomeNum do
+        if craftData.ingredients.length >= index then
+            local itemBundle = craftData.ingredients[CSIndex(index)]
+            addBuildingMaterial(ingredients, itemBundle.id, itemBundle.count)
+        end
+    end
+    return ingredients
+end
+
+
+
+
+
+
+
+local function checkBuildingMaterialEnoughByCount(itemId, needCount, allowRecurse, needDoubleMaterial, reserved)
+    reserved = reserved or {}
+    local craftId = FactoryUtils.getBuildingHubCraftList(itemId)
+    if craftId then
+        local materialEnough = true
+        local craftData = Tables.factoryHubCraftTable:GetValue(craftId)
+        local displayIngredients = {}
+        for index = 1, FacConst.FAC_HUB_CRAFT_MAX_INCOME_NUM do
+            if craftData.ingredients.length >= index then
+                local itemBundle = craftData.ingredients[CSIndex(index)]
+                local materialCount = Utils.getItemCount(itemBundle.id, true, true)
+                local availableCount = getAvailableMaterialCount(itemBundle.id, reserved)
+                local requiredCount = itemBundle.count * needCount
+                if availableCount >= requiredCount then
+                    addReservedMaterial(reserved, itemBundle.id, requiredCount)
+                else
+                    addReservedMaterial(reserved, itemBundle.id, availableCount)
+                    local ingredientCraftId = allowRecurse and FactoryUtils.getBuildingHubCraftList(itemBundle.id)
+                    if not ingredientCraftId or not checkBuildingMaterialEnoughByCount(itemBundle.id, requiredCount - availableCount, false, false, reserved) then
+                        materialEnough = false
+                        break
+                    end
+                end
+                
+                local previewHave = needDoubleMaterial and (materialCount - itemBundle.count) or materialCount
+                if previewHave >= itemBundle.count then
+                    addBuildingMaterial(displayIngredients, itemBundle.id, itemBundle.count)
+                else
+                    if previewHave > 0 then
+                        addBuildingMaterial(displayIngredients, itemBundle.id, previewHave)
+                    end
+                    local unitLack = itemBundle.count - math.max(previewHave, 0)
+                    local ingredientCraftId = unitLack > 0 and FactoryUtils.getBuildingHubCraftList(itemBundle.id)
+                    if ingredientCraftId then
+                        local nestedCraft = Tables.factoryHubCraftTable:GetValue(ingredientCraftId)
+                        for nestedIndex = 1, FacConst.FAC_HUB_CRAFT_MAX_INCOME_NUM do
+                            if nestedCraft.ingredients.length >= nestedIndex then
+                                local nestedBundle = nestedCraft.ingredients[CSIndex(nestedIndex)]
+                                addBuildingMaterial(displayIngredients, nestedBundle.id, nestedBundle.count * unitLack)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        if materialEnough then
+            return true, displayIngredients
+        end
+    elseif allowRecurse then
+        local isManualCraftItem, manualCraftId = Tables.factoryManualCraftOutcomeToIdTable:TryGetValue(itemId)
+        if isManualCraftItem then
+            local materialEnough = true
+            local manualData = Tables.factoryManualCraftTable:GetValue(manualCraftId)
+            for index = 1, FacConst.FAC_MANUAL_CRAFT_MAX_INCOME_NUM do
+                if manualData.ingredients.length >= index then
+                    local itemBundle = manualData.ingredients[CSIndex(index)]
+                    local availableCount = getAvailableMaterialCount(itemBundle.id, reserved)
+                    if availableCount < itemBundle.count * needCount then
+                        materialEnough = false
+                        break
+                    end
+                    addReservedMaterial(reserved, itemBundle.id, itemBundle.count * needCount)
+                end
+            end
+            if materialEnough then
+                return true, collectCraftIngredients(manualData, FacConst.FAC_MANUAL_CRAFT_MAX_INCOME_NUM)
+            end
+        end
+    end
+    return false
+end
+
+function FactoryUtils.checkBuildingMaterialEnough(itemId, needDoubleMaterial, allowRecurse)
+    if not FactoryUtils.canConsumeMaterialToPlaceBuilding() then
+        return false
+    end
+    if allowRecurse == nil then
+        allowRecurse = true
+    end
+    return checkBuildingMaterialEnoughByCount(itemId, needDoubleMaterial and 2 or 1, allowRecurse, needDoubleMaterial)
+end
+
+
+
 
 
 function FactoryUtils.parseMinerCraftData(buildingId, mineable)
@@ -1783,6 +1914,12 @@ function FactoryUtils.isPlayerOutOfRangeManual()
     if not level then
         return true
     end
+    
+    
+    local succ, outOfRangeManual = GameInstance.remoteFactoryManager:TrySampleCurrentSceneGridStatusWithPlayerPosition()
+    if succ then
+        return outOfRangeManual
+    end
     return level.isPlayerOutOfRangeManual
 end
 
@@ -1791,7 +1928,51 @@ function FactoryUtils.canPlayerEnterFacMode()
     if not level then
         return false
     end
-    return not (level.isPlayerOutOfRangeManual or GameWorld.battle.isSquadInFight)
+    return not (FactoryUtils.isPlayerOutOfRangeManual() or GameWorld.battle.isSquadInFight)
+end
+
+
+
+
+function FactoryUtils.canEnterTopView(configKey)
+    if Utils.isCurSquadAllDead() then
+        return false
+    end
+    if configKey and configKey ~= "" then
+        local cfg = require_ex('LuaSystem/FacRemoteTopViewConfig').Get(configKey)
+        local relocate = cfg and cfg.factoryRelocate
+        local targetMapId = relocate and relocate.mapId  
+        return targetMapId == nil or targetMapId == GameInstance.remoteFactoryManager.currentMapId
+    end
+    local facModeData = FactoryUtils.getFacModeData()
+    if not facModeData.supportsTopView then
+        return false
+    end
+    return true
+end
+
+function FactoryUtils.getFacRegionTypeData(facRegionType)
+    if facRegionType == nil then
+        local facRegion = GameInstance.player.factoryRegionManager.currentRegion
+        facRegionType = facRegion.type
+    end
+    local success, facRegionTypeData = Tables.factoryRegionTypeTable:TryGetValue(facRegionType)
+    if not success then
+        logger.error(ELogChannel.Factory, "FactoryRegionTypeData not found, type: " .. tostring(facRegionType))
+    end
+    return facRegionTypeData
+end
+
+function FactoryUtils.getFacModeData(facModeDataId)
+    if facModeDataId == nil then
+        local facRegionTypeData = FactoryUtils.getFacRegionTypeData()
+        facModeDataId = facRegionTypeData.factoryModeDataId
+    end
+    local success, facModeData = Tables.factoryModeDataTable:TryGetValue(facModeDataId)
+    if not success then
+        logger.error(ELogChannel.Factory, "FactoryModeData not found, id: " .. tostring(facRegionType))
+    end
+    return facModeData
 end
 
 function FactoryUtils.clampTopViewCamTargetPosition(worldPos, curWorldPos)
@@ -1807,11 +1988,10 @@ function FactoryUtils.clampTopViewCamTargetPosition(worldPos, curWorldPos)
     if level.customFacTopViewRangeInWorld then
         rect = level.customFacTopViewRangeInWorld
     else
-        rect = level.mainRegionLocalRectWithMovePadding
+        rect = level.facRegionLocalRectWithMovePadding
         if rect and (rect.width == 0 or rect.height == 0) then
             logger.critical("FactoryUtils.clampTopViewCamTargetPosition rect IS ZERO", GameWorld.worldInfo.curMapIdStr, GameWorld.worldInfo.curLevelId)
-            local _, panelIndex = Utils.isInFacMainRegionAndGetIndex()
-            level:_UpdateCurMainRegionInfo(panelIndex)
+            level:_UpdateFacRegionInfo(GameInstance.player.factoryRegionManager.currentRegion)
             return curWorldPos, false
         end
     end
@@ -1837,6 +2017,9 @@ function FactoryUtils.clampTopViewCamTargetPosition(worldPos, curWorldPos)
     
     
     rect = Unity.Rect(rect.x + xPadding, rect.y + yPadding, math.max(0, rect.width - xPadding * 2), math.max(0, rect.height - yPadding * 2))
+
+    
+    
 
     local regionTransform, localPos, curLocalPos
     if not level.customFacTopViewRangeInWorld then
@@ -2564,8 +2747,29 @@ function FactoryUtils.getCurOpenedBuildingId()
     return machine.m_panelBuildingDataId
 end
 
+function FactoryUtils.canShowBelt()
+    if not GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBelt then
+        return false
+    end
+    local facModeData = FactoryUtils.getFacModeData()
+    if not facModeData.supportsBelt then
+        return false
+    end
+    return true
+end
+
 function FactoryUtils.canShowPipe()
-    return GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipe and FactoryUtils.isDomainSupportPipe()
+    if not GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipe then
+        return false
+    end
+    if not FactoryUtils.isDomainSupportPipe() then
+        return false
+    end
+    local facModeData = FactoryUtils.getFacModeData()
+    if not facModeData.supportsPipe then
+        return false
+    end
+    return true
 end
 
 function FactoryUtils.isDomainSupportPipe()
@@ -2583,6 +2787,18 @@ function FactoryUtils.getCraftTimeStr(time, forceFloor)
     else
         return string.format("%.1f", time)
     end
+end
+
+
+function FactoryUtils.getHourTextByMinutes(minutes)
+    local hours = math.floor(minutes / Const.MIN_PER_HOUR * 10 + 0.5) / 10
+    if minutes > 0 then
+        hours = math.max(hours, 0.1)
+    end
+    if hours == math.floor(hours) then
+        return tostring(math.floor(hours))
+    end
+    return string.format("%.1f", hours)
 end
 
 function FactoryUtils.getMatchedFormulaIdByItemList(buildingId, mode, itemList, env)
@@ -2820,6 +3036,38 @@ function FactoryUtils.createBPAbnormalIconHelper()
         end
     end
     return helper
+end
+
+function FactoryUtils.getQuickBar(quickBarType)
+    local remoteFactoryCore = GameInstance.player.remoteFactory.core
+    local chapterInfo = remoteFactoryCore:GetCurrentChapterInfo()
+    if not chapterInfo then
+        return
+    end
+
+    if remoteFactoryCore.isTempQuickBarActive then
+        return remoteFactoryCore:GetCurrentTempQuickBar()
+    else
+        return chapterInfo:GetQuickBar(quickBarType)
+    end
+end
+
+function FactoryUtils.MoveQuickBar(quickBarType, fromCSIndex, toCSIndex)
+    local remoteFactoryCore = GameInstance.player.remoteFactory.core
+    if remoteFactoryCore.isTempQuickBarActive then
+        remoteFactoryCore:SwitchTempQuickBarItem(fromCSIndex, toCSIndex)
+    else
+        GameInstance.player.remoteFactory:SendMoveQuickBar(quickBarType, 0, fromCSIndex, toCSIndex)
+    end
+end
+
+function FactoryUtils.SetQuickBar(quickBarType, csIndex, itemId)
+    local remoteFactoryCore = GameInstance.player.remoteFactory.core
+    if remoteFactoryCore.isTempQuickBarActive then
+        remoteFactoryCore:MoveItemToTempQuickBar(itemId, csIndex)
+    else
+        GameInstance.player.remoteFactory:SendSetQuickBar(quickBarType, 0, csIndex, itemId)
+    end
 end
 
 function FactoryUtils.clearQuickBarSlot(csIndex)
@@ -3110,6 +3358,22 @@ function FactoryUtils.isTimeLimitedItem(itemId)
 end
 
 
+function FactoryUtils.getTimeLimitedItemAbnormalType(itemId)
+    if not FactoryUtils.isTimeLimitedItem(itemId) then
+        return FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Normal
+    end
+    local hasCraft, craftIds = Tables.factoryItemAsMachineCrafterOutcomeTable:TryGetValue(itemId)
+    if hasCraft then
+        for _, craftId in pairs(craftIds.list) do
+            if FactoryUtils.isExpiredTimeLimitedFormula(craftId) then
+                return FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedExpired
+            end
+        end
+    end
+    return FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedActive
+end
+
+
 function FactoryUtils.setTimeLimitedFormulaTagColor(image, formulaId)
     if image ~= nil and Tables.limitedFormulaCraftIdReverseTable:ContainsKey(formulaId) then
         local activityId = Tables.limitedFormulaCraftIdReverseTable:GetValue(formulaId)
@@ -3153,6 +3417,18 @@ function FactoryUtils.isBlueprintHasExpiredTimeLimited(csBP)
                     if FactoryUtils.isExpiredTimeLimitedFormula(craftId) then
                         return true
                     end
+                end
+            end
+        end
+    end
+    
+    for _, entry in pairs(csBP.buildingNodes) do
+        for _, entryInfo in pairs(entry.info) do
+            local infoTypeName = entryInfo:GetType().Name
+            if infoTypeName == "BlueprintEntryInfo_BoxValve" or infoTypeName == "BlueprintEntryInfo_FluidValve" then
+                local itemId = entryInfo.selectItemId
+                if FactoryUtils.getTimeLimitedItemAbnormalType(itemId) == FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedExpired then
+                    return true
                 end
             end
         end
@@ -3489,6 +3765,419 @@ function FactoryUtils.evaluateMultiBuildingLimitedPriority(templateId)
         end
     end
     return 0
+end
+
+
+
+
+
+function FactoryUtils.isSoilBuilding(buildingId)
+    if buildingId == nil then
+        return false
+    end
+    local buildingData = Tables.factoryBuildingTable[buildingId]
+    return buildingData.type == GEnums.FacBuildingType.Soil
+end
+
+function FactoryUtils.isSoilBuildingItem(itemId)
+    local buildingId = FactoryUtils.getItemBuildingId(itemId)
+    if buildingId == nil then
+        return false
+    end
+    return FactoryUtils.isSoilBuilding(buildingId)
+end
+
+
+function FactoryUtils.isEnableTeammateFertilize()
+    local result = CSFactoryUtil.IsEnableTeammateFertilize()
+    return result
+end
+
+function FactoryUtils.setEnableTeammateFertilize(value)
+    logger.info("[FarmTerminal] setEnableTeammateFertilize " .. tostring(value))
+    GameInstance.player.farmTerminalSystem:SendSetAIOption(
+        value,
+        FactoryUtils.isTeammateFertilizeSameSoil())
+    
+end
+
+
+function FactoryUtils.isTeammateFertilizeSameSoil()
+    local result = CSFactoryUtil.IsTeammateFertilizeSameSoil()
+    return result
+end
+
+function FactoryUtils.setTeammateFertilizeSameSoil(value)
+    logger.info("[FarmTerminal] setTeammateFertilizeSameSoil " .. tostring(value))
+    GameInstance.player.farmTerminalSystem:SendSetAIOption(
+        FactoryUtils.isEnableTeammateFertilize(),
+    value)
+    
+end
+
+
+function FactoryUtils.setTeammateAutoSoilData(autoSoil, sameSoil)
+    logger.info(string.format("[FarmTerminal] setTeammateAutoSoilData: %s, %s",
+        tostring(autoSoil), tostring(sameSoil)))
+    GameInstance.player.farmTerminalSystem:SendSetAIOption(
+        autoSoil,
+        sameSoil)
+end
+
+
+
+function FactoryUtils.checkSoilCanMutate(nodeId)
+    local canMutate, canNeighbor = CSFactoryUtil.CheckSoilCanMutateAndNeighborByNodeId(nodeId)
+    return canMutate
+end
+
+
+
+function FactoryUtils.checkSoilCanNeighbor(nodeId)
+    local canMutate, canNeighbor = CSFactoryUtil.CheckSoilCanMutateAndNeighborByNodeId(nodeId)
+    return canNeighbor
+end
+
+local SOIL_EXTRA_STATUS_MUTATION = 1
+local SOIL_EXTRA_STATUS_NEIGHBOR_INCREASE = 2
+local SOIL_EXTRA_STATUS_MUTATIONING = 4
+local SOIL_EXTRA_STATUS_NEIGHBOR_INCREASING = 8
+local FacCoreNS = CS.Beyond.Gameplay.Factory.Core
+local ProtoParseVoxel = CS.Beyond.Gameplay.RemoteFactory.ProtoParse.Voxel
+
+local function _getSoilPayload(nodeId)
+    local nodeHandler = CSFactoryUtil.GetNodeHandlerByNodeId(nodeId)
+    if nodeHandler == nil then
+        return nil
+    end
+    local soilComponent = nodeHandler:GetComponentInPosition(GEnums.FCComponentPos.Soil:GetHashCode())
+    if soilComponent == nil then
+        return nil
+    end
+    return soilComponent.soil, soilComponent.tms
+end
+
+local function _isSoilInStepType(nodeId, soil, stepType)
+    if soil == nil then
+        return false
+    end
+    local nodeHandler = CSFactoryUtil.GetNodeHandlerByNodeId(nodeId)
+    if nodeHandler == nil then
+        return false
+    end
+    local hasPlantingData, plantingData = Tables.plantingDataTable:TryGetValue(nodeHandler.templateId)
+    if not hasPlantingData then
+        return false
+    end
+    local step = soil.stepCursor
+    if step < 0 or step >= plantingData.plantingSteps.Count then
+        return false
+    end
+    local stepData = plantingData.plantingSteps[step]
+    return stepData ~= nil and stepData.plantingStepType == stepType
+end
+
+local function _isSoilInGrowStep(nodeId, soil)
+    return _isSoilInStepType(nodeId, soil, GEnums.PlantingStepType.Grow)
+end
+
+local function _isSoilInHarvestStep(nodeId, soil)
+    return _isSoilInStepType(nodeId, soil, GEnums.PlantingStepType.Harvest)
+end
+
+function FactoryUtils.isSoilInHarvestStep(nodeId)
+    local soil = _getSoilPayload(nodeId)
+    return _isSoilInHarvestStep(nodeId, soil)
+end
+
+local function _getSoilProgressWithElapsedTime(progressRaw, syncTimestampMs, advanceWithTime)
+    if not advanceWithTime or syncTimestampMs <= 0 then
+        return progressRaw
+    end
+    return progressRaw + math.max(0, DateTimeUtils.GetCurrentTimestampByMilliseconds() - syncTimestampMs)
+end
+
+local function _getSoilFootprintRect(nodeHandler)
+    local buildingData = GameInstance.remoteFactoryManager.staticData:QueryBuildingData(nodeHandler.templateId)
+    if buildingData == nil then
+        return nil
+    end
+    local range = buildingData.range
+    local originRect = FacCoreNS.RectIntData(range.x, range.z, range.width, range.depth)
+    local position = nodeHandler.transform.position
+    local face = FacCoreNS.RectFace.__CastFrom(ProtoParseVoxel.FaceFromVector3Int(nodeHandler.transform.direction))
+    return FacCoreNS.GridUtil.GetRectByTransAndRot(originRect, FacCoreNS.Vector2IntData(position.x, position.z), face)
+end
+
+local function _isAdjacentSameSoil(targetNodeHandler, targetRect, soilNode)
+    if soilNode.nodeId == targetNodeHandler.nodeId then
+        return false
+    end
+    local neighborNodeHandler = CSFactoryUtil.GetNodeHandlerByNodeId(soilNode.nodeId)
+    if neighborNodeHandler == nil or neighborNodeHandler.templateId ~= targetNodeHandler.templateId then
+        return false
+    end
+    local neighborRect = _getSoilFootprintRect(neighborNodeHandler)
+    return neighborRect ~= nil and FacCoreNS.GridUtil.RectContact(targetRect, neighborRect) >= 0
+end
+
+function FactoryUtils.getAdjacentSoilCount(nodeId)
+    local nodeHandler = CSFactoryUtil.GetNodeHandlerByNodeId(nodeId)
+    if nodeHandler == nil then
+        return 0
+    end
+    local hasPlantingData, plantingData = Tables.plantingDataTable:TryGetValue(nodeHandler.templateId)
+    if not hasPlantingData or not plantingData.enableMutation then
+        return 0
+    end
+    local targetRect = _getSoilFootprintRect(nodeHandler)
+    if targetRect == nil then
+        return 0
+    end
+    local success, soilNodes = GameInstance.player.facSoilSystem:TryGetNodes(GEnums.FacBuildingType.Soil)
+    if not success then
+        return 0
+    end
+
+    local count = 0
+    for _, soilNode in cs_pairs(soilNodes) do
+        if _isAdjacentSameSoil(nodeHandler, targetRect, soilNode) then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+
+function FactoryUtils.getSoilMutateData(nodeId)
+    local soil, syncTimestampMs = _getSoilPayload(nodeId)
+    local status = soil and soil.soilExtraStatus or 0
+    local progressRaw = soil and soil.mutationProgress or 0
+    syncTimestampMs = syncTimestampMs or 0
+    local complete = (status & SOIL_EXTRA_STATUS_MUTATION) ~= 0
+    local inProgress = (status & SOIL_EXTRA_STATUS_MUTATIONING) ~= 0
+    local start = complete or inProgress or progressRaw > 0
+    local advanceWithTime = inProgress and _isSoilInGrowStep(nodeId, soil)
+    local progress = CSFactoryUtil.NormalizeSoilMutationProgress(progressRaw, syncTimestampMs, advanceWithTime)
+    local currentProgressRaw = _getSoilProgressWithElapsedTime(progressRaw, syncTimestampMs, advanceWithTime)
+    local time = inProgress and math.max(0, Tables.factorySoilConst.SoilMutationProgressSum - currentProgressRaw / 1000) or 0
+    return {
+        complete = complete, 
+        start = start, 
+        inProgress = inProgress, 
+        progress = progress, 
+        time = time, 
+    }
+end
+
+
+function FactoryUtils.getSoilNeighborData(nodeId)
+    local soil, syncTimestampMs = _getSoilPayload(nodeId)
+    local status = soil and soil.soilExtraStatus or 0
+    local progressRaw = soil and soil.neighborIncreaseProgress or 0
+    syncTimestampMs = syncTimestampMs or 0
+    local complete = (status & SOIL_EXTRA_STATUS_NEIGHBOR_INCREASE) ~= 0
+    local inProgress = (status & SOIL_EXTRA_STATUS_NEIGHBOR_INCREASING) ~= 0
+    local start = complete or inProgress or progressRaw > 0
+    local advanceWithTime = inProgress and _isSoilInGrowStep(nodeId, soil)
+    local progress = CSFactoryUtil.NormalizeSoilNeighborIncreaseProgress(progressRaw, syncTimestampMs, advanceWithTime)
+    local currentProgressRaw = _getSoilProgressWithElapsedTime(progressRaw, syncTimestampMs, advanceWithTime)
+    local count = FactoryUtils.getAdjacentSoilCount(nodeId)
+    local time = inProgress and math.max(0, Tables.factorySoilConst.SoilNeighborIncreaseProgressSum - currentProgressRaw / 1000) or 0
+    return {
+        complete = complete, 
+        start = start, 
+        inProgress = inProgress, 
+        progress = progress, 
+        time = time, 
+        count = count, 
+        effectValue = count * Tables.factorySoilConst.SoilIncreaseProducePerSoil, 
+        frozenEffectValue = soil and soil.neighborIncreaseRate or 0, 
+    }
+end
+
+local function _getFertilizeIncreaseValue(increaseType)
+    local succ, cfg = Tables.fertilizeIncreaseTable:TryGetValue(increaseType)
+    local cfgParam = succ and cfg.param or nil
+    if cfgParam == nil or cfgParam.valueFloatList == nil or cfgParam.valueFloatList.Count <= 0 then
+        logger.error("Invalid fertilizer increase config", tostring(increaseType))
+        return nil
+    end
+    return Utils.getDynamicParamFloatValue(cfgParam)
+end
+
+
+function FactoryUtils.getFertilizeIncreaseParam(param)
+    local typeStr = Utils.getDynamicParamStringValue(param)
+    local enumName = string.match(typeStr, "^E_FertilizeIncreaseType_(.+)$")
+    local increaseType = enumName and GEnums.FertilizeIncreaseType[enumName] or nil
+    if increaseType == nil then
+        logger.error("Invalid fertilizer increase type", typeStr)
+        return nil
+    end
+
+    return _getFertilizeIncreaseValue(increaseType)
+end
+
+local function _getFertilizeAccelerateMinutes(itemId)
+    local succ, cfg = Tables.fertilizeDataTable:TryGetValue(itemId)
+    if not succ then
+        logger.error("Invalid fertilizer config", itemId)
+        return nil
+    end
+
+    for i = 0, cfg.fertilizeType.Count - 1 do
+        if cfg.fertilizeType[i] == GEnums.FertilizeType.DecreaseTime then
+            local seconds = Utils.getDynamicParamIntValue(cfg.fertilizeParam1[i])
+            if seconds == nil or seconds <= 0 then
+                logger.error("Invalid fertilizer accelerate time", itemId, tostring(seconds))
+                return nil
+            end
+            return seconds / Const.SEC_PER_MIN
+        end
+    end
+
+    return 0
+end
+
+
+function FactoryUtils.getSoilFertilizaDataBySoilNode(soilNode)
+    local ret = {}
+    
+    local fertilizeRipenCount = soilNode.fertilizeRipenCount
+    
+    local fertilizeIncreaseType = soilNode.fertilizeIncreaseType
+    
+    if fertilizeRipenCount > 0 then
+        local usedFertilizerItemIds = soilNode.usedFertilizerItemIds
+        local desc
+        if usedFertilizerItemIds.Count == 0 then
+            desc = Language.LUA_FAC_CULTIVATE_ACCELERATE_COMPATIBLE_OLD
+        else
+            local minutes = 0
+            for i = 0, usedFertilizerItemIds.Count - 1 do
+                local accelerateMinutes = _getFertilizeAccelerateMinutes(usedFertilizerItemIds[i])
+                if accelerateMinutes ~= nil then
+                    minutes = minutes + accelerateMinutes
+                end
+            end
+            if minutes > 0 then
+                local format = Language.LUA_FAC_CULTIVATE_ACCELERATE
+                desc = string.format(format, FactoryUtils.getHourTextByMinutes(minutes))
+            end
+        end
+        if desc ~= nil then
+            table.insert(ret, {
+                type = "Accelerate",
+                value = fertilizeRipenCount,
+                desc = desc,
+            })
+        end
+    end
+    
+    local increaseSumValue = 0  
+    local increaseDataList = {}
+    if fertilizeIncreaseType ~= GEnums.FertilizeIncreaseType.None then
+        local increaseValue = _getFertilizeIncreaseValue(fertilizeIncreaseType)
+        if increaseValue ~= nil then
+            local value = math.floor(increaseValue * 100 + 0.5)
+            increaseSumValue = increaseSumValue + value
+            local desc = Language.LUA_FAC_CULTIVATE_INCREASE_FERTILIZE
+            table.insert(increaseDataList, {
+                increaseType = "Fertilize",
+                value = value,
+                descLeft = desc,
+                descRight = string.format("%s%%", value),
+            })
+        end
+    end
+    local neighborData = FactoryUtils.getSoilNeighborData(soilNode.nodeId)
+    if neighborData.complete then
+        local value
+        if FactoryUtils.isSoilInHarvestStep(soilNode.nodeId) then
+            
+            
+            value = math.floor(neighborData.frozenEffectValue * 100 + 0.5)
+        else
+            
+            
+            value = math.floor(neighborData.count * Tables.factorySoilConst.SoilIncreaseProducePerSoil * 100 + 0.5)
+        end
+        
+        if value > 0 then
+            increaseSumValue = increaseSumValue + value
+            local desc = Language.LUA_FAC_CULTIVATE_INCREASE_NEIGHBOR
+            table.insert(increaseDataList, {
+                increaseType = "Neighbor",
+                value = value,
+                descLeft = desc,
+                descRight = string.format("%s%%", value),
+            })
+        end
+    end
+    
+    if increaseSumValue > 0 and #increaseDataList > 0 then
+        local format = Language.LUA_FAC_CULTIVATE_INCREASE
+        local desc = string.format(format, increaseSumValue)
+        table.insert(ret, {
+            type = "Increase",
+            value = increaseSumValue,
+            desc = desc,
+            increaseDataList = increaseDataList,
+        })
+    end
+    return ret
+end
+
+
+
+
+function FactoryUtils.getCropObtainWayInfo(itemId)
+    if string.isEmpty(itemId) or not Tables.cropObtainWayTable:ContainsKey(itemId) then
+        return nil
+    end
+
+    local cfg = Tables.cropObtainWayTable:GetValue(itemId)
+    if not string.isEmpty(cfg.questId) then
+        if not GameInstance.player.mission:IsQuestCompleted(cfg.questId) then
+            return nil
+        end
+    end
+
+    local env = nil
+    local mode = nil
+    if cfg.xiraniteState then
+        env = GEnums.FacEnvGenEnvType.Xiranite
+        mode = "gas"
+    end
+
+    local craftInfo = {
+        craftId = itemId,
+        incomes = { { id = cfg.soilItemId, count = cfg.soilItemNum } },
+        outcomes = { { id = itemId, count = cfg.itemNum } },
+        env = env,
+        formulaMode = mode,
+        isUnlock = true,
+    }
+
+    local phaseId = nil
+    local phaseArgs = nil
+    if not string.isEmpty(cfg.phaseId) then
+        phaseId = PhaseId[cfg.phaseId]
+        if not string.isEmpty(cfg.phaseArgs) then
+            phaseArgs = Json.decode(cfg.phaseArgs)
+        end
+    end
+
+    return {
+        name = cfg.textId,
+        crafts = { craftInfo },
+        iconFolder = UIConst.UI_SPRITE_ITEM_TIPS,
+        iconId = cfg.iconId,
+        phaseId = phaseId,
+        phaseArgs = phaseArgs,
+        sortId = 2000,
+    }
 end
 
 

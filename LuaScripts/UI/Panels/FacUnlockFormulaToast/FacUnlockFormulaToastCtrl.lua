@@ -10,7 +10,7 @@ FacUnlockFormulaToastCtrl = HL.Class('FacUnlockFormulaToastCtrl', uiCtrl.UICtrl)
 
 
 FacUnlockFormulaToastCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
+    [MessageConst.ON_DIALOG_START] = 'OnDialogStart',
 }
 
 
@@ -44,6 +44,10 @@ end
 FacUnlockFormulaToastCtrl.ShowFormulaToast = HL.Method(HL.String) << function(self, text)
     self.view.specialToast.view.specialToastText:SetAndResolveTextStyle(text)
     self.view.specialToast:ShowToast()
+end
+
+FacUnlockFormulaToastCtrl.OnDialogStart = HL.Method(HL.Opt(HL.Any)) << function(self)
+    self.view.specialToast:HideToast()
 end
 
 

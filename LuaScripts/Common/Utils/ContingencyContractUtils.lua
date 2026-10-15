@@ -4,7 +4,7 @@ local ContingencyContractUtils = {}
 ContingencyContractUtils.MAX_ROW_COUNT = 3
 
 
-function ContingencyContractUtils.GetTagParseInfos(gameId)
+function ContingencyContractUtils.CreateTagFullInfosTable(gameId)
     
     local tagInfos = {}
     local allTagInfosMap = {}
@@ -25,63 +25,39 @@ function ContingencyContractUtils.GetTagParseInfos(gameId)
         return resultInfos
     end
     
-    for column, ccGroupCfg in pairs(ccCfg.contractGroupMap) do
+    for column, ccGroupCfg in pairs(ccCfg.contractColMap) do
         for row = 1, ContingencyContractUtils.MAX_ROW_COUNT do
             
-            local _, singleTagCfg = ccGroupCfg.contractMap:TryGetValue(row)
+            local _, singleTagCfg = ccGroupCfg.contractRowMap:TryGetValue(row)
             
             local tagEffectCfg
             hasCfg = false
             if singleTagCfg then
                 hasCfg, tagEffectCfg = Tables.ccTagTable:TryGetValue(singleTagCfg.tagId)
             end
-            local info = ContingencyContractUtils._GetTagInfoTemplate()
+            local info
 
             
             if not tagEffectCfg then
                 
+                info = ContingencyContractUtils._GetTagInfoTemplate()
                 info.isEmpty = true
                 info.tagId = -ContingencyContractUtils.GetCellIndex(column, row) 
             else
                 
-                local tagId = singleTagCfg.tagId
-                local keyId = singleTagCfg.keyId
-                local groupId = singleTagCfg.groupId
-                info.isEmpty = false
-                info.tagId = tagId
-                info.level = row
-                info.groupId = groupId
-                info.conflictId = singleTagCfg.conflictId
-                info.keyId = keyId
-                info.unlockScore = singleTagCfg.unlockScore
-                info.unlockStage = singleTagCfg.unlockActivityStage
-                info.canPreview = singleTagCfg.canPreview
-                for i, lockId in pairs(singleTagCfg.lockIds) do
-                    table.insert(info.lockIds, lockId)
-                end
-                
-                info.tagName = tagEffectCfg.name
-                info.romanNumSuffix = tagEffectCfg.romanNumSuffix
-                if string.isEmpty(info.romanNumSuffix) then
-                    info.tagFullName = info.tagName
-                else
-                    info.tagFullName = string.format(Language.LUA_CONTINGENCY_CONTRACT_TAG_NAME_FORMAT, info.tagName, info.romanNumSuffix)
-                end
-                info.icon = tagEffectCfg.icon
-                
-                local formatData = CS.Beyond.Gameplay.ContingencyContractFormatData(tagId)
-                info.desc = formatData:GetFormattedDesc()
-
+                info = ContingencyContractUtils.CreateTagBasicInfo(singleTagCfg, tagEffectCfg)
                 if UNITY_EDITOR and ContingencyContractUtils.IsRemoveCCTagLimit then
                     info.keyId = ""
                     info.unlockStage = ""
                     info.lockIds = {}
                 else
                     
+                    local tagId = info.tagId
+                    local keyId = info.keyId
                     if not string.isEmpty(keyId) then
                         local keyInfo = tagKeyInfos[keyId]
                         if not keyInfo then
-                            keyInfo = ContingencyContractUtils._GetKeyLockInfoTemplate(keyId)
+                            keyInfo = ContingencyContractUtils._CreateKeyLockInfoFullInfo(keyId)
                             tagKeyInfos[keyId] = keyInfo
                         end
                         keyInfo.keyTags[tagId] = info
@@ -91,7 +67,7 @@ function ContingencyContractUtils.GetTagParseInfos(gameId)
                         for i, lockId in pairs(info.lockIds) do
                             local lockInfo = tagKeyInfos[lockId]
                             if not lockInfo then
-                                lockInfo = ContingencyContractUtils._GetKeyLockInfoTemplate(lockId)
+                                lockInfo = ContingencyContractUtils._CreateKeyLockInfoFullInfo(lockId)
                                 tagKeyInfos[lockId] = lockInfo
                             end
                             lockInfo.lockTags[tagId] = info
@@ -144,9 +120,6 @@ function ContingencyContractUtils.GetTagParseInfos(gameId)
             
 
             
-            info.column = column
-            info.row = row
-            info.cellIndex = ContingencyContractUtils.GetCellIndex(column, row)
             
             local tempInfo
             if row > 1 then
@@ -187,6 +160,144 @@ function ContingencyContractUtils.GetTagParseInfos(gameId)
     return resultInfos
 end
 
+function ContingencyContractUtils.CreateTagBasicInfoWithKeyLockInfos(gameId, tagIds, outTagInfos)
+    local tagInfos = outTagInfos or {}
+    if not tagIds then
+        return tagInfos
+    end
+
+    local hasCfg, ccCfg = Tables.contingencyContractTable:TryGetValue(gameId)
+    if not hasCfg then
+        return tagInfos
+    end
+
+    for _, tagId in pairs(tagIds) do
+        
+        local hasSingleTagCfg, singleTagCfg = ccCfg.contractMap:TryGetValue(tagId)
+        local hasTagEffectCfg, tagEffectCfg = Tables.ccTagTable:TryGetValue(tagId)
+        if hasSingleTagCfg and hasTagEffectCfg then
+            local tagInfo = ContingencyContractUtils.CreateTagBasicInfo(singleTagCfg, tagEffectCfg)
+            if tagInfo then
+                table.insert(tagInfos, tagInfo)
+                
+                if not string.isEmpty(tagInfo.keyId) then
+                    tagInfo.keyInfo = ContingencyContractUtils.CreateKeyLockBasicInfo(tagInfo.keyId)
+                end
+                
+                tagInfo.lockInfos = {}
+                if #tagInfo.lockIds > 0 then
+                    table.sort(tagInfo.lockIds)
+                    for _, lockId in ipairs(tagInfo.lockIds) do
+                        table.insert(tagInfo.lockInfos, ContingencyContractUtils.CreateKeyLockBasicInfo(lockId))
+                    end
+                end
+            end
+        end
+    end
+    
+    table.sort(tagInfos, function(a, b)
+        return a.cellIndex < b.cellIndex
+    end)
+    return tagInfos
+end
+
+function ContingencyContractUtils.CreateTagBasicInfoWithKeyLockInfosByGroup(gameId, tagGroupId, outTagInfos)
+    local tagIds = {}
+    local hasCfg, ccCfg = Tables.contingencyContractTable:TryGetValue(gameId)
+    if not hasCfg then
+        return nil
+    end
+
+    local hasGroupCfg, groupCfg = ccCfg.contractGroupMap:TryGetValue(tagGroupId)
+    if not hasGroupCfg then
+        return nil
+    end
+
+    for _, singleTagCfg in pairs(groupCfg.contractMap) do
+        table.insert(tagIds, singleTagCfg.tagId)
+    end
+    return ContingencyContractUtils.CreateTagBasicInfoWithKeyLockInfos(gameId, tagIds, outTagInfos)
+end
+
+function ContingencyContractUtils.CreateTagBasicInfoWithKeyLockJoinedInfos(gameId, tagIds, tagGroupIds)
+    local tagInfos = {}  
+    local tagGroupInfos = {} 
+    local hasCfg, ccCfg = Tables.contingencyContractTable:TryGetValue(gameId)
+    if not hasCfg then
+        return tagInfos, tagGroupInfos
+    end
+
+    local ccSystem = GameInstance.player.contingencyContractSystem
+    local ccData = ccSystem:GetCcGameData(gameId)
+    local joinedTagSet = ccData and ccData.curSelectTagSet or nil
+    local joinedConflictMap = {}
+    if joinedTagSet then
+        for _, singleTagCfg in pairs(ccCfg.contractMap) do
+            if joinedTagSet:Contains(singleTagCfg.tagId) and not string.isEmpty(singleTagCfg.conflictId) then
+                joinedConflictMap[singleTagCfg.conflictId] = singleTagCfg.tagId
+            end
+        end
+    end
+
+    local function fillJoinedInfos(infos)
+        for _, tagInfo in pairs(infos) do
+            tagInfo.isJoined = joinedTagSet ~= nil and joinedTagSet:Contains(tagInfo.tagId)
+            tagInfo.isConflict = not tagInfo.isJoined
+                and not string.isEmpty(tagInfo.conflictId)
+                and joinedConflictMap[tagInfo.conflictId] ~= nil
+        end
+    end
+
+    ContingencyContractUtils.CreateTagBasicInfoWithKeyLockInfos(gameId, tagIds, tagInfos)
+    fillJoinedInfos(tagInfos)
+
+    for _, tagGroupId in pairs(tagGroupIds or {}) do
+        local tagGroupInfo = {}
+        ContingencyContractUtils.CreateTagBasicInfoWithKeyLockInfosByGroup(gameId, tagGroupId, tagGroupInfo)
+        fillJoinedInfos(tagGroupInfo)
+        table.insert(tagGroupInfos, tagGroupInfo)
+    end
+    return tagInfos, tagGroupInfos
+end
+
+function ContingencyContractUtils.CreateTagBasicInfoWithKeyLockJoinedInfosFilterGroup(gameId, tagIds, tagGroupIds)
+    local tagInfos, tagGroupInfos = ContingencyContractUtils.CreateTagBasicInfoWithKeyLockJoinedInfos(gameId, tagIds, tagGroupIds)
+    local tagInfoMap = {}
+    for _, tagInfo in pairs(tagInfos) do
+        tagInfo.isFromGroup = false
+        tagInfoMap[tagInfo.tagId] = tagInfo
+    end
+
+    for _, tagGroupInfo in pairs(tagGroupInfos) do
+        local targetTagInfo
+        for _, tagInfo in pairs(tagGroupInfo) do
+            tagInfo.isFromGroup = true
+            if tagInfoMap[tagInfo.tagId] then
+                tagInfoMap[tagInfo.tagId].isFromGroup = true
+            end
+            if tagInfo.isJoined then
+                targetTagInfo = tagInfo
+                break
+            end
+            if not targetTagInfo
+                or tagInfo.level < targetTagInfo.level
+            then
+                targetTagInfo = tagInfo
+            end
+        end
+        if targetTagInfo and not tagInfoMap[targetTagInfo.tagId] then
+            table.insert(tagInfos, targetTagInfo)
+            tagInfoMap[targetTagInfo.tagId] = true
+            targetTagInfo.isFromGroup = true
+        end
+    end
+
+    table.sort(tagInfos, function(a, b)
+        return a.cellIndex < b.cellIndex
+    end)
+    return tagInfos
+end
+
 
 function ContingencyContractUtils._GetTagInfoTemplate()
     return {
@@ -212,6 +323,8 @@ function ContingencyContractUtils._GetTagInfoTemplate()
         isUnlockByStage = false, 
         hasFirstPassReward = true, 
         useKeyCount = 0,
+        isJoined = false,
+        isConflict = false,
         
         column = 0,
         row = 0,
@@ -224,7 +337,41 @@ function ContingencyContractUtils._GetTagInfoTemplate()
 end
 
 
-function ContingencyContractUtils._GetKeyLockInfoTemplate(keyId)
+
+function ContingencyContractUtils.CreateTagBasicInfo(singleTagCfg, tagEffectCfg)
+    if not singleTagCfg or not tagEffectCfg then
+        return nil
+    end
+    local info = ContingencyContractUtils._GetTagInfoTemplate()
+    info.isEmpty = false
+    info.tagId = singleTagCfg.tagId
+    info.groupId = singleTagCfg.groupId
+    info.column = singleTagCfg.column
+    info.row = singleTagCfg.row
+    info.conflictId = singleTagCfg.conflictId
+    info.keyId = singleTagCfg.keyId
+    info.unlockScore = singleTagCfg.unlockScore
+    info.unlockStage = singleTagCfg.unlockActivityStage
+    info.canPreview = singleTagCfg.canPreview
+    info.cellIndex = ContingencyContractUtils.GetCellIndex(info.column, info.row)
+    for i, lockId in pairs(singleTagCfg.lockIds) do
+        table.insert(info.lockIds, lockId)
+    end
+    info.tagName = tagEffectCfg.name
+    info.level = tagEffectCfg.score
+    info.icon = tagEffectCfg.icon
+    info.romanNumSuffix = tagEffectCfg.romanNumSuffix
+    if string.isEmpty(info.romanNumSuffix) then
+        info.tagFullName = info.tagName
+    else
+        info.tagFullName = string.format(Language.LUA_CONTINGENCY_CONTRACT_TAG_NAME_FORMAT, info.tagName, info.romanNumSuffix)
+    end
+    local formatData = CS.Beyond.Gameplay.ContingencyContractFormatData(info.tagId)
+    info.desc = formatData:GetFormattedDesc()
+    return info
+end
+
+function ContingencyContractUtils.CreateKeyLockBasicInfo(keyId)
     local _, keyCfg = Tables.contingencyContractKeyLockTable:TryGetValue(keyId)
     return {
         keyId = keyId,
@@ -232,13 +379,18 @@ function ContingencyContractUtils._GetKeyLockInfoTemplate(keyId)
         lockName = keyCfg.lockName,
         color = UIUtils.getColorByString(keyCfg.color),
         keyDecoImg = keyCfg.keyDecoImg,
-        keyTags = {},
-        keyTagsList = {},
-        lockTags = {},
-
-        curJoinedKeyTags = {},
-        curJoinedLockTags = {},
     }
+end
+
+
+function ContingencyContractUtils._CreateKeyLockInfoFullInfo(keyId)
+    local basicInfo = ContingencyContractUtils.CreateKeyLockBasicInfo(keyId)
+    basicInfo.keyTags = {}
+    basicInfo.keyTagsList = {}
+    basicInfo.lockTags = {}
+    basicInfo.curJoinedKeyTags = {}
+    basicInfo.curJoinedLockTags = {}
+    return basicInfo
 end
 
 function ContingencyContractUtils.GetCellIndex(column, row)
@@ -255,49 +407,26 @@ end
 
 
 
-
 function ContingencyContractUtils.SortTagIdsByGridPos(gameId, tagIds)
-    local sorted = {}
     if not tagIds then
-        return sorted
+        return {}
     end
-    for _, tagId in ipairs(tagIds) do
-        table.insert(sorted, tagId)
-    end
+    local sorted = lume.copy(tagIds)
 
     local hasCfg, ccCfg = Tables.contingencyContractTable:TryGetValue(gameId)
     if not hasCfg or not ccCfg then
         return sorted
     end
 
-    local tagIdToPos = {}
-    for column, ccGroupCfg in pairs(ccCfg.contractGroupMap) do
-        for row = 1, ContingencyContractUtils.MAX_ROW_COUNT do
-            local hasTag, singleTagCfg = ccGroupCfg.contractMap:TryGetValue(row)
-            if hasTag and singleTagCfg then
-                tagIdToPos[singleTagCfg.tagId] = { column = column, row = row }
-            end
-        end
-    end
-
-    local function getSortKey(tagId)
-        local pos = tagIdToPos[tagId]
-        if pos then
-            return pos.column, pos.row
-        end
-        if UNITY_EDITOR then
-            logger.error(string.format("ContingencyContractUtils.SortTagIdsByGridPos: tagId [%s] not found in gameId [%s]", tostring(tagId), tostring(gameId)))
-        end
-        return math.huge, math.huge
-    end
-
     table.sort(sorted, function(a, b)
-        local colA, rowA = getSortKey(a)
-        local colB, rowB = getSortKey(b)
-        if colA ~= colB then
-            return colA < colB
+        local aCfg = ccCfg.contractMap[a]
+        local bCfg = ccCfg.contractMap[b]
+        local aIndex = ContingencyContractUtils.GetCellIndex(aCfg.column, aCfg.row)
+        local bIndex = ContingencyContractUtils.GetCellIndex(bCfg.column, bCfg.row)
+        if aIndex ~= bIndex then
+            return aIndex < bIndex
         end
-        return rowA < rowB
+        return a < b
     end)
 
     return sorted
@@ -307,8 +436,8 @@ end
 function ContingencyContractUtils.CreateStageToTagMap()
     local stageToTagMap = {}
     for _, contractData in pairs(Tables.contingencyContractTable) do
-        for _, groupData in pairs(contractData.contractGroupMap) do
-            for _, singleData in pairs(groupData.contractMap) do
+        for _, groupData in pairs(contractData.contractColMap) do
+            for _, singleData in pairs(groupData.contractRowMap) do
                 local unlockStage = singleData.unlockActivityStage
                 local tagId = singleData.tagId
                 if not string.isEmpty(unlockStage) then
@@ -460,9 +589,9 @@ function ContingencyContractUtils.GenShareCode(gameId, tagIds)
     end
 
     local columnValues = {}
-    for column, ccGroupCfg in pairs(ccCfg.contractGroupMap) do
+    for column, ccGroupCfg in pairs(ccCfg.contractColMap) do
         for row = 1, ContingencyContractUtils.MAX_ROW_COUNT do
-            local hasTag, singleTagCfg = ccGroupCfg.contractMap:TryGetValue(row)
+            local hasTag, singleTagCfg = ccGroupCfg.contractRowMap:TryGetValue(row)
             if hasTag and singleTagCfg and selectedTagSet[singleTagCfg.tagId] then
                 local weight = 1 << (row - 1) 
                 columnValues[column] = (columnValues[column] or 0) + weight
@@ -554,13 +683,13 @@ function ContingencyContractUtils.AnalyzeShareCode(gameId, shareCode, noUnlockTo
         local digitIndex = tagMaxColumn - col + 1
         local digitChar = octalStr:sub(digitIndex, digitIndex)
         local value = tonumber(digitChar) or 0
-        local hasGroup, ccGroupCfg = ccCfg.contractGroupMap:TryGetValue(col)
+        local hasGroup, ccGroupCfg = ccCfg.contractColMap:TryGetValue(col)
         if hasGroup then
             for row = 1, ContingencyContractUtils.MAX_ROW_COUNT do
                 local weight = 1 << (row - 1)
                 if value & weight ~= 0 then
                     local fail = true
-                    local hasTag, singleTagCfg = ccGroupCfg.contractMap:TryGetValue(row)
+                    local hasTag, singleTagCfg = ccGroupCfg.contractRowMap:TryGetValue(row)
                     if hasTag then
                         local hasTagCfg, tagCfg = Tables.ccTagTable:TryGetValue(singleTagCfg.tagId)
                         if hasTagCfg then
@@ -618,7 +747,7 @@ function ContingencyContractUtils.CheckJoinedTagListValid(gameId, joinedTagIds, 
     for _, tagId in pairs(joinedTagIds) do
         joinedTagIdMap[tagId] = true
     end
-    local infosTable = ContingencyContractUtils.GetTagParseInfos(gameId)
+    local infosTable = ContingencyContractUtils.CreateTagFullInfosTable(gameId)
     local allTagInfosMap = infosTable.allTagInfosMap
     local keyInfos = infosTable.tagKeyInfos
     local conflictInfos = infosTable.tagConflictInfos
@@ -681,6 +810,165 @@ end
 
 
 
+
+function ContingencyContractUtils.GetImportWarningScores(gameId)
+    local warningScore1, warningScore2 = 0, 0
+    local hasCfg, ccCfg = Tables.contingencyContractTable:TryGetValue(gameId)
+    if not hasCfg then
+        logger.error(string.format("危机合约，gameId[%s]配置不存在", gameId))
+        return warningScore1, warningScore2
+    end
+    local hasActivityCfg, ccActivityCfg = Tables.activityContingencyContractTable:TryGetValue(ccCfg.activityId)
+    if not hasActivityCfg then
+        logger.error(string.format("危机合约，activityId[%s]配置不存在", ccCfg.activityId))
+        return warningScore1, warningScore2
+    end
+    local scoreBandCount = ccActivityCfg.scoreBand.Count
+    if scoreBandCount < 2 then
+        logger.error(string.format("危机合约活动表，[Id:%s]活动配置scoreBand数量少于2！无法正确显示分数难度提示功能", ccCfg.activityId))
+    else
+        warningScore1 = ccActivityCfg.scoreBand[0]
+        warningScore2 = ccActivityCfg.scoreBand[1]
+    end
+    return warningScore1, warningScore2
+end
+
+
+
+function ContingencyContractUtils.BuildImportTagResult(gameId, tagInfos)
+    
+    local ccSystem = GameInstance.player.contingencyContractSystem
+    local ccData = ccSystem:GetCcGameData(gameId)
+    local resultSet = {}
+    local conflictToTagId = {}
+    local historyBestScore = ccData and ccData.historyBestScore or 0
+
+    local hasCfg, ccCfg = Tables.contingencyContractTable:TryGetValue(gameId)
+    if ccData then
+        for _, tagId in pairs(ccData.curSelectTagList) do
+            resultSet[tagId] = true
+            if hasCfg then
+                local hasSingle, singleCfg = ccCfg.contractMap:TryGetValue(tagId)
+                if hasSingle and not string.isEmpty(singleCfg.conflictId) then
+                    conflictToTagId[singleCfg.conflictId] = tagId
+                end
+            end
+        end
+    end
+
+    local allJoined = true
+    local hasConflict = false
+    local hasScoreLock = false
+    for _, tagInfo in ipairs(tagInfos or {}) do
+        if not tagInfo.isJoined then
+            allJoined = false
+            if tagInfo.isConflict then
+                hasConflict = true
+            end
+            if tagInfo.unlockScore > historyBestScore then
+                hasScoreLock = true
+            end
+            if not string.isEmpty(tagInfo.conflictId) then
+                local oldId = conflictToTagId[tagInfo.conflictId]
+                if oldId then
+                    resultSet[oldId] = nil
+                end
+                conflictToTagId[tagInfo.conflictId] = tagInfo.tagId
+            end
+            resultSet[tagInfo.tagId] = true
+        end
+    end
+
+    local mergedIds = {}
+    local finalScore = 0
+    for tagId, _ in pairs(resultSet) do
+        table.insert(mergedIds, tagId)
+        local hasTagCfg, tagEffectCfg = Tables.ccTagTable:TryGetValue(tagId)
+        if hasTagCfg then
+            finalScore = finalScore + tagEffectCfg.score
+        end
+    end
+
+    return {
+        mergedIds = mergedIds,
+        finalScore = finalScore,
+        allJoined = allJoined,
+        hasConflict = hasConflict,
+        hasScoreLock = hasScoreLock,
+    }
+end
+
+
+
+
+
+
+
+
+function ContingencyContractUtils.TryImportTagConfirmation(gameId, importResult, warningScores, opts)
+    opts = opts or {}
+    local warningScore1 = warningScores and warningScores.warningScore1 or 0
+    local warningScore2 = warningScores and warningScores.warningScore2 or 0
+    local gotoAfter = opts.gotoAfter
+    local onSend = opts.onSend
+    local onGotoSelectTag = opts.onGotoSelectTag
+
+    if importResult.allJoined then
+        if gotoAfter and onGotoSelectTag then
+            onGotoSelectTag()
+        end
+        return
+    end
+
+    if importResult.hasScoreLock then
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = Language.LUA_ACTIVITY_CONTINGENCY_CONTRACT_JUMP_HAS_LOCKED_TAG_CONFIRM_POP_UP,
+            onConfirm = function()
+                if onGotoSelectTag then
+                    onGotoSelectTag()
+                end
+            end,
+        })
+        return
+    end
+
+    local finalScore = importResult.finalScore
+    local hasConflict = importResult.hasConflict
+    local needPopup = hasConflict or finalScore >= warningScore1
+    if not needPopup then
+        if onSend then
+            onSend(importResult.mergedIds, finalScore)
+        end
+        return
+    end
+
+    local contentLang
+    if finalScore < warningScore1 then
+        contentLang = Language.LUA_CONTINGENCY_CONTRACT_IMPORT_TAG_CONFIRM
+    elseif finalScore < warningScore2 then
+        contentLang = Language.LUA_CONTINGENCY_CONTRACT_IMPORT_TAG_CONFIRM_HARD
+    else
+        contentLang = Language.LUA_CONTINGENCY_CONTRACT_IMPORT_TAG_CONFIRM_EXTREME
+    end
+
+    local popUpArg = {
+        content = string.format(contentLang, finalScore),
+        onConfirm = function()
+            if onSend then
+                onSend(importResult.mergedIds, finalScore)
+            end
+        end,
+    }
+    if hasConflict then
+        popUpArg.warningContent = Language.LUA_CONTINGENCY_CONTRACT_IMPORT_TAG_CONFLICT_WARN
+    end
+    Notify(MessageConst.SHOW_POP_UP, popUpArg)
+end
+
+
+
+
+
 function ContingencyContractUtils.CreateGroupToTaskMap(activityId)
     local taskInfoDict = Tables.activityConditionalMultiStageTaskConfigTable[activityId].TaskConfigMap
     local groupToTaskMap = {}
@@ -718,6 +1006,9 @@ function ContingencyContractUtils.GetTotalScoreByGamaId(gameId)
     local ccSystem = GameInstance.player.contingencyContractSystem
     local ccData = ccSystem:GetCcGameData(gameId)
     local totalScore = 0
+    if not ccData then
+        return totalScore
+    end
     for _, tagId in pairs(ccData.curSelectTagList) do
         local succ, tagCfg = Tables.ccTagTable:TryGetValue(tagId)
         if succ then

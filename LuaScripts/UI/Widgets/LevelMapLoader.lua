@@ -36,6 +36,8 @@ local CHUNK_DRAW_MATERIAL_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Materi
 local MIST_DRAW_MATERIAL_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Materials/M_ui_mapmist_rendertexture_painter.mat"
 
 local TEXTURE_LOAD_PATH_FORMAT = "%s/%s.png"
+local FALLBACK_MAP_BACKGROUND_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/LevelMap/default_grid.png"
+local FALLBACK_MAP_BACKGROUND_TYPE = CS.UnityEngine.UI.Image.Type.Tiled
 
 
 LevelMapLoader.m_initialized = HL.Field(HL.Boolean) << false
@@ -47,6 +49,12 @@ LevelMapLoader.m_levelMapConfig = HL.Field(CS.Beyond.Gameplay.UILevelMapConfig)
 LevelMapLoader.m_mistSystem = HL.Field(CS.Beyond.Gameplay.MistMapSystem)
 
 LevelMapLoader.m_regionManager = HL.Field(CS.Beyond.Gameplay.MapRegionManager)
+
+LevelMapLoader.m_isFallbackLoaderData = HL.Field(HL.Boolean) << false
+
+LevelMapLoader.m_fallbackMapCache = HL.Field(LuaNodeCache)
+
+LevelMapLoader.m_fallbackMapCell = HL.Field(HL.Table)
 
 LevelMapLoader.m_dataUpdateInterval = HL.Field(HL.Number) << LOADER_DEFAULT_UPDATE_INTERVAL
 
@@ -180,6 +188,10 @@ LevelMapLoader.m_loadedStaticElementViewDataMap = HL.Field(HL.Table)
 
 LevelMapLoader.m_loadedMarkViewDataMap = HL.Field(HL.Table)  
 
+LevelMapLoader.m_markStateChangeCallbackKey = HL.Field(HL.String) << ""
+
+LevelMapLoader.m_listeningMarkRuntimeDataMap = HL.Field(HL.Table)
+
 LevelMapLoader.m_missionTrackingAreaCache = HL.Field(LuaNodeCache)
 
 LevelMapLoader.m_loadedMissionTrackingMarks = HL.Field(HL.Table)  
@@ -264,6 +276,7 @@ LevelMapLoader._OnFirstTimeInit = HL.Override() << function(self)
 end
 
 LevelMapLoader._OnDestroy = HL.Override() << function(self)
+    self:_ClearMarkStateChangeCallbacks()
     if not self.m_initialized then
         return
     end
@@ -272,6 +285,7 @@ LevelMapLoader._OnDestroy = HL.Override() << function(self)
     self.m_lineRefreshTick = LuaUpdate:Remove(self.m_lineRefreshTick)
     self.m_pendingLineRefreshTypes = {}
     self.m_animMistShowTimer = self:_ClearTimer(self.m_animMistShowTimer)
+    self:_ClearFallbackMapBackground()
     self:_StopDelayDisposeChunkResourceThread()
     self:_RemoveAllDelayActions()
     self:_DestroyChunkGODrawers()
@@ -293,12 +307,14 @@ LevelMapLoader._DestroyChunkGODrawers = HL.Method() << function(self)
 end
 
 LevelMapLoader.InitLevelMapLoader = HL.Method(HL.String, HL.Opt(HL.Table)) << function(self, levelId, customInfo)
+    self:_ClearMarkStateChangeCallbacks()
     self.m_initialized = false
 
     if string.isEmpty(levelId) then
         return
     end
 
+    self.m_markStateChangeCallbackKey = string.format("LoadedMark_%d", self.luaWidget:GetInstanceID())
     self.m_levelMapConfig = DataManager.uiLevelMapConfig
     self.m_gridRectLength = self.m_levelMapConfig.gridRectLength
     self.m_gridWorldLength = self.m_levelMapConfig.gridWorldLength
@@ -310,6 +326,7 @@ LevelMapLoader.InitLevelMapLoader = HL.Method(HL.String, HL.Opt(HL.Table)) << fu
     local success, levelConfig = Utils.getLevelConfig(levelId)
     self.m_mapId = success and levelConfig.mapIdStr or ""
     self.m_levelId = levelId
+    self.m_isFallbackLoaderData = self.m_mapManager:IsFallbackLoaderData(levelId)
     self.m_tierId = MapConst.BASE_TIER_ID
     self.m_forbidMistRefreshAfterGridChange = false
     self:_ClearMissionTrackingElementsBeforeReinit()
@@ -318,11 +335,7 @@ LevelMapLoader.InitLevelMapLoader = HL.Method(HL.String, HL.Opt(HL.Table)) << fu
     self:_InitLoaderCache()
     self:_InitChunkDrawer()
     self:_InitMistDrawer()
-
-    if BEYOND_DEBUG_COMMAND and customInfo.isDebugMode then
-        self:_InitDebugMode(levelId)
-        return
-    end
+    self:_RefreshFallbackMapBackground()
 
     self:_InitGridsMask()
     self:_InitMarkStaticDataMap()
@@ -333,6 +346,7 @@ LevelMapLoader.InitLevelMapLoader = HL.Method(HL.String, HL.Opt(HL.Table)) << fu
     self:_InitPermanentElementsInCurrentMap()
 
     self:_FirstTimeInit()
+    self:_RefreshFallbackLevelMarks()
 
     self.m_initialized = true
 end
@@ -479,6 +493,10 @@ LevelMapLoader._InitLoaderCache = HL.Method() << function(self)
     source.marks.levelMapCustomMark.gameObject:SetActive(true)
 
     self.m_tierCache = LuaNodeCache(source.tier, element.loadedTiers)
+    self.m_fallbackMapCache = nil
+    if self.m_useChunkGODrawer then
+        self.m_fallbackMapCache = LuaNodeCache(source.chunks.goChunk, element.loadedChunks)
+    end
 
     self.m_missionTrackingAreaCache = LuaNodeCache(
         source.mission.missionTrackingArea,
@@ -516,6 +534,111 @@ LevelMapLoader._InitLoaderMarkCache = HL.Method() << function(self)
     end
     self.m_markCache = Stack()
     self.m_trackingMarkCache = Stack()
+end
+
+LevelMapLoader._RefreshFallbackMapBackground = HL.Method() << function(self)
+    self:_ClearFallbackMapBackground()
+    if not self.m_isFallbackLoaderData or not self.m_useChunkGODrawer then
+        return
+    end
+
+    local success, levelConfig = Utils.getLevelConfig(self.m_levelId)
+    if not success or self.m_fallbackMapCache == nil then
+        return
+    end
+
+    local worldLeftBottom = levelConfig.rectLeftBottom
+    local worldRightTop = levelConfig.rectRightTop
+    local rectLeftBottom = self:_GetRectPosByWorldPos(Vector3(worldLeftBottom.x, 0, worldLeftBottom.y), true)
+    local rectRightTop = self:_GetRectPosByWorldPos(Vector3(worldRightTop.x, 0, worldRightTop.y), true)
+    local left = math.min(rectLeftBottom.x, rectRightTop.x)
+    local right = math.max(rectLeftBottom.x, rectRightTop.x)
+    local bottom = math.min(rectLeftBottom.y, rectRightTop.y)
+    local top = math.max(rectLeftBottom.y, rectRightTop.y)
+
+    local cell = self.m_fallbackMapCache:Get()
+    cell.image.material = nil
+    cell.image:LoadSpriteWithOutFormat(FALLBACK_MAP_BACKGROUND_PATH)
+    cell.image.type = FALLBACK_MAP_BACKGROUND_TYPE
+    cell.rectTransform.localScale = Vector3(1, 1, 1)
+    cell.rectTransform.sizeDelta = Vector2(right - left, top - bottom)
+    cell.rectTransform.anchoredPosition = Vector2((left + right) / 2, (top + bottom) / 2)
+    cell.transform:SetAsFirstSibling()
+    self.m_fallbackMapCell = cell
+    self:_RefreshFallbackDebugOverlay(worldLeftBottom, worldRightTop)
+end
+
+LevelMapLoader._RefreshFallbackDebugOverlay = HL.Method(HL.Any, HL.Any) << function(self, worldLeftBottom, worldRightTop)
+    if not (BEYOND_DEBUG_COMMAND or BEYOND_DEBUG) then
+        return
+    end
+    if self.m_fallbackMapCell == nil then
+        return
+    end
+
+    local overlay = CS.Beyond.UI.UILevelMapFallbackDebugOverlay.Ensure(self.m_fallbackMapCell.rectTransform)
+    if overlay == nil then
+        return
+    end
+
+    local showName = ""
+    local descSuccess, levelDesc = Tables.levelDescTable:TryGetValue(self.m_levelId)
+    if descSuccess and levelDesc ~= nil and levelDesc.showName ~= nil then
+        showName = levelDesc.showName
+    end
+
+    local fontSource = nil
+    local scaleReference = nil
+    local uiCtrl = self:GetUICtrl()
+    if uiCtrl ~= nil and uiCtrl.view ~= nil then
+        scaleReference = uiCtrl.view.rectTransform
+        if uiCtrl.view.titleNode ~= nil and uiCtrl.view.titleNode.levelTitleTxt ~= nil then
+            fontSource = uiCtrl.view.titleNode.levelTitleTxt
+        end
+    end
+
+    overlay:Setup(
+        worldLeftBottom,
+        worldRightTop,
+        self.m_gridWorldLength,
+        self.m_gridRectLength,
+        self.m_levelId,
+        showName,
+        true,
+        fontSource,
+        scaleReference
+    )
+end
+
+LevelMapLoader._ClearFallbackMapBackground = HL.Method() << function(self)
+    if self.m_fallbackMapCell == nil then
+        return
+    end
+
+    if BEYOND_DEBUG_COMMAND or BEYOND_DEBUG then
+        CS.Beyond.UI.UILevelMapFallbackDebugOverlay.DestroyOn(self.m_fallbackMapCell.rectTransform)
+    end
+
+    self.m_fallbackMapCell.image.sprite = nil
+    if self.m_fallbackMapCache ~= nil then
+        self.m_fallbackMapCache:Cache(self.m_fallbackMapCell)
+    end
+    self.m_fallbackMapCell = nil
+end
+
+LevelMapLoader._RefreshFallbackLevelMarks = HL.Method() << function(self)
+    if not self.m_isFallbackLoaderData then
+        return
+    end
+
+    local success, marks = self.m_mapManager:GetLevelMarkData(self.m_mapId, self.m_levelId)
+    if not success or marks == nil then
+        return
+    end
+
+    for markInstId, markRuntimeData in pairs(marks) do
+        self:_RefreshGridMark(markInstId, markRuntimeData, true)
+    end
 end
 
 LevelMapLoader._InitStaticElementInitializer = HL.Method() << function(self)
@@ -709,7 +832,7 @@ LevelMapLoader._OnMarkInstDataModified = HL.Method(HL.String) << function(self, 
     if belongGridLoaderData == nil or not self.view.loader:IsGridInHitList(belongGridLoaderData.gridId) then
         return
     end
-    self:_RefreshGridMark(markInstId, markRuntimeData, markRuntimeData.isVisible, true)
+    self:_RefreshGridMark(markInstId, markRuntimeData, markRuntimeData.isVisible)
 end
 
 LevelMapLoader._OnMarkInstDataChanged = HL.Method(HL.String, HL.Boolean) << function(self, markInstId, isAdd)
@@ -833,6 +956,7 @@ LevelMapLoader._OnMarkLineInstDataChanged = HL.Method(LineType) << function(self
 
 
 end
+
 
 LevelMapLoader._OnCommonStaticElementStateChanged = HL.Method(HL.String, HL.Boolean) << function(self, elementId, isVisible)
     local viewData = self.m_loadedStaticElementViewDataMap[elementId]
@@ -1030,9 +1154,10 @@ LevelMapLoader._RefreshPowerLineAppearance = HL.Method(HL.Any, HL.Userdata) << f
     if line == nil or lineData == nil or line.image == nil then
         return
     end
-    if FactoryUtils.getIsInBackupPower() then
-        local fromNodeState = FactoryUtils.getBuildingStateType(lineData.fromNodeId)
-        local toNodeState = FactoryUtils.getBuildingStateType(lineData.toNodeId)
+    local chapterId = ScopeUtil.GetChapterId(self.m_levelId)
+    if FactoryUtils.getIsInBackupPower(chapterId) then
+        local fromNodeState = FactoryUtils.getBuildingStateType(lineData.fromNodeId, chapterId)
+        local toNodeState = FactoryUtils.getBuildingStateType(lineData.toNodeId, chapterId)
         line.image.color = (fromNodeState ~= GEnums.FacBuildingState.NotInPowerNet and toNodeState ~= GEnums.FacBuildingState.NotInPowerNet) and
                         self.view.config.POWER_LINE_VALID_COLOR or
                         self.view.config.POWER_LINE_INVALID_COLOR
@@ -2615,13 +2740,14 @@ LevelMapLoader._RefreshGridMarks = HL.Method(HL.Userdata, HL.Boolean) << functio
     end
 end
 
-LevelMapLoader._RefreshGridMark = HL.Method(HL.String, HL.Userdata, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, markInstId, markRuntimeData, needShow, isStateModify)
+LevelMapLoader._RefreshGridMark = HL.Method(HL.String, HL.Userdata, HL.Boolean) << function(self, markInstId, markRuntimeData, needShow)
     if not markRuntimeData.isConstantState and self.m_needListenMarkStateChange then
-        local keepListening = isStateModify == true and markRuntimeData.keepStateChangeCallbackWhenInvisible
-        if needShow or keepListening then
-            markRuntimeData:AddStateChangeCallback("LoadedMark")
+        if needShow then
+            self.m_listeningMarkRuntimeDataMap[markInstId] = markRuntimeData
+            markRuntimeData:AddStateChangeCallback(self.m_markStateChangeCallbackKey)
         else
-            markRuntimeData:RemoveStateChangeCallback("LoadedMark")
+            self.m_listeningMarkRuntimeDataMap[markInstId] = nil
+            markRuntimeData:RemoveStateChangeCallback(self.m_markStateChangeCallbackKey)
         end
     end
 
@@ -2934,7 +3060,18 @@ LevelMapLoader._ClearLoaderCache = HL.Method(HL.Table, LuaNodeCache) << function
     nodeTable = {}
 end
 
+LevelMapLoader._ClearMarkStateChangeCallbacks = HL.Method() << function(self)
+    if self.m_listeningMarkRuntimeDataMap then
+        for _, markRuntimeData in pairs(self.m_listeningMarkRuntimeDataMap) do
+            markRuntimeData:RemoveStateChangeCallback(self.m_markStateChangeCallbackKey)
+        end
+    end
+
+    self.m_listeningMarkRuntimeDataMap = {}
+end
+
 LevelMapLoader._ClearLoaderMarkCache = HL.Method() << function(self)
+    self:_ClearMarkStateChangeCallbacks()
     for _, markViewData in pairs(self.m_loadedMarkViewDataMap) do
         if markViewData.markObj then
             self:_CacheMark(markViewData, markViewData.markObj)
@@ -2988,6 +3125,7 @@ LevelMapLoader._ClearLoaderLinesCache = HL.Method() << function(self)
 end
 
 LevelMapLoader._ClearLoaderCachesState = HL.Method() << function(self)
+    self:_ClearFallbackMapBackground()
     self:_ClearLoaderStaticElementCache()
     self:_ClearLoaderMarkCache()
     self:_ClearLoaderGameplayAreaCache()
@@ -3123,6 +3261,9 @@ end
 
 LevelMapLoader.SetLoaderLevel = HL.Method(HL.String) << function(self, levelId)
     self.m_levelId = levelId
+    self.m_isFallbackLoaderData = self.m_mapManager:IsFallbackLoaderData(levelId)
+    self:_RefreshFallbackMapBackground()
+    self:_RefreshFallbackLevelMarks()
     
     self:_ReorderAllGOChunkDrawers()
 end
@@ -3687,6 +3828,7 @@ LevelMapLoader.ResetToTargetMapAndLevel = HL.Method(HL.String) << function(self,
 
     self.m_mapId = levelConfig.mapIdStr
     self.m_levelId = levelId
+    self.m_isFallbackLoaderData = self.m_mapManager:IsFallbackLoaderData(levelId)
     self:SetLoaderTierId(MapConst.BASE_TIER_ID)
     self:_RefreshLoaderChunksTierColorState(false)
     self:_RemoveAllDelayActions()
@@ -3701,37 +3843,8 @@ LevelMapLoader.ResetToTargetMapAndLevel = HL.Method(HL.String) << function(self,
     
 
     self:_InitPermanentElementsInCurrentMap()
-end
-
-
-
-
-
-
-if BEYOND_DEBUG_COMMAND then
-    LevelMapLoader._InitDebugMode = HL.Method(HL.String) << function(self, levelId)
-        local success, levelConfig = Utils.getLevelConfig(levelId)
-        if not success then
-            return
-        end
-
-        local worldLeftBottom = levelConfig.rectLeftBottom
-        local worldRightTop = levelConfig.rectRightTop
-        local rectLeftBottom = self:_GetRectPosByWorldPos(Vector3(worldLeftBottom.x, 0, worldLeftBottom.y), true)
-        local rectRightTop = self:_GetRectPosByWorldPos(Vector3(worldRightTop.x, 0, worldRightTop.y), true)
-        local horizontalCount = (rectRightTop.x - rectLeftBottom.x) / self.m_gridRectLength
-        local verticalCount = (rectRightTop.y - rectLeftBottom.y) / self.m_gridRectLength
-
-        self.m_gridCache = LuaNodeCache(self.view.source.grid, self.view.element.loadedGrids)
-        for i = 0, horizontalCount - 1 do
-            for j = 0, verticalCount - 1 do
-                local gridCell = self.m_gridCache:Get()
-                local gridRectPosX = rectLeftBottom.x + (i + 0.5) * self.m_gridRectLength
-                local gridRectPosY = rectLeftBottom.y + (j + 0.5) * self.m_gridRectLength
-                gridCell.rectTransform.anchoredPosition = Vector2(gridRectPosX, gridRectPosY)
-            end
-        end
-    end
+    self:_RefreshFallbackMapBackground()
+    self:_RefreshFallbackLevelMarks()
 end
 
 

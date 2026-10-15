@@ -1,15 +1,11 @@
 {
   "abilityEventAction": [],
   "addingCooldown": {
-    "blackboardKey": "",
+    "blackboardKey": null,
     "useBlackboardKey": false,
     "value": 0.0
   },
-  "applyTags": [
-    {
-      "tagId": -1486085048
-    }
-  ],
+  "applyTags": [],
   "attributeModifier": {
     "attributeModifiers": [],
     "isConvertedAttribute": false
@@ -19,10 +15,67 @@
       "isDynamic": false,
       "key": "duration",
       "valueDouble": 8.0,
-      "valueStr": ""
+      "valueStr": null
     }
   ],
-  "buffEventAction": [],
+  "buffEventAction": [
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.SetSkillCdAtOnce+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "functionType": 1,
+              "isPercentage": false,
+              "skillId": null,
+              "skillTypeMask": 4,
+              "target": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": null,
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": null,
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": null,
+                "targetGroupKey": null,
+                "targetSource": 4
+              },
+              "useSkillType": true,
+              "value": {
+                "blackboardKey": "duration",
+                "useBlackboardKey": true,
+                "value": 0.0
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 0
+    }
+  ],
   "damageModifier": [],
   "dispelConfig": {
     "canBeDispelled": false,
@@ -30,8 +83,8 @@
   },
   "duration": {
     "blackboardKey": "duration",
-    "useBlackboardKey": true,
-    "value": 3.0
+    "useBlackboardKey": false,
+    "value": 0.10000000149011612
   },
   "finishOnRepatriate": false,
   "globalModifier": [],
@@ -44,7 +97,7 @@
       "priorityValue": 0,
       "priorityEnum": 100
     },
-    "_spritePath": "",
+    "_spritePath": null,
     "abnormalColorType": 0,
     "blinkInMainCharHpBar": false,
     "charHpBarVfxType": 0,
@@ -57,6 +110,7 @@
     "showInHeadBarAttached": false,
     "showInHeadBarCommon": false,
     "showInSquadIcon": false,
+    "showProgressInEnemyHeadBar": false,
     "showProgressInHpBar": false,
     "showProgressInNormalSkillButton": false,
     "showProgressInUltimateSkillButton": false,
@@ -69,7 +123,7 @@
   "ignoreTagImmune": false,
   "lifeType": 0,
   "maxTriggerCnt": {
-    "blackboardKey": "",
+    "blackboardKey": null,
     "useBlackboardKey": false,
     "value": -1
   },
@@ -80,20 +134,20 @@
     "identifierType": 0,
     "isNeedStackEffect": false,
     "maxStackCnt": 1,
-    "maxStackCntKey": "",
+    "maxStackCntKey": null,
     "negatePriority": false,
     "priority": 0.0,
-    "priorityKey": "",
+    "priorityKey": null,
     "stackEffects": [],
-    "stackingKey": "",
-    "stackingType": 4,
+    "stackingKey": null,
+    "stackingType": 7,
     "useMaxStackCntKey": false,
     "usePriorityKey": false
   },
   "tagsAfterTriggerExtendBuffAction": [],
   "timelineActions": [],
   "triggerInterval": {
-    "blackboardKey": "",
+    "blackboardKey": null,
     "useBlackboardKey": false,
     "value": -1.0
   },

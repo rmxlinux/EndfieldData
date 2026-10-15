@@ -26,7 +26,6 @@ TeleportLoadingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 TeleportLoadingCtrl.OnClose = HL.Override() << function(self)
-    GameInstance.SetBurstMode(false, GameInstance.EBurstModeReason.TeleportLoadingUI)
     
     UIManager:RemoveMainCameraTempRequest("TeleportLoading")
 end

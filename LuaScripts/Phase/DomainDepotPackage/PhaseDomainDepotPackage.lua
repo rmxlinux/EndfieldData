@@ -54,6 +54,7 @@ PhaseDomainDepotPackage.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_OPEN_SHOW_SELL_ANIM_PANEL] = { 'OnOpenSellAnimPanel', true },
     [MessageConst.ON_SELECT_BUYER_END] = { 'OnPackSellEndPanel', true },
     [MessageConst.ON_CLOSE_DOMAIN_DEPOT_PACK_SETTLE_PANEL] = { 'OnClosePackSellEndPanel', true },
+    [MessageConst.ON_DOMAIN_DEPOT_QUICK_TRANSFER_SUCCESS] = { 'OnQuickTransferSuccess', true },
 }
 
 PhaseDomainDepotPackage.OnOpenDomainDepotTab = HL.StaticMethod(HL.Table) << function(args)
@@ -282,9 +283,12 @@ PhaseDomainDepotPackage._CollectResumeState = HL.Method().Return(HL.Table) << fu
         topPanelItem = self.m_panelItemDic[self.m_lastTabPanelId]
     end
     local topPanelState = self:_CollectPanelState(topPanelItem) or lume.deepCopy(self.m_lastTopPanelState)
+    local deliveryPanelState = self:_CollectPanelState(self.m_panelItemDic[PanelId.DomainDepotDelivery])
     return {
         selectedTabIndex = self:_GetTabIndexByPanelId(self.m_lastTabPanelId),
         topPanelState = topPanelState,
+        
+        deliveryPanelArg = deliveryPanelState and deliveryPanelState.arg or self.m_pendingPanelArgMap[PanelId.DomainDepotDelivery],
         panelStates = self:_CollectOpenPanelStates(),
     }
 end
@@ -361,6 +365,7 @@ end
 
 
 PhaseDomainDepotPackage._RestoreTopPanelState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    self.m_pendingPanelArgMap[PanelId.DomainDepotDelivery] = resumeState and resumeState.deliveryPanelArg or nil
     local topPanelState = resumeState and resumeState.topPanelState or nil
     local selectedTabIndex = resumeState and resumeState.selectedTabIndex or 1
     if topPanelState and topPanelState.panelId then
@@ -506,6 +511,23 @@ PhaseDomainDepotPackage.OnClosePackSellPanel = HL.Method() << function(self)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_backPanel)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_showSellAnimPanel)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_sellPanel)
+end
+
+PhaseDomainDepotPackage.OnQuickTransferSuccess = HL.Method(HL.Any) << function(self, args)
+    local domainId, rewardItemId, depositCount = unpack(args)
+    self:OnClosePackSellPanel()
+    Notify(MessageConst.ON_CHANGE_DOMAIN_DEPOT_TAB, {
+        domainId = domainId,
+        index = TOP_PANEL_ID_TO_TAB_INDEX[PanelId.DomainDepotMyOrder],
+    })
+    Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
+        items = {
+            {
+                id = rewardItemId,
+                count = depositCount,
+            },
+        },
+    })
 end
 
 PhaseDomainDepotPackage.OnPackSellEndPanel = HL.Method(HL.Any) << function(self, args)

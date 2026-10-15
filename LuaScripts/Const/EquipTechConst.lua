@@ -13,6 +13,15 @@ local EquipTechConst = {
         High = 3,  
     },
 
+    
+    EEquipManufactureMaxReason = {
+        Ok = 0,                    
+        MaterialInsufficient = 1,  
+        EnhanceCostInsufficient = 2, 
+        BatchFull = 3,             
+        GuaranteeFull = 4,         
+    },
+
     PANL_SORT_TYPE = SORT_TYPE,
 
     EQUIP_PRODUCE_PACK_SORT_CONFIG = {

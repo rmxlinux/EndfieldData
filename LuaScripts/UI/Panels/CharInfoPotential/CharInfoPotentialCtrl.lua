@@ -273,10 +273,30 @@ CharInfoPotentialCtrl._InitAction = HL.Method() << function(self)
     end)
 end
 
+CharInfoPotentialCtrl._IsOnPotentialPage = HL.Method().Return(HL.Boolean) << function(self)
+    return not self.m_isClosed and self.m_phase ~= nil and self.m_phase.m_curPage == UIConst.CHAR_INFO_PAGE_TYPE.POTENTIAL
+end
+
+
+
+CharInfoPotentialCtrl._CloseSelfWhenPageSwitched = HL.Method() << function(self)
+    if self.m_isClosed or self:_IsOnPotentialPage() then
+        return
+    end
+    self.m_phase:CloseCharInfoPanel(self.panelId)
+end
+
 CharInfoPotentialCtrl._ActiveLevelUp = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, HL.Number)) << function(self, active, selectCurrent, selectedIndex)
+    if active and not self:_IsOnPotentialPage() then
+        return
+    end
     self.m_isLevelUpActivated = active
     if active then
         self.view.animWrapper:PlayOutAnimation(function()
+            if not self:_IsOnPotentialPage() then
+                self:_CloseSelfWhenPageSwitched()
+                return
+            end
             self.view.stateController:SetState(MAIN_STATE_NAME.LevelUp)
             self:Notify(MessageConst.TOGGLE_CHAR_INFO_FOCUS_MODE, true)
             if selectCurrent then
@@ -722,9 +742,16 @@ end
 CharInfoPotentialCtrl.isPhotoMode = HL.Field(HL.Boolean) << false
 
 CharInfoPotentialCtrl._ActivePhotoMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isActive, playAnim)
+    if isActive and not self:_IsOnPotentialPage() then
+        return
+    end
     self.isPhotoMode = isActive
     if playAnim and isActive then
         self.view.animWrapper:PlayOutAnimation(function()
+            if not self:_IsOnPotentialPage() then
+                self:_CloseSelfWhenPageSwitched()
+                return
+            end
             self.view.stateController:SetState(MAIN_STATE_NAME.LevelUp)
             self:Notify(MessageConst.TOGGLE_CHAR_INFO_FOCUS_MODE, true)
             self:SetNaviTarget(self.view.skill01.button)

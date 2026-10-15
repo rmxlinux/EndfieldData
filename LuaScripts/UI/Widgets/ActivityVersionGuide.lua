@@ -143,6 +143,40 @@ ActivityVersionGuide._SetAsNaviTarget = HL.Method(HL.Number) << function(self, i
     end
 end
 
+
+ActivityVersionGuide.OnActivityContentNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
+    if not DeviceInfo.usingController then
+        return
+    end
+    local naviDirection = CS.UnityEngine.UI.NaviDirection
+    if dir ~= naviDirection.Up and dir ~= naviDirection.Down then
+        return
+    end
+
+    local firstTarget, lastTarget
+    for index = 1, self.m_taskCells:GetCount() do
+        local cell = self.m_taskCells:Get(index)
+        local target = cell and cell.naviDecorator
+        if target and target.enableControllerNavi and target:IsActive() and target:IsInteractable() then
+            firstTarget = firstTarget or target
+            lastTarget = target
+        end
+    end
+    if not firstTarget or firstTarget == lastTarget then
+        return
+    end
+
+    local currentTarget = InputManagerInst.controllerNaviManager.curTarget
+    if not currentTarget then
+        return
+    end
+    if dir == naviDirection.Up and currentTarget.transform:IsChildOf(firstTarget.transform) then
+        self:SetNaviTarget(lastTarget)
+    elseif dir == naviDirection.Down and currentTarget.transform:IsChildOf(lastTarget.transform) then
+        self:SetNaviTarget(firstTarget)
+    end
+end
+
 ActivityVersionGuide.OnShow = HL.Method() << function(self)
     self.view.scrollRect.verticalNormalizedPosition = self.m_normalizedPosition
 end

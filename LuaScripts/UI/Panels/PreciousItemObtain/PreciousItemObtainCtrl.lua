@@ -66,9 +66,6 @@ PreciousItemObtainCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
     end
-    if self.view.reminderScrollList then
-        self.view.reminderScrollList.controllerScrollEnabled = true
-    end
     self:_FocusCell(self:_ResolveFocusIndex())
 end
 
@@ -402,7 +399,7 @@ PreciousItemObtainCtrl._ResolveActivityObtainWay = HL.Method(HL.String, HL.Strin
         if activity:GetCompleteSortId() ~= 0 then
             goto continue
         end
-        local isTimed = (activity.endTime and activity.endTime > 0) or activityCfg.isRecommend
+        local isTimed = (activity.endTime and activity.endTime > 0) or ActivityUtils.isActivityRecommended(activityCfg)
         table.insert(candidates, {
             id = activity.id,
             groupOrder = isTimed and 0 or 1,

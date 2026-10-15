@@ -1,0 +1,472 @@
+{
+  "airWalls": [],
+  "aiTransData": [],
+  "autoSpawnedInteractives": [],
+  "blackbox": null,
+  "buildableCondition": null,
+  "cameraPoses": [],
+  "charPatrol": [],
+  "doodadGroup": [],
+  "dynamicOccludeAreas": [],
+  "enemies": [],
+  "enemyGroup": [],
+  "enemyPatrol": [],
+  "environmentVolumes": [],
+  "factoryMines": [],
+  "factoryPredefineData": {
+    "powerGates": []
+  },
+  "factoryRegions": [],
+  "functionArea": {
+    "baseData": [
+      {
+        "bufferDistance": 2.0,
+        "defaultOff": false,
+        "enableFactoryHide": false,
+        "euler": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "factoryHideDesc": null,
+        "functionType": 8,
+        "hasCondition": false,
+        "index": 0,
+        "offset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "posList": null,
+        "postion": {
+          "x": -1113.031982421875,
+          "y": 282.4778137207031,
+          "z": -399.6910095214844
+        },
+        "radius": 0.0,
+        "shapeType": 1,
+        "size": {
+          "x": 4.0,
+          "y": 4.0,
+          "z": 4.0
+        },
+        "uniqueId": 22801220000
+      }
+    ],
+    "functionAreaConditions": [
+      {
+        "conditionRuntimeBase": {
+          "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+          "conditionOperator": 0,
+          "reverse": false,
+          "subConditions": [
+            {
+              "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+              "conditionOperator": 0,
+              "reverse": false,
+              "subConditions": [
+                {
+                  "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                  "compareOperator": 0,
+                  "compareTarget": 2,
+                  "missionId": "a1m18"
+                },
+                {
+                  "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                  "conditionOperator": 0,
+                  "reverse": false,
+                  "subConditions": [
+                    {
+                      "$type": "Beyond.Gameplay.SimpleConditionCheckMissionNotPaused, Gameplay.Beyond",
+                      "missionId": "a1m18"
+                    },
+                    {
+                      "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                      "compareOperator": 0,
+                      "compareTarget": 2,
+                      "missionId": "a1m18"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+              "conditionOperator": 0,
+              "reverse": true,
+              "subConditions": [
+                {
+                  "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                  "compareOperator": 0,
+                  "compareTarget": 3,
+                  "questId": "a1m18_q#2"
+                }
+              ]
+            }
+          ]
+        },
+        "uniqueId": 22801220000
+      }
+    ],
+    "ranges": [
+      {
+        "m_center": {
+          "x": -1113.031982421875,
+          "y": 282.4778137207031,
+          "z": -399.6910095214844
+        },
+        "m_size": {
+          "x": 4.0,
+          "y": 4.0,
+          "z": 4.0
+        }
+      }
+    ],
+    "specificDatas": [
+      {
+        "$type": "Beyond.Gameplay.LevelFunctionAreaData+StorySafeZone, Gameplay.Beyond",
+        "defaultOn": false,
+        "npcProxyIds": [],
+        "showEnterToast": true,
+        "showLeaveToast": true
+      }
+    ]
+  },
+  "guideHints": [],
+  "interactiveLockData": [],
+  "interactives": [
+    {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 0,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_snapshot_empty",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 22801220001,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1109.260009765625,
+        "y": 286.57000732421875,
+        "z": -336.32000732421875
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": ""
+                }
+              ]
+            }
+          }
+        ],
+        "5": [
+          {
+            "key": "dont_log_error",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": ""
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+        "compareOperator": 0,
+        "compareTarget": 3,
+        "questId": "e5m3_q#3"
+      },
+      "properties": [
+        {
+          "key": "identify_id",
+          "value": {
+            "type": 7,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": "obb_carly_a3_001"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "aoiRadiusType": 0,
+      "belongLevelScriptId": 0,
+      "createState": 0,
+      "dependencyGroupId": 0,
+      "entityDataIdKey": "int_activity_snap_shot",
+      "entityType": 32,
+      "forceLoad": false,
+      "keepCrossMap": false,
+      "levelLogicId": 22801220002,
+      "overrideSendDieEvent": false,
+      "position": {
+        "x": -1092.074951171875,
+        "y": 282.47601318359375,
+        "z": -336.5840148925781
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "sendDieEvent": false,
+      "componentProperties": {
+        "0": [
+          {
+            "key": "check_angle_offset",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": ""
+                }
+              ]
+            }
+          }
+        ],
+        "61": [
+          {
+            "key": "use_level_event_click",
+            "value": {
+              "type": 2,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": ""
+                }
+              ]
+            }
+          },
+          {
+            "key": "level_event_id_click",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": ""
+                }
+              ]
+            }
+          },
+          {
+            "key": "click_option_name_list",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "ui_msc_snapshot_int_click_button_name"
+                }
+              ]
+            }
+          }
+        ],
+        "2000": [
+          {
+            "key": "identify",
+            "value": {
+              "type": 7,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "snapshot_carly_a3_001"
+                }
+              ]
+            }
+          },
+          {
+            "key": "focus",
+            "value": {
+              "type": 5,
+              "valueArray": [
+                {
+                  "valueBit64": 1102053376,
+                  "valueString": ""
+                }
+              ]
+            }
+          },
+          {
+            "key": "thirdPerson",
+            "value": {
+              "type": 1,
+              "valueArray": [
+                {
+                  "valueBit64": 1,
+                  "valueString": ""
+                }
+              ]
+            }
+          },
+          {
+            "key": "camInitRotate",
+            "value": {
+              "type": 11,
+              "valueArray": [
+                {
+                  "valueBit64": 1086324736,
+                  "valueString": ""
+                },
+                {
+                  "valueBit64": -1028390912,
+                  "valueString": ""
+                },
+                {
+                  "valueBit64": 0,
+                  "valueString": ""
+                }
+              ]
+            }
+          },
+          {
+            "key": "conflictQuestIds",
+            "value": {
+              "type": 8,
+              "valueArray": [
+                {
+                  "valueBit64": 0,
+                  "valueString": "a1m18_q#3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "globalIntKeyList": null,
+      "globalProperties": null,
+      "hideInDialog": false,
+      "isClientOnly": false,
+      "isLocked": false,
+      "mapIntKeyList": null,
+      "mapProperties": null,
+      "modelScale": 0.0,
+      "progressLockCondition": {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+        "compareOperator": 0,
+        "compareTarget": 3,
+        "questId": "e5m3_q#3"
+      },
+      "properties": []
+    }
+  ],
+  "levelIdNum": 228,
+  "levelScriptBriefDataDict": {
+    "22801220001": {
+      "dataPath": {
+        "hash": -7850421304817996207
+      },
+      "interactiveActiveRiskEntityIdList": null,
+      "levelScriptType": 1,
+      "maxStage": 3,
+      "parentLevelScriptId": 0,
+      "properties": [
+        {
+          "key": "lt:p:65986b1e:baf58c95",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 0,
+                "valueString": ""
+              }
+            ]
+          }
+        },
+        {
+          "key": "lt:mp:65986b1e:baf58c95",
+          "value": {
+            "type": 3,
+            "valueArray": [
+              {
+                "valueBit64": 1,
+                "valueString": ""
+              }
+            ]
+          }
+        }
+      ],
+      "propertyIdToKeyMap": {
+        "1": "lt:p:65986b1e:baf58c95",
+        "1026": "lt:mp:65986b1e:baf58c95"
+      },
+      "refWorldEntityIdList": null,
+      "scriptId": 22801220001
+    },
+    "22801220002": {
+      "dataPath": {
+        "hash": 9221294670735259413
+      },
+      "interactiveActiveRiskEntityIdList": null,
+      "levelScriptType": 1,
+      "maxStage": 1,
+      "parentLevelScriptId": 0,
+      "properties": [],
+      "propertyIdToKeyMap": {},
+      "refWorldEntityIdList": null,
+      "scriptId": 22801220002
+    }
+  },
+  "levelScriptDataPathDict": {},
+  "levelUIs": [],
+  "levelWideConfigs": {},
+  "mapVolumeDatas": [],
+  "missionAreas": [],
+  "npcAttractPointData": [],
+  "npcClusters": [],
+  "npcGroup": [],
+  "npcPatrol": [],
+  "npcs": [],
+  "patrols": [],
+  "predefinedParams": [],
+  "riftVolumes": [],
+  "safeZone": {
+    "boxes": []
+  },
+  "sceneId": "map02_lv002",
+  "sludgeDatas": [],
+  "spawners": [],
+  "specificData": null,
+  "splines": [],
+  "waterVolumes": [],
+  "worldWayPointData": []
+}

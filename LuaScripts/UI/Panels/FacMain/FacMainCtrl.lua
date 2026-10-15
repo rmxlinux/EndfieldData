@@ -31,8 +31,8 @@ FacMainCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_PIN_STATE_CHANGED] = '_OnPinStateChanged',
     [MessageConst.ON_SYSTEM_UNLOCK_CHANGED] = '_OnPinSystemLockedStateChanged',
-    [MessageConst.ON_ENTER_FAC_MAIN_REGION] = '_OnEnterFacMainRegion',
-    [MessageConst.ON_EXIT_FAC_MAIN_REGION] = '_OnExitFacMainRegion',
+    [MessageConst.ON_ENTER_FAC_REGION] = '_OnEnterFacRegion',
+    [MessageConst.ON_EXIT_FAC_REGION] = '_OnExitFacRegion',
     
     [MessageConst.ON_REFRESH_PHASE_LEVEL] = '_OnRefreshPhaseLevel',
 
@@ -74,12 +74,17 @@ FacMainCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     end
 end
 
-FacMainCtrl._OnEnterFacMainRegion = HL.Method(HL.Opt(HL.Any)) << function(self)
-    self:_RefreshPinFormula()
+FacMainCtrl._OnEnterFacRegion = HL.Method(HL.Userdata) << function(self, facRegion)
+    local facRegionType = facRegion.type
+    if facRegionType == GEnums.FacRegionType.Main then
+        self:_RefreshPinFormula()
+    end
 end
 
-FacMainCtrl._OnExitFacMainRegion = HL.Method() << function(self)
-    self:_RefreshPinFormula()
+FacMainCtrl._OnExitFacRegion = HL.Method(HL.Userdata) << function(self, facRegionType)
+    if facRegionType == GEnums.FacRegionType.Main then
+        self:_RefreshPinFormula()
+    end
 end
 
 FacMainCtrl._OnRefreshPhaseLevel = HL.Method() << function(self)

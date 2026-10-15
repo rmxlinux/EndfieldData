@@ -50,7 +50,9 @@ SpaceshipControlCenterRoomCtrl._RefreshCCRoom = HL.Method() << function(self)
     local node = self.view.controlCenterNode
     node.button.onClick:RemoveAllListeners()
     node.button.onClick:AddListener(function()
-        PhaseManager:OpenPhase(PhaseId.SpaceshipStation, { roomId = roomId })
+        local phaseId = SpaceshipUtils.isSingleTeamMode(roomId) and PhaseId.SpaceshipStation
+            or PhaseId.SpaceshipSchedule
+        PhaseManager:OpenPhase(phaseId, { roomId = roomId })
     end)
     node.upgradeBtn.onClick:RemoveAllListeners()
     node.upgradeBtn.onClick:AddListener(function()
@@ -117,7 +119,9 @@ SpaceshipControlCenterRoomCtrl._UpdateRoomCell = HL.Method(HL.Table, HL.String) 
         cell.simpleStateController:SetState("Normal")
         cell.button.onClick:AddListener(function()
             if roomInfo.type == GEnums.SpaceshipRoomType.ControlCenter then
-                PhaseManager:OpenPhase(PhaseId.SpaceshipStation, { roomId = roomId })
+                local phaseId = SpaceshipUtils.isSingleTeamMode(roomId) and PhaseId.SpaceshipStation
+                    or PhaseId.SpaceshipSchedule
+                PhaseManager:OpenPhase(phaseId, { roomId = roomId })
             else
                 local phaseId = PhaseId[SpaceshipConst.ROOM_PHASE_ID_NAME_MAP_BY_TYPE[roomInfo.type]]
                 PhaseManager:OpenPhase(phaseId,

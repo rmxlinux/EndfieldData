@@ -48,6 +48,8 @@ DungeonSettlementPopupCtrl.m_hasShowResultState = HL.Field(HL.Boolean) << false
 
 DungeonSettlementPopupCtrl.m_leaveTick = HL.Field(HL.Number) << -1
 
+DungeonSettlementPopupCtrl.m_openTimeMark = HL.Field(HL.Number) << -1
+
 
 DungeonSettlementPopupCtrl.m_pausedGameTimeForDoubleBattle = HL.Field(HL.Boolean) << false
 
@@ -88,6 +90,8 @@ DungeonSettlementPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitController()
 
     self:StartSettlement(arg)
+
+    self.m_openTimeMark = Time.realtimeSinceStartup
 end
 
 DungeonSettlementPopupCtrl.OnShow = HL.Override() << function(self)
@@ -105,6 +109,8 @@ DungeonSettlementPopupCtrl.OnClose = HL.Override() << function(self)
     if self.m_leaveTick then
         self.m_leaveTick = LuaUpdate:Remove(self.m_leaveTick)
     end
+
+    self.m_openTimeMark = -1
 
     
     self:_TryResumeGameTime()
@@ -233,6 +239,11 @@ DungeonSettlementPopupCtrl._OnBtnRestartDungeonClick = HL.Method() << function(s
 end
 
 DungeonSettlementPopupCtrl._OnBtnLeaveDungeonClick = HL.Method() << function(self)
+    if DeviceInfo.usingController and self.m_openTimeMark > 0
+        and Time.realtimeSinceStartup - self.m_openTimeMark < self.view.config.LEAVE_DUNGEON_CLICK_GUARD_DURATION then
+        return
+    end
+
     
     self:Notify(MessageConst.HIDE_ITEM_TIPS)
 

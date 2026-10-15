@@ -7,16 +7,17 @@ local UI_CONTROLLER_PANEL_PREFAB_FORMAT = "Prefabs/%s/%sPanel_Controller.prefab"
 
 UI_NODE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/UINode.prefab"
 UI_RED_DOT_ANIMATION_PATH = UI_ASSETS_PATH .. "Prefabs/RedDotAnimation.prefab"
+UI_CHAR_HEAD_GLOW_ANIMATION_PATH = UI_ASSETS_PATH .. "Prefabs/CharHeadGlowAnimation.prefab"
 UI_BUSINESS_CARD_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Friend/FriendBusinessCard/%s.prefab"
 UI_WATCH_BUSINESS_CARD_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Common/Widgets/BusinessCard/%s.prefab"
 UI_ACTIVITY_CHAR_GUIDE_LINE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/CharacterGuideLine/%s.prefab"
 UI_ACTIVITY_VERSION_GUIDE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/VersionGuide/%s.prefab"
 UI_ACTIVITY_CHECK_IN_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Checkin/%s.prefab"
+UI_ACTIVITY_WEB_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Web/%s.prefab"
 UI_ACTIVITY_TASK_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Task/%s.prefab"
 UI_ACTIVITY_HIGH_DIFFICULTY_BG_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/HighDifficultyBg/%s.prefab"
 UI_ACTIVITY_CHALLENGE_DUNGEON_BG_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/ChallengeDungeonBg/%s.prefab"
 UI_ACTIVITY_ARKNIGHTS_BIRTH_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/ArknightsBirth/%s.prefab"
-UI_DUMMY_NAVI_LAYER_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/UIDummyNaviLayer.prefab"
 
 UI_PANEL_PREFAB_PATH = UI_ASSETS_PATH .. UI_PANEL_PREFAB_FORMAT
 UI_PC_PANEL_PREFAB_PATH = UI_ASSETS_PATH .. UI_PC_PANEL_PREFAB_FORMAT
@@ -127,6 +128,7 @@ UI_SPRITE_HOR_CHAR_HEAD = "CharHorHeadIcon"
 UI_SPRITE_SQUARE_CHAR_HEAD = "CharBattleIcon"
 UI_SPRITE_ROUND_CHAR_HEAD = "CharRoundIcon"
 UI_SPRITE_ATTRIBUTE_ICON = "AttributeIcon"
+GAMBLE_BATTLE_SPRITE_FOLDER = "Activity/ActivityGambleBattle"
 UI_SPRITE_EQUIP = "Equip"
 UI_SPRITE_EQUIP_SUIT = "Suit"
 UI_CHAR_HEAD_PREFIX = "icon_round_"
@@ -178,6 +180,16 @@ UI_SPRITE_SETTLEMENT_ICON_BIG = "Settlement/IconBig"
 UI_SPRITE_SETTLEMENT = "Settlement"
 UI_SPRITE_SETTLEMENT_KITE_STATION = "Settlement/KiteStation"
 
+UI_SPRITE_INN_RANCH_ANIMAL = "Inn/AnimalIcon"
+UI_SPRITE_INN_ITEM_TAG = "Inn/RecipeTypeTabIcon"
+UI_SPRITE_INN_DESK_NUM = "Inn/TableNumber"
+UI_SPRITE_INN_TOPIC = "Inn/TopicChangeBg"
+UI_SPRITE_INN_Emotion = "Inn/Emotion"
+UI_SPRITE_INN_AUTO = "Inn/AssistIcon"
+UI_SPRITE_INN_ICON = "Inn/InnIcon"
+UI_SPRITE_INN_REGION_UPGRADE = "Inn/RegionUpgrade"
+UI_SPRITE_INN_ITEM_TYPE = "Inn/Type"
+
 UI_SPRITE_DOMAIN = "Domain"
 
 UI_SPRITE_HEAD_FRAME = "HeadFrameIcon"
@@ -188,6 +200,8 @@ UI_SPRITE_WIKI_GROUP = "Wiki/GroupIcon"
 PLAYER_NAME_FORMATTER = "{player}"
 
 UI_MANUALCRAFT_ICON_ID = "icon_tips_manualcraft"
+
+UI_INN_CRAFT_ICON_ID = "icon_tips_inn_dishes"
 
 UI_LOADING_BG = "Loading"
 
@@ -1186,11 +1200,13 @@ DEFAULT_SORT_OPTION = {
 TACTICAL_ITEM_SORT_OPTION = {
     {
         name = Language.LUA_TACTICAL_ITEM_SORT_NUM,
-        keys = { "curCount", "rarity", "sortId1", "sortId2" },
+        keys = { "isEquippedSort", "curCount", "rarity", "sortId1", "sortId2" },
+        reverseKeys = { "isEquippedSortReverse", "curCount", "rarity", "sortId1", "sortId2" },
     },
     {
         name = Language.LUA_TACTICAL_ITEM_SORT_RARITY,
-        keys = { "rarity", "sortId1", "sortId2" },
+        keys = { "isEquippedSort", "rarity", "sortId1", "sortId2" },
+        reverseKeys = { "isEquippedSortReverse", "rarity", "sortId1", "sortId2" },
     },
 }
 
@@ -1310,8 +1326,8 @@ CharacterSummonSortOptions = {
 EQUIP_SORT_OPTION = {
     {
         name = Language.LUA_EQUIP_SORT_1, 
-        keys = { "num_canEquip", "minWearLv", "sortId2", "tier", "equipEnhanceLevel" },
-        reverseKeys = { "num_canEquip", "minWearLv", "sortId2", "tier", "equipEnhanceLevel" },
+        keys = { "isCurrentCharacterEquip", "num_canEquip", "rarity", "isOtherCharacterEquip", "minWearLv", "sortId1", "sortId2", "tier", "equipEnhanceLevel" },
+        reverseKeys = { "reverseIsCurrentCharacterEquip", "reverse_num_canEquip", "rarity", "reverseIsOtherCharacterEquip", "minWearLv", "sortId1", "sortId2", "tier", "equipEnhanceLevel" },
     },
 }
 
@@ -1437,6 +1453,10 @@ MOUSE_ICON_HINT = {
     Frame = "icon_mouse_frame",
     Magnifier = "icon_mouse_magnifier",
     ContinuousBuild = "icon_mouse_continuous_build",
+    PainterSplash = "icon_mouse_painter_splash",
+    PainterSplashPress = "icon_mouse_painter_splash_press",
+    PainterLink = "icon_mouse_painter_link",
+    PainterLinkPress = "icon_mouse_painter_link_press",
 }
 
 
@@ -1471,6 +1491,8 @@ FAC_TRANS_DOMAIN_ICONS = {
 ITEM_MAX_RARITY = 6
 ITEM_RARITY_DEFAULT_LIGHT_IMG = "bg_item_rarity_bar_common"
 ITEM_RARITY_SP_LIGHT_IMG = "bg_item_rarity_bar_sp"
+
+ITEM_NO_RARITY_BG_DEFAULT_COLOR = "444444B4"
 
 GACHA_CHAR_TIMELINE_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Gacha/%s/Prefab/%s.prefab"
 
@@ -1678,10 +1700,15 @@ UI_TEXT_LINK_TYPE = {
     Default = "default",
     Narrative = "narrative",
     Hyperlink = "hyperlink",
+    Item = "item",
 }
+
+
+UI_TEXT_ITEM_LINK_PREFIX = "ITEMLK_"
 
 UI_TEXT_LINK_MOUSE_ICON = {
     [UI_TEXT_LINK_TYPE.Default] = MOUSE_ICON_HINT.Default,
     [UI_TEXT_LINK_TYPE.Narrative] = MOUSE_ICON_HINT.Magnifier,
     [UI_TEXT_LINK_TYPE.Hyperlink] = MOUSE_ICON_HINT.Magnifier,
+    [UI_TEXT_LINK_TYPE.Item] = MOUSE_ICON_HINT.Magnifier,
 }

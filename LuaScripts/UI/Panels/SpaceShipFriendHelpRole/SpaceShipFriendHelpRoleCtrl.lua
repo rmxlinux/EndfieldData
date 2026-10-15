@@ -81,7 +81,6 @@ SpaceShipFriendHelpRoleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
 end
 
 SpaceShipFriendHelpRoleCtrl.OnUseHelpCredit = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
-    Notify(MessageConst.SHOW_TOAST, Language.LUA_SS_USE_HELP_CHAR_TOAST)
     self:Close()
 end
 
@@ -149,7 +148,6 @@ end
 SpaceShipFriendHelpRoleCtrl.OnDataModify = HL.Method() << function(self)
     local leftHelpCount, beHelpedCount = GameInstance.player.spaceship:GetCabinAssistedTime(self.m_roomId)
     if leftHelpCount == 0 then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_SS_USE_HELP_CHAR_TOAST)
         self:Close()
     end
 end

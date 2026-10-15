@@ -11,17 +11,6 @@ local Phase = {
 
 local SIMULATION_TRAINING_SUB_GAME_ID = "world_poi_simulation_training_01"
 
-local Category2CommonTaskQueueKey = {
-    ["world_energy_point_small"] = "ForceClearTrackHud",
-    ["world_energy_point"] = "ForceClearTrackHud",
-}
-
-local TrackingHudState = {
-    None = 0,
-    Custom = 1,
-    SubGame = 2,
-}
-
 local PANEL_OUT_ANIM = "commontasktrackhud_out"
 local CONTENT_SCROLL_FADE_ANIM = "commontasktrackhud_contentscrollfade"
 local CONTENT_REFRESH_ANIM = "commontasktrackhud_contentrefresh"
@@ -40,7 +29,8 @@ SimulationTrainingTrackHudCtrl.m_subGameId = HL.Field(HL.String) << ""
 
 SimulationTrainingTrackHudCtrl.m_isShowCustomTask = HL.Field(HL.Boolean) << false
 
-SimulationTrainingTrackHudCtrl.m_resetBtnVisible = HL.Field(HL.Boolean) << false
+
+SimulationTrainingTrackHudCtrl.m_gambleBattleGameStarted = HL.Field(HL.Boolean) << false
 
 
 
@@ -73,17 +63,11 @@ SimulationTrainingTrackHudCtrl.m_tween = HL.Field(HL.Any)
 SimulationTrainingTrackHudCtrl.m_canFoldThresholdOffsetY = HL.Field(HL.Number) << -1
 
 
-
-
-
-
-
 SimulationTrainingTrackHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     
-    [MessageConst.ON_SUB_GAME_FINISH_STATE_CHANGE] = "OnSubGameFinishStateChange", 
-    [MessageConst.ON_SUB_GAME_STAGE_FINISH] = "OnSubGameStageFinish", 
-    [MessageConst.ON_SUB_GAME_STAGE_CHANGE] = "OnSubGameStageChange", 
     [MessageConst.ON_GAME_MECHANICS_SYNC_CUSTOM_TARGET] = "OnGameMechanicsSyncCustomTarget",
+    [MessageConst.ON_GAMBLE_BATTLE_GAME_START] = "OnGambleBattleGameStart", 
+    [MessageConst.ON_CLOSE_GAMBLE_BATTLE_MAIN_PANEL] = "OnGambleBattleMainPanelClose", 
 }
 
 
@@ -185,7 +169,8 @@ end
 SimulationTrainingTrackHudCtrl.InitSubGameTrack = HL.Method(HL.Any) << function(self, args)
     self.m_subGameId = SIMULATION_TRAINING_SUB_GAME_ID
     self.m_isShowCustomTask = false
-
+    
+    self.m_gambleBattleGameStarted = false
 
     self:RefreshAll()
 end
@@ -205,6 +190,8 @@ SimulationTrainingTrackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
     self.view.btnStop.onClick:AddListener(function()
         self:_OnBtnStopClick()
     end)
+    
+    self:_ToggleBtnVisible(true)
 end
 
 SimulationTrainingTrackHudCtrl.OnClose = HL.Override() << function(self)
@@ -219,7 +206,7 @@ SimulationTrainingTrackHudCtrl.OnShow = HL.Override() << function(self)
 end
 
 SimulationTrainingTrackHudCtrl.RefreshAll = HL.Method() << function(self)
-    self:_RefreshSubGameTrack()
+    self:_RefreshHudShow()
 
     
     if self.m_contentShowingCor then
@@ -232,40 +219,62 @@ SimulationTrainingTrackHudCtrl.RefreshAll = HL.Method() << function(self)
 end
 
 
-SimulationTrainingTrackHudCtrl._RefreshSubGameTrack = HL.Method() << function(self)
-    local trackingMgr = GameWorld.levelScriptTaskTrackingManager
-    local mainTask = trackingMgr.mainTask
+SimulationTrainingTrackHudCtrl._RefreshHudShow = HL.Method() << function(self)
     self.view.goalRoot.gameObject:SetActive(true)
 
-    self:_RefreshMainTask()
-
     local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_subGameId)
-    self.view.btnStop.gameObject:SetActiveIfNecessary(true)  
-    self.view.btnStopTxt:SetAndResolveTextStyle(success and subGameData.resetBtnName:GetText() or self.m_subGameId)
+    if self:_IsGambleBattle() then
+        self:_RefreshTaskInfoGambleBattle()
+    else
+        self:_RefreshTaskInfoSimulationTraining()
+        self.view.btnStopTxt:SetAndResolveTextStyle(success and subGameData.resetBtnName:GetText() or self.m_subGameId)
+    end
+
+    self:_ToggleBtnVisible(true)
 
     local gameMechanicData = Tables.gameMechanicTable[self.m_subGameId]
-    local gameMechanicCategoryData = Tables.gameMechanicCategoryTable[gameMechanicData.gameCategory]
-    self.m_resetBtnVisible = gameMechanicCategoryData.canReChallenge
-
     self.view.btnNode.gameObject:SetActiveIfNecessary(true)
 
-    local title
+    local title = ""
 
-    
     if string.isEmpty(title) then
         title = success and gameMechanicData.gameName
     end
+    if self:_IsGambleBattle() then
+        title = self:_GetGambleBattleTitleText()
+    end
+
     self:_ProcessTitleText(title)
     self:_ProcessTitleIcon()
 end
 
+SimulationTrainingTrackHudCtrl._IsGambleBattle = HL.Method().Return(HL.Boolean) << function(self)
+    return GameWorld.worldInfo.curSubGameId == Tables.gambleBattleConst.gambleBattleDungeonId
+end
+
+SimulationTrainingTrackHudCtrl._GetSystem = HL.Method().Return(HL.Any) << function(self)
+    if self:_IsGambleBattle() then
+        return GameInstance.player.gambleBattleSystem
+    else
+        return GameInstance.player.simulationTrainingSystem
+    end
+end
+
+SimulationTrainingTrackHudCtrl._GetGambleBattleTitleText = HL.Method().Return(HL.String) << function(self)
+    return string.format(Language.LUA_GAMBLE_BATTLE_HUD_ROUND_TITLE, self:_GetSystem().gamblingDungeonRoundIndex + 1)
+end
+
+SimulationTrainingTrackHudCtrl._RefreshGambleBattleTitle = HL.Method() << function(self)
+    self:_ProcessTitleText(self:_GetGambleBattleTitleText())
+end
 
 SimulationTrainingTrackHudCtrl.OnGameMechanicsSyncCustomTarget = HL.Method(HL.Any) << function(self, args)
     local gameId, targetValue, currentValue = unpack(args)
     self.view.mainGoalCell.progressTxt.text = string.format(Language.LUA_SIMULATION_TRAINING_HUD_GOAL_NUMBER, currentValue,targetValue)
 end
 
-SimulationTrainingTrackHudCtrl._RefreshMainTask = HL.Method() << function(self)
+SimulationTrainingTrackHudCtrl._RefreshTaskInfoSimulationTraining = HL.Method() << function(self)
+    self.view.mainGoalCell.gameObject:SetActiveIfNecessary(true)
     self.view.mainGoalCell.goalTxt.text = Language.LUA_SIMULATION_TRAINING_HUD_GOAL_TEXT  
     local m_system = GameInstance.player.simulationTrainingSystem
     self.view.mainGoalCell.progressTxt.text = string.format(Language.LUA_SIMULATION_TRAINING_HUD_GOAL_NUMBER, 0, m_system.enemyAllCount)
@@ -293,6 +302,105 @@ SimulationTrainingTrackHudCtrl._RefreshMainTask = HL.Method() << function(self)
 end
 
 
+SimulationTrainingTrackHudCtrl._RefreshTaskInfoGambleBattle = HL.Method() << function(self)
+    
+    if self.m_gambleBattleGameStarted then
+        self.view.mainGoalCell.gameObject:SetActiveIfNecessary(true)
+        self.view.mainGoalCell.goalTxt.text = Language.LUA_GAMBLE_BATTLE_HUD_GOAL_TEXT     
+        local m_system = self:_GetSystem()
+        self.view.mainGoalCell.progressTxt.text = string.format(Language.LUA_GAMBLE_BATTLE_HUD_GOAL_NUMBER, 0,
+            m_system.enemyAllCount)
+        
+        local rewardNum = m_system.gamblingDungeonTotalPoint + self:_GetGambleBattleRoundRewardNumber()
+        self.view.mainGoalRewardCell.goalTxt.text = string.format(Language.LUA_GAMBLE_BATTLE_HUD_REWARD_NUMBER, rewardNum)     
+        self.view.mainGoalRewardCell.progressTxt.text = ""
+    else
+        self.view.mainGoalCell.gameObject:SetActiveIfNecessary(false)
+        self.view.mainGoalRewardCell.goalTxt.text = Language.LUA_GAMBLE_BATTLE_HUD_TOUCH_LIGHT_POINT 
+        self.view.mainGoalRewardCell.progressTxt.text = ""
+    end
+end
+
+
+
+SimulationTrainingTrackHudCtrl._GetGambleBattleRoundRewardNumber = HL.Method().Return(HL.Number) << function(self)
+    local baseAward = self:_GetGambleBattleBaseAward()
+    
+    return math.floor(baseAward * self:_GetGambleBattleEffectiveComboBenefit() / 100)
+end
+
+
+
+SimulationTrainingTrackHudCtrl._GetGambleBattleBaseAward = HL.Method().Return(HL.Number) << function(self)
+    local m_system = self:_GetSystem()
+    local baseAward = m_system.rewardScoreNumber
+    if baseAward > 0 then
+        return baseAward
+    end
+
+    local cardSuits = m_system.curCardSuits
+    if not cardSuits or cardSuits.Count <= 0 then
+        return 0
+    end
+
+    local pointNumber = 0
+    for i = 1, cardSuits.Count do
+        local cardName = cardSuits[i - 1].cardId
+        local hasCard, cardData = Tables.GambleBattleCardTable:TryGetValue(cardName)
+        if hasCard then
+            pointNumber = pointNumber + cardData.cardPoint
+        end
+    end
+    if pointNumber <= 0 then
+        return 0
+    end
+
+    local awardList = Tables.gambleBattleConst.pointAwardList
+    local awardIndex = math.min(pointNumber, awardList.Count) - 1
+    
+    local awardMultiplierPercent = math.floor(m_system.gamblingDungeonTotalPoint / 10000) * 10 + 100
+    return math.floor(awardList[awardIndex] * awardMultiplierPercent / 100)
+end
+
+
+
+SimulationTrainingTrackHudCtrl._GetGambleBattleEffectiveComboBenefit = HL.Method().Return(HL.Number) << function(self)
+    local m_system = self:_GetSystem()
+    local handTypeId = m_system.handType
+    if not handTypeId or handTypeId == 0 then
+        return 100
+    end
+
+    local ok, data = Tables.gambleBattleHandTypeTable:TryGetValue(handTypeId)
+    if not ok or not data then
+        return 100
+    end
+
+    local benefit = m_system.isMatchHandType == true and data.bonusBenefit or data.handTypeBenefit
+    return benefit
+end
+
+
+SimulationTrainingTrackHudCtrl.OnGambleBattleGameStart = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    if not self:_IsGambleBattle() then
+        return
+    end
+    self.m_gambleBattleGameStarted = true
+    self:_RefreshGambleBattleTitle()
+    self:_RefreshTaskInfoGambleBattle()
+end
+
+
+SimulationTrainingTrackHudCtrl.OnGambleBattleMainPanelClose = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    if not self:_IsGambleBattle() then
+        return
+    end
+    self.m_gambleBattleGameStarted = false
+    self:_RefreshGambleBattleTitle()
+    self:_RefreshTaskInfoGambleBattle()
+end
+
+
 SimulationTrainingTrackHudCtrl.OnSubGameStageFinish = HL.Method() << function(self)
     if not self:_ShowEndEffect() then
         return
@@ -310,7 +418,7 @@ SimulationTrainingTrackHudCtrl.OnSubGameStageFinish = HL.Method() << function(se
             end
             self:_SafelyPlayAnimAsync(self.animationWrapper, CONTENT_SCROLL_FADE_ANIM)
             self:_SafelyPlayAnimAsync(self.animationWrapper, PANEL_OUT_ANIM)
-            self:_TrackFinish()
+            self:_TrackStageFinish()
             Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackStateFinish")
         end)
     end
@@ -462,7 +570,16 @@ SimulationTrainingTrackHudCtrl._SafelyPlayAnimAsync = HL.Method(HL.Any, HL.Strin
     coroutine.wait(stateTime)
 end
 
+
 SimulationTrainingTrackHudCtrl._TrackFinish = HL.Method() << function(self)
+    self:Close()
+end
+
+
+SimulationTrainingTrackHudCtrl._TrackStageFinish = HL.Method() << function(self)
+    if self.m_contentShowingCor then
+        self.m_contentShowingCor = self:_ClearCoroutine(self.m_contentShowingCor)
+    end
     self:Hide()
 end
 
@@ -509,11 +626,6 @@ SimulationTrainingTrackHudCtrl._ProcessTitleIcon = HL.Method() << function(self)
     self.view.defaultIconBg.gameObject:SetActiveIfNecessary(true)
     self.view.finishIconBg.gameObject:SetActiveIfNecessary(true)
     self.view.failIconBg.gameObject:SetActiveIfNecessary(true)
-    if hasIconBgName then
-        self.view.defaultIconBg:LoadSprite(UIConst.UI_SPRITE_COMMON_TASK_TRACK, iconBgName)
-        self.view.finishIconBg:LoadSprite(UIConst.UI_SPRITE_COMMON_TASK_TRACK, iconBgName)
-        self.view.failIconBg:LoadSprite(UIConst.UI_SPRITE_COMMON_TASK_TRACK, iconBgName)
-    end
 end
 
 
@@ -530,13 +642,11 @@ SimulationTrainingTrackHudCtrl._ShowConfirmPopup = HL.Method(HL.String, HL.Funct
         return
     end
 
-    self:Notify(MessageConst.SHOW_POP_UP, {
+    UIManager:AutoOpen(PanelId.SubGamePopup, {
         content = content,
         onConfirm = function()
             confirmFunc()
         end,
-        freezeWorld = true,
-        pauseGame = true,
         interrupt = {
             interruptMessage = { MessageConst.ON_SUB_GAME_QUIT, MessageConst.SHOW_DEATH_INFO },
         }
@@ -545,7 +655,10 @@ end
 
 
 SimulationTrainingTrackHudCtrl._ToggleBtnVisible = HL.Method(HL.Boolean) << function(self, isOn)
-    self.view.btnStop.gameObject:SetActiveIfNecessary(isOn)   
+    
+    self.view.btnStopPCRect.gameObject:SetActiveIfNecessary(false)
+    self.view.btnStopMobileRect.gameObject:SetActiveIfNecessary(false)
+    self.view.btnStop.gameObject:SetActiveIfNecessary(isOn and not self:_IsGambleBattle())
 end
 
 

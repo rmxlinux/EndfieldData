@@ -508,7 +508,6 @@ FriendListCtrl.OnShow = HL.Override() << function(self)
     self.friendSystem.isReadFullFriendRequestInfo = true
 
     self:TryRefresh()
-    self.view.friendList:RestoreNaviIfNeeded()
 end
 FriendListCtrl.OnHide = HL.Override() << function(self)
 end

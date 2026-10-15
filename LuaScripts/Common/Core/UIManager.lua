@@ -90,10 +90,6 @@ UIManager.m_pauseMobileFrameGen = HL.Field(HL.Boolean) << false
 
 UIManager.m_currentStandardFOV = HL.Field(HL.Number) << 0
 
-UIManager.uiDummyNaviLayerRoot = HL.Field(Unity.Transform)
-
-UIManager.uiDummyNaviLayerAsset = HL.Field(HL.Userdata)
-
 UIManager.m_onCanvasChangedCallback = HL.Field(HL.Function)
 
 UIManager.m_isHotSwitching = HL.Field(HL.Boolean) << false
@@ -174,8 +170,6 @@ UIManager.UIManager = HL.Constructor() << function(self)
     self.worldUIRoot = self.uiNode.worldUIRoot.transform
     self.gyroscopeEffect = self.uiNode.worldUIRoot.transform:GetComponent("UIGyroscopeEffect")
     self.m_worldUICanvasScaleHelper = self.worldUIRoot:GetComponent("UICanvasScaleHelper")
-    self.uiDummyNaviLayerRoot = self.uiNode.uiDummyNaviLayerRoot
-    self.uiDummyNaviLayerAsset = self.m_resourceLoader:LoadGameObject(UIConst.UI_DUMMY_NAVI_LAYER_PREFAB_PATH)
 
     self.m_disabledPanelRoot = self.uiNode.disabledUIRoot
     self.m_disabledPanelRoot.gameObject:SetActive(false)
@@ -210,6 +204,11 @@ UIManager.UIManager = HL.Constructor() << function(self)
     local uiRedDotAsset = self.m_resourceLoader:LoadGameObject(UIConst.UI_RED_DOT_ANIMATION_PATH)
     local uiRedDotObj = CSUtils.CreateObject(uiRedDotAsset, self.uiRoot)
     CS.Beyond.UI.UIRedDotAnimation.instance:Init(uiRedDotObj)
+
+    
+    local charHeadGlowAsset = self.m_resourceLoader:LoadGameObject(UIConst.UI_CHAR_HEAD_GLOW_ANIMATION_PATH)
+    local charHeadGlowObj = CSUtils.CreateObject(charHeadGlowAsset, self.uiRoot)
+    CS.Beyond.UI.UICharHeadGlowAnimation.instance:Init(charHeadGlowObj)
 
     
     addMetaIndex(self.cfgs, function(_, k)
@@ -325,8 +324,11 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table, HL.Forward("Phase
 
     Notify(MessageConst.ON_BEFORE_UI_PANEL_OPEN, cfg.name)
 
-    
-    self:_TryAttachNaviDummyLayer(panelId)
+    if cfg.needNaviDummyLayer ~= nil then   
+        logger.error("needNaviDummyLayer 已更名为 needOwnNaviScope，请改 PanelConfig", cfg.name)
+    end
+    self:_TryPushPanelNaviScope(panelId)
+    InputManagerInst.controllerNaviManager:RegisterPanelScope(panelId, self:_GetPanelNaviScopeKey(panelId, bindPhaseItem))
 
     
     local cachedInfo = self.m_hotSwitchCache and self.m_hotSwitchCache[panelId]
@@ -634,11 +636,11 @@ UIManager._GetPanelAssetPathAndTypeByInputType = HL.Method(HL.Number, HL.Userdat
     if usingController then
         local ctPath = string.format(UIConst.UI_CONTROLLER_PANEL_PREFAB_PATH, cfg.folder, cfg.name)
         if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-            if not ResourceManager.CheckExists(ctPath) then
+            if not self.m_resourceLoader:CheckExists(ctPath) then
                 ctPath = string.format(UIConst.UI_CONTROLLER_PANEL_PREFAB_DEV_PATH, cfg.folder, cfg.name)
             end
         end
-        if ResourceManager.CheckExists(ctPath) then
+        if self.m_resourceLoader:CheckExists(ctPath) then
             assetType = UIConst.PANEL_ASSET_TYPES.Controller
             path = ctPath
         end
@@ -647,11 +649,11 @@ UIManager._GetPanelAssetPathAndTypeByInputType = HL.Method(HL.Number, HL.Userdat
     if not path and usingKeyboardOrController then
         local pcPath = string.format(UIConst.UI_PC_PANEL_PREFAB_PATH, cfg.folder, cfg.name)
         if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-            if not ResourceManager.CheckExists(pcPath) then
+            if not self.m_resourceLoader:CheckExists(pcPath) then
                 pcPath = string.format(UIConst.UI_PC_PANEL_PREFAB_DEV_PATH, cfg.folder, cfg.name)
             end
         end
-        if ResourceManager.CheckExists(pcPath) then
+        if self.m_resourceLoader:CheckExists(pcPath) then
             assetType = UIConst.PANEL_ASSET_TYPES.PC
             path = pcPath
         end
@@ -660,7 +662,7 @@ UIManager._GetPanelAssetPathAndTypeByInputType = HL.Method(HL.Number, HL.Userdat
     if not path then
         path = string.format(UIConst.UI_PANEL_PREFAB_PATH, cfg.folder, cfg.name)
         if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-            if not ResourceManager.CheckExists(path) then
+            if not self.m_resourceLoader:CheckExists(path) then
                 path = string.format(UIConst.UI_PANEL_PREFAB_DEV_PATH, cfg.folder, cfg.name)
             end
         end
@@ -1064,7 +1066,8 @@ UIManager.Close = HL.Method(HL.Number) << function(self, panelId)
     Notify(MessageConst.ON_UI_PANEL_CLOSED, cfg.name)
     CS.Beyond.Gameplay.Conditions.OnUIPanelClose.Trigger(cfg.name)
 
-    self:_TryDetachNaviDummyLayer(panelId)
+    self:_TryPopPanelNaviScope(panelId)
+    InputManagerInst.controllerNaviManager:UnregisterPanelScope(panelId)
 
     self:_SendEventUISwitch(cfg, false)
     if cfg.hideCamera then
@@ -1089,7 +1092,7 @@ UIManager.Show = HL.Method(HL.Number) << function(self, panelId)
     self.m_hidedPanels[panelId] = nil
     if not hideByOthers then
         
-        self:_TryAttachNaviDummyLayer(panelId)
+        self:_TryPushPanelNaviScope(panelId)
         self:_InternalShow(panelId)
     end
     LuaProfilerUtils.EndSample()
@@ -1142,7 +1145,6 @@ UIManager._InternalShow = HL.Method(HL.Number) << function(self, panelId)
 
     
     
-    
 
     self:CalcOtherSystemPropertyByPanelOrder()
 
@@ -1187,7 +1189,7 @@ UIManager.Hide = HL.Method(HL.Number) << function(self, panelId)
 
     if not self.m_clearedPanelReverseInfos[panelId] then
         
-        self:_TryDetachNaviDummyLayer(panelId)
+        self:_TryPopPanelNaviScope(panelId)
         self:_InternalHide(panelId)
     end
 end
@@ -1275,8 +1277,6 @@ UIManager._InternalHide = HL.Method(HL.Number) << function(self, panelId)
         return
     end
 
-    
-    
     
     
 
@@ -2072,6 +2072,7 @@ UIManager.Dispose = HL.Method() << function(self)
         self.worldObjectRoot = nil
     end
     CS.Beyond.UI.UIRedDotAnimation.instance:UnInit()
+    CS.Beyond.UI.UICharHeadGlowAnimation.instance:UnInit()
     self.m_resourceLoader:DisposeAllHandles()
     if CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader ~= nil then
         CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader:Dispose()
@@ -2517,21 +2518,30 @@ UIManager.UpdateUICanvasScaleHelpers = HL.Method() << function(self)
     end
 end
 
-UIManager.CreateNaviDummLayerObj = HL.Method().Return(GameObject) << function(self)
-    return CSUtils.CreateObject(self.uiDummyNaviLayerAsset, self.uiDummyNaviLayerRoot)
+
+
+UIManager._GetPanelNaviScopeKey = HL.Method(HL.Number, HL.Opt(HL.Forward("PhasePanelItem"))).Return(HL.String) << function(self, panelId, bindPhaseItem)
+    local cfg = self.m_panelConfigs[panelId]
+    if cfg.needOwnNaviScope == true then
+        return cfg.name
+    end
+    local phase = bindPhaseItem and bindPhaseItem.phase or nil
+    if phase ~= nil and phase.cfg.notCreateNaviScope ~= true then
+        return PhaseManager:GetPhaseNaviScopeKey(phase.phaseId)
+    end
+    return ""
 end
 
-UIManager._TryAttachNaviDummyLayer = HL.Method(HL.Number) << function(self, panelId)
+UIManager._TryPushPanelNaviScope = HL.Method(HL.Number) << function(self, panelId)
     local cfg = self.m_panelConfigs[panelId]
-    if cfg.needNaviDummyLayer ~= true then
+    if cfg.needOwnNaviScope ~= true then
         return
     end
-    Notify(MessageConst.ATTACH_DUMMY_NAVI_LAYER, cfg.name)
+    InputManagerInst.controllerNaviManager:PushScope(cfg.name)
 end
 
-UIManager._TryDetachNaviDummyLayer = HL.Method(HL.Number) << function(self, panelId)
-    local panelName = self.m_names[panelId]
-    Notify(MessageConst.DETACH_DUMMY_NAVI_LAYER, panelName)
+UIManager._TryPopPanelNaviScope = HL.Method(HL.Number) << function(self, panelId)
+    InputManagerInst.controllerNaviManager:PopScope(self.m_names[panelId])
 end
 
 

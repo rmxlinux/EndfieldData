@@ -126,6 +126,13 @@ SSCharSkillNode.TriggerSkillHint = HL.Method() << function(self)
     end
 end
 
+SSCharSkillNode.HideSkillHint = HL.Method() << function(self)
+    for _, cell in ipairs(self.m_levelUpSkills) do
+        cell.upgradeHint.gameObject:SetActive(false)
+        cell.upgradeNode:SetState("NotClicked")
+    end
+end
+
 SSCharSkillNode.GetCanLevelUpState = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_canLevelUpState
 end

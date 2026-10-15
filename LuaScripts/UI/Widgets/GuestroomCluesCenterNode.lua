@@ -30,6 +30,15 @@ GuestroomCluesCenterNode._OnFirstTimeInit = HL.Override() << function(self)
         end
         self.m_spaceship:OpenInfoExchangeClue()
     end)
+
+    self:RegisterMessage(MessageConst.SPACESHIP_ON_ROOM_LEVEL_UP, function(args)
+        local roomId = unpack(args)
+        if roomId ~= Tables.spaceshipConst.guestRoomClueExtensionId then
+            return
+        end
+        self:RefreshBottomState()
+    end)
+
     self.view.selectableNaviGroup.onIsFocusedChange:RemoveAllListeners()
     self.view.selectableNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
         if isFocused then

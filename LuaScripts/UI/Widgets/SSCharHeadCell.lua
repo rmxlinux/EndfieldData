@@ -36,6 +36,7 @@ SSCharHeadCell._OnFirstTimeInit = HL.Override() << function(self)
     self.view.chooseNode.gameObject:SetActive(false)
 
     self.m_skillCells = UIUtils.genCellCache(self.view.skillCell)
+    self.m_groupABTxt = self.view.groupNode.transform:Find("ABTxt"):GetComponent("UIText")
 
     self:RegisterMessage(MessageConst.HIDE_SPACESHIP_CHAR_TIPS_DONE, function()
         self:SetSelectState(false)
@@ -49,6 +50,7 @@ SSCharHeadCell.ShowTips = HL.Method(HL.Opt(HL.Any, HL.Any, HL.Boolean)) << funct
         key = self.transform,
         isHover = isHover,
         charId = self.m_charId,
+        targetRoomId = self.m_args.targetRoomId,
         tmpSafeArea = self.transform,
         transform = self.m_tipsPositionTrans or self.transform,
         posType = posType or self.m_args.posType,
@@ -66,6 +68,8 @@ SSCharHeadCell.m_args = HL.Field(HL.Table)
 SSCharHeadCell.m_tipsPositionTrans = HL.Field(CS.UnityEngine.Transform)
 
 SSCharHeadCell.m_skillCells = HL.Field(HL.Forward('UIListCache'))
+
+SSCharHeadCell.m_groupABTxt = HL.Field(HL.Any)
 
 
 
@@ -95,7 +99,6 @@ SSCharHeadCell.InitSSCharHeadCell = HL.Method(HL.Table) << function(self, args)
         self.view.buffNode.gameObject:SetActive(false)
     end
 
-    local spaceship = GameInstance.player.spaceship
     local succ, char = spaceship.characters:TryGetValue(charId)
     if succ then
         local roomType = SpaceshipUtils.getRoomTypeByRoomId(args.targetRoomId)
@@ -113,6 +116,31 @@ SSCharHeadCell.InitSSCharHeadCell = HL.Method(HL.Table) << function(self, args)
         self.view.giftNode.gameObject:SetActive(true)
     else
         self.view.giftNode.gameObject:SetActive(false)
+    end
+    self:_UpdateGroupNode(args, char)
+end
+
+SSCharHeadCell._UpdateGroupNode = HL.Method(HL.Table, HL.Opt(HL.Any)) << function(self, args, char)
+    self:_SetGroupTeamType(char)
+end
+
+SSCharHeadCell._SetGroupTeamType = HL.Method(HL.Opt(HL.Any)) << function(self, char)
+    local TeamType = CS.Proto.SpaceshipCharTeamType
+    local roomId = char.stationedRoomId
+    local scheduleEnabled = SpaceshipUtils.isScheduleUnlocked()
+        and SpaceshipUtils.isRoomScheduleSupported(roomId)
+        and not SpaceshipUtils.isSingleTeamMode(roomId)
+    local teamType = char.teamType
+    self.m_groupABTxt.color = not string.isEmpty(roomId) and SpaceshipUtils.getRoomColor(roomId) or Color.white
+    if not scheduleEnabled then
+        teamType = nil
+    end
+    if teamType == TeamType.A then
+        self.view.groupNode:SetState("A")
+    elseif teamType == TeamType.B then
+        self.view.groupNode:SetState("B")
+    else
+        self.view.groupNode:SetState("Single")
     end
 end
 

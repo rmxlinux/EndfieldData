@@ -57,6 +57,7 @@ SpaceshipReceptionDisplayCtrl.ResetPicture = HL.StaticMethod() << function()
             end
             table.insert(picIdsTable, pictureId)
         end
+        picIdsTable = CharInfoUtils.filterUnlockedCharPotentialPictureIds(picIdsTable)
         GameInstance.player.spaceship:ChangeGuestRoomScreenWallPics(picIdsTable)
     end
 end
@@ -87,6 +88,7 @@ SpaceshipReceptionDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
                 tmpPicTable[picId] = true
             end
         end
+        tmpTable = CharInfoUtils.filterUnlockedCharPotentialPictureIds(tmpTable)
 
         
         local guestRoomId = Tables.spaceshipConst.guestRoomId

@@ -230,7 +230,7 @@ ForesightCharGrowthDetailRewardsCell._RefreshCostItemSlotList = HL.Method(HL.Tab
         self:_ApplyCostItemSlot(v.costItemTemplateWidget, slots[1], v)
         self:_ApplyCostItemControllerExtra(v, v.costItemTemplateWidget)
         local siblingIndex = itemTemplate:GetSiblingIndex() + 1
-        local cutBeforeExtraIndex = layoutOpt.cutLineBeforeChest and extraCount or nil
+        local cutBeforeExtraIndex = layoutOpt.cutLineBeforeExtraIndex
         for index = 1, extraCount do
             if cutBeforeExtraIndex and index == cutBeforeExtraIndex and v.costCutLine then
                 v.costCutLine.gameObject:SetActive(true)
@@ -247,7 +247,7 @@ ForesightCharGrowthDetailRewardsCell._RefreshCostItemSlotList = HL.Method(HL.Tab
     else
         itemTemplateGo:SetActive(false)
     end
-    if v.costCutLine and not layoutOpt.cutLineBeforeChest then
+    if v.costCutLine and not layoutOpt.cutLineBeforeExtraIndex then
         v.costCutLine.gameObject:SetActive(false)
     end
     if content then
@@ -415,37 +415,21 @@ ForesightCharGrowthDetailRewardsCell._RefreshCostListItems = HL.Method(HL.Table,
     self:_RefreshCostItemSlotList(v, ForesightCharGrowthDetailRewardsCell._BuildItemSlotsFromList(itemList))
 end
 
-ForesightCharGrowthDetailRewardsCell._CalcPreciousChestNeedCount = HL.StaticMethod(HL.Table).Return(HL.Number) << function(materials)
-    local chestNeed = 0
-    for _, entry in ipairs(materials or {}) do
-        if entry.itemId and (entry.count or 0) > 0 then
-            local deficit = math.max(0, (entry.count or 0) - Utils.getItemCount(entry.itemId, true))
-            if deficit > 0 then
-                chestNeed = chestNeed + math.ceil(deficit / 2)
-            end
-        end
-    end
-    return chestNeed
-end
-
 
 ForesightCharGrowthDetailRewardsCell._RefreshPreciousCostListItems = HL.Method(HL.Table, HL.Table)
     << function(self, v, preciousData)
     local materials = preciousData.materials or {}
-    local chestItemId = preciousData.chestItemId or ""
-    local hasChest = not string.isEmpty(chestItemId)
     local slots = ForesightCharGrowthDetailRewardsCell._BuildItemSlotsFromList(materials)
-    local hasMaterialSlots = #slots > 0
-    if hasChest then
-        local chestNeedCount = ForesightCharGrowthDetailRewardsCell._CalcPreciousChestNeedCount(materials)
+    local materialSlotCount = #slots
+    for _, chest in ipairs(preciousData.chests or {}) do
         slots[#slots + 1] = {
             isChest = true,
-            itemId = chestItemId,
-            needCount = chestNeedCount,
+            itemId = chest.itemId,
+            needCount = chest.needCount,
         }
     end
     self:_RefreshCostItemSlotList(v, slots, {
-        cutLineBeforeChest = hasChest and hasMaterialSlots,
+        cutLineBeforeExtraIndex = #slots > materialSlotCount and materialSlotCount > 0 and materialSlotCount or nil,
     })
 end
 

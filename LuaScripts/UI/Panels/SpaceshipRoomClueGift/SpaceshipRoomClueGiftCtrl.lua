@@ -237,6 +237,11 @@ SpaceshipRoomClueGiftCtrl._UpdateClueCell = HL.Method(HL.Any, HL.Number) << func
     local luaIndex = LuaIndex(csIndex)
 
     local clueId = self.m_luaIndex2ClueId[luaIndex]
+    for cachedClueId, cachedCell in pairs(self.m_clueId2ClueCell) do
+        if cachedClueId ~= clueId and cachedCell == cell then
+            self.m_clueId2ClueCell[cachedClueId] = nil
+        end
+    end
     self.m_clueId2ClueCell[clueId] = cell
 
     if clueId == 1 then

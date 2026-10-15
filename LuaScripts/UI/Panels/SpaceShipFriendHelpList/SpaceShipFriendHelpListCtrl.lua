@@ -132,10 +132,15 @@ SpaceShipFriendHelpListCtrl._RefreshData = HL.Method(HL.Opt(HL.String)) << funct
                 helpNode.stateController:SetState("NoData")
             else
                 helpNode.stateController:SetState("Friend")
-                local friendDicIndex = FriendUtils.FRIEND_CELL_INIT_CONFIG.Friend.infoDicIndex
                 local haveFriend, info = GameInstance.player.friendSystem.friendInfoDic:TryGetValue(beHelpedFriendRoleId)
                 local nameStr, avatarPath, avatarFramePath = FriendUtils.getFriendInfoByRoleId(beHelpedFriendRoleId)
                 helpNode.nameTxt.text = nameStr
+                local isPsnPlatform = FriendUtils.isPsnPlatform()
+                helpNode.nameLayout.gameObject:SetActiveIfNecessary(isPsnPlatform)
+                if isPsnPlatform then
+                    helpNode.nameLayout:SetState(string.isEmpty(info.psName) and "NoPsAccount" or "Ps")
+                    helpNode.psNameTxt.text = info.psName
+                end
                 helpNode.commonPlayerHead:InitCommonPlayerHeadByRoleId(beHelpedFriendRoleId, function()
                     Notify(MessageConst.ON_OPEN_BUSINESS_CARD_PREVIEW, { roleId = beHelpedFriendRoleId, isPhase = true })
                 end)

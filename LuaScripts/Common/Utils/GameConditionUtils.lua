@@ -124,6 +124,10 @@ local _conditionHandlers = {
         local ret = GameConditionUtils.CheckDomainKiteStationUnlockCount()
         return ret
     end,
+    [GEnums.ConditionType.CheckActivityState] = function(params)
+        local args = LuaGameConditionUtils._extractStrings(params)
+        return GameConditionUtils.CheckActivityState(args[1], tonumber(args[2]), tonumber(args[3]))
+    end,
 }
 
 function LuaGameConditionUtils.getConditionValueByParameters(conditionType, parameters)

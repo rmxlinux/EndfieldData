@@ -31,7 +31,7 @@ Const.RESERVE_PANEL_IDS_FOR_FAC_BUILD_MODE = {
     PanelId.FacPowerPoleTravelHint,
     PanelId.FacPowerPoleAutoConnectHint,
     PanelId.HeadLabel,
-    PanelId.FacMiniPowerHud,
+    PanelId.FacTopHud,
     PanelId.FacTopView,
     PanelId.Radio,
     PanelId.FacTopViewBuildingInfo,

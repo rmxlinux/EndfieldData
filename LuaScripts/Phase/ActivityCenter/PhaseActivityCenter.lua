@@ -20,6 +20,8 @@ PhaseActivityCenter.m_activitySystem = HL.Field(HL.Userdata)
 
 PhaseActivityCenter.m_activityPanelId = HL.Field(HL.Number) << -1
 
+PhaseActivityCenter.m_bgmOwnerActivityId = HL.Field(HL.String) << ""
+
 PhaseActivityCenter.m_isShowingInstruction = HL.Field(HL.Boolean) << false
 
 PhaseActivityCenter.m_activityPushIds = HL.Field(HL.Table)
@@ -65,7 +67,9 @@ PhaseActivityCenter.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Op
             
             local availablePushIds = GameInstance.player.activitySystem:GetAvailableActivityPushIds()
             for _, pushId in pairs(availablePushIds) do
-                table.insert(self.m_activityPushIds, pushId)
+                if ActivityUtils.isActivityPushPopupConditionSatisfied(pushId) then
+                    table.insert(self.m_activityPushIds, pushId)
+                end
             end
         end
 
@@ -131,7 +135,14 @@ PhaseActivityCenter._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt
     if curArg and curArg.activityId then
         local activityId = curArg.activityId
         local _, activityData = Tables.activityTable:TryGetValue(activityId)
-        if activityData and not string.isEmpty(activityData.bgm) then
+        if activityData and activityData.panelId == "ActivityGambleBattle" then
+            self.m_bgmOwnerActivityId = activityId
+            
+            if not ActivityUtils.isGambleBattleBgmEnding() then
+                ActivityUtils.playGambleBattleBgm("")
+            end
+        elseif activityData and not string.isEmpty(activityData.bgm) then
+            self.m_bgmOwnerActivityId = activityId
             AudioManager.PostEvent(activityData.bgm)
         end
     end
@@ -139,9 +150,25 @@ end
 
 PhaseActivityCenter._OnDestroy = HL.Override() << function(self)
     PhaseActivityCenter.Super._OnDestroy(self)
-    AudioManager.PostEvent("au_music_meta_ui_stop")
+    self:_PostActivityBgmStop()
 end
 
+
+PhaseActivityCenter._PostActivityBgmStop = HL.Method() << function(self)
+    local stopEvent = "au_music_meta_ui_stop"
+    if not string.isEmpty(self.m_bgmOwnerActivityId) then
+        local _, activityData = Tables.activityTable:TryGetValue(self.m_bgmOwnerActivityId)
+        if activityData and activityData.panelId == "ActivityGambleBattle" then
+            ActivityUtils.stopGambleBattleBgm()
+            self.m_bgmOwnerActivityId = ""
+            return
+        elseif activityData then
+            stopEvent = ActivityUtils.getActivityBgmStopEvent(activityData.type)
+        end
+    end
+    AudioManager.PostEvent(stopEvent)
+    self.m_bgmOwnerActivityId = ""
+end
 
 PhaseActivityCenter.m_firstTimeShowActivity = HL.Field(HL.Boolean) << true
 
@@ -200,12 +227,16 @@ PhaseActivityCenter.ShowActivity = HL.Method(HL.Any) << function(self, arg)
 
     
     local _, activityData = Tables.activityTable:TryGetValue(activityId)
-    if activityData and not string.isEmpty(activityData.bgm) then
+    if activityData and activityData.panelId == "ActivityGambleBattle" then
+        self.m_bgmOwnerActivityId = activityId
+        ActivityUtils.playGambleBattleBgm("")
+    elseif activityData and not string.isEmpty(activityData.bgm) then
+        self.m_bgmOwnerActivityId = activityId
         AudioManager.PostEvent(activityData.bgm)
     else
         if not arg.isInit then
             
-            AudioManager.PostEvent("au_music_meta_ui_stop")
+            self:_PostActivityBgmStop()
         end
     end
 
@@ -242,9 +273,15 @@ PhaseActivityCenter.ShowActivity = HL.Method(HL.Any) << function(self, arg)
             end
             
             rightNaviGroup.onDefaultNaviFailed:RemoveAllListeners()
+            local rightScrollList = rightNaviGroup:GetComponent(typeof(CS.Beyond.UI.UIScrollList))
             rightNaviGroup.onDefaultNaviFailed:AddListener(function(dir)
                 if dir == Unity.UI.NaviDirection.Left then
                     panel:SetNaviTarget(getReturnTargetFunc())
+                elseif rightScrollList and rightScrollList.isActiveAndEnabled then
+                    rightScrollList:ListWrapNavigate(dir)
+                elseif HL.TryGet(panel.uiCtrl, "OnActivityContentNaviFailed") then
+                    
+                    panel.uiCtrl:OnActivityContentNaviFailed(dir)
                 end
             end)
         end
@@ -328,7 +365,7 @@ PhaseActivityCenter.ShowPushPopup = HL.StaticMethod(HL.Table) << function(args)
             Notify(MessageConst.SHOW_TOAST, string.format("活动推送表中不存在pushId:%s，请检查配表", pushId))
             return
         end
-        if not GameInstance.player.activitySystem:GetActivity(info.activityId) then
+        if not info.isPreview and not GameInstance.player.activitySystem:GetActivity(info.activityId) then
             Notify(MessageConst.SHOW_TOAST, string.format("%s活动尚未解锁，请检查私服设置", info.activityId))
             return
         end

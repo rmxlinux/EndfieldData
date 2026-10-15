@@ -1,0 +1,458 @@
+{
+  "abilityEventAction": [
+    {
+      "abilityEvent": 8,
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 0,
+              "alwaysNext": true,
+              "conditionAction": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.Conditions.CheckEntityNum+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 1,
+                    "checkTarget": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": null,
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": null,
+                      "selectorData": {
+                        "finderData": {
+                          "$type": "Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond"
+                        },
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 0,
+                      "targetContextKey": null,
+                      "targetGroupKey": null,
+                      "targetSource": 3
+                    },
+                    "compareType": 4,
+                    "containsHittableTarget": false,
+                    "excludeDeadEntity": true,
+                    "minNum": 0,
+                    "storeKey": null
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "failActions": {
+                "actionData": [],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              },
+              "succeedActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 2,
+                    "alwaysNext": true,
+                    "conditionAction": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.CheckBuffStackNumAdvanced+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 3,
+                          "buffSettings": {
+                            "buffIdList": [
+                              "buff_gambling_battle_TongHua_Bing"
+                            ],
+                            "checkType": 0,
+                            "tagQuery": {
+                              "queryType": 0,
+                              "tags": []
+                            }
+                          },
+                          "buffStackNumType": 0,
+                          "checkTarget": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 4
+                          },
+                          "compareType": 3,
+                          "limitSkillCastId": false,
+                          "value": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 1.0
+                          }
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    },
+                    "failActions": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 5,
+                          "alwaysNext": true,
+                          "conditionAction": {
+                            "actionData": [
+                              {
+                                "$type": "Beyond.Gameplay.Core.CheckBuffStackNumAdvanced+Data, Gameplay.Beyond",
+                                "isEnable": true,
+                                "priorityLevel": 0,
+                                "priorityOffset": 0,
+                                "serverActionIndex": 6,
+                                "buffSettings": {
+                                  "buffIdList": [
+                                    "buff_gambling_battle_TongHua_Tiao"
+                                  ],
+                                  "checkType": 0,
+                                  "tagQuery": {
+                                    "queryType": 0,
+                                    "tags": []
+                                  }
+                                },
+                                "buffStackNumType": 0,
+                                "checkTarget": {
+                                  "advancedDirection": {
+                                    "clampToXZ": true,
+                                    "customSourceAndTarget": false,
+                                    "directionType": 0,
+                                    "invertDirection": false,
+                                    "source": null,
+                                    "sourceMountPoint": 0,
+                                    "target": null,
+                                    "targetMountPoint": 0
+                                  },
+                                  "centerContextKey": null,
+                                  "centerToGround": false,
+                                  "centerType": 0,
+                                  "enableAdvancedDirection": false,
+                                  "ownerContextKey": null,
+                                  "selectorData": {
+                                    "finderData": null,
+                                    "postProcessorData": [],
+                                    "validatorData": []
+                                  },
+                                  "selectorDirection": 0,
+                                  "selectorOwner": 1,
+                                  "target": 0,
+                                  "targetContextKey": null,
+                                  "targetGroupKey": null,
+                                  "targetSource": 4
+                                },
+                                "compareType": 3,
+                                "limitSkillCastId": false,
+                                "value": {
+                                  "blackboardKey": null,
+                                  "useBlackboardKey": false,
+                                  "value": 1.0
+                                }
+                              }
+                            ],
+                            "onlyExecuteWhenSourceIsGuard": false,
+                            "onlyExecuteWhenSourceIsMainChar": false
+                          },
+                          "failActions": {
+                            "actionData": [
+                              {
+                                "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+                                "isEnable": true,
+                                "priorityLevel": 0,
+                                "priorityOffset": 0,
+                                "serverActionIndex": 8,
+                                "alwaysNext": true,
+                                "conditionAction": {
+                                  "actionData": [
+                                    {
+                                      "$type": "Beyond.Gameplay.Core.CheckBuffStackNumAdvanced+Data, Gameplay.Beyond",
+                                      "isEnable": true,
+                                      "priorityLevel": 0,
+                                      "priorityOffset": 0,
+                                      "serverActionIndex": 9,
+                                      "buffSettings": {
+                                        "buffIdList": [
+                                          "buff_gambling_battle_TongHua_Wan"
+                                        ],
+                                        "checkType": 0,
+                                        "tagQuery": {
+                                          "queryType": 0,
+                                          "tags": []
+                                        }
+                                      },
+                                      "buffStackNumType": 0,
+                                      "checkTarget": {
+                                        "advancedDirection": {
+                                          "clampToXZ": true,
+                                          "customSourceAndTarget": false,
+                                          "directionType": 0,
+                                          "invertDirection": false,
+                                          "source": null,
+                                          "sourceMountPoint": 0,
+                                          "target": null,
+                                          "targetMountPoint": 0
+                                        },
+                                        "centerContextKey": null,
+                                        "centerToGround": false,
+                                        "centerType": 0,
+                                        "enableAdvancedDirection": false,
+                                        "ownerContextKey": null,
+                                        "selectorData": {
+                                          "finderData": null,
+                                          "postProcessorData": [],
+                                          "validatorData": []
+                                        },
+                                        "selectorDirection": 0,
+                                        "selectorOwner": 1,
+                                        "target": 0,
+                                        "targetContextKey": null,
+                                        "targetGroupKey": null,
+                                        "targetSource": 4
+                                      },
+                                      "compareType": 3,
+                                      "limitSkillCastId": false,
+                                      "value": {
+                                        "blackboardKey": null,
+                                        "useBlackboardKey": false,
+                                        "value": 1.0
+                                      }
+                                    }
+                                  ],
+                                  "onlyExecuteWhenSourceIsGuard": false,
+                                  "onlyExecuteWhenSourceIsMainChar": false
+                                },
+                                "failActions": {
+                                  "actionData": [],
+                                  "onlyExecuteWhenSourceIsGuard": false,
+                                  "onlyExecuteWhenSourceIsMainChar": false
+                                },
+                                "succeedActions": {
+                                  "actionData": [
+                                    {
+                                      "$type": "Beyond.Gameplay.Core.SendBattleSignalToLevel+Data, Gameplay.Beyond",
+                                      "isEnable": true,
+                                      "priorityLevel": 0,
+                                      "priorityOffset": 0,
+                                      "serverActionIndex": 10,
+                                      "doubleValue": {
+                                        "blackboardKey": null,
+                                        "useBlackboardKey": false,
+                                        "value": 0.0
+                                      },
+                                      "signalId": {
+                                        "blackboardKey": null,
+                                        "useBlackboardKey": false,
+                                        "value": "FlushSpecialBuff_Wan"
+                                      }
+                                    }
+                                  ],
+                                  "onlyExecuteWhenSourceIsGuard": false,
+                                  "onlyExecuteWhenSourceIsMainChar": false
+                                }
+                              }
+                            ],
+                            "onlyExecuteWhenSourceIsGuard": false,
+                            "onlyExecuteWhenSourceIsMainChar": false
+                          },
+                          "succeedActions": {
+                            "actionData": [
+                              {
+                                "$type": "Beyond.Gameplay.Core.SendBattleSignalToLevel+Data, Gameplay.Beyond",
+                                "isEnable": true,
+                                "priorityLevel": 0,
+                                "priorityOffset": 0,
+                                "serverActionIndex": 7,
+                                "doubleValue": {
+                                  "blackboardKey": null,
+                                  "useBlackboardKey": false,
+                                  "value": 0.0
+                                },
+                                "signalId": {
+                                  "blackboardKey": null,
+                                  "useBlackboardKey": false,
+                                  "value": "FlushSpecialBuff_Tiao"
+                                }
+                              }
+                            ],
+                            "onlyExecuteWhenSourceIsGuard": false,
+                            "onlyExecuteWhenSourceIsMainChar": false
+                          }
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    },
+                    "succeedActions": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.SendBattleSignalToLevel+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 4,
+                          "doubleValue": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          },
+                          "signalId": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": "FlushSpecialBuff_Bing"
+                          }
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    }
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ]
+    }
+  ],
+  "addingCooldown": {
+    "blackboardKey": null,
+    "useBlackboardKey": false,
+    "value": 0.0
+  },
+  "applyTags": [],
+  "attributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "blackboard": [],
+  "buffEventAction": [],
+  "damageModifier": [],
+  "dispelConfig": {
+    "canBeDispelled": false,
+    "dispelledLevel": 0
+  },
+  "duration": {
+    "blackboardKey": "duration",
+    "useBlackboardKey": false,
+    "value": -1.0
+  },
+  "finishOnRepatriate": false,
+  "globalModifier": [],
+  "hasAddingCooldown": false,
+  "hasIcon": false,
+  "healModifier": [],
+  "iconConfig": {
+    "_orderPriorityConfig": {
+      "useDirectoryValue": false,
+      "priorityValue": 0,
+      "priorityEnum": 180
+    },
+    "_spritePath": null,
+    "abnormalColorType": 0,
+    "blinkInMainCharHpBar": false,
+    "charHpBarVfxType": 0,
+    "forceRaiseIconEvent": false,
+    "hasCharHpBarVfxType": false,
+    "iconStyleInSquad": 0,
+    "onlyShowForMainCharacter": false,
+    "playStrongInAnimation": false,
+    "showDirectlyInHeadBuff": false,
+    "showInHeadBarAttached": false,
+    "showInHeadBarCommon": false,
+    "showInSquadIcon": false,
+    "showProgressInEnemyHeadBar": false,
+    "showProgressInHpBar": false,
+    "showProgressInNormalSkillButton": false,
+    "showProgressInUltimateSkillButton": false,
+    "showWarningBackground": false,
+    "useWeakProgressInNormalSkillButton": false
+  },
+  "id": "buff_gambling_battle_TongHua",
+  "igniteEventAction": [],
+  "ignoreCooldownWhenAdding": false,
+  "ignoreTagImmune": false,
+  "lifeType": 1,
+  "maxTriggerCnt": {
+    "blackboardKey": null,
+    "useBlackboardKey": false,
+    "value": -1
+  },
+  "onlyUseSelfTimeDilation": false,
+  "poiseModifier": [],
+  "shieldConfigs": [],
+  "stackingSettings": {
+    "identifierType": 0,
+    "isNeedStackEffect": false,
+    "maxStackCnt": 999,
+    "maxStackCntKey": null,
+    "negatePriority": false,
+    "priority": 0.0,
+    "priorityKey": null,
+    "stackEffects": [],
+    "stackingKey": null,
+    "stackingType": 3,
+    "useMaxStackCntKey": false,
+    "usePriorityKey": false
+  },
+  "tagsAfterTriggerExtendBuffAction": [],
+  "timelineActions": [],
+  "triggerInterval": {
+    "blackboardKey": "interval",
+    "useBlackboardKey": false,
+    "value": -1.0
+  },
+  "useTimeDilationDt": false,
+  "waitFirstTriggerInterval": false
+}

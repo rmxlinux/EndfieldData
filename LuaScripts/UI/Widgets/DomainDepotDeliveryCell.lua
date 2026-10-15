@@ -1,6 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 local DEFAULT_DOMAIN_DEPOT_BG_ICON = "business_card_topic_normal_1"
+local SYSTEM_AGENT_DOMAIN_BG_ICONS = {
+    domain_1 = "business_card_topic_normal_2",
+    domain_2 = "business_card_topic_normal_4",
+}
 
 DomainDepotDeliveryCell = HL.Class('DomainDepotDeliveryCell', UIWidgetBase)
 
@@ -16,6 +20,7 @@ DomainDepotDeliveryCell.m_deliveryOnClick = HL.Field(HL.Function)
 
 DomainDepotDeliveryCell.m_domainDepotId = HL.Field(HL.String) << "" 
 
+local SYSTEM_AGENT_PEER_TYPE = CS.Proto.DOMAIN_DEPOT_PEER_TYPE.SystemAgent
 
 
 DomainDepotDeliveryCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -107,7 +112,7 @@ DomainDepotDeliveryCell.InitSelfDomainDepotDeliveryCell = HL.Method(HL.Userdata,
     local daysLeft = UIUtils.getLeftTime(timeDiff)
     self.view.expiredTxt.text = string.format(Language.LUA_DOMAIN_DEPOT_DELIVERY_NOT_COMPLETED_TIME_LEFT, daysLeft)
 
-    local showPlayerName = roleId ~= 0
+    local showPlayerName = roleId ~= 0 or info.delegatePeerType == SYSTEM_AGENT_PEER_TYPE
 
     if timeDiff <= 0 or info.packageProgress == GEnums.DomainDepotPackageProgress.SendPackageTimeout then
         self.m_canReceive = true
@@ -140,8 +145,21 @@ end
 DomainDepotDeliveryCell._UpdateInfo = HL.Method(HL.Userdata) << function(self, info)
     self.m_deliveryId = info.buyerInfo.targetId
     local roleId = info.delegateRoleId
+    local isSystemAgentPeer = info.delegatePeerType == SYSTEM_AGENT_PEER_TYPE
     self.view.commonPlayerHead:UpdateHideSignature(true)
-    self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(roleId, true)
+    if isSystemAgentPeer then
+        self.view.commonPlayerHead:UpdateHideLevelTxt(true)
+        self.view.commonPlayerHead:UpdateHidePlatformNode(true)
+        local agentId = CS.Beyond.Cfg.Tables.domainDepotAgentIdToStr:GetValue(info.delegateAgentId)
+        local agentConfig = Tables.domainDepotSystemAgentTable:GetValue(agentId)
+        self.view.commonPlayerHead:InitCommonPlayerHead("", "", false, 0, agentConfig.displayName)
+        self.view.commonPlayerHead.view.playerHead:LoadSprite(UIConst.UI_SPRITE_HEAD, agentConfig.headIcon)
+        self.view.commonPlayerHead.view.playerHead.gameObject:SetActiveIfNecessary(true)
+    else
+        self.view.commonPlayerHead:UpdateHideLevelTxt(false)
+        self.view.commonPlayerHead:UpdateHidePlatformNode(false)
+        self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(roleId, true)
+    end
 
     
     
@@ -170,7 +188,10 @@ DomainDepotDeliveryCell._UpdateInfo = HL.Method(HL.Userdata) << function(self, i
     self.view.itemSmallBlack:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
 
     local themeBgIcon = DEFAULT_DOMAIN_DEPOT_BG_ICON
-    if roleId ~= 0 then
+    if isSystemAgentPeer then
+        
+        themeBgIcon = SYSTEM_AGENT_DOMAIN_BG_ICONS[deliverCfg.domainId] or DEFAULT_DOMAIN_DEPOT_BG_ICON
+    elseif roleId ~= 0 then
         local success, friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(roleId)
         if success then
             if friendInfo.businessCardTopicId ~= nil then

@@ -2,6 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ManualCraft
 local PHASE_ID = PhaseId.ManualCraft
+local COMMON_TOAST_DISABLE_KEY = "ManualCraft"
 local MAX_APPEND_MANUFACTURE_COUNT_LIMIT = 5  
 local CraftShowingType = CS.Beyond.GEnums.CraftShowingType
 local filterList = {
@@ -243,7 +244,7 @@ ManualCraftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 
-    self:Notify(MessageConst.ON_DISABLE_COMMON_TOAST)
+    self:Notify(MessageConst.ON_DISABLE_COMMON_TOAST, COMMON_TOAST_DISABLE_KEY)
 end
 
 
@@ -1300,8 +1301,6 @@ ManualCraftCtrl.OnManualWorkModify = HL.Method(HL.Any) << function(self, arg)
         end,
     }
     arg = arg[1]
-    local manualCraftTable = Tables.factoryManualCraftTable
-    local success, craftInfo = manualCraftTable:TryGetValue(arg.FormulaId)
     info.items = {}
     local outItems = self:_GetOutcomeItems(arg.FormulaId, arg.Count)
     for _, item in pairs(outItems) do
@@ -1310,7 +1309,7 @@ ManualCraftCtrl.OnManualWorkModify = HL.Method(HL.Any) << function(self, arg)
             count = item.count,
         })
     end
-    local _arg = {info, craftInfo.itemId, self:_GetIngredientItems(arg.FormulaId, arg.Count)}
+    local _arg = {info, self:_GetIngredientItems(arg.FormulaId, arg.Count)}
     UIManager:Open(PanelId.CompositeToast, _arg)
 
     self:_RefreshCraftNode()
@@ -1424,7 +1423,7 @@ ManualCraftCtrl.OnClose = HL.Override() << function(self)
     end
     self.m_facManualCraftSystem:ReadCrafts(craftIds)
     self:_ToggleFabricateSound(false)
-    self:Notify(MessageConst.ON_ENABLE_COMMON_TOAST)
+    self:Notify(MessageConst.ON_ENABLE_COMMON_TOAST, COMMON_TOAST_DISABLE_KEY)
     Notify(MessageConst.ON_MANUAL_CRAFT_PANEL_CLOSE)
     self.m_facManualCraftSystem:CloseManualCraftPanel()
 end

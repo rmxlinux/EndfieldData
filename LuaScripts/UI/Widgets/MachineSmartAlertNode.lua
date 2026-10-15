@@ -163,7 +163,7 @@ MachineSmartAlertNode.UpdateSmartAlertState = HL.Method(HL.Number, HL.Opt(HL.Tab
             self.m_targetTransform = alertInfo.targetTransform
             LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.layoutNode.transform)
             UIUtils.updateTipsPosition(self.view.mainRect, self.m_targetTransform, self.view.rectTransform, UIManager.uiCamera, UIConst.UI_TIPS_POS_TYPE.FacSmartAlertTop)
-            local padding = FacConst.SMARTALERT_TRASNFORM_OFFSET[self.m_curCondition]
+            local padding = FacConst.SMARTALERT_TRANSFORM_OFFSET[self.m_curCondition]
             local pos = self.view.mainRect.anchoredPosition
             pos.x = pos.x + padding.x
             pos.y = pos.y + padding.y
@@ -209,7 +209,7 @@ MachineSmartAlertNode.ForceUpdateAlertPosition = HL.Method() << function(self)
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.layoutNode.transform)
     UIUtils.updateTipsPosition(self.view.mainRect, self.m_targetTransform, self.view.rectTransform, UIManager.uiCamera, UIConst.UI_TIPS_POS_TYPE.FacSmartAlertTop)
-    local padding = FacConst.SMARTALERT_TRASNFORM_OFFSET[self.m_curCondition]
+    local padding = FacConst.SMARTALERT_TRANSFORM_OFFSET[self.m_curCondition]
     local pos = self.view.mainRect.anchoredPosition
     pos.x = pos.x + padding.x
     pos.y = pos.y + padding.y

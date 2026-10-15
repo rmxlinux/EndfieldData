@@ -1120,7 +1120,9 @@ end
 AchievementListCtrl._UpdateCategorySelection = HL.Method(HL.Number) << function(self, prevCategoryIndex)
     local filteredDataCount = #self.m_categoryFilteredData
     
-    if DeviceInfo.usingController or prevCategoryIndex == self.m_selectCategoryIndex then
+    local canRefreshShowingCells = DeviceInfo.usingController
+        or (prevCategoryIndex == self.m_selectCategoryIndex and not self.m_isFold)
+    if canRefreshShowingCells then
         local csIndex = CSIndex(self.m_selectCategoryIndex)
         local catObj = self.view.categoryList:Get(csIndex)
         if not catObj then
@@ -1131,6 +1133,7 @@ AchievementListCtrl._UpdateCategorySelection = HL.Method(HL.Number) << function(
         end)
         self:_ScrollCategoryToSubGroup()
     else
+        self.m_isFold = false
         self.view.categoryList:UpdateCount(filteredDataCount, false, true)
         if filteredDataCount ~= 0 then
             self.view.categoryList:FoldAll(false)

@@ -25,6 +25,7 @@ SnapshotCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BATTLE_SQUAD_CHANGED] = '_OnBattleSquadChanged',
     [MessageConst.ON_CHARACTER_DEAD] = '_OnCharacterDead',
     [MessageConst.ON_SCREEN_SIZE_CHANGED] = '_OnScreenSizeChanged',
+    [MessageConst.ON_UI_CANVAS_SIZE_CHANGED] = '_OnCanvasSizeChanged',
     [MessageConst.ON_MAIN_CHARACTER_CHANGE_MOVE_MODE] = '_OnMainCharacterChangeMoveMode',
     
     [MessageConst.ON_NET_MASK_CHANGED] = '_OnNetMaskChanged',
@@ -38,6 +39,8 @@ local formationManager = GameWorld.aiManager.characterPhotoSystem
 local inventorySystem = GameInstance.player.inventory
 
 local DATA_KEY_MOVE_MODE = "SNAPSHOT_IS_CAMERA_MOVE_MODE"
+local DATA_KEY_STICKER_CLEAR_CONFIRM_DAILY = "SNAPSHOT_STICKER_CLEAR_CONFIRM_DAILY"
+local STICKER_CLEAR_CONFIRM_CATEGORY = "Snapshot"
 
 local FIRST_PERSON_FORBID_KEY = "FirstPerson"
 local SNAPSHOT_CUSTOM_ACTION_FORBID_KEY = "ForbidSnapshotCustomAction"
@@ -55,6 +58,17 @@ local MOVE_SELECT_ARROW_HEAD_WORLD_OFFSET = Vector3(0, 0.35, 0)
 local MOVE_CHAR_OUTLINE_ASSET = "P_fxgp_common_char_outline_01_nofade_asset"
 local MOVE_CHAR_ROTATE_3D_SLIDER_PREFAB_PATH =
     "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Snapshot/Widget/SnapshotRotate3DSlider.prefab"
+
+
+local STICKER_HOLD_ROTATE_CW = "rotateCw"
+local STICKER_HOLD_ROTATE_CCW = "rotateCcw"
+local STICKER_HOLD_SCALE_DOWN = "scaleDown"
+local STICKER_HOLD_SCALE_UP = "scaleUp"
+
+
+local STICKER_CONTINUOUS_PLACE_OFFSET_STEP = 100
+
+local MENU_TAB_INDEX_STICKER = 5
 
 local showCharConfig = {
     {
@@ -280,15 +294,49 @@ SnapshotCtrl.m_isInitRefreshStickerUI = HL.Field(HL.Boolean) << false
 
 SnapshotCtrl.m_getStickerCellFunc = HL.Field(HL.Function)
 
-SnapshotCtrl.m_curUsedStickerIndex = HL.Field(HL.Number) << 0
-
 SnapshotCtrl.m_curSelectStickerIndex = HL.Field(HL.Number) << 0
 
-SnapshotCtrl.m_inStickerEditMode = HL.Field(HL.Boolean) << false
+SnapshotCtrl.m_placedStickers = HL.Field(HL.Table)
+
+SnapshotCtrl.m_curEditingPlacedIdx = HL.Field(HL.Number) << 0
 
 SnapshotCtrl.m_hideSnapshotUIBySticker = HL.Field(HL.Boolean) << false
 
 SnapshotCtrl.m_editStickerCtrl = HL.Field(HL.Any)
+
+SnapshotCtrl.m_stickerDragInitAngle = HL.Field(HL.Number) << 0
+
+SnapshotCtrl.m_stickerDragInitRotation = HL.Field(HL.Number) << 0
+
+SnapshotCtrl.m_stickerDragInitDistance = HL.Field(HL.Number) << 0
+
+SnapshotCtrl.m_stickerDragInitScale = HL.Field(HL.Number) << 1
+
+SnapshotCtrl.m_stickerDragInitFingerPos = HL.Field(Vector2)
+
+SnapshotCtrl.m_stickerDragInitAnchoredPos = HL.Field(Vector2)
+
+
+SnapshotCtrl.m_stickerContinuousPlaceOffsetX = HL.Field(HL.Number) << 0
+
+
+SnapshotCtrl.m_stickerClampScreenWidth = HL.Field(HL.Number) << 0
+
+SnapshotCtrl.m_stickerClampScreenHeight = HL.Field(HL.Number) << 0
+
+
+SnapshotCtrl.m_stickerHoldButton = HL.Field(HL.String) << ""
+
+SnapshotCtrl.m_stickerHoldCoroutine = HL.Field(HL.Thread)
+
+
+SnapshotCtrl.m_stickerEditBindingId = HL.Field(HL.Number) << -1
+
+
+SnapshotCtrl.m_stickerNaviFocusIndex = HL.Field(HL.Number) << 0
+
+
+SnapshotCtrl.m_stickerViewedNewSet = HL.Field(HL.Table)
 
 
 
@@ -407,10 +455,12 @@ SnapshotCtrl.OnClose = HL.Override() << function(self)
     self:_CloseActionVideo()
     self:_DeselectMoveChar()
     
+    self:_RemoveAllStickers()
     if self.m_editStickerCtrl then
         self.m_editStickerCtrl:Close()
         self.m_editStickerCtrl = nil
     end
+    self:_ClearFilter()
     
 
     
@@ -430,7 +480,6 @@ SnapshotCtrl.OnClose = HL.Override() << function(self)
         self:_ChangeCharShowMode(1)
         self:_ChangeTeamFormation(TEAM_FORMATION_INDEX_NONE, true)
         self:_ChangeFilter(1)
-        self:_ClearFilter()
         snapshotSystem.camController:ResetToInitialParam()
         self:_SwitchPersonPerspectiveMode(false, false)
         
@@ -537,6 +586,8 @@ SnapshotCtrl._ClearRegisters = HL.Method() << function(self)
     self.m_actionProgressCoroutine = self:_ClearCoroutine(self.m_actionProgressCoroutine)
     self.m_videoProgressCoroutine = self:_ClearCoroutine(self.m_videoProgressCoroutine)
     
+    self:_StopStickerHoldAction()
+    
     local basicNode = self.view.menuContentNode.menuBasicNode
     basicNode.showCharDropDown.onIsNaviTargetChanged = nil
     basicNode.environmentNode.environmentDropDown.onIsNaviTargetChanged = nil
@@ -630,14 +681,37 @@ SnapshotCtrl._OnUpdate = HL.Method() << function(self)
     self:_RefreshMoveCharRotateButtonHover()
     
     if DeviceInfo.usingController then
-        if self.m_inStickerEditMode then
-            
+        if self.m_curEditingPlacedIdx > 0 then
             
             local screenWidth = UIManager.uiCanvasRect.rect.size.x
             local delta = screenWidth * self.view.config.CONTROLLER_MOVE_STICKER_SPEED * Time.deltaTime
-            local moveDelta = InputManagerInst:GetGamepadStickValue(true) * delta
-            local newPos = self.view.stickerImg.rectTransform.anchoredPosition + moveDelta
-            self:_SetStickerNewPos(newPos)
+            
+            local stick = InputManagerInst:GetGamepadStickValue(true)
+            local dpad = Vector2.zero
+            if InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.ArrowRight) then
+                dpad.x = dpad.x + 1
+            end
+            if InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.ArrowLeft) then
+                dpad.x = dpad.x - 1
+            end
+            if InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.ArrowUp) then
+                dpad.y = dpad.y + 1
+            end
+            if InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.ArrowDown) then
+                dpad.y = dpad.y - 1
+            end
+            local moveDir = stick + dpad
+            if moveDir.sqrMagnitude > 1 then
+                moveDir = moveDir.normalized
+            end
+            local moveDelta = moveDir * delta
+            local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+            if stickerData and moveDelta.sqrMagnitude > 0.0001 then
+                self:_ResetStickerContinuousPlaceOffset()
+                local newPos = stickerData.anchoredPos + moveDelta
+                self:_SetPlacedStickerPos(self.m_curEditingPlacedIdx, newPos)
+                self:_SyncEditOverlayTransform()
+            end
         elseif not self.m_isShowSnapshotUI then
             
             for keyCode, _ in pairs(controllerExitHideUIAnyKeyDown) do
@@ -694,6 +768,8 @@ SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_cameraCtrl = self.m_phase.snapshotCameraPanel.uiCtrl
     self.m_autoFocusDistanceTime = self.view.config.AUTO_FOCUS_DISTANCE_TIME
     self.m_keepCamPosWhenClose = true
+    self.m_stickerClampScreenWidth = Screen.width
+    self.m_stickerClampScreenHeight = Screen.height
     
     self.m_onZoom = function(delta)
         self.m_cameraCtrl:ZoomCamera(delta)
@@ -720,8 +796,8 @@ SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
         if self.m_blockDragByNetMask then
             return
         end
-        if self.m_inStickerEditMode then
-            self:_EnableStickerEditMode(false)
+        if self.m_curEditingPlacedIdx > 0 then
+            self:_DeselectEditSticker()
         end
         
         if self.m_isKeyboardQuickRotateCharMode and not self.m_dragHitRotateChar then
@@ -762,8 +838,8 @@ SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
         if not self.m_isShowSnapshotUI and not sucControlMoveChar then
             self:_SwitchSnapshotUIVisible(true)
         end
-        if self.m_inStickerEditMode then
-            self:_EnableStickerEditMode(false)
+        if self.m_curEditingPlacedIdx > 0 then
+            self:_DeselectEditSticker()
         end
     end
     
@@ -869,8 +945,10 @@ SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     table.insert(self.m_stickerInfos, {
         isEmpty = true,
         isUnlock = true,
+        isNew = false,
         sortId = math.mininteger,
     })
+    self.m_stickerViewedNewSet = {}
     for id, stickerCfg in pairs(Tables.snapshotStickerTable) do
         local itemId = stickerCfg.itemId
         local _, itemCfg = Tables.itemTable:TryGetValue(itemId)
@@ -880,6 +958,10 @@ SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
             local isUnlock = stickerCfg.isDefaultUnlock or inventorySystem:IsItemGot(itemId)
             local canShow = isUnlock or Utils.isNotObtainCanShow(itemCfg.notObtainShow, itemCfg.notObtainShowTimeId)
             if canShow then
+                local isNew = false
+                if isUnlock and not string.isEmpty(itemId) then
+                    isNew = inventorySystem:IsNewItem(itemId)
+                end
                 local info = {
                     id = id,
                     itemId = itemId,
@@ -892,6 +974,7 @@ SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
                     
                     isEmpty = false,
                     isUnlock = isUnlock,
+                    isNew = isNew,
                     
                     sortId = stickerCfg.sortId,
                 }
@@ -905,7 +988,12 @@ SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
         end
         return a.sortId < b.sortId
     end)
-    self:_ChangeSticker(1, true)
+    self.m_placedStickers = {}
+    self.m_curEditingPlacedIdx = 0
+    self.m_stickerContinuousPlaceOffsetX = 0
+    self.view.stickerTemplate.gameObject:SetActive(false)
+    self.view.stickerEditOverlay.gameObject:SetActive(false)
+    self.view.stickerCountNode.gameObject:SetActive(false)
     
 
     
@@ -1244,6 +1332,7 @@ SnapshotCtrl._InitUI = HL.Method() << function(self)
     end
     
     menuTabNode.menuTabActionBtn.redDot:InitRedDot("SnapshotActionTab")
+    menuTabNode.menuTabStickerBtn.redDot:InitRedDot("SnapshotStickerTab")
     
     local preTabActionId = menuTabNode.keyHintPreTab.actionId
     local nextTabActionId = menuTabNode.keyHintNextTab.actionId
@@ -1548,21 +1637,31 @@ SnapshotCtrl._InitUI = HL.Method() << function(self)
         self:_OnClickStickerJumpBtn()
     end)
     
-    local stickerTouchPlate = self.view.stickerTouchPlate
-    stickerTouchPlate.onDrag:AddListener(function(eventData)
-        self:_OnDragSticker(eventData)
+    
+    if DeviceInfo.usingController then
+        self.m_stickerEditBindingId = self:BindInputPlayerAction("snapshot_controller_sticker_edit", function()
+            self:_OnControllerEditSticker()
+        end, self.view.menuInputGroup.groupId)
+        self:_ToggleStickerEditBinding(false)
+    end
+    
+    local editOverlay = self.view.stickerEditOverlay
+    editOverlay.moveTouchPanel.onDrag:AddListener(function(eventData)
+        self:_OnDragMovePlacedSticker(eventData)
+        self:_SyncEditOverlayTransform()
     end)
-    stickerTouchPlate.onDragBegin:AddListener(function(_)
-        if not self.m_inStickerEditMode then
+    editOverlay.moveTouchPanel.onDragBegin:AddListener(function(startPos)
+        if self.m_curEditingPlacedIdx <= 0 then
             return
         end
+        self:_OnBeginDragMovePlacedSticker(startPos)
         if self.m_isShowSnapshotUI then
             self.m_hideSnapshotUIBySticker = true
             self:_SwitchSnapshotUIVisible(false)
         end
     end)
-    stickerTouchPlate.onDragEnd:AddListener(function(_)
-        if not self.m_inStickerEditMode then
+    editOverlay.moveTouchPanel.onDragEnd:AddListener(function(_)
+        if self.m_curEditingPlacedIdx <= 0 then
             return
         end
         if self.m_hideSnapshotUIBySticker then
@@ -1570,15 +1669,25 @@ SnapshotCtrl._InitUI = HL.Method() << function(self)
             self:_SwitchSnapshotUIVisible(true)
         end
     end)
-    
-    local stickerTouchPlateNoEdit = self.view.stickerTouchPlateNoEdit
-    stickerTouchPlateNoEdit.onClick:AddListener(function()
-        if not self.m_inStickerEditMode then
-            self:_EnableStickerEditMode(true)
-        end
+    editOverlay.rotateTouchPanel.onDrag:AddListener(function(eventData)
+        self:_OnDragRotateSticker(eventData)
+        self:_SyncEditOverlayTransform()
     end)
-    stickerTouchPlateNoEdit.onDrag:AddListener(function(eventData)
-        self.m_onDrag(eventData)
+    editOverlay.rotateTouchPanel.onDragBegin:AddListener(function(startPos)
+        self:_OnBeginDragRotateSticker(startPos)
+    end)
+    editOverlay.scaleTouchPanel.onDrag:AddListener(function(eventData)
+        self:_OnDragScaleSticker(eventData)
+        self:_SyncEditOverlayTransform()
+    end)
+    editOverlay.scaleTouchPanel.onDragBegin:AddListener(function(startPos)
+        self:_OnBeginDragScaleSticker(startPos)
+    end)
+    editOverlay.delBtn.onClick:AddListener(function()
+        self:_OnClickDeleteEditingSticker()
+    end)
+    editOverlay.copyBtn.onClick:AddListener(function()
+        self:_OnClickCopyEditingSticker()
     end)
     
 
@@ -1713,7 +1822,7 @@ SnapshotCtrl._InitUIMenuContentChangeFunc = HL.Method() << function(self)
                 self:_RefreshStickerInfoArea()
             end,
             naviFunc = function()
-                local focusIndex = self.m_curSelectStickerIndex > 0 and self.m_curSelectStickerIndex or self.m_curUsedStickerIndex
+                local focusIndex = self.m_curSelectStickerIndex > 0 and self.m_curSelectStickerIndex or 1
                 if self.m_resumeMenuControllerFocusType == "sticker" and self.m_resumeMenuControllerFocusIndex > 0 then
                     focusIndex = self.m_resumeMenuControllerFocusIndex
                     self.m_resumeMenuControllerFocusType = nil
@@ -1726,8 +1835,12 @@ SnapshotCtrl._InitUIMenuContentChangeFunc = HL.Method() << function(self)
                 end
             end,
             leaveFunc = function()
-                if self.m_inStickerEditMode then
-                    self:_EnableStickerEditMode(false)
+                
+                self.m_stickerNaviFocusIndex = 0
+                self:_ToggleStickerEditBinding(false)
+                self:_OnLeaveStickerTab()
+                if self.m_curEditingPlacedIdx > 0 then
+                    self:_DeselectEditSticker()
                 end
             end,
         },
@@ -1774,7 +1887,7 @@ SnapshotCtrl._RefreshAllUI = HL.Method() << function(self)
     
     local filterNode = menuContentNode.menuFilterNode
     filterNode.menuFilterList:UpdateCount(#self.m_filterInfos, true)
-    
+    self:_RefreshStickerCountUI()
     
     self:_ChangeMenuTab(1, false, true)
     self:_SwitchMenuContentExpand(false, true)
@@ -1823,6 +1936,7 @@ SnapshotCtrl._RefreshFilterCell = HL.Method(HL.Any, HL.Number) << function(self,
     end)
     if not string.isEmpty(info.itemId) then
         cell.btn.onLongPress:AddListener(function()
+            self:_SelectFilterCell(luaIndex, cell)
             Notify(MessageConst.SHOW_ITEM_TIPS, {
                 transform = cell.transform,
                 safeArea = cell.transform,
@@ -1850,8 +1964,8 @@ SnapshotCtrl._RefreshFilterCell = HL.Method(HL.Any, HL.Number) << function(self,
     if info.isEmpty and DeviceInfo.usingController then
         cell.btn.onIsNaviTargetChanged = function(isTarget)
             if isTarget then
-                self.m_curSelectFilterIndex = 1
-                self:_RefreshFilterInfoArea()
+                
+                self:_SelectFilterCell(luaIndex, cell)
             end
         end
     end
@@ -1891,12 +2005,10 @@ end
 
 SnapshotCtrl._RefreshStickerCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local info = self.m_stickerInfos[luaIndex]
-    local isUsed = self.m_curUsedStickerIndex == luaIndex
-    cell.useStateCtrl:SetState(isUsed and "Used" or "Unused")
     cell.selectStateCtrl:SetState(self.m_curSelectStickerIndex == luaIndex and "Select" or "Unselect")
-    local isEditor = (not info.isEmpty) and isUsed
-    cell.editorStateCtrl:SetState(isEditor and "Editor" or "NoEditor")
     cell.emptyStateCtrl:SetState(info.isEmpty and "Empty" or "Normal")
+    cell.editorStateCtrl:SetState("NoEditor")
+    self:_RefreshStickerCellUseState(luaIndex, cell)
     cell.btn.onClick:RemoveAllListeners()
     cell.btn.onLongPress:RemoveAllListeners()
     cell.showTipsBtn.onClick:RemoveAllListeners()
@@ -1907,6 +2019,7 @@ SnapshotCtrl._RefreshStickerCell = HL.Method(HL.Any, HL.Number) << function(self
         cell.lockStateCtrl:SetState("Lock")
     end
     cell.btn.onClick:AddListener(function()
+        self:_TryReadStickerNewItem(luaIndex)
         self:_SelectStickerCell(luaIndex, cell)
         if info.isUnlock then
             self:_OnClickMenuStickerCell(luaIndex, cell)
@@ -1916,6 +2029,7 @@ SnapshotCtrl._RefreshStickerCell = HL.Method(HL.Any, HL.Number) << function(self
     end)
     if not string.isEmpty(info.itemId) then
         cell.btn.onLongPress:AddListener(function()
+            self:_SelectStickerCell(luaIndex, cell)
             Notify(MessageConst.SHOW_ITEM_TIPS, {
                 transform = cell.transform,
                 safeArea = cell.transform,
@@ -1932,25 +2046,42 @@ SnapshotCtrl._RefreshStickerCell = HL.Method(HL.Any, HL.Number) << function(self
                     itemId = info.itemId,
                 })
             end)
-            cell.btn.onIsNaviTargetChanged = function(isTarget)
-                cell.showTipsBtn.gameObject:SetActive(isTarget)
-                if isTarget then
-                    self:_SelectStickerCell(luaIndex, cell)
-                end
-            end
         end
     end
-    if info.isEmpty and DeviceInfo.usingController then
+    
+    if DeviceInfo.usingController then
         cell.btn.onIsNaviTargetChanged = function(isTarget)
+            if not string.isEmpty(info.itemId) then
+                cell.showTipsBtn.gameObject:SetActive(isTarget)
+            end
             if isTarget then
-                self.m_curSelectStickerIndex = 1
-                self:_RefreshStickerInfoArea()
+                self.m_stickerNaviFocusIndex = luaIndex
+                
+                self:_SelectStickerCell(luaIndex, cell)
+                if info.isEmpty then
+                    self:_ToggleStickerEditBinding(false)
+                else
+                    self:_ToggleStickerEditBinding(self:_GetPlacedStickerCountByInfoIndex(luaIndex) > 0)
+                end
+            elseif self.m_stickerNaviFocusIndex == luaIndex then
+                
+                self.m_stickerNaviFocusIndex = 0
+                self:_ToggleStickerEditBinding(false)
             end
         end
     end
     
     if not info.isEmpty then
         cell.iconImg:LoadSprite(UIConst.UI_SPRITE_SNAPSHOT_STICKER, info.icon)
+    end
+    
+    if info.isEmpty or string.isEmpty(info.itemId) then
+        cell.redDot:Stop()
+    else
+        cell.redDot:InitRedDot("SnapshotStickerItem", info.itemId)
+        if info.isNew then
+            self.m_stickerViewedNewSet[info.itemId] = true
+        end
     end
 end
 
@@ -1980,6 +2111,74 @@ SnapshotCtrl._SelectStickerCell = HL.Method(HL.Number, HL.Opt(HL.Any)) << functi
     end
     self:_RefreshStickerCellSelectState(luaIndex, cell)
     self:_RefreshStickerInfoArea()
+end
+
+
+SnapshotCtrl._TryReadStickerNewItem = HL.Method(HL.Number) << function(self, luaIndex)
+    local info = self.m_stickerInfos[luaIndex]
+    if not info or not info.isNew or string.isEmpty(info.itemId) then
+        return
+    end
+    info.isNew = false
+    inventorySystem:ReadNewItem(info.itemId)
+    self.m_stickerViewedNewSet[info.itemId] = nil
+end
+
+
+SnapshotCtrl._OnLeaveStickerTab = HL.Method() << function(self)
+    local readItemIds = {}
+    for itemId, _ in pairs(self.m_stickerViewedNewSet) do
+        table.insert(readItemIds, itemId)
+        for _, info in pairs(self.m_stickerInfos) do
+            if info.itemId == itemId then
+                info.isNew = false
+                break
+            end
+        end
+    end
+    if #readItemIds > 0 then
+        inventorySystem:ReadNewItems(readItemIds)
+    end
+    self.m_stickerViewedNewSet = {}
+end
+
+
+
+SnapshotCtrl._RefreshStickerCellUseState = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, luaIndex, cell)
+    if luaIndex <= 0 then
+        return
+    end
+    if not cell and not self.m_getStickerCellFunc then
+        return
+    end
+    if not cell then
+        local obj = self.view.menuContentNode.menuStickerNode.stickerList:Get(CSIndex(luaIndex))
+        if obj then
+            cell = self.m_getStickerCellFunc(obj)
+        end
+    end
+    if not cell then
+        return
+    end
+    if luaIndex == 1 then
+        local totalCount = #self.m_placedStickers
+        cell.useStateCtrl:SetState(totalCount == 0 and "Used" or "Unused")
+        if DeviceInfo.usingController and self.m_stickerNaviFocusIndex == luaIndex then
+            self:_ToggleStickerEditBinding(false)
+        end
+        return
+    end
+    local count = self:_GetPlacedStickerCountByInfoIndex(luaIndex)
+    if count > 0 then
+        cell.useStateCtrl:SetState("Count")
+        cell.countText.text = tostring(count)
+    else
+        cell.useStateCtrl:SetState("Unused")
+    end
+    
+    if DeviceInfo.usingController and self.m_stickerNaviFocusIndex == luaIndex then
+        self:_ToggleStickerEditBinding(count > 0)
+    end
 end
 
 SnapshotCtrl._RefreshIdentifyTask = HL.Method() << function(self)
@@ -2040,10 +2239,12 @@ end
 
 SnapshotCtrl._ClickShutter = HL.Method() << function(self)
     EventLogManagerInst:GameEvent_Snapshot(2)
-    if self.m_inStickerEditMode then
-        self:_EnableStickerEditMode(false)
-    end
+    
     self.m_isInCapture = true
+    self:_RefreshStickerCountNodeVisible()
+    if self.m_curEditingPlacedIdx > 0 then
+        self:_DeselectEditSticker()
+    end
     self.view.captureInvisibleRoot.gameObject:SetActive(false)
     self.view.touchPlate.gameObject:SetActive(false)
     local atLeastOneSuccess = false
@@ -2089,7 +2290,7 @@ SnapshotCtrl._ClickShutter = HL.Method() << function(self)
         )
     end
     
-    local curShowSticker = self.view.stickerImg.gameObject.activeSelf
+    local hasPlacedStickers = #self.m_placedStickers > 0
     self.m_phase:SetForbidJoystick(true, "Shutter")
     Notify(MessageConst.HIDE_ITEM_TIPS)
     self:_SetMoveSelectUIVisible(false, false)
@@ -2102,7 +2303,7 @@ SnapshotCtrl._ClickShutter = HL.Method() << function(self)
         showPlayerInfo = true,
         success = atLeastOneSuccess,
         isCloseFast = needCloseSelfFast,
-    }, curShowSticker, needCloseSelfFast))
+    }, hasPlacedStickers, needCloseSelfFast))
     GameInstance.player.statisticValueSystem:IncrementClientStatisticValueByType(GEnums.StatType.CltTakePhoto)
 end
 
@@ -2113,19 +2314,19 @@ SnapshotCtrl._BuildCommonShareArg = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.Bo
     local shouldCloseSelfFast = commonShareArg.snapshotNeedCloseSelfFast == true
     commonShareArg.onCaptureEnd = function()
         if not UIManager:IsOpen(PANEL_ID) or not PhaseManager:IsOpenAndValid(PHASE_ID) then
-            return  
+            return
         end
-        if shouldRestoreSticker and not IsNull(self.view.stickerImg) then
-            self.view.stickerImg.gameObject:SetActive(false)
+        if shouldRestoreSticker and not IsNull(self.view.stickerContainer) then
+            self.view.stickerContainer.gameObject:SetActive(false)
         end
     end
     commonShareArg.onClose = function()
         if not UIManager:IsOpen(PANEL_ID) or not PhaseManager:IsOpenAndValid(PHASE_ID) then
-            return  
+            return
         end
         self.m_isInCapture = false
-        if shouldRestoreSticker and not IsNull(self.view.stickerImg) then
-            self.view.stickerImg.gameObject:SetActive(true)
+        if shouldRestoreSticker and not IsNull(self.view.stickerContainer) then
+            self.view.stickerContainer.gameObject:SetActive(true)
         end
         if not IsNull(self.view.touchPlate) then
             self.view.touchPlate.gameObject:SetActive(true)
@@ -2133,6 +2334,7 @@ SnapshotCtrl._BuildCommonShareArg = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.Bo
         if not IsNull(self.view.captureInvisibleRoot) then
             self.view.captureInvisibleRoot.gameObject:SetActive(true)
         end
+        self:_RefreshStickerCountNodeVisible()
         self.m_phase:SetForbidJoystick(false, "Shutter")
         if shouldCloseSelfFast then
             self:_CloseSelf(true, true)
@@ -2211,6 +2413,7 @@ SnapshotCtrl._SwitchMoveMode = HL.Method(HL.Boolean, HL.Boolean) << function(sel
 end
 
 SnapshotCtrl._SwitchSnapshotUIVisible = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isShow, isInit)
+    local stateChanged = self.m_isShowSnapshotUI ~= isShow
     self.m_isShowSnapshotUI = isShow
     self.view.captureInvisibleRoot.gameObject:SetActive(isShow)
     if DeviceInfo.usingController then
@@ -2218,12 +2421,13 @@ SnapshotCtrl._SwitchSnapshotUIVisible = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)
     elseif DeviceInfo.usingTouch then
         self.m_phase:SetForbidJoystick(not isShow, "SnapshotUIVisibleUsingTouch")
     end
-    if not isInit then
+    if not isInit and stateChanged then
         AudioAdapter.PostEvent(isShow and "Au_UI_Popup_Common_Large_Open" or "Au_UI_Popup_Common_Large_Close")
     end
     if not isShow then
         Notify(MessageConst.HIDE_ITEM_TIPS)
     end
+    self:_RefreshStickerCountNodeVisible()
 end
 
 
@@ -2261,12 +2465,21 @@ SnapshotCtrl._ChangeMenuTab = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Boolean
         
         self.m_onChangeContentFuncList[luaIndex].naviFunc()
     end
+    self:_RefreshStickerCountNodeVisible()
 end
 
 SnapshotCtrl._SwitchMenuContentExpand = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isExpand, isInit)
     self.m_isMenuExpand = isExpand
     if isExpand then
         self:_InitBasicSliderControllerInputs()
+        
+        
+        if not isInit then
+            local changeFunc = self.m_onChangeContentFuncList[self.m_curSelectMenuIndex]
+            if changeFunc and changeFunc.entryFunc then
+                changeFunc.entryFunc()
+            end
+        end
     end
     if isInit then
         self.m_menuTabCellList[self.m_curSelectMenuIndex].selectStateCtrl:SetState(isExpand and "Select" or "Unselect")
@@ -2295,15 +2508,32 @@ SnapshotCtrl._SwitchMenuContentExpand = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)
         InputManagerInst:ToggleGroup(self.m_phase.snapshotCameraPanel.uiCtrl.view.inputGroup.groupId, not isExpand)
         self.view.hintNode.gameObject:SetActive(not isExpand)
         self.view.menuTabNode.focusMenuKeyHintNode.gameObject:SetActive(not isExpand)
-    end
-    if DeviceInfo.usingTouch then
-        if self.m_phase.snapshotJoystickPanel then
-            local joystickCtrl = self.m_phase.snapshotJoystickPanel.uiCtrl
-            joystickCtrl.view.joystick.gameObject:SetActive(not isExpand)
+        
+        if not isExpand then
+            self.m_stickerNaviFocusIndex = 0
+            self:_ToggleStickerEditBinding(false)
         end
     end
+    self:RefreshTouchJoystickVisible()
     
     self:_RefreshTaskNodeVisible()
+    self:_RefreshStickerCountNodeVisible()
+end
+
+
+
+
+
+SnapshotCtrl.RefreshTouchJoystickVisible = HL.Method(HL.Opt(HL.Any)) << function(self, joystick)
+    if joystick == nil then
+        local joystickPanel = self.m_phase and self.m_phase.snapshotJoystickPanel
+        local joystickCtrl = joystickPanel and joystickPanel.uiCtrl
+        joystick = joystickCtrl and joystickCtrl.view and joystickCtrl.view.joystick
+    end
+    if not DeviceInfo.usingTouch or joystick == nil then
+        return
+    end
+    joystick.gameObject:SetActive(not self.m_isMenuExpand)
 end
 
 SnapshotCtrl._InitBasicSliderControllerInputs = HL.Method() << function(self)
@@ -3951,6 +4181,13 @@ end
 SnapshotCtrl._StartVideoProgressUpdate = HL.Method() << function(self)
     self:_StopVideoProgressUpdate()
     local videoNode = self.view.videoNode
+    local info = self.m_actionInfos[self.m_curSelectActionIndex]
+    local showProgress = info and not info.isEmpty and not info.isStatic
+    videoNode.progressBar.gameObject:SetActive(showProgress)
+    if not showProgress then
+        videoNode.progressBar.value = 0
+        return
+    end
     videoNode.progressBar.interactable = false
     self.m_videoProgressCoroutine = self:_StartCoroutine(function()
         while true do
@@ -4068,7 +4305,7 @@ SnapshotCtrl._RefreshActionCellSelect = HL.Method(HL.Number, HL.Boolean) << func
     if not info then
         return
     end
-    if isSelect and not DeviceInfo.usingController then
+    if isSelect then
         cell.actionState:SetState("Select")
     else
         cell.actionState:SetState("UnSelect")
@@ -4144,7 +4381,7 @@ end
 
 
 SnapshotCtrl._OnClickStickerJumpBtn = HL.Method() << function(self)
-    local index = self.m_curSelectStickerIndex > 0 and self.m_curSelectStickerIndex or self.m_curUsedStickerIndex
+    local index = self.m_curSelectStickerIndex > 0 and self.m_curSelectStickerIndex or 1
     local info = self.m_stickerInfos[index]
     self:_OpenSnapshotInfoJump(info, false)
 end
@@ -4164,7 +4401,7 @@ end
 
 SnapshotCtrl._RefreshStickerInfoArea = HL.Method() << function(self)
     local stickerNode = self.view.menuContentNode.menuStickerNode
-    local index = self.m_curSelectStickerIndex > 0 and self.m_curSelectStickerIndex or self.m_curUsedStickerIndex
+    local index = self.m_curSelectStickerIndex > 0 and self.m_curSelectStickerIndex or 1
     local info = self.m_stickerInfos[index]
     self:_RefreshSnapshotMenuInfoArea(
         stickerNode.menuDownInfoNode,
@@ -4291,7 +4528,7 @@ SnapshotCtrl._RefreshActionCell = HL.Method(HL.Any, HL.Number) << function(self,
     cell.showTipsBtn.onClick:RemoveAllListeners()
     cell.actionBtn.onIsNaviTargetChanged = nil
 
-    cell.actionState:SetState(luaIndex == self.m_curSelectActionIndex and not DeviceInfo.usingController and "Select" or "UnSelect")
+    cell.actionState:SetState(luaIndex == self.m_curSelectActionIndex and "Select" or "UnSelect")
     if info.isEmpty then
         cell.actionState:SetState("Empty")
         cell.iconImg.gameObject:SetActive(false)
@@ -4405,6 +4642,9 @@ end
 
 
 SnapshotCtrl._ChangeFilter = HL.Method(HL.Number) << function(self, luaIndex)
+    if self.m_filterInfos == nil then
+        return
+    end
     local oldIndex = self.m_curUsedFilterIndex
     local oldInfo = self.m_filterInfos[oldIndex]
     local info = self.m_filterInfos[luaIndex]
@@ -4456,107 +4696,658 @@ end
 
 
 
-SnapshotCtrl._ChangeSticker = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, luaIndex, isInit)
-    self.m_curUsedStickerIndex = luaIndex
-    if self.m_curSelectStickerIndex ~= luaIndex then
-        self:_SelectStickerCell(luaIndex)
+
+SnapshotCtrl._RefreshStickerCountUI = HL.Method() << function(self)
+    local count = #self.m_placedStickers
+    self.view.stickerCountText.text = string.format("%d / %d", count, Tables.snapshotConst.maxStickerCount)
+    self:_RefreshStickerCellUseState(1)
+end
+
+
+
+
+
+SnapshotCtrl._RefreshStickerCountNodeVisible = HL.Method() << function(self)
+    local show = false
+    if not self.m_isInCapture then
+        if self.m_curEditingPlacedIdx > 0 then
+            show = true
+        elseif self.m_isShowSnapshotUI and self.m_isMenuExpand and self.m_curSelectMenuIndex == MENU_TAB_INDEX_STICKER then
+            show = true
+        end
     end
-    local info = self.m_stickerInfos[luaIndex]
-    local stickerImg = self.view.stickerImg
-    if info.isEmpty then
-        self.view.stickerTouchPlate.transform.anchoredPosition = Vector2.zero
-        self.view.stickerImg.rectTransform.anchoredPosition = Vector2.zero
-        self.view.stickerTouchPlate.gameObject:SetActive(false)
-        stickerImg.gameObject:SetActive(false)
-        self:_EnableStickerEditMode(false, isInit)
-    else
-        self.view.stickerTouchPlate.gameObject:SetActive(true)
-        if not isInit then
-            self:_EnableStickerEditMode(true, false)
+    self.view.stickerCountNode.gameObject:SetActive(show)
+end
+
+
+SnapshotCtrl._GetPlacedStickerCountByInfoIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, stickerInfoIndex)
+    local count = 0
+    if stickerInfoIndex <= 0 then
+        return count
+    end
+    for _, stickerData in ipairs(self.m_placedStickers) do
+        if stickerData.stickerInfoIndex == stickerInfoIndex then
+            count = count + 1
         end
-        if not DeviceInfo.usingController then
-            self.view.stickerMoveHint.gameObject:SetActive(false)
+    end
+    return count
+end
+
+
+SnapshotCtrl._FindLastPlacedStickerIdxByInfoIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, stickerInfoIndex)
+    if stickerInfoIndex <= 0 then
+        return 0
+    end
+    for i = #self.m_placedStickers, 1, -1 do
+        local stickerData = self.m_placedStickers[i]
+        if stickerData and stickerData.stickerInfoIndex == stickerInfoIndex then
+            return i
         end
-        stickerImg.gameObject:SetActive(true)
-        self.view.stickerImgAnimationWrapper:Play("stickertouchimg_in")
-        stickerImg:LoadSprite(UIConst.UI_SPRITE_SNAPSHOT_STICKER, info.icon)
-        local size = stickerImg.sprite.rect.size * UIManager.uiCanvasRect.rect.size.y / 1080 
-        stickerImg.rectTransform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x)
-        stickerImg.rectTransform:SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y)
-        self.view.stickerTouchPlate.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x)
-        self.view.stickerTouchPlate.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y)
+    end
+    return 0
+end
+
+
+SnapshotCtrl._ToggleStickerEditBinding = HL.Method(HL.Boolean) << function(self, enable)
+    if self.m_stickerEditBindingId > 0 then
+        InputManagerInst:ToggleBinding(self.m_stickerEditBindingId, enable)
     end
 end
 
-SnapshotCtrl._EnableStickerEditMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, enable, isInit)
-    self:_SwitchSnapshotUIVisible(not enable, isInit)
-    self.m_phase:SetForbidJoystick(enable, "stickerMode")
-    if enable then
-        if self.m_editStickerCtrl == nil then
-            self.m_editStickerCtrl = UIManager:Open(PanelId.SnapshotControllerEditSticker, function()
-                self:_EnableStickerEditMode(false)
-                self.m_editStickerCtrl:Hide()
+
+SnapshotCtrl._OnControllerEditSticker = HL.Method() << function(self)
+    local stickerInfoIndex = self.m_curSelectStickerIndex
+    if stickerInfoIndex <= 0 then
+        return
+    end
+    local info = self.m_stickerInfos[stickerInfoIndex]
+    if not info or info.isEmpty then
+        return
+    end
+    local placedIdx = self:_FindLastPlacedStickerIdxByInfoIndex(stickerInfoIndex)
+    if placedIdx <= 0 then
+        return
+    end
+    self:_SelectEditSticker(placedIdx)
+end
+
+
+SnapshotCtrl._ResetStickerContinuousPlaceOffset = HL.Method() << function(self)
+    self.m_stickerContinuousPlaceOffsetX = 0
+end
+
+
+SnapshotCtrl._AddSticker = HL.Method(HL.Number, HL.Opt(HL.Boolean)).Return(HL.Number) << function(self, stickerInfoIndex, skipSelect)
+    if #self.m_placedStickers >= Tables.snapshotConst.maxStickerCount then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SNAPSHOT_STICKER_COUNT_REACH_LIMIT)
+        return 0
+    end
+    local info = self.m_stickerInfos[stickerInfoIndex]
+    if not info or info.isEmpty then
+        return 0
+    end
+    local template = self.view.stickerTemplate
+    local child = UIUtils.addChild(self.view.stickerContainer, template)
+    child.transform = child.gameObject.transform
+    child = Utils.wrapLuaNode(child)
+    
+    
+    
+    local baseSize = child.transform.rect.size
+    child.image:LoadSprite(UIConst.UI_SPRITE_SNAPSHOT_STICKER, info.icon)
+    child.image.preserveAspect = true
+    child.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, baseSize.x)
+    child.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, baseSize.y)
+    child.transform.anchoredPosition = Vector2.zero
+    child.transform.localEulerAngles = Vector3.zero
+    child.gameObject:SetActive(true)
+    if child.animationWrapper then
+        child.animationWrapper:Play("stickertouchimg_in")
+    end
+    local placedIdx = #self.m_placedStickers + 1
+    local stickerData = {
+        stickerInfoIndex = stickerInfoIndex,
+        node = child,
+        anchoredPos = Vector2.zero,
+        rotation = 0,
+        scale = 1,
+        baseSize = baseSize,
+    }
+    table.insert(self.m_placedStickers, stickerData)
+    
+    self:_SetPlacedStickerPos(placedIdx, Vector2(self.m_stickerContinuousPlaceOffsetX, 0))
+    self.m_stickerContinuousPlaceOffsetX = self.m_stickerContinuousPlaceOffsetX + STICKER_CONTINUOUS_PLACE_OFFSET_STEP
+    
+    if child.touchPanel then
+        child.touchPanel.onClick:AddListener(function(_)
+            AudioAdapter.PostEvent("Au_UI_Button_Common")
+            self:_OnClickPlacedSticker(placedIdx)
+        end)
+    end
+    if not skipSelect then
+        self:_SelectEditSticker(placedIdx)
+    end
+    self:_RefreshStickerCellUseState(stickerInfoIndex)
+    self:_RefreshStickerCountUI()
+    return placedIdx
+end
+
+SnapshotCtrl._RemoveSticker = HL.Method(HL.Number) << function(self, placedIdx)
+    if placedIdx <= 0 or placedIdx > #self.m_placedStickers then
+        return
+    end
+    local stickerData = self.m_placedStickers[placedIdx]
+    local stickerInfoIndex = stickerData and stickerData.stickerInfoIndex or 0
+    if stickerData and stickerData.node and not IsNull(stickerData.node.gameObject) then
+        CS.UnityEngine.Object.Destroy(stickerData.node.gameObject)
+    end
+    table.remove(self.m_placedStickers, placedIdx)
+    if self.m_curEditingPlacedIdx > placedIdx then
+        self.m_curEditingPlacedIdx = self.m_curEditingPlacedIdx - 1
+    end
+    self:_RebindPlacedStickerEvents()
+    self:_RefreshStickerCellUseState(stickerInfoIndex)
+    self:_RefreshStickerCountUI()
+    self:_ResetStickerContinuousPlaceOffset()
+end
+
+SnapshotCtrl._RemoveAllStickers = HL.Method() << function(self)
+    self:_DeselectEditSticker()
+    local touchedStickerInfoIndices = {}
+    for i = #self.m_placedStickers, 1, -1 do
+        local stickerData = self.m_placedStickers[i]
+        if stickerData then
+            touchedStickerInfoIndices[stickerData.stickerInfoIndex] = true
+            if stickerData.node and not IsNull(stickerData.node.gameObject) then
+                CS.UnityEngine.Object.Destroy(stickerData.node.gameObject)
+            end
+        end
+    end
+    self.m_placedStickers = {}
+    for stickerInfoIndex, _ in pairs(touchedStickerInfoIndices) do
+        self:_RefreshStickerCellUseState(stickerInfoIndex)
+    end
+    self:_RefreshStickerCountUI()
+    self:_ResetStickerContinuousPlaceOffset()
+end
+
+SnapshotCtrl._RebindPlacedStickerEvents = HL.Method() << function(self)
+    for idx, stickerData in ipairs(self.m_placedStickers) do
+        local child = stickerData.node
+        if child and child.touchPanel then
+            child.touchPanel.onClick:RemoveAllListeners()
+            local capturedIdx = idx
+            child.touchPanel.onClick:AddListener(function(_)
+                AudioAdapter.PostEvent("Au_UI_Button_Common")
+                self:_OnClickPlacedSticker(capturedIdx)
             end)
-        else
+        end
+    end
+end
+
+SnapshotCtrl._OnClickPlacedSticker = HL.Method(HL.Number) << function(self, placedIdx)
+    if placedIdx <= 0 or placedIdx > #self.m_placedStickers then
+        return
+    end
+    if self.m_curEditingPlacedIdx == placedIdx then
+        return
+    end
+    self:_SelectEditSticker(placedIdx)
+end
+
+SnapshotCtrl._SelectEditSticker = HL.Method(HL.Number) << function(self, placedIdx)
+    if placedIdx <= 0 or placedIdx > #self.m_placedStickers then
+        return
+    end
+    self.m_curEditingPlacedIdx = placedIdx
+    local stickerData = self.m_placedStickers[placedIdx]
+    stickerData.node.transform:SetAsLastSibling()
+    self:_SyncEditOverlayTransform()
+    self.view.stickerEditOverlay.gameObject:SetActive(true)
+    self:_SwitchSnapshotUIVisible(false)
+    self.m_phase:SetForbidJoystick(true, "stickerMode")
+    if DeviceInfo.usingController then
+        if self.m_editStickerCtrl == nil then
+            self.m_editStickerCtrl = UIManager:Open(PanelId.SnapshotControllerEditSticker, {
+                ctrl = self,
+                onExitEdit = function()
+                    self:_DeselectEditSticker()
+                    self.m_editStickerCtrl:Hide()
+                end,
+            })
+        elseif self.m_editStickerCtrl:IsHide() then
             self.m_editStickerCtrl:Show()
         end
-    else
-        if self.m_editStickerCtrl ~= nil then
-            self.m_editStickerCtrl:Hide()
+    end
+end
+
+SnapshotCtrl._DeselectEditSticker = HL.Method() << function(self)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    self:_StopStickerHoldAction()
+    self.m_curEditingPlacedIdx = 0
+    self.view.stickerEditOverlay.gameObject:SetActive(false)
+    self:_SwitchSnapshotUIVisible(true)
+    self.m_phase:SetForbidJoystick(false, "stickerMode")
+    if self.m_editStickerCtrl ~= nil then
+        self.m_editStickerCtrl:Hide()
+    end
+end
+
+SnapshotCtrl._SyncEditOverlayTransform = HL.Method() << function(self)
+    if self.m_curEditingPlacedIdx <= 0 or self.m_curEditingPlacedIdx > #self.m_placedStickers then
+        return
+    end
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    local overlay = self.view.stickerEditOverlay
+    local scaledW = stickerData.baseSize.x * stickerData.scale
+    local scaledH = stickerData.baseSize.y * stickerData.scale
+    overlay.transform.anchoredPosition = stickerData.anchoredPos
+    overlay.transform.localEulerAngles = Vector3(0, 0, stickerData.rotation)
+    overlay.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, scaledW)
+    overlay.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, scaledH)
+    
+    local counterRot = Vector3(0, 0, -stickerData.rotation)
+    overlay.copyBtn.transform.localEulerAngles = counterRot
+    overlay.scaleTouchPanel.transform.localEulerAngles = counterRot
+    overlay.rotateTouchPanel.transform.localEulerAngles = counterRot
+    overlay.delBtn.transform.localEulerAngles = counterRot
+end
+
+SnapshotCtrl._SetPlacedStickerPos = HL.Method(HL.Number, Vector2) << function(self, placedIdx, newPos)
+    if placedIdx <= 0 or placedIdx > #self.m_placedStickers then
+        return
+    end
+    
+    
+    local canvasRect = UIManager.uiCanvasRect.rect
+    local finalPos = Vector2(lume.clamp(newPos.x, canvasRect.xMin, canvasRect.xMax), lume.clamp(newPos.y, canvasRect.yMin, canvasRect.yMax))
+    local stickerData = self.m_placedStickers[placedIdx]
+    stickerData.anchoredPos = finalPos
+    stickerData.node.transform.anchoredPosition = finalPos
+end
+
+
+SnapshotCtrl._ClampAllPlacedStickerPosToCanvas = HL.Method() << function(self)
+    if not self.m_placedStickers or #self.m_placedStickers == 0 then
+        return
+    end
+    for placedIdx, stickerData in ipairs(self.m_placedStickers) do
+        if stickerData then
+            self:_SetPlacedStickerPos(placedIdx, stickerData.anchoredPos)
         end
     end
-    self.m_inStickerEditMode = enable
-    self.view.stickerSurroundBoxImg.enabled = enable
-    self.view.stickerTouchPlate.gameObject:SetActive(enable)
-    self.view.stickerTouchPlateNoEdit.enabled = not enable
-    self.view.stickerMoveHint.gameObject:SetActive(DeviceInfo.usingController and enable)
+    if self.m_curEditingPlacedIdx > 0 then
+        self:_SyncEditOverlayTransform()
+    end
 end
 
-SnapshotCtrl._OnDragSticker = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
-    local newScreenPos = UIUtils.screenPointToUI(eventData.position, self.uiCamera, self.view.rectTransform)
-    self:_SetStickerNewPos(newScreenPos)
+
+SnapshotCtrl._OnBeginDragMovePlacedSticker = HL.Method(Vector2) << function(self, screenPos)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    self:_ResetStickerContinuousPlaceOffset()
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    self.m_stickerDragInitFingerPos = UIUtils.screenPointToUI(screenPos, self.uiCamera, self.view.rectTransform)
+    self.m_stickerDragInitAnchoredPos = stickerData.anchoredPos
 end
 
-SnapshotCtrl._SetStickerNewPos = HL.Method(Vector2) << function(self, newPos)
+SnapshotCtrl._OnDragMovePlacedSticker = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    local curFingerPos = UIUtils.screenPointToUI(eventData.position, self.uiCamera, self.view.rectTransform)
+    local fingerDelta = curFingerPos - self.m_stickerDragInitFingerPos
+    local newPos = self.m_stickerDragInitAnchoredPos + fingerDelta
+    self:_SetPlacedStickerPos(self.m_curEditingPlacedIdx, newPos)
+end
+
+SnapshotCtrl._ApplyStickerTransform = HL.Method(HL.Number) << function(self, placedIdx)
+    if placedIdx <= 0 or placedIdx > #self.m_placedStickers then
+        return
+    end
+    local stickerData = self.m_placedStickers[placedIdx]
+    local scaledW = stickerData.baseSize.x * stickerData.scale
+    local scaledH = stickerData.baseSize.y * stickerData.scale
+    stickerData.node.transform.anchoredPosition = stickerData.anchoredPos
+    stickerData.node.transform.localEulerAngles = Vector3(0, 0, stickerData.rotation)
+    stickerData.node.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, scaledW)
+    stickerData.node.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, scaledH)
+end
+
+SnapshotCtrl._GetStickerEditFingerAngle = HL.Method(Vector2).Return(HL.Number) << function(self, screenPos)
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    local center = stickerData.anchoredPos
+    local fingerUI = UIUtils.screenPointToUI(screenPos, self.uiCamera, self.view.rectTransform)
+    return math.atan(fingerUI.y - center.y, fingerUI.x - center.x)
+end
+
+SnapshotCtrl._GetStickerEditFingerDistance = HL.Method(Vector2).Return(HL.Number) << function(self, screenPos)
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    local center = stickerData.anchoredPos
+    local fingerUI = UIUtils.screenPointToUI(screenPos, self.uiCamera, self.view.rectTransform)
+    local dx = fingerUI.x - center.x
+    local dy = fingerUI.y - center.y
+    return math.sqrt(dx * dx + dy * dy)
+end
+
+
+SnapshotCtrl._OnBeginDragRotateSticker = HL.Method(Vector2) << function(self, screenPos)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    self.m_stickerDragInitAngle = self:_GetStickerEditFingerAngle(screenPos)
+    self.m_stickerDragInitRotation = stickerData.rotation
+end
+
+SnapshotCtrl._OnDragRotateSticker = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    local curAngle = self:_GetStickerEditFingerAngle(eventData.position)
+    local angleDelta = math.deg(curAngle - self.m_stickerDragInitAngle)
+    local newRotation = self.m_stickerDragInitRotation + angleDelta
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    stickerData.rotation = newRotation
+    stickerData.node.transform.localEulerAngles = Vector3(0, 0, newRotation)
+end
+
+SnapshotCtrl._OnBeginDragScaleSticker = HL.Method(Vector2) << function(self, screenPos)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    self.m_stickerDragInitDistance = self:_GetStickerEditFingerDistance(screenPos)
+    self.m_stickerDragInitScale = stickerData.scale
+end
+
+SnapshotCtrl._OnDragScaleSticker = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    local curDist = self:_GetStickerEditFingerDistance(eventData.position)
+    if self.m_stickerDragInitDistance <= 0 then
+        return
+    end
+    local newScale = lume.clamp(
+        self.m_stickerDragInitScale * curDist / self.m_stickerDragInitDistance,
+        self.view.config.STICKER_SCALE_MIN,
+        self.view.config.STICKER_SCALE_MAX
+    )
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    stickerData.scale = newScale
+    local scaledW = stickerData.baseSize.x * newScale
+    local scaledH = stickerData.baseSize.y * newScale
+    stickerData.node.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, scaledW)
+    stickerData.node.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, scaledH)
+end
+
+
+SnapshotCtrl._TryStartStickerHoldAction = HL.Method(HL.String, HL.Function) << function(self, holdButton, onTickDelta)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    if self.m_stickerHoldButton ~= "" then
+        return
+    end
+    self.m_stickerHoldButton = holdButton
+    self.m_stickerHoldCoroutine = self:_StartCoroutine(function()
+        while true do
+            onTickDelta(Time.deltaTime)
+            coroutine.step()
+        end
+    end)
+end
+
+SnapshotCtrl._TryEndStickerHoldAction = HL.Method(HL.String) << function(self, holdButton)
+    if self.m_stickerHoldButton ~= holdButton then
+        return
+    end
+    self.m_stickerHoldButton = ""
+    self.m_stickerHoldCoroutine = self:_ClearCoroutine(self.m_stickerHoldCoroutine)
+end
+
+
+SnapshotCtrl._StopStickerHoldAction = HL.Method() << function(self)
+    self.m_stickerHoldButton = ""
+    self.m_stickerHoldCoroutine = self:_ClearCoroutine(self.m_stickerHoldCoroutine)
+end
+
+SnapshotCtrl._AdjustEditingStickerRotation = HL.Method(HL.Number) << function(self, deltaDegrees)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    stickerData.rotation = stickerData.rotation + deltaDegrees
+    stickerData.node.transform.localEulerAngles = Vector3(0, 0, stickerData.rotation)
+    self:_SyncEditOverlayTransform()
+end
+
+SnapshotCtrl._AdjustEditingStickerScale = HL.Method(HL.Number) << function(self, deltaScale)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    local stickerData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    local newScale = lume.clamp(stickerData.scale + deltaScale, self.view.config.STICKER_SCALE_MIN, self.view.config.STICKER_SCALE_MAX)
+    stickerData.scale = newScale
+    local scaledW = stickerData.baseSize.x * newScale
+    local scaledH = stickerData.baseSize.y * newScale
+    stickerData.node.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, scaledW)
+    stickerData.node.transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, scaledH)
+    self:_SyncEditOverlayTransform()
+end
+
+
+
+
+
+SnapshotCtrl._OnStickerHoldRotateCwStart = HL.Method() << function(self)
+    self:_TryStartStickerHoldAction(STICKER_HOLD_ROTATE_CW, function(deltaTime)
+        self:_AdjustEditingStickerRotation(-self.view.config.STICKER_ROTATE_PRE_SEC * deltaTime)
+    end)
+end
+
+SnapshotCtrl._OnStickerHoldRotateCwEnd = HL.Method() << function(self)
+    self:_TryEndStickerHoldAction(STICKER_HOLD_ROTATE_CW)
+end
+
+SnapshotCtrl._OnStickerHoldRotateCcwStart = HL.Method() << function(self)
+    self:_TryStartStickerHoldAction(STICKER_HOLD_ROTATE_CCW, function(deltaTime)
+        self:_AdjustEditingStickerRotation(self.view.config.STICKER_ROTATE_PRE_SEC * deltaTime)
+    end)
+end
+
+SnapshotCtrl._OnStickerHoldRotateCcwEnd = HL.Method() << function(self)
+    self:_TryEndStickerHoldAction(STICKER_HOLD_ROTATE_CCW)
+end
+
+SnapshotCtrl._OnStickerHoldScaleDownStart = HL.Method() << function(self)
+    self:_TryStartStickerHoldAction(STICKER_HOLD_SCALE_DOWN, function(deltaTime)
+        self:_AdjustEditingStickerScale(-self.view.config.STICKER_SCALE_PRE_SEC * deltaTime)
+    end)
+end
+
+SnapshotCtrl._OnStickerHoldScaleDownEnd = HL.Method() << function(self)
+    self:_TryEndStickerHoldAction(STICKER_HOLD_SCALE_DOWN)
+end
+
+SnapshotCtrl._OnStickerHoldScaleUpStart = HL.Method() << function(self)
+    self:_TryStartStickerHoldAction(STICKER_HOLD_SCALE_UP, function(deltaTime)
+        self:_AdjustEditingStickerScale(self.view.config.STICKER_SCALE_PRE_SEC * deltaTime)
+    end)
+end
+
+SnapshotCtrl._OnStickerHoldScaleUpEnd = HL.Method() << function(self)
+    self:_TryEndStickerHoldAction(STICKER_HOLD_SCALE_UP)
+end
+
+
+
+SnapshotCtrl._OnSwitchToNextSticker = HL.Method() << function(self)
+    if self.m_curEditingPlacedIdx <= 0 or #self.m_placedStickers <= 1 then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SNAPSHOT_STICKER_NO_OTHER)
+        return
+    end
+    local nextIdx = self.m_curEditingPlacedIdx + 1
+    if nextIdx > #self.m_placedStickers then
+        nextIdx = 1
+    end
+    self:_SelectEditSticker(nextIdx)
+end
+
+SnapshotCtrl._OnClickDeleteEditingSticker = HL.Method() << function(self)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    local deletedIdx = self.m_curEditingPlacedIdx
+    self:_RemoveSticker(deletedIdx)
+    local count = #self.m_placedStickers
+    if count > 0 then
+        local nextIdx = (deletedIdx > count) and 1 or deletedIdx
+        self:_SelectEditSticker(nextIdx)
+        return
+    end
     
-    local touchPlate = self.view.stickerTouchPlate.transform
-    
-    local stickerHalfSize = touchPlate.rect.size / 2
-    local minPos = UIManager.uiCanvasRect.offsetMin + stickerHalfSize
-    local maxPos = UIManager.uiCanvasRect.offsetMax - stickerHalfSize
-    local finalPos = Vector2(lume.clamp(newPos.x, minPos.x, maxPos.x), lume.clamp(newPos.y, minPos.y, maxPos.y))
-    touchPlate.anchoredPosition = finalPos
-    self.view.stickerImg.rectTransform.anchoredPosition = finalPos
+    self:_DeselectEditSticker()
+    self:_SelectEmptyStickerCell()
+end
+
+
+SnapshotCtrl._SelectEmptyStickerCell = HL.Method() << function(self)
+    self:_SelectStickerCell(1)
+    if not DeviceInfo.usingController then
+        return
+    end
+    local stickerNode = self.view.menuContentNode.menuStickerNode
+    if not self.m_isInitRefreshStickerUI then
+        self.m_isInitRefreshStickerUI = true
+        stickerNode.stickerList:UpdateCount(#self.m_stickerInfos, true)
+    end
+    stickerNode.stickerList:ScrollToIndex(0, true)
+    local obj = stickerNode.stickerList:Get(CSIndex(1))
+    if not obj or not self.m_getStickerCellFunc then
+        return
+    end
+    local cell = self.m_getStickerCellFunc(obj)
+    if cell then
+        self:SetNaviTarget(cell.btn)
+    end
+end
+
+SnapshotCtrl._OnClickCopyEditingSticker = HL.Method() << function(self)
+    if self.m_curEditingPlacedIdx <= 0 then
+        return
+    end
+    if #self.m_placedStickers >= Tables.snapshotConst.maxStickerCount then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SNAPSHOT_STICKER_COUNT_REACH_LIMIT)
+        return
+    end
+    local srcData = self.m_placedStickers[self.m_curEditingPlacedIdx]
+    local srcRotation = srcData.rotation
+    local srcScale = srcData.scale
+    local newIdx = self:_AddSticker(srcData.stickerInfoIndex)
+    if newIdx > 0 then
+        local newData = self.m_placedStickers[newIdx]
+        newData.rotation = srcRotation
+        newData.scale = srcScale
+        self:_ApplyStickerTransform(newIdx)
+        
+        self:_SyncEditOverlayTransform()
+    end
 end
 
 SnapshotCtrl._OnClickMenuStickerCell = HL.Method(HL.Number, HL.Any) << function(self, newIndex, newCell)
     local info = self.m_stickerInfos[newIndex]
-    local oldIndex = self.m_curUsedStickerIndex
-    
-    if oldIndex == newIndex and not info.isEmpty then
-        if not self.m_inStickerEditMode then
-            self:_EnableStickerEditMode(true)
-        end
+    if info.isEmpty then
+        self:_TryRemoveAllStickers()
         return
     end
-    
-    if oldIndex > 0 then
-        local oldObj = self.view.menuContentNode.menuStickerNode.stickerList:Get(CSIndex(oldIndex))
-        local oldCell = self.m_getStickerCellFunc(oldObj)
-        if oldCell then
-            oldCell.useStateCtrl:SetState("Unused")
-            oldCell.editorStateCtrl:SetState("NoEditor")
-            InputManagerInst:SetBindingText(oldCell.btn.hoverConfirmBindingId, Language.LUA_SNAPSHOT_STICKER_SELECT_HINT_TEXT)
+    self:_AddSticker(newIndex)
+end
+
+
+SnapshotCtrl._TryRemoveAllStickers = HL.Method() << function(self)
+    local count = #self.m_placedStickers
+    if count <= 0 then
+        return
+    end
+    if count == 1 then
+        self:_ConfirmRemoveAllStickers()
+        return
+    end
+    local _, hideToday = ClientDataManagerInst:GetBool(
+        DATA_KEY_STICKER_CLEAR_CONFIRM_DAILY, false, false, STICKER_CLEAR_CONFIRM_CATEGORY)
+    if hideToday then
+        self:_ConfirmRemoveAllStickers()
+        return
+    end
+    local noRemindToday = false
+    self:Notify(MessageConst.SHOW_POP_UP, {
+        content = Language.LUA_SNAPSHOT_REMOVE_ALL_STICKER,
+        toggle = {
+            isOn = false,
+            toggleText = Language.LUA_SNAPSHOT_STICKER_CLEAR_NO_REMIND,
+            onValueChanged = function(isOn)
+                noRemindToday = isOn
+            end,
+        },
+        onConfirm = function()
+            ClientDataManagerInst:SetBool(
+                DATA_KEY_STICKER_CLEAR_CONFIRM_DAILY, noRemindToday, false,
+                STICKER_CLEAR_CONFIRM_CATEGORY,
+                EClientDataTimeValidType.CurrentDayUntil4AM)
+            self:_ConfirmRemoveAllStickers()
+        end,
+    })
+end
+
+SnapshotCtrl._ConfirmRemoveAllStickers = HL.Method() << function(self)
+    self:_RemoveAllStickers()
+    Notify(MessageConst.SHOW_TOAST, Language.LUA_SNAPSHOT_STICKER_CLEAR_ALL)
+end
+
+SnapshotCtrl._CollectPlacedStickersState = HL.Method().Return(HL.Table) << function(self)
+    local list = {}
+    for _, stickerData in ipairs(self.m_placedStickers) do
+        local info = self.m_stickerInfos[stickerData.stickerInfoIndex]
+        if info then
+            table.insert(list, {
+                infoId = info.id,
+                posX = stickerData.anchoredPos.x,
+                posY = stickerData.anchoredPos.y,
+                rotation = stickerData.rotation,
+                scale = stickerData.scale,
+            })
+        end
+    end
+    return list
+end
+
+SnapshotCtrl._RestorePlacedStickersState = HL.Method(HL.Opt(HL.Table)) << function(self, placedList)
+    if not placedList or #placedList == 0 then
+        return
+    end
+    for _, entry in ipairs(placedList) do
+        local stickerInfoIndex = self:_FindStickerIndexById(entry.infoId)
+        if stickerInfoIndex > 0 then
+            local placedIdx = self:_AddSticker(stickerInfoIndex, true)
+            if placedIdx > 0 then
+                local stickerData = self.m_placedStickers[placedIdx]
+                
+                
+                stickerData.anchoredPos = Vector2(entry.posX or 0, entry.posY or 0)
+                stickerData.rotation = entry.rotation or 0
+                stickerData.scale = entry.scale or 1
+                self:_ApplyStickerTransform(placedIdx)
+            end
         end
     end
     
-    newCell.useStateCtrl:SetState("Used")
-    if not info.isEmpty then
-        newCell.editorStateCtrl:SetState("Editor")
-        InputManagerInst:SetBindingText(newCell.btn.hoverConfirmBindingId, Language.LUA_SNAPSHOT_STICKER_MOVE_HINT_TEXT)
-    end
     
-    self:_ChangeSticker(newIndex)
+    self:_ResetStickerContinuousPlaceOffset()
 end
 
 
@@ -4882,6 +5673,9 @@ SnapshotCtrl.OnForbidSystemChanged = HL.Method(HL.Any) << function(self, args)
     elseif forbidType == ForbidType.ForbidSnapshotMainCharDragMoveRotate
         or forbidType == ForbidType.ForbidSnapshotAllCharDragMoveRotate then
         self:_RefreshAvatarSelectableChanged()
+        
+        self:_ChangeTeamFormation(TEAM_FORMATION_INDEX_NONE, true)
+        self:_ResetFormationDropDownNextFrame(TEAM_FORMATION_INDEX_NONE)
     elseif forbidType == ForbidType.ForbidSnapshotCustomAction then
         self:_SetForbid(self.m_forbidRecords.action, isForbid, SNAPSHOT_CUSTOM_ACTION_FORBID_KEY)
         if not isForbid then
@@ -4941,12 +5735,13 @@ SnapshotCtrl.OnFirstGotItem = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     for index, info in pairs(self.m_stickerInfos) do
         if info.itemId == itemId then
             info.isUnlock = true
+            info.isNew = true
             local cell = self.m_getStickerCellFunc(index)
             if cell then
                 cell.lockStateCtrl:SetState("Unlock")
                 InputManagerInst:SetBindingText(cell.btn.hoverConfirmBindingId, Language.LUA_SNAPSHOT_STICKER_SELECT_HINT_TEXT)
             end
-            local infoAreaIndex = self.m_curSelectStickerIndex > 0 and self.m_curSelectStickerIndex or self.m_curUsedStickerIndex
+            local infoAreaIndex = self.m_curSelectStickerIndex > 0 and self.m_curSelectStickerIndex or 1
             if infoAreaIndex == index then
                 self:_RefreshStickerInfoArea()
             end
@@ -4982,6 +5777,20 @@ SnapshotCtrl._OnScreenSizeChanged = HL.Method() << function(self)
     snapshotSystem:UpdateSensorSize()
 end
 
+
+
+
+SnapshotCtrl._OnCanvasSizeChanged = HL.Method() << function(self)
+    local screenWidth = Screen.width
+    local screenHeight = Screen.height
+    if screenWidth == self.m_stickerClampScreenWidth and screenHeight == self.m_stickerClampScreenHeight then
+        return
+    end
+    self.m_stickerClampScreenWidth = screenWidth
+    self.m_stickerClampScreenHeight = screenHeight
+    self:_ClampAllPlacedStickerPosToCanvas()
+end
+
 SnapshotCtrl._OnNetMaskChanged = HL.Method(HL.Any) << function(self, args)
     local showMask = unpack(args)
     self.m_blockDragByNetMask = showMask == true
@@ -4992,7 +5801,7 @@ end
 
 SnapshotCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
     local filterInfo = self.m_filterInfos[self.m_curUsedFilterIndex]
-    local stickerInfo = self.m_stickerInfos[self.m_curUsedStickerIndex]
+    local stickerInfo = nil
     local controllerFocusType, controllerFocusIndex = self:_GetMenuControllerFocusKey()
     local resumeState = {
         ui = {
@@ -5034,9 +5843,8 @@ SnapshotCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self
                 usedId = filterInfo and (not filterInfo.isEmpty) and filterInfo.id or nil,
             },
             sticker = {
-                usedId = stickerInfo and (not stickerInfo.isEmpty) and stickerInfo.id or nil,
-                anchoredPos = self.view.stickerImg.rectTransform.anchoredPosition,
-                isEditMode = self.m_inStickerEditMode,
+                placedList = self:_CollectPlacedStickersState(),
+                editingPlacedIdx = self.m_curEditingPlacedIdx,
             },
         },
     }
@@ -5200,11 +6008,7 @@ SnapshotCtrl._ApplyResumeMenuState = HL.Method(HL.Opt(HL.Any)) << function(self,
     end
 
     local stickerState = menuState.sticker
-    if stickerState then
-        
-        
-        self.m_curUsedStickerIndex = self:_FindStickerIndexById(stickerState.usedId)
-    end
+    
 
     
     local actionState = menuState.action
@@ -5246,23 +6050,19 @@ SnapshotCtrl._ApplyResumeMenuState = HL.Method(HL.Opt(HL.Any)) << function(self,
         self.m_resumeMenuControllerFocusIndex = 0
     end
 
-    local stickerState = menuState.sticker
     if stickerState then
-        local stickerIndex = self:_FindStickerIndexById(stickerState.usedId)
-        self:_ChangeSticker(stickerIndex, true)
-        if stickerState.anchoredPos and stickerIndex > 1 then
-            self:_SetStickerNewPos(stickerState.anchoredPos)
-        end
-        self:_EnableStickerEditMode(stickerState.isEditMode == true, true)
+        self:_RestorePlacedStickersState(stickerState.placedList)
     end
 end
 
 SnapshotCtrl._ApplyResumeUIViewState = HL.Method(HL.Opt(HL.Any, HL.Any)) << function(self, uiState, stickerState)
-    if stickerState and stickerState.isEditMode then
-        return
-    end
     if uiState and uiState.isShowSnapshotUI == false then
         self:_SwitchSnapshotUIVisible(false, true)
+    end
+    
+    local editingPlacedIdx = stickerState and stickerState.editingPlacedIdx or 0
+    if editingPlacedIdx > 0 then
+        self:_SelectEditSticker(editingPlacedIdx)
     end
 end
 

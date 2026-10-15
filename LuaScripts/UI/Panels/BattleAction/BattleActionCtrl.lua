@@ -18,10 +18,12 @@ BattleActionCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_PRESS_AND_RELEASE_SKILL_BUTTON] = 'OnPressAndReleaseSkillButton',
     [MessageConst.ON_CONTROLLER_INDICATOR_CHANGE] = 'OnToggleControllerSkillIndicator',
     [MessageConst.ON_LOCK_TARGET_CHANGED] = 'OnLockTargetChanged',
+    [MessageConst.ON_LOCK_HOLD_AIM_CHANGED] = 'OnLockHoldAimChanged',
     [MessageConst.ON_SQUAD_INFIGHT_CHANGED] = 'OnInFightChanged',
     [MessageConst.AFTER_TOGGLE_UI_ACTION] = 'AfterToggleUiAction',
     [MessageConst.ON_SKILL_BUTTON_ACTIVE_CONFIG_CHANGED] = 'OnSkillButtonActiveConfigChanged',
     [MessageConst.ON_FORCE_HIDE_LOCK_AIM_UI_CHANGED] = 'OnForceHideLockAimUIChanged',
+    [MessageConst.ON_HIDE_CHAR_HP_INFO_CHANGED] = 'OnHideCharHpInfoChanged',
     [MessageConst.FORBID_SYSTEM_CHANGED] = 'OnForbidSystemChanged',
     [MessageConst.TOGGLE_DEBUG_SQUAD_ICON_BUFF_MODE] = 'OnToggleDebugSquadIconBuffMode',
     [MessageConst.ON_BLIGHT_MIASMA_AREA_ENTER] = 'OnBlightMiasmaAreaEnter',
@@ -64,6 +66,8 @@ do
     BattleActionCtrl.m_openedSubHudPanelId = HL.Field(HL.Table)
 
     BattleActionCtrl.m_gpuiBuffEnabled = HL.Field(HL.Boolean) << true
+
+    BattleActionCtrl.m_aimBtnPressed = HL.Field(HL.Boolean) << false
 end
 
 local SYSTEM_UNLOCK_KEY = "system_unlock"
@@ -84,14 +88,18 @@ BattleActionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.skillShowBtn.onClick:AddListener(function(args)
             self:OnClickSkillShowBtn(args)
         end)
+        self.view.aimBtnDragHandler.onDrag:AddListener(function(eventData)
+            self:_OnDragAimBtn(eventData)
+        end)
     end
     self.view.aimBtn.onPressStart:AddListener(function()
-        self.view.aimBtnAnim:PlayWithTween("skillbutton_aim_press")
-        GameWorld.battle:ToggleLockTargetStart()
+        self:_OnAimBtnPressStart()
     end)
     self.view.aimBtn.onPressEnd:AddListener(function()
-        GameWorld.battle:ToggleLockTargetEnd()
+        self:_OnAimBtnPressEnd()
     end)
+    self.view.aimBtnAnim:SampleToInAnimationBegin()
+    self.m_aimBtnPressed = false
 
     self.m_teamSkillUnlocked = Utils.isSystemUnlocked(GEnums.UnlockSystemType.TeamSkill)
 
@@ -132,7 +140,7 @@ BattleActionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if self.isDefaultPanel then
         self:_RefreshSkillShowNodeState()
     end
-    self.view.atbNode.gameObject:SetActive(isNormalSkillUnlock)
+    self:_RefreshAtbNodeState()
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.LockTarget) then
         self.m_forbidLockTargetKeys[SYSTEM_UNLOCK_KEY] = true
     end
@@ -141,6 +149,10 @@ BattleActionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     self:_RefreshLockTargetState()
     self:_RefreshLockAimState()
+
+    self.view.manualLockNode.gameObject:SetActive(false)
+    local offset = GameInstance.dataManager.markTargetConfig.lockHoldScreenCenterOffset
+    self.view.manualLockNode.transform.localPosition = Vector3(offset.x, offset.y, 0)
 
     if BEYOND_DEBUG_COMMAND then
         self:BindInputPlayerAction("battle_debug_refresh_skill_usp", function()
@@ -229,6 +241,8 @@ BattleActionCtrl.OnHide = HL.Override() << function(self)
     self:_ClearRegisters()
     self:_ClearAllSkillBtnClick()
     self:OnToggleControllerSkillIndicator(false)
+    self:_OnAimBtnPressEnd()
+    self.view.manualLockNode.gameObject:SetActive(false)
     for _, skillCell in ipairs(self.m_skillCellList) do
         skillCell.enabled = false
     end
@@ -422,7 +436,7 @@ do
         if not active and self:IsShow() then
             self:_ClearAllSkillBtnClick()
             self:OnToggleControllerSkillIndicator(false)
-            GameWorld.battle:ToggleLockTargetEnd()
+            self:_OnAimBtnPressEnd()
         end
         if active and self.isControllerPanel then
             if self:IsShow() and CS.Beyond.UI.BattleControllerInputController.instance:GetControllerIndicatorState() then
@@ -492,6 +506,26 @@ do
             self.view.lockAimBtnNode.gameObject:SetActive(false)
         end
     end
+
+    BattleActionCtrl.OnLockHoldAimChanged = HL.Method(HL.Table) << function(self, args)
+        local active, hasTarget, angle = unpack(args)
+        local prevActive = self.view.manualLockNode.gameObject.activeSelf
+        if prevActive ~= active then
+            if active then
+                self.view.manualLockNode:ClearTween(false)
+                self.view.manualLockNode.gameObject:SetActive(true)
+                self.view.manualLockNode:PlayInAnimation()
+            else
+                self.view.manualLockNode:PlayOutAnimation(function()
+                    self.view.manualLockNode.gameObject:SetActive(false)
+                end)
+            end
+        end
+        self.view.manualLockArrow.gameObject:SetActive(active and hasTarget)
+        if active and hasTarget then
+            self.view.manualLockArrow.localEulerAngles = Vector3(0, 0, angle - 90)
+        end
+    end
 end
 
 BattleActionCtrl.OnInFightChanged = HL.Method(HL.Opt(HL.Table)) << function(self, args)
@@ -549,6 +583,29 @@ do
         self.view.actionsNodeFadeController:InformShow()
     end
 
+    BattleActionCtrl._OnDragAimBtn = HL.Method(HL.Userdata) << function(self, eventData)
+        Notify(MessageConst.ON_DRAG_SPRINT_BTN, eventData.delta)
+    end
+
+    BattleActionCtrl._OnAimBtnPressStart = HL.Method() << function(self)
+        if self.m_aimBtnPressed then
+            return
+        end
+        self.m_aimBtnPressed = true
+        self.view.aimBtnAnim:ClearTween(false)
+        self.view.aimBtnAnim:PlayInAnimation()
+        GameWorld.battle:ToggleLockTargetStart()
+    end
+
+    BattleActionCtrl._OnAimBtnPressEnd = HL.Method() << function(self)
+        if not self.m_aimBtnPressed then
+            return
+        end
+        self.m_aimBtnPressed = false
+        self.view.aimBtnAnim:PlayOutAnimation()
+        GameWorld.battle:ToggleLockTargetEnd()
+    end
+
     BattleActionCtrl.OnForbidSystemChanged = HL.Method(HL.Table) << function(self, args)
         local forbidType, isForbidden = unpack(args)
         if forbidType == ForbidType.ForbidLockTarget then
@@ -565,7 +622,7 @@ do
         local isForbidden = next(self.m_forbidLockTargetKeys) ~= nil
         self.view.aimBtn.gameObject:SetActive(not isForbidden)
         if isForbidden then
-            GameWorld.battle:ToggleLockTargetEnd()
+            self:_OnAimBtnPressEnd()
         end
     end
 
@@ -608,7 +665,7 @@ do
             self.m_isNormalSkillUnlock = true
             self.m_hideSkillNodeKeys[SYSTEM_UNLOCK_KEY] = nil
             self:_RefreshSkillNodeState()
-            self.view.atbNode.gameObject:SetActive(true)
+            self:_RefreshAtbNodeState()
             if self.isDefaultPanel then
                 self.m_hideSkillShowNodeKeys[SYSTEM_UNLOCK_KEY] = nil
                 self:_RefreshSkillShowNodeState()
@@ -649,6 +706,14 @@ do
 
     BattleActionCtrl.OnForceHideLockAimUIChanged = HL.Method(HL.Any) << function(self, arg)
         self:_RefreshLockAimState()
+    end
+
+    BattleActionCtrl.OnHideCharHpInfoChanged = HL.Method(HL.Any) << function(self, arg)
+        self:_RefreshAtbNodeState()
+    end
+
+    BattleActionCtrl._RefreshAtbNodeState = HL.Method() << function(self)
+        self.view.atbNode.gameObject:SetActive(self.m_isNormalSkillUnlock and not GameWorld.battle.hideCharHpInfo)
     end
 end
 

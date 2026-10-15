@@ -57,8 +57,11 @@ end
 MapMarkDetailCampFireCtrl._Teleport = HL.Method() << function(self)
     Utils.teleportToEntity(self.m_teleportValidationId, function()
         GameAction.SaveCheckpointToCampfire(self.m_logicIdGlobal)
-        GameInstance.gameplayNetwork:RestAtCampfire(self.m_logicIdGlobal)
-        end)
+        local success, validationData = GameInstance.dataManager.teleportValidationDatas:TryGetValue(self.m_teleportValidationId)
+        if success and validationData.teleportReason == GEnums.C2STeleportReason.ServerGotoCamp then
+            GameInstance.gameplayNetwork:RestAtCampfire(self.m_logicIdGlobal)
+        end
+    end)
 end
 
 HL.Commit(MapMarkDetailCampFireCtrl)

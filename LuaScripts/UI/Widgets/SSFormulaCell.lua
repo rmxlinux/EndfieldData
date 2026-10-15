@@ -80,7 +80,8 @@ SSFormulaCell._UpdateCommonFormulaInfo = HL.Method() << function(self)
     self.view.onWorkingDeco.gameObject:SetActiveIfNecessary(info.isWorking)
 
     if info.roomAttrType ~= nil then
-        local haveCharSkill = GameInstance.player.spaceship:IsRoomAttrHaveCharSkill(info.roomId, info.roomAttrType, false)
+        local haveCharSkill = GameInstance.player.spaceship:IsRoomAttrHaveCharSkill(info.roomId, info.roomAttrType,
+            info.isMfg == true or info.isSow == true)
         self.view.accIconNode.gameObject:SetActiveIfNecessary(haveCharSkill)
     else
         self.view.accIconNode.gameObject:SetActiveIfNecessary(false)

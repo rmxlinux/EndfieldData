@@ -376,7 +376,7 @@ GachaWeaponCtrl._InitAllTimeline = HL.Method() << function(self)
             dirInfo.mainDir = cutscene.director
             table.insert(dirInfo.dirList, dirInfo.mainDir)
             
-            dirInfo.camRoot = rootTrans:Find("ExternalCamera")
+            dirInfo.camRoot = rootTrans:Find("GachaCamera")
             if not dirInfo.camRoot then
                 logger.error("【武器抽卡】没找到timeline对应相机：", dirInfo.actorDir.transform:PathFromRoot())
             end

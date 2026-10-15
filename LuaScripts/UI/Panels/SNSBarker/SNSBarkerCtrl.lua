@@ -34,6 +34,8 @@ SNSBarkerCtrl.m_curSelectedChatId = HL.Field(HL.String) << ""
 
 SNSBarkerCtrl.m_chatVOs = HL.Field(HL.Table)
 
+SNSBarkerCtrl.m_chatFoldOutStates = HL.Field(HL.Table)
+
 SNSBarkerCtrl.m_cachedSelectedTags = HL.Field(HL.Table)
 
 SNSBarkerCtrl.m_filterArgs = HL.Field(HL.Table)
@@ -83,7 +85,7 @@ SNSBarkerCtrl.OnClickContactNpcCell = HL.Method(HL.Number) << function(self, csI
     
     
     
-    self.view.contactNpcScrollList:Toggle(csIndex, DeviceInfo.usingController)
+    self:_SetNpcCellFoldOut(csIndex, not self.m_chatFoldOutStates[chatVO.chatId], DeviceInfo.usingController)
 
     if DeviceInfo.usingController then
         
@@ -93,6 +95,32 @@ SNSBarkerCtrl.OnClickContactNpcCell = HL.Method(HL.Number) << function(self, csI
         self:SetNaviTarget(subCell.view.button)
 
         self:_ToggleSubCellNavi(true)
+    end
+end
+
+SNSBarkerCtrl._SetNpcCellFoldOut = HL.Method(HL.Number, HL.Boolean, HL.Boolean) << function(self, csIndex, isFoldOut, fastMode)
+    local luaIndex = LuaIndex(csIndex)
+    local chatId = self.m_chatVOs[luaIndex].chatId
+    
+    self.m_chatFoldOutStates[chatId] = isFoldOut
+    self.view.contactNpcScrollList:ToggleByState(csIndex, isFoldOut, fastMode)
+
+    
+    local cell = self.m_getContactNpcCellFunc(luaIndex)
+    if cell then
+        cell:SetFoldOut(isFoldOut)
+    end
+end
+
+SNSBarkerCtrl._FoldAllNpcCells = HL.Method() << function(self)
+    self.m_chatFoldOutStates = {}
+    self.view.contactNpcScrollList:FoldAll(false)
+    for luaIndex = 1, #self.m_chatVOs do
+        
+        local cell = self.m_getContactNpcCellFunc(luaIndex)
+        if cell then
+            cell:SetFoldOut(false)
+        end
     end
 end
 
@@ -119,6 +147,7 @@ SNSBarkerCtrl.OnClickDialogCell = HL.Method(HL.String, HL.String, HL.Forward("SN
 end
 
 SNSBarkerCtrl._InitData = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
+    self.m_chatFoldOutStates = {}
     local dialogId = arg and arg.dialogId
     if not string.isEmpty(dialogId) and Tables.sNSDialogTable:ContainsKey(dialogId) then
         self.m_curSelectedSubDialogId = dialogId
@@ -133,12 +162,13 @@ SNSBarkerCtrl._InitData = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
 end
 
 SNSBarkerCtrl._RefreshContactNpcListAfterFilter = HL.Method() << function(self)
+    self.m_chatFoldOutStates = {}
     local hasResult = #self.m_chatVOs > 0
     self.view.contactNpcScrollList.gameObject:SetActive(hasResult)
     self.view.nonResult.gameObject:SetActive(not hasResult)
     if hasResult then
         self.view.contactNpcScrollList:UpdateCount(#self.m_chatVOs, true)
-        self.view.contactNpcScrollList:FoldAll(false)
+        self:_FoldAllNpcCells()
         self:_RefreshNaviTarget()
     end
 end
@@ -168,7 +198,8 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
         end
     end
 
-    local shouldRecoverNpcCell = not nonSelectSubDialog or (hasSelectedChat and targetNpcCSIndex ~= nil)
+    local shouldRecoverNpcCell = not nonSelectSubDialog
+            or (not DeviceInfo.usingController and hasSelectedChat and targetNpcCSIndex ~= nil)
 
     
     if targetNpcCSIndex == nil then
@@ -189,7 +220,7 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
     self:_StartCoroutine(function()
         coroutine.step()
         if hasResult then
-            self.view.contactNpcScrollList:FoldAll(false)
+            self:_FoldAllNpcCells()
         end
         coroutine.step()
         if self.m_isClosed then
@@ -202,7 +233,7 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
         end
 
         if hasResult and shouldRecoverNpcCell then
-            self.view.contactNpcScrollList:Toggle(targetNpcCSIndex, true)
+            self:_SetNpcCellFoldOut(targetNpcCSIndex, true, true)
         end
 
         coroutine.step()
@@ -214,7 +245,8 @@ SNSBarkerCtrl._OnUpdateContactNpcCell = HL.Method(GameObject, HL.Number) << func
     local npcVO = self.m_chatVOs[LuaIndex(csIndex)]
     
     local content = self.m_getContactNpcCellFunc(go)
-    content:InitSNSContactNpcCell(npcVO, self:_ShouldFoldOutNpcCell(npcVO.chatId), function()
+    local isFoldOut = self.m_chatFoldOutStates[npcVO.chatId] == true
+    content:InitSNSContactNpcCell(npcVO, isFoldOut, function()
         self:OnClickContactNpcCell(csIndex)
     end, function(cell, chatId, dialogId, luaIndex)
         self:_RefreshSubCell(cell, chatId, dialogId, luaIndex)
@@ -227,6 +259,11 @@ SNSBarkerCtrl._OnUpdateContactNpcCell = HL.Method(GameObject, HL.Number) << func
 
         content.view.foldOut.enableControllerNavi = self.m_curFocusSubCellLuaIndex < 0
     end
+
+    
+    local foldoutComponent = go:GetComponent(typeof(CS.Beyond.UI.UIFoldoutComponent))
+    foldoutComponent:Refresh(csIndex)
+    self.view.contactNpcScrollList:ToggleByState(csIndex, isFoldOut, true)
 end
 
 SNSBarkerCtrl._RefreshSubCell = HL.Method(HL.Forward("SNSSubDialogCell"), HL.String, HL.String, HL.Number)
@@ -413,14 +450,6 @@ SNSBarkerCtrl._TryRecoverScrollToNpcCell = HL.Method(HL.Number) << function(self
             end
         end
     end)
-end
-
-SNSBarkerCtrl._ShouldFoldOutNpcCell = HL.Method(HL.String).Return(HL.Boolean) << function(self, chatId)
-    if not string.isEmpty(self.m_curSelectedSubDialogId) then
-        return Tables.sNSDialogTable[self.m_curSelectedSubDialogId].chatId == chatId
-    end
-
-    return not string.isEmpty(self.m_curSelectedChatId) and self.m_curSelectedChatId == chatId
 end
 
 SNSBarkerCtrl._IsFilterChange = HL.Method(HL.Table).Return(HL.Boolean) << function(self, selectedTags)
@@ -622,6 +651,11 @@ SNSBarkerCtrl._InitController = HL.Method() << function(self)
         return
     end
 
+    local scrollRect = self.view.contactNpcScrollList:GetComponent(typeof(CS.Beyond.UI.UIScrollRect))
+    scrollRect.naviGroup.onDefaultNaviFailed:AddListener(function(dir)
+        self:_OnContactListNaviFailed(dir)
+    end)
+
     self.m_focusSubCellReturnToNpcCellBindId = self:BindInputPlayerAction("common_back", function()
         self.m_returnToNpcCellBindActionFlag = true
 
@@ -637,6 +671,41 @@ SNSBarkerCtrl._InitController = HL.Method() << function(self)
     
     
     InputManagerInst:ToggleBinding(self.m_focusSubCellReturnToNpcCellBindId, not string.isEmpty(self.m_curSelectedSubDialogId))
+end
+
+SNSBarkerCtrl._OnContactListNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
+    if not DeviceInfo.usingController or self.m_curFocusSubCellLuaIndex >= 0 then
+        return
+    end
+    local count = #self.m_chatVOs
+    if count <= 1 then
+        return
+    end
+
+    local currentIndex = self.m_curFocusNpcCellCSIndex
+    local targetIndex
+    if dir == NaviDirection.Up and currentIndex == 0 then
+        targetIndex = count - 1
+    elseif dir == NaviDirection.Down and currentIndex == count - 1 then
+        targetIndex = 0
+    else
+        return
+    end
+
+    
+    local currentCell = self.m_getContactNpcCellFunc(LuaIndex(currentIndex))
+    local currentTarget = currentCell and currentCell.view.foldOut
+    if not currentTarget or not currentTarget.enableControllerNavi or not currentTarget:IsActive()
+            or not currentTarget:IsInteractable() or InputManagerInst.controllerNaviManager.curTarget ~= currentTarget then
+        return
+    end
+
+    self.view.contactNpcScrollList:ScrollToIndex(targetIndex, true)
+    local targetCell = self.m_getContactNpcCellFunc(LuaIndex(targetIndex))
+    local target = targetCell and targetCell.view.foldOut
+    if target and target.enableControllerNavi and target:IsActive() and target:IsInteractable() then
+        self:SetNaviTarget(target)
+    end
 end
 
 SNSBarkerCtrl._OnSubContentDefaultNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
@@ -663,16 +732,11 @@ SNSBarkerCtrl._OnSubContentDefaultNaviFailed = HL.Method(CS.UnityEngine.UI.NaviD
         return
     end
 
-    self.view.contactNpcScrollList:Toggle(self.m_curFocusNpcCellCSIndex, true)
-    self.view.contactNpcScrollList:Toggle(nextFocusCellCSIndex, true)
+    self:_SetNpcCellFoldOut(self.m_curFocusNpcCellCSIndex, false, true)
+    self:_SetNpcCellFoldOut(nextFocusCellCSIndex, true, true)
 
     
     local preCell = self.m_getContactNpcCellFunc(LuaIndex(self.m_curFocusNpcCellCSIndex))
-    preCell:ToggleFoldOut()
-
-    
-    local curCell = self.m_getContactNpcCellFunc(LuaIndex(nextFocusCellCSIndex))
-    curCell:ToggleFoldOut()
 
     
     local firstSubCell = preCell.m_subDialogCellCache:Get(1)
@@ -717,16 +781,12 @@ SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, H
 
     if preFocusNpcCellCSIndex ~= csIndex then
         
-        self.view.contactNpcScrollList:Toggle(preFocusNpcCellCSIndex, true)
-        self.view.contactNpcScrollList:Toggle(csIndex, true)
-        
-        local preCell = self.m_getContactNpcCellFunc(LuaIndex(preFocusNpcCellCSIndex))
+        self:_SetNpcCellFoldOut(preFocusNpcCellCSIndex, false, true)
+        self:_SetNpcCellFoldOut(csIndex, true, true)
         
         local npcCell = self.m_getContactNpcCellFunc(LuaIndex(csIndex))
         
-        if preCell and npcCell then
-            preCell:ToggleFoldOut()
-            npcCell:ToggleFoldOut()
+        if npcCell then
             
             local subCell = npcCell.m_subDialogCellCache:Get(1)
             self:SetNaviTarget(subCell.view.button)
@@ -735,27 +795,18 @@ SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, H
         
         if self.m_returnToNpcCellBindActionFlag then
             
-            self.view.contactNpcScrollList:Toggle(preFocusNpcCellCSIndex, true)
-            
-            local preCell = self.m_getContactNpcCellFunc(LuaIndex(preFocusNpcCellCSIndex))
-            if preCell then
-                preCell:ToggleFoldOut()
-            end
+            self:_SetNpcCellFoldOut(preFocusNpcCellCSIndex, false, true)
             self.m_returnToNpcCellBindActionFlag = false
         else
             
             local nextNpcCellCSIndex = preFocusNpcCellCSIndex - 1
             if nextNpcCellCSIndex >= 0 then
-                self.view.contactNpcScrollList:Toggle(preFocusNpcCellCSIndex, true)
-                self.view.contactNpcScrollList:Toggle(nextNpcCellCSIndex, true)
-                
-                local preCell = self.m_getContactNpcCellFunc(LuaIndex(preFocusNpcCellCSIndex))
+                self:_SetNpcCellFoldOut(preFocusNpcCellCSIndex, false, true)
+                self:_SetNpcCellFoldOut(nextNpcCellCSIndex, true, true)
                 
                 local npcCell = self.m_getContactNpcCellFunc(LuaIndex(nextNpcCellCSIndex))
                 
-                if preCell and npcCell then
-                    preCell:ToggleFoldOut()
-                    npcCell:ToggleFoldOut()
+                if npcCell then
                     
                     local subCellCache = npcCell.m_subDialogCellCache
                     

@@ -269,6 +269,7 @@ FacMainRightCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, 
 
     Notify(MessageConst.TOGGLE_HIDE_INTERACT_OPTION_LIST, { "FacMainRight", isTopLayer })
     Notify(MessageConst.TOGGLE_HIDE_FAC_TOP_VIEW_RIGHT_SIDE_UI, isTopLayer)
+    Notify(MessageConst.FAC_MAIN_HUD_RIGHT_TOP_LAYER_CHANGED, { isTopLayer, self.view.content.groupId })
 end
 
 FacMainRightCtrl._CloseBtnBox = HL.Method() << function(self)

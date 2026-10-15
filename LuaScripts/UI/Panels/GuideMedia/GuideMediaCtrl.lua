@@ -122,8 +122,9 @@ GuideMediaCtrl._OnUpdateImageCell = HL.Method(GameObject, HL.Number) << function
     local isImg = info.type == CS.Beyond.Gameplay.GuideMediaInfo.Type.Image
     local imgPath, videoFile
     if isImg then
-        imgPath = UIUtils.getSpritePath(UIConst.UI_SPRITE_GUIDE, info.imgPath)
-        if not ResourceManager.CheckExists(imgPath) then
+        local resolvedImgName = CS.Beyond.Gameplay.GuideSystem.ResolveGuideMediaImageName(info.imgPath)
+        imgPath = UIUtils.getSpritePath(UIConst.UI_SPRITE_GUIDE, resolvedImgName)
+        if not self.loader:CheckExists(imgPath) then
             imgPath = UIUtils.getSpritePath(UIConst.UI_SPRITE_GUIDE, "guide_pic_default")
         end
     else

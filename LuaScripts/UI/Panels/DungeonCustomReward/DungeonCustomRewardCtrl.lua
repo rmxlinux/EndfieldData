@@ -45,7 +45,7 @@ DungeonCustomRewardCtrl.TryStartSettlement = HL.StaticMethod() << function()
             local isHunterMode = DungeonUtils.isDungeonHasHunterMode(dungeonId)
 
             local realCost = ActivityUtils.getRealStaminaCost(costStamina)
-            Notify(MessageConst.SHOW_POP_UP, {
+            UIManager:AutoOpen(PanelId.SubGamePopup, {
                 staminaInfo = {
                     descStamina = isHunterMode and Language.LUA_DUNGEON_OBTAIN_REWARD_COST_STAMINA_HUNTER_MODE_DESC or Language.LUA_DUNGEON_OBTAIN_REWARD_COST_STAMINA_RESOURCE_DESC,
                     costStamina = realCost,
@@ -146,6 +146,11 @@ DungeonCustomRewardCtrl._InitView = HL.Method() << function(self)
 end
 
 DungeonCustomRewardCtrl._OnClickBtnAward = HL.Method() << function(self)
+    
+    if PhaseManager:IsInPhaseTransition() then
+        return
+    end
+
     local realCostStamina = ActivityUtils.getRealStaminaCost(self.m_curSelectRadio * self.m_costStamina)
     if GameInstance.player.inventory.curStamina >= realCostStamina then
         PhaseManager:ExitPhaseFast(PHASE_ID)
@@ -157,6 +162,11 @@ DungeonCustomRewardCtrl._OnClickBtnAward = HL.Method() << function(self)
 end
 
 DungeonCustomRewardCtrl._OnClickBtnCancel = HL.Method() << function(self)
+    
+    if PhaseManager:IsInPhaseTransition() then
+        return
+    end
+
     PhaseManager:ExitPhaseFast(PHASE_ID)
 
     local dungeonId = self.m_dungeonId

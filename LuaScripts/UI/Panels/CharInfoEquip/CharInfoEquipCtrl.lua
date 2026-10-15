@@ -17,6 +17,7 @@ CharInfoEquipCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TACTICAL_ITEM_CHANGE] = 'OnTacticalItemChange',
     [MessageConst.ON_EQUIP_PRODUCE] = 'SetEquipListDirty',
     [MessageConst.ON_EQUIP_ENHANCE] = 'SetEquipListDirty',
+    [MessageConst.ON_SYSTEM_UNLOCK_CHANGED] = '_OnSystemUnlockChanged',
 }
 
 CharInfoEquipCtrl.m_arg = HL.Field(HL.Table)
@@ -58,6 +59,7 @@ CharInfoEquipCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_CleanUpCache()
     self:_InitActionEvent()
+    self:_RefreshEquipPresetGroupEntry()
     self.view.commonItemList.gameObject:SetActive(false)
     self.view.equipDetailNode.leftNode.gameObject:SetActive(false)
     self.view.tacticalDetailNode.leftNode.gameObject:SetActive(false)
@@ -85,12 +87,28 @@ end
 
 CharInfoEquipCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
     self.m_charInfo = charInfo
+    self:_RefreshEquipPresetGroupEntry()
     self:_CleanUpCache()
     self:_RefreshRightPanel({
         charInfo = charInfo,
         slotIndex = self.m_curSelectSlotIndex,
         compareEquipInstId = self.m_curCompareEquipInstId,
     })
+end
+
+CharInfoEquipCtrl._RefreshEquipPresetGroupEntry = HL.Method() << function(self)
+    local canOpen = CharInfoUtils.canOpenEquipPresetGroup(self.m_charInfo)
+    local isEntryVisible = canOpen and self.state == UIConst.CHAR_INFO_EQUIP_STATE.Normal
+    self.view.equipPresetBtn.gameObject:SetActive(isEntryVisible)
+    if canOpen then
+        self.view.infoBtnRedDot:InitRedDot("EquipPresetGroupNew")
+    else
+        self.view.infoBtnRedDot:Stop()
+    end
+end
+
+CharInfoEquipCtrl._OnSystemUnlockChanged = HL.Method() << function(self)
+    self:_RefreshEquipPresetGroupEntry()
 end
 
 CharInfoEquipCtrl._RefreshRightPanel = HL.Method(HL.Table)
@@ -479,14 +497,13 @@ CharInfoEquipCtrl.OnPutOnEquip = HL.Method(HL.Table) << function(self, arg)
         AudioAdapter.PostEvent("au_ui_equip_puton_accessories")
     end
 
-    Utils.triggerVoice("chrbark_gear", self.m_charInfo.templateId)
+    Utils.triggerVoice("chrbark_gear", newOwner.templateId)
 
     local lastSelectIndexId = self.view.commonItemList.m_curSelectId
     self.m_isInCompare = false
 
-    self.view.commonItemList:RefreshAllCells()
-
     if self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail then
+        self.view.commonItemList:RefreshAllCells()
         self:OnCompareEquipChange(lastSelectIndexId)
     end
 end
@@ -522,7 +539,16 @@ CharInfoEquipCtrl.OnTacticalItemChange = HL.Method(HL.Table) << function(self, a
     self.m_isInCompare = false
 
     if self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail then
-        self.view.commonItemList:RefreshAllCells()
+        local commonItemList = self.view.commonItemList
+        local charInst = CharInfoUtils.getPlayerCharInfoByInstId(self.m_charInfo.instId)
+        local equippedId = charInst.tacticalItemId
+        commonItemList.m_arg.equippedTacticalItemId = equippedId
+        for _, info in pairs(commonItemList.m_itemInfoList or {}) do
+            local isEquipped = equippedId ~= nil and not string.isEmpty(equippedId) and info.id == equippedId
+            info.isEquippedSort = isEquipped and 1 or 0
+            info.isEquippedSortReverse = -info.isEquippedSort
+        end
+        commonItemList:RefreshAllCells()
         self:OnSelectTacticalItemChange(lastSelectIndexId)
     end
 end
@@ -621,6 +647,21 @@ CharInfoEquipCtrl._InitActionEvent = HL.Method() << function(self)
             equipInstId = self.m_curCompareEquipInstId,
         })
     end)
+    self.view.equipPresetBtn.onClick:AddListener(function()
+        if not CharInfoUtils.canOpenEquipPresetGroup(self.m_charInfo) then
+            return
+        end
+        local equipSlotPanelPhaseItem = self.m_phase:_GetPanelPhaseItem(PanelId.CharInfoEquipSlot)
+        if equipSlotPanelPhaseItem and equipSlotPanelPhaseItem.uiCtrl:IsPlayingAnimationIn() then
+            equipSlotPanelPhaseItem.uiCtrl.animationWrapper:SkipInAnimation()
+        end
+        PhaseManager:GoToPhase(PhaseId.EquipPresetGroup, {
+            initCharInfo = {
+                instId = self.m_charInfo.instId,
+                templateId = self.m_charInfo.templateId,
+            },
+        })
+    end)
 end
 
 CharInfoEquipCtrl._GetConfirmText = HL.Method(HL.Int).Return(HL.Any) << function(self, equipInstId)
@@ -700,7 +741,6 @@ CharInfoEquipCtrl._RefreshCommonTacticalItemList = HL.Method() << function(self)
         skipGraduallyShow = skipGraduallyShow,
     })
 
-
     
 end
 
@@ -709,8 +749,6 @@ CharInfoEquipCtrl._RefreshCommonEquipList = HL.Method(HL.Number) << function(sel
     local charInstId = self.m_charInfo.instId
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
     local maxWearLimit = charInst.equipTierLimit
-    local charInstId = self.m_charInfo.instId
-    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
     local equipIndex = UIConst.EQUIP_PART_TYPE_2_CELL_CONFIG[selectSlotIndex].equipIndex
     local _, equipInstId = charInst.equipCol:TryGetValue(equipIndex)
 
@@ -750,6 +788,7 @@ CharInfoEquipCtrl._RefreshCommonEquipList = HL.Method(HL.Number) << function(sel
         curSortIsIncremental = curSortIsIncremental,
         selectedTags = selectedTags,
         skipGraduallyShow = skipGraduallyShow,
+        charInstId = charInstId,
     })
 
     
@@ -845,6 +884,7 @@ CharInfoEquipCtrl._ToggleEquipList = HL.Method(HL.Boolean) << function(self, isO
         self.view.commonItemList.gameObject:SetActive(isOn)
         self.view.tabGroup.gameObject:SetActive(isOn)
         self.view.enhanceBtn.gameObject:SetActive(isOn and Utils.isSystemUnlocked(GEnums.UnlockSystemType.EquipEnhance))
+        self:_RefreshEquipPresetGroupEntry()
     end
 
     local wrapper = self.animationWrapper
@@ -966,8 +1006,6 @@ CharInfoEquipCtrl._ShowCompare = HL.Method(HL.Boolean) << function(self, inCompa
     end
 
     self.view.btnEmpty.gameObject:SetActive(inCompare)
-    self.view.keyHintTabLeft.gameObject:SetActive(not inCompare)
-    self.view.keyHintTabRight.gameObject:SetActive(not inCompare)
 end
 
 CharInfoEquipCtrl._CleanUpCache = HL.Method() << function(self)

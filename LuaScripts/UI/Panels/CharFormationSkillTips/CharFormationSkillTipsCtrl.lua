@@ -20,6 +20,9 @@ CharFormationSkillTipsCtrl.m_hasCachedTipsPositionArgs = HL.Field(HL.Boolean) <<
 CharFormationSkillTipsCtrl.m_cachedTipsTransform = HL.Field(HL.Userdata)
 CharFormationSkillTipsCtrl.m_cachedTipsPosType = HL.Field(HL.Any)
 
+
+CharFormationSkillTipsCtrl.m_posTrackCoroutine = HL.Field(HL.Thread)
+
 CharFormationSkillTipsCtrl.m_extraInfoCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
@@ -78,9 +81,30 @@ CharFormationSkillTipsCtrl._ShowTips = HL.Method(HL.Table) << function(self, arg
 
     self:_CacheTipsPositionArgs(args)
     self:_UpdateDescScrollLayoutAndPosition()
-    self:_StartCoroutine(function()
+    
+    
+    if self.m_posTrackCoroutine then
+        self.m_posTrackCoroutine = self:_ClearCoroutine(self.m_posTrackCoroutine)
+    end
+    self.m_posTrackCoroutine = self:_StartCoroutine(function()
         coroutine.step()
         self:_UpdateDescScrollLayoutAndPosition()
+        local stableCount = 0
+        local lastX, lastY
+        while true do
+            coroutine.step()
+            self:_UpdateTipsPosition()
+            local pos = self.view.content.localPosition
+            if lastX ~= nil and math.abs(pos.x - lastX) < 0.01 and math.abs(pos.y - lastY) < 0.01 then
+                stableCount = stableCount + 1
+                if stableCount >= 3 then
+                    return
+                end
+            else
+                stableCount = 0
+            end
+            lastX, lastY = pos.x, pos.y
+        end
     end)
     Notify(MessageConst.ON_CHAR_INFO_SHOW_SKILL_TIP)
 end
@@ -318,6 +342,7 @@ end
 CharFormationSkillTipsCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.autoCloseArea.onTriggerAutoClose:RemoveAllListeners()
     self.view.autoCloseArea.onTriggerAutoClose:AddListener(function()
+        Notify(MessageConst.ON_CHAR_INFO_SKILL_TIP_CLOSED_BY_CANCEL)
         self:_CloseSkillTips()
     end)
 end

@@ -231,7 +231,7 @@ Item.InitItem = HL.Method(HL.Opt(HL.Any, HL.Any, HL.String, HL.Boolean))
         self.view.nameScrollText:ForceUpdate()
     end
 
-    self:UpdateCount(itemBundle.count, itemBundle.needCount, nil, nil, nil, nil, itemBundle.isInfinite)
+    self:UpdateCount(itemBundle.count, itemBundle.needCount, nil, nil, nil, itemBundle.isLack, itemBundle.isInfinite)
     self:_UpdateIcon(data, itemBundle.instId)
     self:_UpdateInstData(itemBundle)
     self:_UpdateWeaponAddon(itemBundle)
@@ -316,6 +316,16 @@ Item._UpdateCompositeIconBG = HL.Method() << function(self)
         end)
     if obj then
         self.view.compositeIconBG = obj:GetComponent("UIImage")
+        local colorStr = UIConst.ITEM_NO_RARITY_BG_DEFAULT_COLOR
+        local hasItem, itemData = Tables.itemTable:TryGetValue(self.id)
+        local compositeId = (hasItem and itemData.iconCompositeId) or nil
+        if not string.isEmpty(compositeId) then
+            local hasComposite, compositeData = Tables.itemIconCompositeTable:TryGetValue(compositeId)
+            if hasComposite and not string.isEmpty(compositeData.noRarityBgColor) then
+                colorStr = compositeData.noRarityBgColor
+            end
+        end
+        self.view.compositeIconBG.color = UIUtils.getColorByString(colorStr)
     end
 end
 
@@ -532,6 +542,23 @@ Item._UpdateLevelNode = HL.Method(HL.Opt(HL.Number)) << function(self, lv)
             lvTxt.color = self.view.config.LEVEL_TEXT_COLOR
             self.view.lvNumTxt = obj.transform:Find("LvNumTxt"):GetComponent("UIText")
             self.view.lvNumTxt.color = self.view.config.LEVEL_TEXT_COLOR
+            
+            
+            
+            local levelStateName = "ItemBig"
+            if self.view.config:HasValue("LEVEL_NODE_STATE") and not string.isEmpty(self.view.config.LEVEL_NODE_STATE) then
+                levelStateName = self.view.config.LEVEL_NODE_STATE
+            end
+            local levelNodeStateController = obj:GetComponent(typeof(CS.Beyond.UI.UIState.UIStateController))
+            if levelNodeStateController then
+                local stateList = levelNodeStateController.states
+                for i = 0, stateList.Count - 1 do
+                    if stateList[i].stateName == levelStateName then
+                        levelNodeStateController:SetState(levelStateName)
+                        break
+                    end
+                end
+            end
         end
     end
     if lv then

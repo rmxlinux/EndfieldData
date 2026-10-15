@@ -30,6 +30,8 @@ DialogTimelineCtrl.s_overrideMessages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TOGGLE_HUD_FADE] = '_OnToggleHudFade',
     [MessageConst.DIALOG_TIMELINE_SHOW_VIDEO_BORDER] = 'OnShowVideoBorder',
     [MessageConst.DIALOG_TIMELINE_HIDE_VIDEO_BORDER] = 'OnHideVideoBorder',
+    [MessageConst.ON_QTE_START] = 'OnQTEStart',
+    [MessageConst.ON_QTE_COMPLETE] = 'OnQTEComplete',
 }
 
 local UI_HIDDEN_WHITE_LIST = {
@@ -305,6 +307,9 @@ end
 
 
 DialogTimelineCtrl.OnBtnNextClick = HL.Override() << function(self)
+    if GameWorld.dialogTimelineManager.hasActiveUIInteractionTakeoverClip then
+        return
+    end
     if self:TryInterruptUIHidden() then
         return
     end

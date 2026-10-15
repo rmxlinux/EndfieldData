@@ -1,5 +1,29 @@
 local RedDotUtils = {}
 
+function RedDotUtils.isEquipPresetGroupNewUnread()
+    if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.EquipPresetGroup) then
+        return false
+    end
+    local globalVar = GameInstance.player and GameInstance.player.globalVar
+    if not globalVar then
+        return false
+    end
+    local _, value = globalVar:TryGetClientVar("equip_preset_group_new")
+    return (value or 0) < 1
+end
+
+function RedDotUtils.setEquipPresetGroupNewRead()
+    if not RedDotUtils.isEquipPresetGroupNewUnread() then
+        return
+    end
+    local globalVar = GameInstance.player and GameInstance.player.globalVar
+    if not globalVar then
+        return
+    end
+    globalVar:SetClientVar("equip_preset_group_new", 1)
+    RedDotManager:TriggerUpdate("EquipPresetGroupNew")
+end
+
 function RedDotUtils.hasGemNotEquipped()
     local gemDepot = GameInstance.player.inventory.valuableDepots[GEnums.ItemValuableDepotType.WeaponGem]:GetOrFallback(Utils.getCurrentScope())
     if not gemDepot then
@@ -574,6 +598,71 @@ end
 
 
 
+
+local INN_RED_DOT_CATEGORY = "InnRedDot"
+
+local innRecipeReadKey = "INN_RECIPE_READ_"
+
+function RedDotUtils.isInnRecipeRead(dishId)
+    local _, isRead = ClientDataManagerInst:GetBool(innRecipeReadKey .. dishId, false, false, INN_RED_DOT_CATEGORY)
+    return isRead
+end
+
+function RedDotUtils.markAllUnlockedInnRecipesRead()
+    local innSystem = GameInstance.player and GameInstance.player.innSystem
+    if not innSystem then
+        return
+    end
+    local anyMarked = false
+    for dishId, _ in pairs(Tables.innDishTable) do
+        if innSystem:IsDishUnlocked(dishId) and not RedDotUtils.isInnRecipeRead(dishId) then
+            ClientDataManagerInst:SetBool(innRecipeReadKey .. dishId, true, false, INN_RED_DOT_CATEGORY)
+            anyMarked = true
+        end
+    end
+    if anyMarked then
+        ClientDataManagerInst:SaveUserData(INN_RED_DOT_CATEGORY)
+        Notify(MessageConst.ON_INN_RECIPE_READ)
+    end
+end
+
+function RedDotUtils.isInnTopicRead(topicId)
+    local topicNum = CS.Beyond.Cfg.Tables.innManagementTopicIdToNum:GetValue(topicId)
+    return GameInstance.player.commonBitsetSystem:IsBitEnable(GEnums.BitsetType.ReadInnManagementTopic, topicNum)
+end
+
+function RedDotUtils.markInnTopicRead(topicId)
+    local hasTopic, topicData = Tables.innTopicTable:TryGetValue(topicId)
+    if not hasTopic or GameInstance.player.innSystem.innLevel < (topicData.unlockLevel or 0) then
+        return
+    end
+    if RedDotUtils.isInnTopicRead(topicId) then
+        return
+    end
+    local topicNum = CS.Beyond.Cfg.Tables.innManagementTopicIdToNum:GetValue(topicId)
+    GameInstance.player.commonBitsetSystem:EnableBit(GEnums.BitsetType.ReadInnManagementTopic, topicNum)
+end
+
+function RedDotUtils.markAllUnlockedInnTopicsRead()
+    local innSystem = GameInstance.player and GameInstance.player.innSystem
+    if not innSystem then
+        return
+    end
+    local innLevel = innSystem.innLevel
+    local topicNums = {}
+    for topicId, topicData in pairs(Tables.innTopicTable) do
+        if innLevel >= (topicData.unlockLevel or 0) and not RedDotUtils.isInnTopicRead(topicId) then
+            topicNums[#topicNums + 1] = CS.Beyond.Cfg.Tables.innManagementTopicIdToNum:GetValue(topicId)
+        end
+    end
+    if #topicNums > 0 then
+        GameInstance.player.commonBitsetSystem:EnableBits(GEnums.BitsetType.ReadInnManagementTopic, topicNums)
+    end
+end
+
+
+
+
 local foresightCharGrowthEntryReadKey = "foresight_char_growth_entry_read"
 function RedDotUtils.isForesightCharGrowthEntryUnread()
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.ForesightCharGrowth) then
@@ -587,54 +676,6 @@ function RedDotUtils.setForesightCharGrowthEntryRead()
         return
     end
     ClientDataManagerInst:SetBool(foresightCharGrowthEntryReadKey, true, false, EClientDataTimeValidType.Permanent)
-end
-
-
-
-
-
-
-local surveyRedDotCache = false
-local surveyRedDotTimerId = -1
-
-local function updateSurveyRedDot()
-    surveyRedDotCache = CS.Beyond.SDK.SDKAccountUtils.surveyRedDot
-    surveyRedDotTimerId = -1
-    RedDotManager:TriggerUpdate("Questionnaire")
-end
-
-function RedDotUtils.hasSurveyRedDot()
-    if surveyRedDotCache ~= CS.Beyond.SDK.SDKAccountUtils.surveyRedDot and surveyRedDotTimerId == -1 then
-        surveyRedDotTimerId = TimerManager:StartFrameTimer(0, updateSurveyRedDot)
-    end
-    return surveyRedDotCache
-end
-
-
-
-
-
-
-
-local activityWebPortalRedDotCache = {}
-local activityWebPortalRedDotTimerId = -1
-
-local function updateActivityWebPortalRedDot()
-    for target, _ in pairs(activityWebPortalRedDotCache) do
-        activityWebPortalRedDotCache[target] = CS.Beyond.SDK.SDKAccountUtils.GetActivityWebPortalRedDot(target)
-    end
-    activityWebPortalRedDotTimerId = -1
-    RedDotManager:TriggerUpdate("ActivityWEB")
-end
-
-function RedDotUtils.hasActivityWebPortalRedDot(target)
-    local cachedRedDot = activityWebPortalRedDotCache[target] or false
-    activityWebPortalRedDotCache[target] = cachedRedDot
-    local currentRedDot = CS.Beyond.SDK.SDKAccountUtils.GetActivityWebPortalRedDot(target)
-    if cachedRedDot ~= currentRedDot and activityWebPortalRedDotTimerId == -1 then
-        activityWebPortalRedDotTimerId = TimerManager:StartFrameTimer(0, updateActivityWebPortalRedDot)
-    end
-    return cachedRedDot
 end
 
 

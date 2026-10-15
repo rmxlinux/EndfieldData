@@ -11,6 +11,7 @@ local BUILDING_ICON_MAP = {
     [GEnums.FacBuildingType.BusStart] = "building_icon_bus_sourcepillar",
     [GEnums.FacBuildingType.MachineCrafter] = "building_icon_xirong_machine",
     [GEnums.FacBuildingType.Decorate] = "building_icon_decorate",
+    [GEnums.FacBuildingType.Soil] = "building_icon_soil",
 }
 local USE_DURATION = Tables.factoryConst.facBackUpPowerDuration
 local RECOVERY_DURATION = Tables.factoryConst.facBackUpPowerCooldownTime
@@ -396,8 +397,8 @@ FacMiniPowerContent._MonitorPower = HL.Method() << function(self)
     end
 
     if not string.isEmpty(showText) then
-        if not Utils.isInDungeon() and not Utils.isForbidden(ForbidType.FacPowerToast) and self.m_showToastTimer < 0 then
-            
+        
+        if not Utils.isInDungeon() and not Utils.isForbidden(ForbidType.FacPowerToast) and not UIUtils.inDialog() and self.m_showToastTimer < 0 then
             Notify(MessageConst.SHOW_SPECIAL_TOAST, showText)
             self.m_showToastTimer = self:_StartTimer(self.view.config.WARNING_TOAST_INTERVAL, function()
                 self:_ClearShowToastTimer()
@@ -440,7 +441,7 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
     local inBuildingMode = FactoryUtils.isInBuildMode()
     local node = self.view
 
-    node.powerSaveNode.gameObject:SetActive(not inBuildingMode)
+    node.powerSaveNode.gameObject:SetActive(not inBuildingMode or not data)
     if not inBuildingMode or not data then
         node.powerNode.gameObject:SetActive(true)
         node.buildingCountNode.gameObject:SetActive(false)
@@ -526,6 +527,25 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
         max = GameInstance.remoteFactoryManager.currentChapterInfo.data.domainDecorateCount
         cur = buildingMode.currentDecorateCount
         delta = buildingMode.isMoving and 0 or 1
+    elseif data.type == GEnums.FacBuildingType.Soil then
+        if buildingMode then
+            local addBuildingCheckResult = buildingMode.addBuildingCheckResult
+            if addBuildingCheckResult.cropAreaLimited then
+                
+            else
+                local facRegion = GameInstance.player.factoryRegionManager.currentRegion
+                if facRegion.type == GEnums.FacRegionType.Crop then
+                    buildingCountNodeActive = true
+                    max = facRegion:GetMaxCropCount()
+                    cur = facRegion:GetCurrentCropCount()
+                    if buildingMode then
+                        delta = buildingMode.isMoving and 0 or 1
+                    else
+                        delta = 0
+                    end
+                end
+            end
+        end
     elseif data.type == GEnums.FacBuildingType.MachineCrafter and data.id == XIRANITE_BUILDINGID then
         max = GameInstance.remoteFactoryManager:GetBuildingLimitsInChapter(data.id)
         if max < 0 then
@@ -614,6 +634,38 @@ FacMiniPowerContent.UpdateLackOfPowerAudio = HL.Method() << function(self)
         end
     end
     self.m_lackOfPowerAudioBaseTime = self.m_lackOfPowerAudioBaseTime + math.floor(normalizedElapseTime) * animLength
+end
+
+
+FacMiniPowerContent.SyncVisibilityForContent = HL.Method(HL.Boolean, HL.String) << function(self, visible, buildItemId)
+    if not self.gameObject then
+        return
+    end
+    self.gameObject:SetActive(visible)
+    if not visible then
+        self:ToggleCoroutine(false)
+    else
+        self:SwitchFacMiniPowerContent(buildItemId)
+        self:ToggleCoroutine(true)
+    end
+end
+FacMiniPowerContent.InitLoadedForContent = HL.Method() << function(self)
+    self:InitFacMiniPowerContent()
+    self.shouldShowBackupPower = true
+    self.isMonitorPower = true
+end
+FacMiniPowerContent.BuildModeChangeForContent = HL.Method(HL.Boolean) << function(self,shouldShow)
+    self:ToggleBackupPowerShow(shouldShow)
+end
+FacMiniPowerContent.FacChapterResetForContent = HL.Method(HL.String) << function(self, buildItemId)
+    self:ClearMemorizedPowerInfo()
+    if string.isEmpty(buildItemId) then
+        return
+    end
+    self:SwitchFacMiniPowerContent(buildItemId)
+end
+FacMiniPowerContent.OnFacBuildingPreviewPositionRotationChangedForContent = HL.Method(HL.String) << function(self,buildItemId)
+    self:SwitchFacMiniPowerContent(buildItemId)
 end
 
 HL.Commit(FacMiniPowerContent)

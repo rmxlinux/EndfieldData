@@ -76,6 +76,9 @@ CharInfoWeaponCtrl._InitActionEvent = HL.Method() << function(self)
     end)
     self.view.compareButton.onClick:RemoveAllListeners()
     self.view.compareButton.onClick:AddListener(function()
+        if UIManager:IsShow(PanelId.RecommendedTips) then
+            return
+        end
         self:_SwitchCompare(true)
     end)
 
@@ -99,6 +102,9 @@ CharInfoWeaponCtrl._InitActionEvent = HL.Method() << function(self)
 
     self.view.weaponInfoRight.view.tagBtn.onClick:RemoveAllListeners()
     self.view.weaponInfoRight.view.tagBtn.onClick:AddListener(function()
+        if self.m_inCompare then
+            return
+        end
         UIManager:Open(PanelId.RecommendedTips, {
             charId = self.m_charInfo.templateId,
             charInstId = self.m_charInfo.instId,
@@ -523,13 +529,17 @@ CharInfoWeaponCtrl._SetFocusMasteryNaviGroupActive = HL.Method(HL.Boolean) << fu
 end
 
 CharInfoWeaponCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local curSelectWeaponInstId = self.m_phase.m_curPreviewWeaponInstId
+    if curSelectWeaponInstId == nil or curSelectWeaponInstId <= 0 then
+        curSelectWeaponInstId = self.m_curSelectInstId
+    end
     local arg = {
         inCompare = self.m_inCompare,
         isDetail = self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail,
         curSortCSIndex = self.view.commonItemList.view.sortNode:GetCurSelectedIndex() - 1,
         curSortIsIncremental = self.view.commonItemList.view.sortNode.isIncremental,
         selectedTags = self.view.commonItemList.m_selectedTags,
-        curSelectedIndex = self.view.commonItemList:IsAnyItemSelecting() and self.view.commonItemList:GetCurSelectIndex() or nil,
+        curSelectWeaponInstId = curSelectWeaponInstId > 0 and curSelectWeaponInstId or nil,
         isBtnFullSkillClicked = UIManager:IsShow(PanelId.WeaponSkillDetail),
         isTagBtnClicked = UIManager:IsShow(PanelId.RecommendedTips),
     }
@@ -545,9 +555,11 @@ CharInfoWeaponCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
     UIManager:Hide(PanelId.CharInfo)
     self.m_phase:_ToggleWeaponDeco(false, nil, true)
 
-    if arg.curSelectedIndex then
-        self.view.commonItemList:SetSelectedIndex(arg.curSelectedIndex, false)
+    local targetInstId = arg.curSelectWeaponInstId
+    if not targetInstId or not self.view.commonItemList:GetItemInfoByIndexId(targetInstId) then
+        targetInstId = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId).weaponInstId
     end
+    self.view.commonItemList:SetSelectedId(targetInstId, false)
     if arg.inCompare then
         self:_SwitchCompare(true)
     end

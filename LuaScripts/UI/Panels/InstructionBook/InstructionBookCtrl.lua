@@ -20,8 +20,10 @@ InstructionBookCtrl.onClose = HL.Field(HL.Any) << nil
 
 InstructionBookCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local id
+    local hideBgImg
     if type(arg) == "table" then
         id = arg.id
+        hideBgImg = arg.hideBgImg
         self.onClose = arg.onClose
     else
         id = arg
@@ -34,6 +36,12 @@ InstructionBookCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:PlayAnimationOut()
     end)
 
+    if not string.isEmpty(arg.closeActionId) then
+        self:BindInputPlayerAction(arg.closeActionId, function()
+            self:PlayAnimationOut()
+        end)
+    end
+
     local succ, data = Tables.instructionBook:TryGetValue(id)
     if succ then
         self.view.titleText:SetAndResolveTextStyle(data.title)
@@ -41,6 +49,12 @@ InstructionBookCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     else
         self.view.titleText.text = id
         self.view.contentTxt.text = id
+    end
+
+    if hideBgImg then
+        self.view.bgImage.gameObject:SetActive(false)
+    else
+        self.view.bgImage.gameObject:SetActive(true) 
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})

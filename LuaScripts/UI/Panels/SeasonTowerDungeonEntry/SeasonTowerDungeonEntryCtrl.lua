@@ -128,6 +128,9 @@ SeasonTowerDungeonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
 
     if DeviceInfo.usingController then
         self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+        self.view.selectBtn1.naviGroup.onDefaultNaviFailed:AddListener(function(dir)
+            self:_OnDifficultyListNaviFailed(dir)
+        end)
     end
     
     self:_OnSelectGameGroup(defaultTabIndex)
@@ -136,6 +139,36 @@ SeasonTowerDungeonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self:_TryRecoverPopupState(arg and arg.popupState or nil)
     
     UIUtils.bindHyperlinkPopup(self, "DungeonEntry", self.view.inputGroup.groupId)
+end
+
+SeasonTowerDungeonEntryCtrl._OnDifficultyListNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
+    if not DeviceInfo.usingController then
+        return
+    end
+    if dir ~= CS.UnityEngine.UI.NaviDirection.Up and dir ~= CS.UnityEngine.UI.NaviDirection.Down then
+        return
+    end
+
+    
+    local firstTarget
+    local lastTarget
+    for index = 1, 3 do
+        local target = self.view["selectBtn" .. index]
+        if target.enableControllerNavi and target:IsActive() and target:IsInteractable() then
+            firstTarget = firstTarget or target
+            lastTarget = target
+        end
+    end
+    if not firstTarget or firstTarget == lastTarget then
+        return
+    end
+
+    local currentTarget = InputManagerInst.controllerNaviManager.curTarget
+    if dir == CS.UnityEngine.UI.NaviDirection.Up and currentTarget == firstTarget then
+        self:SetNaviTarget(lastTarget)
+    elseif dir == CS.UnityEngine.UI.NaviDirection.Down and currentTarget == lastTarget then
+        self:SetNaviTarget(firstTarget)
+    end
 end
 
 SeasonTowerDungeonEntryCtrl.OnClose = HL.Override() << function(self)

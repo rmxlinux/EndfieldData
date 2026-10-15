@@ -24,12 +24,14 @@ CharInfoAttributeHintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         if self.m_args and self.m_isFC then
             self.m_args = nil
         end
+        Notify(MessageConst.ON_CHAR_INFO_ATTR_TIP_CLOSED_BY_CANCEL)
         self:_CloseAttrTips()
     end)
     self.view.scAttributeHintNode.autoCloseArea.onTriggerAutoClose:AddListener(function()
         if self.m_args and not self.m_isFC then
             self.m_args = nil
         end
+        Notify(MessageConst.ON_CHAR_INFO_ATTR_TIP_CLOSED_BY_CANCEL)
         self:_CloseAttrTips()
     end)
 end
@@ -38,6 +40,9 @@ end
 CharInfoAttributeHintCtrl.m_args = HL.Field(HL.Table)
 
 CharInfoAttributeHintCtrl.m_isFC = HL.Field(HL.Boolean) << false
+
+
+CharInfoAttributeHintCtrl.m_posTrackCoroutine = HL.Field(HL.Thread)
 
 CharInfoAttributeHintCtrl.CharInfoShowFCAttrHint = HL.StaticMethod(HL.Table) << function(args)
     
@@ -105,19 +110,45 @@ CharInfoAttributeHintCtrl._TryShowHint = HL.StaticMethod(HL.Table, HL.Boolean) <
     else
         self:_ShowSCMainAttrHintNode()
     end
-    LayoutRebuilder.ForceRebuildLayoutImmediate(hintNode.content.transform)
     local tipsNode = args.tipsPos or args.transform
+    LayoutRebuilder.ForceRebuildLayoutImmediate(hintNode.content.transform)
+    self:_UpdateHintNodePosition(hintNode, tipsNode)
+    
+    if self.m_posTrackCoroutine then
+        self.m_posTrackCoroutine = self:_ClearCoroutine(self.m_posTrackCoroutine)
+    end
+    self.m_posTrackCoroutine = self:_StartCoroutine(function()
+        local stableCount = 0
+        local lastX, lastY
+        while true do
+            coroutine.step()
+            self:_UpdateHintNodePosition(hintNode, tipsNode)
+            local pos = hintNode.transform.anchoredPosition
+            if lastX ~= nil and math.abs(pos.x - lastX) < 0.01 and math.abs(pos.y - lastY) < 0.01 then
+                stableCount = stableCount + 1
+                if stableCount >= 3 then
+                    return
+                end
+            else
+                stableCount = 0
+            end
+            lastX, lastY = pos.x, pos.y
+        end
+    end)
+    hintNode.autoCloseArea.tmpSafeArea = args.transform
+    hintNode.autoCloseArea:ChangeEnableCloseActionOnController(args.enableCloseActionOnController == true)
+    self.isShowingHint = true
+
+    Notify(MessageConst.ON_CHAR_INFO_SHOW_ATTR_TIP)
+end
+
+CharInfoAttributeHintCtrl._UpdateHintNodePosition = HL.Method(HL.Table, HL.Any) << function(self, hintNode, tipsNode)
     local targetScreenRect = UIUtils.getTransformScreenRect(tipsNode, self.uiCamera) 
     local scale = self.view.transform.rect.width / Screen.width
     local pos = Vector2(targetScreenRect.xMax, -targetScreenRect.yMin) * scale
     
     pos.y = lume.clamp(pos.y, hintNode.content.transform.rect.height - self.view.transform.rect.height, 0)
     hintNode.transform.anchoredPosition = pos
-    hintNode.autoCloseArea.tmpSafeArea = args.transform
-    hintNode.autoCloseArea:ChangeEnableCloseActionOnController(args.enableCloseActionOnController == true)
-    self.isShowingHint = true
-
-    Notify(MessageConst.ON_CHAR_INFO_SHOW_ATTR_TIP)
 end
 
 CharInfoAttributeHintCtrl._ShowFCAttrHintNode = HL.Method() << function(self)
@@ -223,7 +254,9 @@ CharInfoAttributeHintCtrl._CloseAttrTips = HL.Method() << function(self)
     if isRealClose then
         self:_OnCloseAttrTips()
     end
-    self:PlayAnimationOutAndClose()
+    if not self.m_isClosed and not self:IsPlayingAnimationOut() then
+        self:PlayAnimationOutAndClose()
+    end
 end
 
 CharInfoAttributeHintCtrl._OnCloseAttrTips = HL.Method() << function(self)

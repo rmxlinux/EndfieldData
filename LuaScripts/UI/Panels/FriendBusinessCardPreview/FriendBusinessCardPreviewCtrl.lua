@@ -97,6 +97,7 @@ FriendBusinessCardPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
         self.view.mask2d.transform.pivot = Vector2(0.5, 0.5)
         self.view.businessCardScale.localScale = Vector3.one
 
+        self.m_businessCard.view.businessCardRoleNode:SetMaxPotentialGlowForShare(true)
         Notify(MessageConst.SHOW_COMMON_SHARE_PANEL, {
             type = "BusinessCard",
             showPlayerInfo = false,
@@ -104,6 +105,7 @@ FriendBusinessCardPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
             needEdge = false,
             onCaptureEnd = function()
                 
+                self.m_businessCard.view.businessCardRoleNode:SetMaxPotentialGlowForShare(false)
                 self.view.btnClose.gameObject:SetActive(true)
                 self.view.shareBtn.gameObject:SetActive(true)
                 self.view.mask2d.enabled = true
@@ -186,7 +188,11 @@ FriendBusinessCardPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     end
     if arg.forceShare == true then
         self.animationWrapper:SampleClip(self.animationWrapper.animationIn.name, self.animationWrapper.animationIn.length);
-        self.view.shareBtn.onClick:Invoke(nil)
+        
+        self:_StartCoroutine(function()
+            coroutine.step()
+            self.view.shareBtn.onClick:Invoke(nil)
+        end)
     else
         self.m_businessCard.view.animationWrapper:PlayInAnimation()
         self:_SyncExpandToWidget()
@@ -222,6 +228,10 @@ FriendBusinessCardPreviewCtrl._SyncExpandToWidget = HL.Method() << function(self
     self.m_businessCard.m_isExpanded = isExpanded
     self.m_businessCard.view.businessCardState:SetState(isExpanded and 'Expand' or 'Close')
     self.m_businessCard.view.bgCloseBtn.gameObject:SetActiveIfNecessary(isExpanded or self.m_businessCard.m_hideUI)
+    
+    if isExpanded and self.view.inputGroup.groupEnabled then
+        self.m_businessCard.view.businessCardRoleNode:NaviToFirstChar()
+    end
 end
 
 FriendBusinessCardPreviewCtrl.OnShow = HL.Override() << function(self)

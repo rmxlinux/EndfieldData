@@ -1,6 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipCabinInfoDisplay
 local SSStatusBarBase = require_ex('UI/Widgets/SSStatusBarBase')
+local SSRoomInfoPanel = require_ex('UI/Widgets/SSRoomInfoPanel')
 
 SpaceshipCabinInfoDisplayCtrl = HL.Class('SpaceshipCabinInfoDisplayCtrl', uiCtrl.UICtrl)
 
@@ -53,6 +54,15 @@ SpaceshipCabinInfoDisplayCtrl.m_statusBars = HL.Field(HL.Table)
 
 SpaceshipCabinInfoDisplayCtrl.m_charInfoPanels = HL.Field(HL.Table)
 
+SpaceshipCabinInfoDisplayCtrl.m_roomInfoPanelsActive = HL.Field(HL.Boolean) << true
+
+SpaceshipCabinInfoDisplayCtrl.SetRoomInfoPanelsActive = HL.StaticMethod(HL.Table) << function(args)
+    
+    local self = UIManager:AutoOpen(PANEL_ID)
+    self.m_roomInfoPanelsActive = unpack(args)
+    self:_RefreshRoomInfoPanelsActive()
+end
+
 SpaceshipCabinInfoDisplayCtrl.RegisterStatusBar = HL.StaticMethod(HL.Table) << function(args)
     
     local roomId = args.roomId
@@ -62,6 +72,7 @@ SpaceshipCabinInfoDisplayCtrl.RegisterStatusBar = HL.StaticMethod(HL.Table) << f
     local self = UIManager:AutoOpen(PANEL_ID)
     self.m_statusBars[roomId] = statusBar
     self:UpdateStatusBar(roomId)
+    self:_RefreshRoomInfoPanelsActive()
 end
 
 SpaceshipCabinInfoDisplayCtrl.RegisterCharInfoPanel = HL.StaticMethod(HL.Table) << function(args)
@@ -73,6 +84,7 @@ SpaceshipCabinInfoDisplayCtrl.RegisterCharInfoPanel = HL.StaticMethod(HL.Table) 
     local self = UIManager:AutoOpen(PANEL_ID)
     self.m_charInfoPanels[roomId] = charInfoPanel
     self:UpdateCharInfoPanel(roomId)
+    self:_RefreshRoomInfoPanelsActive()
 end
 
 SpaceshipCabinInfoDisplayCtrl.UnregisterStatusBar = HL.Method(HL.String) << function(self, roomId)
@@ -80,6 +92,20 @@ SpaceshipCabinInfoDisplayCtrl.UnregisterStatusBar = HL.Method(HL.String) << func
 end
 SpaceshipCabinInfoDisplayCtrl.UnregisterCharInfoPanel = HL.Method(HL.String) << function(self, roomId)
     self.m_charInfoPanels[roomId] = nil
+end
+
+SpaceshipCabinInfoDisplayCtrl._RefreshRoomInfoPanelsActive = HL.Method() << function(self)
+    local statusBarActive = self.m_roomInfoPanelsActive and Utils.isSystemUnlocked(GEnums.UnlockSystemType.SpaceshipSystem)
+    for _, statusBar in pairs(self.m_statusBars) do
+        if statusBar and HL.Is(statusBar, SSRoomInfoPanel) then
+            statusBar.gameObject:SetActiveIfNecessary(statusBarActive)
+        end
+    end
+    for _, charInfoPanel in pairs(self.m_charInfoPanels) do
+        if charInfoPanel then
+            charInfoPanel.gameObject:SetActiveIfNecessary(self.m_roomInfoPanelsActive)
+        end
+    end
 end
 
 SpaceshipCabinInfoDisplayCtrl.UpdateRoomIds = HL.Method() << function(self)
@@ -155,6 +181,7 @@ SpaceshipCabinInfoDisplayCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(s
                 statusBar.gameObject:SetActiveIfNecessary(true)
             end
         end
+        self:_RefreshRoomInfoPanelsActive()
     end
 end
 
@@ -184,6 +211,7 @@ end
 SpaceshipCabinInfoDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_statusBars = {}
     self.m_charInfoPanels = {}
+    self.m_roomInfoPanelsActive = true
 end
 
 HL.Commit(SpaceshipCabinInfoDisplayCtrl)

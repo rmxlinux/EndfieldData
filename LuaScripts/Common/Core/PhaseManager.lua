@@ -6,7 +6,7 @@ local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
 
 PhaseManager = HL.Class("PhaseManager")
 
-local PHASE_DUMMY_NAVI_LAYER_KEY_FORMAT = "Phase%s"
+local PHASE_NAVI_SCOPE_KEY_FORMAT = "Phase%s"
 
 
 
@@ -258,6 +258,41 @@ PhaseManager.PopPhase = HL.Method(HL.Number, HL.Opt(HL.Function)).Return(HL.Bool
     return true
 end
 
+
+
+PhaseManager.PopPhaseTo = HL.Method(HL.Number, HL.Opt(HL.Function)).Return(HL.Boolean) << function(self, targetPhaseId, callback)
+    logger.info("PhaseManager.PopPhaseTo", targetPhaseId, self:GetPhaseName(targetPhaseId))
+
+    if self.m_phaseStack:Empty() or not self:IsOpen(targetPhaseId) then
+        logger.error("PopPhaseTo: No Target Phase", targetPhaseId, self.phaseId2Names[targetPhaseId])
+        return false
+    end
+    local top = self.m_phaseStack:Peek()
+    if top.phaseId == targetPhaseId then
+        return false
+    end
+    if not self:CanPopPhase(top.phaseId) then
+        return false
+    end
+
+    local middles = {}
+    for i = self.m_phaseStack:TopIndex() - 1, self.m_phaseStack:BottomIndex(), -1 do
+        local phase = self.m_phaseStack:Get(i)
+        if phase.phaseId == targetPhaseId then
+            break
+        end
+        middles[#middles + 1] = phase
+    end
+    self.m_curState = Const.PhaseState.Pop
+    for _, phase in ipairs(middles) do
+        self.m_openedPhaseSet[phase.phaseId] = nil
+        self:_DoFinishPhase(phase, true)
+    end
+
+    self:_DoPopPhase(callback)
+    return true
+end
+
 PhaseManager.CanPopPhase = HL.Method(HL.Number).Return(HL.Boolean) << function(self, phaseId)
     if self.m_isExitingAll then
         logger.info("Phase isExitingAll, PopPhase Fail", phaseId, self:GetPhaseName(phaseId))
@@ -472,11 +507,16 @@ end
 PhaseManager.GetTopOpenAndValidPhaseId = HL.Method().Return(HL.Opt(HL.Number)) << function(self)
     
     local stack = self.m_phaseStack
+    if stack:Empty() then
+        return
+    end
     for i = stack.m_topIndex, stack.m_bottomIndex, -1 do
         local topPhase = stack:Get(i)
-        local isValid = self:IsOpenAndValid(topPhase.phaseId)
-        if isValid then
-            return topPhase.phaseId
+        if topPhase then
+            local isValid = self:IsOpenAndValid(topPhase.phaseId)
+            if isValid then
+                return topPhase.phaseId
+            end
         end
     end
 end
@@ -849,7 +889,7 @@ PhaseManager._DoFinishPhase = HL.Method(HL.Forward("PhaseBase"), HL.Boolean) << 
     phase:TransitionOut(fastMode)
     self:_ReleasePhase(phase)
 
-    Notify(MessageConst.DETACH_DUMMY_NAVI_LAYER, "Phase" .. phase.cfg.name)
+    InputManagerInst.controllerNaviManager:PopScope(self:_GetPhaseNaviScopeKeyByName(phase.cfg.name), true)
 
     Notify(MessageConst.UPDATE_DEBUG_PHASE_TEXT)
 end
@@ -1081,6 +1121,7 @@ PhaseManager._ExitOnSeamlessLoading = HL.Method() << function(self)
 end
 
 PhaseManager._ExitOnMapClose = HL.Method() << function(self)
+    UIManager:StartCacheRecoverScreen()
     self:ExitAllPhaseExceptLevel()
     
     local closeExceptPanelIds = {}
@@ -1090,6 +1131,7 @@ PhaseManager._ExitOnMapClose = HL.Method() << function(self)
     
     Notify(MessageConst.ON_FAC_CHAPTER_RESET)
     UIManager:CloseAllUI(true, closeExceptPanelIds)
+    UIManager:EndCacheRecoverScreen()
 end
 
 PhaseManager._UpdateIsUsingSystemSceneCamera = HL.Method() << function(self)
@@ -1139,7 +1181,7 @@ PhaseManager._DoPopTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("P
             end)
         end
         self:_ReleasePhase(popPhase)
-        Notify(MessageConst.DETACH_DUMMY_NAVI_LAYER, "Phase" .. popPhase.cfg.name)
+        InputManagerInst.controllerNaviManager:PopScope(self:_GetPhaseNaviScopeKeyByName(popPhase.cfg.name), true)
     end
 
     self:_UpdateIsUsingSystemSceneCamera()
@@ -1230,8 +1272,11 @@ PhaseManager._DoPushTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("
     self:_UpdateIsUsingSystemSceneCamera()
 
     if pushPhase then
-        if pushPhase.cfg.notCreateDummyNaviLayer ~= true then
-            Notify(MessageConst.ATTACH_DUMMY_NAVI_LAYER, string.format(PHASE_DUMMY_NAVI_LAYER_KEY_FORMAT, pushPhase.cfg.name))
+        if pushPhase.cfg.notCreateDummyNaviLayer ~= nil then    
+            logger.error("notCreateDummyNaviLayer 已更名为 notCreateNaviScope，请改 PhaseConfig", pushPhase.cfg.name)
+        end
+        if pushPhase.cfg.notCreateNaviScope ~= true then
+            InputManagerInst.controllerNaviManager:PushScope(self:_GetPhaseNaviScopeKeyByName(pushPhase.cfg.name))
         end
         local cfg = pushPhase.cfg
         local fov = cfg.fov
@@ -1337,8 +1382,12 @@ PhaseManager._IsSceneVisibleAfterTransition = HL.Method().Return(HL.Boolean) << 
     return topPhase.cfg.sceneVisible == true or topPhase.cfg.haveSceneCamera == true
 end
 
-PhaseManager.GetPhaseDummyNaviLayerName = HL.Method(HL.Number).Return(HL.String) << function(self, phaseId)
-    return string.format(PHASE_DUMMY_NAVI_LAYER_KEY_FORMAT, self:GetPhaseName(phaseId))
+PhaseManager.GetPhaseNaviScopeKey = HL.Method(HL.Number).Return(HL.String) << function(self, phaseId)
+    return self:_GetPhaseNaviScopeKeyByName(self:GetPhaseName(phaseId))
+end
+
+PhaseManager._GetPhaseNaviScopeKeyByName = HL.Method(HL.String).Return(HL.String) << function(self, phaseName)
+    return string.format(PHASE_NAVI_SCOPE_KEY_FORMAT, phaseName)
 end
 
 PhaseManager.GetPhaseIdByName = HL.Method(HL.String).Return(HL.Number) << function(self, phaseName)

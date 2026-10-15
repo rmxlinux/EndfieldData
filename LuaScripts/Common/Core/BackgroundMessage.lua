@@ -50,10 +50,6 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_PRELOAD_DIALOG_PANEL] = 'OnPreloadDialogPanel',
     },
     
-    ["Dialog2D"] = {
-        [MessageConst.ON_DIALOG_START_2D] = 'OnDialogStart2D',
-    },
-    
     ['DialogTimeline']={
         [MessageConst.ON_PRELOAD_DIALOG_TIMELINE_PANEL] = 'OnPreloadDialogTimelinePanel',
     },
@@ -93,9 +89,9 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         [MessageConst.TOGGLE_COMMON_ITEM_TOAST] = 'ToggleCommonItemToast',
         
-        [MessageConst.ON_PHASE_LEVEL_ON_TOP] = 'OnEnableCommonToast',
+        [MessageConst.ON_PHASE_LEVEL_ON_TOP] = 'OnPhaseLevelOnTop',
         
-        [MessageConst.ON_PHASE_LEVEL_NOT_ON_TOP] = 'OnDisableCommonToast',
+        [MessageConst.ON_PHASE_LEVEL_NOT_ON_TOP] = 'OnPhaseLevelNotOnTop',
         
         [MessageConst.ON_ENABLE_COMMON_TOAST] = 'OnEnableCommonToast',
         
@@ -318,6 +314,23 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_OPEN_SIMULATION_TRAINING_EXPLAIN_PANEL] = "ShowSimulationTrainingExplain",
     },
     
+    ['GambleBattleSubSettlement'] = {
+        
+        [MessageConst.ON_OPEN_GAMBLE_BATTLE_SUB_SETTLEMENT_PANEL] = "ShowGambleBattleSubSettlement",
+    },
+    
+    ['GambleBattleFinalSettlement'] = {
+        
+        [MessageConst.ON_OPEN_GAMBLE_BATTLE_FINAL_SETTLEMENT_PANEL] = "ShowGambleBattleFinalSettlement",
+    },
+    
+    ['GambleBattleMain'] = {
+        
+        [MessageConst.ON_OPEN_GAMBLE_BATTLE_MAIN_PANEL] = "ShowGambleBattleMain",
+        
+        [MessageConst.ON_OPEN_GAMBLE_BATTLE_DUNGEON_INFO_POPUP] = "OnOpenGambleBattleDungeonInfoPopup",
+    },
+    
     ['CommonTaskTrackToast'] = {
         
         [MessageConst.ON_SHOW_COMMON_TASK_COUNTDOWN_TOAST] = "OnShowCommonTaskCountdownToast",
@@ -327,6 +340,10 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FINISH] = "OnShowCommonTaskFinishToast",
         
         [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FAIL] = "OnShowCommonTaskFailToast",
+        
+        [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FINISH_DIRECT] = "OnShowCommonTaskFinishToastDirect",
+        
+        [MessageConst.ON_CLOSE_COMMON_TASK_TOAST_DIRECT] = "OnCloseCommonTaskToastDirect",
 
         
         [MessageConst.ON_SHOW_COMMON_TASK_TOAST_START_WITHOUT_ID] = "OnShowCommonTaskStartToastWithoutId",
@@ -425,7 +442,7 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     },
 
     
-    ['FacMiniPowerHud'] = {
+    ['FacTopHud'] = {
         
         [MessageConst.ON_ENTER_FACTORY_MODE] = 'OnEnterFactoryMode',
         
@@ -530,21 +547,6 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.SHOW_GUIDE_MEDIA] = 'ShowGuideMedia',
     },
     
-    ['HeadLabel'] = {
-        
-        [MessageConst.PRE_LEVEL_START] = '_OnLevelPreStart',
-        
-        [MessageConst.ON_ADD_HEAD_LABEL] = '_OnAddHeadLabel',
-        
-        [MessageConst.ON_REMOVE_HEAD_LABEL] = '_OnRemoveHeadLabel',
-        
-        [MessageConst.ON_ENV_TALK_CHANGED] = '_OnEnvTalkChanged',
-        
-        [MessageConst.ON_HEAD_LABEL_STATE_CHANGED] = '_OnStateChanged',
-        
-        [MessageConst.ON_HEAD_LABEL_GIFT_CHANGED] = '_OnGiftChanged',
-    },
-    
     ['ItemTips'] = {
         
         [MessageConst.SHOW_ITEM_TIPS] = 'ShowItemTips',
@@ -552,6 +554,10 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['WikiGuideTips'] = {
         
         [MessageConst.SHOW_WIKI_REF_TIPS] = 'ShowTips'
+    },
+    ['InnRanchTips'] = {
+        
+        [MessageConst.SHOW_ANIMAL_STATE_TIPS] = 'ShowTips'
     },
     
     ['HyperlinkTips'] = {
@@ -658,6 +664,11 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_BLOCK_PICKUP] = 'OnBlockPickup',
     },
     
+    ['QTE'] = {
+        
+        [MessageConst.ON_QTE_START] = 'OnQTEStart',
+    },
+    
     ['Reading'] = {
         
         [MessageConst.ON_OPEN_PRTS_READING_PANEL] = 'OnOpenReadingPhase',
@@ -746,6 +757,17 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_PHASE_LEVEL_ON_TOP] = 'TryShowEnvironmentalPrompt',
         
         [MessageConst.ON_PHASE_LEVEL_NOT_ON_TOP] = 'HideEnvironmentalPrompt',
+    },
+    
+    ['InnRecipeHud'] = {
+        
+        [MessageConst.ON_ENTER_FACTORY_SAFE_ZONE] = 'OnEnterFactorySafeZone',
+        
+        [MessageConst.ON_LEAVE_FACTORY_SAFE_ZONE] = 'OnLeaveFactorySafeZone',
+        
+        [MessageConst.ON_ENTER_FACTORY_MODE] = 'OnEnterFactoryMode',
+        
+        [MessageConst.ON_PHASE_LEVEL_ON_TOP] = 'OnPhaseLevelOnTop',
     },
     
     ['SubmitCollection'] = {
@@ -974,8 +996,15 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     },
     
     ['SpaceshipCabinInfoDisplay'] = {
+        [MessageConst.SET_SPACESHIP_ROOM_INFO_PANELS_ACTIVE] = 'SetRoomInfoPanelsActive',
         [MessageConst.SS_REGISTER_STATUS_BAR] = 'RegisterStatusBar',
         [MessageConst.SS_REGISTER_CHAR_INFO_PANEL] = 'RegisterCharInfoPanel',
+    },
+    
+    ['FacFarmTerminal'] = {
+        [MessageConst.FARM_TERMINAL_OPEN_NORMAL_PAGE] = 'OpenNormalPage',
+        [MessageConst.FARM_TERMINAL_OPEN_UPGRADE_PAGE] = 'OpenUpgradePage',
+        [MessageConst.SHOW_FARM_TERMINAL_UPGRADE_TOAST] = 'OnShowUpgradeToast',
     },
     
     ['RacingDungeonToast'] = {
@@ -1018,7 +1047,7 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         [MessageConst.SHOW_DEATH_INFO] = 'ShowDeathInfo',
     },
-    ['ContingencyContractSettlement'] = {
+    ['ContingencyContractSettlementNew'] = {
         
         
         [MessageConst.ON_CONTINGENCY_CONTRACT_SETTLEMENT] = 'OnSettlement',
@@ -1155,6 +1184,12 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         [MessageConst.ON_TYPHOEA_ARCHERY_OPEN_PANEL] = "OnOpenTyphoeaArcheryHud",
     },
+    
+    
+    ['InnFeedManage'] = {
+        
+        [MessageConst.OPEN_RANCH_MANAGE_PANEL] = "OnOpenRanchManagePanel",
+    },
 
     
     ['XiraniteNexusAim'] = {
@@ -1200,6 +1235,11 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['Snapshot'] = {
         
         [MessageConst.ON_SHOW_SNAPSHOT] = 'ShowSnapshot',
+    },
+    
+    ['MicroModelAlign'] = {
+        
+        [MessageConst.ON_SHOW_MICRO_MODEL_ALIGN] = 'ShowMicroModelAlign',
     },
     
     ['SpaceshipCollectionBooth'] = {
@@ -1408,6 +1448,25 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['SeasonTowerBuff'] = {
         
         [MessageConst.ON_SEASON_TOWER_BUFF_UPDATE] = 'OnSeasonTowerBuffUpdate',
+    },
+    
+    ["InnManagementResultDetail"] = {
+        [MessageConst.ON_INN_OPEN_RESULT_PANEL] = 'ShowPanel',
+    },
+    
+    
+    ['InnMainHud'] = {
+        
+        [MessageConst.ON_INN_COUNTER_START_GAME_INTERACT] = '_OnCounterStartGameInteract',
+        
+        [MessageConst.ON_INN_COUNTER_INFO_INTERACT] = '_OnCounterInfoInteract',
+        
+        [MessageConst.ON_INN_COUNTER_EXPANSION_INTERACT] = '_OnCounterExpansionInteract',
+    },
+    
+    ['InnCharTips'] = {
+        
+        [MessageConst.OPEN_INN_CHAR_TIPS] = 'ShowInnCharTips',
     },
 }
 

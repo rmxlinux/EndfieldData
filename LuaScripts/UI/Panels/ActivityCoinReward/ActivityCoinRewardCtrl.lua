@@ -5,6 +5,7 @@ local PHASE_ID = PhaseId.ActivityCoinReward
 ActivityCoinRewardCtrl = HL.Class('ActivityCoinRewardCtrl', uiCtrl.UICtrl)
 
 ActivityCoinRewardCtrl.s_messages = HL.StaticField(HL.Table) << {
+    [MessageConst.ON_ACTIVITY_UPDATED] = '_OnActivityScoreChange',
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE] = '_OnActivityDataChange',
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnActivityDataChange',
     [MessageConst.ON_ACTIVITY_RACING_DUNGEON_MILESTONE_CHANGED] = '_OnActivityDataChange',
@@ -17,6 +18,8 @@ ActivityCoinRewardCtrl.m_activityData = HL.Field(HL.Any)
 
 
 ActivityCoinRewardCtrl.m_openInDungeon = HL.Field(HL.Boolean) << false
+
+ActivityCoinRewardCtrl.m_stateName = HL.Field(HL.String) << ''
 
 
 ActivityCoinRewardCtrl.m_tasks = HL.Field(HL.Table)
@@ -39,6 +42,9 @@ ActivityCoinRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_openInDungeon = arg.openInDungeon == true
     self.m_readTasks = {}
     self.m_needNaviToFirst = true
+    if arg.stateName~= nil and not string.isEmpty(arg.stateName) then
+        self.m_stateName = arg.stateName
+    end
 
     self:_InitData()
     self:_BindUI()
@@ -61,15 +67,12 @@ ActivityCoinRewardCtrl._BindUI = HL.Method() << function(self)
 
     self.view.allReceiveBtn.onClick:RemoveAllListeners()
     self.view.allReceiveBtn.onClick:AddListener(function()
-        local waitToReceiveTaskIds = {}
-        for _, taskInfo in ipairs(self.m_tasks) do
-            if taskInfo.status == GEnums.ActivityConditionalTaskState.Completed then
-                table.insert(waitToReceiveTaskIds, taskInfo.taskId)
-            end
-        end
-        if #waitToReceiveTaskIds > 0 then
-            GameInstance.player.activitySystem:SendReceiveTaskRewardConditionMultiStage(self.m_activityId, waitToReceiveTaskIds)
-        end
+        self:_ReceiveAllTaskRewards()
+    end)
+
+    self.view.btnCommonYellow.onClick:RemoveAllListeners()
+    self.view.btnCommonYellow.onClick:AddListener(function()
+        self:_ReceiveAllTaskRewards()
     end)
 
     local _, achievementData = Tables.activityAchievementDataTable:TryGetValue(self.m_activityId)
@@ -78,6 +81,39 @@ ActivityCoinRewardCtrl._BindUI = HL.Method() << function(self)
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+
+    if self.m_stateName == "GambleBattle" then
+        self.animationWrapper:SetAnimationInClip("activitycoinrewardpanel_newin_part_0")
+        self.animationWrapper:SetAnimationInEasingClip("activitycoinrewardpanel_newin_part_1")
+        self.animationWrapper:SetAnimationLoopClip("activitycoinrewardpanel_newloop")
+        self.animationWrapper:SetAnimationOutClip("activitycoinrewardpanel_out")
+        self.view.mainStateController:SetState("GambleBattleBg")
+        self.view.taskCellStateController:SetState("GambleBattleCell")
+    else
+        self.animationWrapper:SetAnimationInClip("activitycoinrewardpanel_in_part_0")
+        self.animationWrapper:SetAnimationInEasingClip("activitycoinrewardpanel_in_part_1")
+        self.animationWrapper:SetAnimationLoopClip("")
+        self.animationWrapper:SetAnimationOutClip("activitycoinrewardpanel_out")
+        self.view.mainStateController:SetState("WonderlandBg")
+        self.view.taskCellStateController:SetState("WonderlandCell")
+    end
+
+end
+
+
+ActivityCoinRewardCtrl._ReceiveAllTaskRewards = HL.Method() << function(self)
+    local waitToReceiveTaskIds = {}
+    for _, taskInfo in ipairs(self.m_tasks) do
+        if taskInfo.status == GEnums.ActivityConditionalTaskState.Completed then
+            table.insert(waitToReceiveTaskIds, taskInfo.taskId)
+        end
+    end
+    if #waitToReceiveTaskIds <= 0 then
+        return
+    end
+
+    self.m_needNaviToFirst = true
+    GameInstance.player.activitySystem:SendReceiveTaskRewardConditionMultiStage(self.m_activityId, waitToReceiveTaskIds)
 end
 
 
@@ -114,6 +150,9 @@ ActivityCoinRewardCtrl._RefreshUI = HL.Method() << function(self)
     self.view.warningNode.gameObject:SetActive(self.m_openInDungeon)
 
     self.view.taskScroll:UpdateCount(#self.m_tasks)
+    if self.m_needNaviToFirst and #self.m_tasks > 0 then
+        self.view.taskScroll:ScrollToIndex(0, true)
+    end
 
     local hasCompletedTask = false
     for _, taskInfo in ipairs(self.m_tasks) do
@@ -122,7 +161,13 @@ ActivityCoinRewardCtrl._RefreshUI = HL.Method() << function(self)
             break
         end
     end
-    self.view.allReceiveBtn.gameObject:SetActive(not self.m_openInDungeon and hasCompletedTask)
+    if self.m_stateName == "GambleBattle" then
+        self.view.btnCommonYellow.gameObject:SetActive(not self.m_openInDungeon and hasCompletedTask)
+        self.view.allReceiveBtn.gameObject:SetActive(false)
+    else
+        self.view.allReceiveBtn.gameObject:SetActive(not self.m_openInDungeon and hasCompletedTask)
+        self.view.btnCommonYellow.gameObject:SetActive(false)
+    end
     self.view.disBtn.gameObject:SetActive(not self.m_openInDungeon and not hasCompletedTask)
 
     self:_RefreshScore()
@@ -166,7 +211,7 @@ ActivityCoinRewardCtrl._OnUpdateCell = HL.Method(HL.Userdata, HL.Number) << func
     cell.receiveBtn.onClick:RemoveAllListeners()
     if taskInfo.status == GEnums.ActivityConditionalTaskState.Completed then
         cell.receiveBtn.onClick:AddListener(function()
-            GameInstance.player.activitySystem:SendReceiveTaskRewardConditionMultiStage(self.m_activityId, { taskInfo.taskId })
+            self:_ReceiveAllTaskRewards()
         end)
     end
 
@@ -185,16 +230,22 @@ ActivityCoinRewardCtrl._OnUpdateCell = HL.Method(HL.Userdata, HL.Number) << func
 end
 
 
+
 ActivityCoinRewardCtrl._RefreshScore = HL.Method() << function(self)
     local currScore = ActivityUtils.GetRacingDungeonMilestoneCurrScore(self.m_activityId)
     local maxScore = ActivityUtils.GetRacingDungeonMilestoneMaxScore(self.m_activityId)
     self.view.rewardInfoNode.topNode.integralTxt.text = string.format("%d/%d", currScore, maxScore)
+    self.view.rewardInfoNode.curScoreNum.text = currScore
+    self.view.rewardInfoNode.maxScoreNum.text = maxScore
     self.view.rewardInfoNode.topNode.progressImg.fillAmount = maxScore > 0 and currScore / maxScore or 0
 end
 
 
 ActivityCoinRewardCtrl._RefreshReward = HL.Method() << function(self)
     local _, cfg = Tables.activityRacingDungeonTable:TryGetValue(self.m_activityId)
+    if cfg == nil then
+        _, cfg = Tables.activityCommonCoinRewardTable:TryGetValue(self.m_activityId)
+    end
     if cfg == nil then
         return
     end
@@ -236,6 +287,11 @@ end
 
 
 ActivityCoinRewardCtrl._RefreshCountdown = HL.Method() << function(self)
+    if self.m_stateName == "GambleBattle" then
+        self.view.countdownNode.gameObject:SetActive(false)
+        return
+    end
+
     if self.m_countdownCor then
         self:_ClearCoroutine(self.m_countdownCor)
         self.m_countdownCor = nil
@@ -297,6 +353,15 @@ ActivityCoinRewardCtrl._UpdateReadInfo = HL.Method() << function(self)
     for taskId, _ in pairs(self.m_readTasks) do
         ActivityUtils.setTaskRead(self.m_activityId, taskId)
     end
+end
+
+
+ActivityCoinRewardCtrl._OnActivityScoreChange = HL.Method(HL.Any) << function(self, arg)
+    local activityId = unpack(arg)
+    if activityId ~= self.m_activityId then
+        return
+    end
+    self:_RefreshScore()
 end
 
 ActivityCoinRewardCtrl._OnActivityDataChange = HL.Method(HL.Any) << function(self, arg)

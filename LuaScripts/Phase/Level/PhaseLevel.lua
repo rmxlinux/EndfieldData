@@ -33,6 +33,12 @@ PhaseLevel.s_messages = HL.StaticField(HL.Table) << {
     
 
     
+    [MessageConst.ON_INN_START_GAME] = { 'OnInnStartGame', true },
+    [MessageConst.ON_INN_RESULT_PANEL_CLOSE] = { 'OnInnGameResult', true },
+    [MessageConst.RECOVER_INN_MAIN_HUD] = { 'RecoverInnMainHud', true },
+    
+
+    
     [MessageConst.ON_START_DOMAIN_DEPOT_DELIVER] = { 'OnStartDomainDepotDeliver', true },
     [MessageConst.ON_FINISH_DOMAIN_DEPOT_DELIVER] = { 'OnFinishDomainDepotDeliver', true },
     
@@ -183,6 +189,7 @@ PhaseLevel.RefreshPhaseLevel = HL.Method() << function(self)
         self.m_hidePanelKey = UIManager:RecoverScreen(self.m_hidePanelKey)
     end
     if not self.isActive then
+        self.state = PhaseConst.EPhaseState.Activated
         self:_ActivePhase()
     end
     local config = PhaseLevelConfig.GetCurrentConfig()
@@ -198,16 +205,24 @@ PhaseLevel.RefreshPhaseLevel = HL.Method() << function(self)
             end
         end
     end
+
     for _, panelName in ipairs(PhaseConst.DONT_DESTROY_ON_CLOSE_MAP) do
         local panelId = PanelId[panelName]
         if panelId ~= PanelId.LevelCamera and openPanels[panelId] == nil and UIManager:IsShow(panelId) then
             UIManager:Hide(panelId)
         end
     end
+
+    
+    UIManager:Show(PanelId.HeadLabel)
+
     if self.m_generalTrackerPanel and UIManager:IsHide(PanelId.GeneralTracker) then
         UIManager:Show(PanelId.GeneralTracker)
     end
     Notify(MessageConst.ON_PHASE_LEVEL_ON_TOP)
+    if not PhaseManager.isRecovering and not LuaSystemManager.uiRestoreSystem:HasValidAction() then
+        CS.Beyond.Gameplay.Conditions.OnEnterMainHud.Trigger()
+    end
     self:_UpdateFactoryMode(true)
     self:_ShowDomainDepotPackHudPanelIfNeed()
     self:OnGameModeEnable({ GameInstance.mode.modeType, GameInstance.mode })
@@ -263,13 +278,13 @@ end
 
 PhaseLevel.m_lastLevelIdNum = HL.Field(HL.Number) << -1
 
-PhaseLevel.m_lastInFacMainRegion = HL.Field(HL.Boolean) << false
+PhaseLevel.facRegionType = HL.Field(HL.Any) << GEnums.FacRegionType.Outer
 
-PhaseLevel.mainRegionPanelIndex = HL.Field(HL.Number) << -1 
+PhaseLevel.facRegionPanelIndex = HL.Field(HL.Number) << -1 
 
-PhaseLevel.mainRegionLocalRect = HL.Field(CS.UnityEngine.Rect)
+PhaseLevel.facRegionLocalRect = HL.Field(CS.UnityEngine.Rect)
 
-PhaseLevel.mainRegionLocalRectWithMovePadding = HL.Field(CS.UnityEngine.Rect)
+PhaseLevel.facRegionLocalRectWithMovePadding = HL.Field(CS.UnityEngine.Rect)
 
 PhaseLevel.customFacTopViewRangeInWorld = HL.Field(CS.UnityEngine.Rect)
 
@@ -285,17 +300,18 @@ end
 
 PhaseLevel.ForceUpdateMainRegionInfo = HL.Method() << function(self)
     logger.info("PhaseLevel.ForceUpdateMainRegionInfo")
-    local inMainRegion, panelIndex = Utils.isInFacMainRegionAndGetIndex()
-    self:_UpdateCurMainRegionInfo(panelIndex)
+    local facRegion = GameInstance.player.factoryRegionManager.currentRegion
+    self:_UpdateFacRegionInfo(facRegion)
 end
 
 PhaseLevel.OnExitTravelMode = HL.Method() << function(self)
-    local inMainRegion, panelIndex = Utils.isInFacMainRegionAndGetIndex()
-    if self.m_lastInFacMainRegion == inMainRegion and (not inMainRegion or self.mainRegionPanelIndex == panelIndex) then
+    local facRegion = GameInstance.player.factoryRegionManager.currentRegion
+    local facRegionPanelIndex = facRegion:GetPanelIndex()
+    if self.facRegionType == facRegion.type and self.facRegionPanelIndex == facRegionPanelIndex then
         return
     end
-    self:_UpdateCurMainRegionInfo(panelIndex)
-    self:_TryAutoToggleFacMode(inMainRegion)
+    self:_UpdateFacRegionInfo(facRegion)
+    self:_TryAutoToggleFacMode()
 end
 
 PhaseLevel.m_enterFacMainRegionCamState = HL.Field(HL.Any)
@@ -304,15 +320,13 @@ PhaseLevel.m_waitInitFacMode = HL.Field(HL.Boolean) << true
 
 PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     if isInit then
-        local inMainRegion, panel = GameInstance.remoteFactoryManager:IsPlayerPositionInMainRegionAndGetIndex()
-        local panelIndex = -1
-        if inMainRegion and panel then
-            panelIndex = panel.index
-        end
+        local facRegion = GameInstance.player.factoryRegionManager.currentRegion
+        local facRegionType = facRegion.type
+
         local curLevelIdNum = GameWorld.worldInfo.curLevelIdNum
         self.m_waitInitFacMode = false
 
-        self:_UpdateCurMainRegionInfo(panelIndex)
+        self:_UpdateFacRegionInfo(facRegion)
 
         
         local enterFactoryModeOnSceneLoaded = false
@@ -328,32 +342,41 @@ PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
             inFacMode = LuaSystemManager.factory.inFacModeBeforeEnterDungeon
             LuaSystemManager.factory.inFacModeBeforeEnterDungeon = nil
         else
-            inFacMode = inMainRegion or enterFactoryModeOnSceneLoaded
+            local facRegionTypeData = FactoryUtils.getFacRegionTypeData()
+            inFacMode = facRegionTypeData.autoEnterFactoryMode or enterFactoryModeOnSceneLoaded
         end
         LuaSystemManager.factory:ClearAndSetFactoryMode(inFacMode, true)
 
+        local inMainRegion = facRegionType == GEnums.FacRegionType.Main
+
         self.m_lastLevelIdNum = curLevelIdNum
-        self.m_lastInFacMainRegion = inMainRegion
-        GameWorld.worldInfo.inFacMainRegion = inMainRegion
+        self.facRegionType = facRegionType
         EventLogManagerInst.isInFactoryArea = inMainRegion
 
         
         
         
-        UIManager:AutoOpen(PanelId.FacMiniPowerHud)
+        UIManager:AutoOpen(PanelId.FacTopHud)
 
-        if inMainRegion then
-            Notify(MessageConst.ON_ENTER_FAC_MAIN_REGION, panel)
-            Notify(MessageConst.ON_IN_FAC_MAIN_REGION_CHANGE, inMainRegion)
-
+        if facRegionType ~= GEnums.FacRegionType.Outer then
             
-            GameAction.SetInSafeZone(0, true) 
+            Notify(MessageConst.ON_ENTER_FAC_REGION, facRegion)
 
-            self.m_enterFacMainRegionCamState = FactoryUtils.enterFacCamera(FacConst.MAIN_REGION_CAM_STATE)
+            if Utils.isInSafeZone() then
+                
+                GameAction.SetInSafeZone(0, true) 
+            end
+
+            if inMainRegion then
+                Notify(MessageConst.ON_IN_FAC_MAIN_REGION_CHANGE, true)
+                self.m_enterFacMainRegionCamState = FactoryUtils.enterFacCamera(FacConst.MAIN_REGION_CAM_STATE)
+            end
         else
-            Notify(MessageConst.ON_EXIT_FAC_MAIN_REGION)
+            
+            
+            Notify(MessageConst.ON_EXIT_FAC_REGION, GEnums.FacRegionType.Main)
             if not inFacMode then
-                UIManager:Hide(PanelId.FacMiniPowerHud)
+                UIManager:Hide(PanelId.FacTopHud)
             end
         end
 
@@ -374,30 +397,33 @@ PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
     self:_UpdatePlayerPosFacInfo()
 
     
-    self:_RefreshFacModeAndMainRegion(nil)
+    self:_RefreshFacModeAndFacRegion(nil)
 end
 
-PhaseLevel._RefreshFacModeAndMainRegion = HL.Method(HL.Opt(HL.Any)) << function(self, reason)
-    local inMainRegion, panel = GameInstance.remoteFactoryManager:IsPlayerPositionInMainRegionAndGetIndex()
-    local panelIndex = -1
-    if inMainRegion and panel then
-        panelIndex = panel.index
-    end
+PhaseLevel._RefreshFacModeAndFacRegion = HL.Method(HL.Opt(HL.Any)) << function(self, reason)
+    local facRegion = GameInstance.player.factoryRegionManager.currentRegion
+    local facRegionType = facRegion.type
+    local facRegionPanelIndex = facRegion:GetPanelIndex()
+
     local curLevelIdNum = GameWorld.worldInfo.curLevelIdNum
 
     local levelChanged = self.m_lastLevelIdNum ~= curLevelIdNum
-    local mainRegionChanged = self.m_lastInFacMainRegion ~= inMainRegion or self.mainRegionPanelIndex ~= panelIndex
-    if not levelChanged and not mainRegionChanged then
+    local facRegionChanged = self.facRegionType ~= facRegionType or self.facRegionPanelIndex ~= facRegionPanelIndex
+    if not levelChanged and not facRegionChanged then
         return
     end
+
 
     if levelChanged then
         self.customFacTopViewRangeInWorld = nil
     end
 
+    local lastFacRegionType = self.facRegionType
+    local inMainRegion = facRegionType == GEnums.FacRegionType.Main
+
     self.m_lastLevelIdNum = curLevelIdNum
-    self.m_lastInFacMainRegion = inMainRegion
-    self:_UpdateCurMainRegionInfo(panelIndex)
+    self.facRegionType = facRegionType
+    self:_UpdateFacRegionInfo(facRegion)
 
     
     local isMovement = reason == CS.Beyond.Gameplay.Core.LevelChangeReason.Movement
@@ -405,26 +431,36 @@ PhaseLevel._RefreshFacModeAndMainRegion = HL.Method(HL.Opt(HL.Any)) << function(
     if not GameWorld.gameMechManager.travelPoleBrain.inFastTravelMode
         and not Utils.isSwitchModeDisabled()
         and not isMovement then
-        self:_TryAutoToggleFacMode(inMainRegion)
+        self:_TryAutoToggleFacMode()
     end
-    if inMainRegion then
-        Notify(MessageConst.ON_ENTER_FAC_MAIN_REGION, panel)
-        if not self.m_enterFacMainRegionCamState then
-            self.m_enterFacMainRegionCamState = FactoryUtils.enterFacCamera(FacConst.MAIN_REGION_CAM_STATE)
+
+    if facRegionChanged then
+        if lastFacRegionType ~= GEnums.FacRegionType.Outer then
+            
+            Notify(MessageConst.ON_EXIT_FAC_REGION, lastFacRegionType)
+            if lastFacRegionType == GEnums.FacRegionType.Main then
+                if self.m_enterFacMainRegionCamState then
+                    self.m_enterFacMainRegionCamState = FactoryUtils.exitFacCamera(self.m_enterFacMainRegionCamState)
+                end
+            end
         end
-    else
-        Notify(MessageConst.ON_EXIT_FAC_MAIN_REGION)
-        if self.m_enterFacMainRegionCamState then
-            self.m_enterFacMainRegionCamState = FactoryUtils.exitFacCamera(self.m_enterFacMainRegionCamState)
+        if facRegionType ~= GEnums.FacRegionType.Outer then
+            
+            Notify(MessageConst.ON_ENTER_FAC_REGION, facRegion)
+            if inMainRegion then
+                if not self.m_enterFacMainRegionCamState then
+                    self.m_enterFacMainRegionCamState = FactoryUtils.enterFacCamera(FacConst.MAIN_REGION_CAM_STATE)
+                end
+            end
         end
     end
+
     
-    GameAction.SetInSafeZone(0, inMainRegion)
+    local facRegionTypeData = FactoryUtils.getFacRegionTypeData()
+    GameAction.SetInSafeZone(0, facRegionTypeData.isSafeZone)
 
     Notify(MessageConst.ON_IN_FAC_MAIN_REGION_CHANGE, inMainRegion)
 
-    
-    GameWorld.worldInfo.inFacMainRegion = inMainRegion
     EventLogManagerInst.isInFactoryArea = inMainRegion
 end
 
@@ -433,30 +469,31 @@ PhaseLevel.OnCurrentLevelChanged = HL.Method(HL.Any) << function(self, arg)
         return
     end
     local reason = unpack(arg)
-    self:_RefreshFacModeAndMainRegion(reason)
+    self:_RefreshFacModeAndFacRegion(reason)
 end
 
-PhaseLevel._UpdateCurMainRegionInfo = HL.Method(HL.Opt(HL.Number)) << function(self, panelIndex)
-    if panelIndex and panelIndex >= 0 then
-        self.mainRegionPanelIndex = panelIndex
-        self.mainRegionLocalRect = GameInstance.remoteFactoryManager:GetMainRegionLocalRect(panelIndex, 0)
+PhaseLevel._UpdateFacRegionInfo = HL.Method(HL.Userdata) << function(self, facRegion)
+    local facRegionPanelIndex = facRegion:GetPanelIndex()
+    if facRegionPanelIndex ~= FacConst.FAC_REGION_CONST.INVALID_PANEL_INDEX then
+        self.facRegionPanelIndex = facRegionPanelIndex
+        self.facRegionLocalRect = facRegion:GetLocalRect()
         local padding = Vector2(FacConst.FAC_TOP_VIEW_MOVE_PADDING, FacConst.FAC_TOP_VIEW_MOVE_PADDING)
-        self.mainRegionLocalRectWithMovePadding = Unity.Rect(self.mainRegionLocalRect.min + padding, self.mainRegionLocalRect.size - padding * 2)
+        self.facRegionLocalRectWithMovePadding = Unity.Rect(self.facRegionLocalRect.min + padding, self.facRegionLocalRect.size - padding * 2)
     else
-        self.mainRegionPanelIndex = -1
-        self.mainRegionLocalRect = nil
-        self.mainRegionLocalRectWithMovePadding = nil
+        self.facRegionPanelIndex = FacConst.FAC_REGION_CONST.INVALID_PANEL_INDEX
+        self.facRegionLocalRect = nil
+        self.facRegionLocalRectWithMovePadding = nil
     end
 end
 
-PhaseLevel._TryAutoToggleFacMode = HL.Method(HL.Boolean) << function(self, inMainRegion)
-    if inMainRegion then
+PhaseLevel._TryAutoToggleFacMode = HL.Method() << function(self)
+    
+    local facRegionTypeData = FactoryUtils.getFacRegionTypeData()
+    if facRegionTypeData.autoEnterFactoryMode then
         if FactoryUtils.canPlayerEnterFacMode() then
-            
             LuaSystemManager.factory:AddFactoryModeRequest({ true, "Player" })
         end
     else
-        
         if not FactoryUtils.isInBuildMode() then
             LuaSystemManager.factory:RemoveFactoryModeRequest("Player" )
         end
@@ -524,6 +561,7 @@ PhaseLevel._OnActivated = HL.Override() << function(self)
     self:_AddRegisters()
     GameWorld.ppEffectLoader:ResumeTick()
     self:_OnInternalInMainHudStateChanged(true)
+    Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self, enabled = false})
 end
 
 
@@ -553,6 +591,7 @@ PhaseLevel._OnDestroy = HL.Override() << function(self)
     if self.m_defenseFinishClearScreenKey > 0 then
         self.m_defenseFinishClearScreenKey = UIManager:RecoverScreen(self.m_defenseFinishClearScreenKey)
     end
+    self:_RecoverInnClearScreen()
     self:_ClearRegisters()
     self:_ClearInMainHudMessageList()
 
@@ -597,6 +636,8 @@ PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
     if not Utils.isInDungeon() then
         Notify(MessageConst.ON_WORLD_LEVEL_CHANGED, {GameInstance.player.adventure.currentMaxWorldLevel - 1, GameInstance.player.adventure.currentMaxWorldLevel, false})
     end
+    
+    self:TryRestoreInnGame()
 
     if self.arg then
         local buildModeInfos = self.arg.buildModeInfos
@@ -616,7 +657,7 @@ PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
                 LuaSystemManager.factory.topViewCamTarget.transform.position = topViewArg.targetPos
                 LuaSystemManager.factory.topViewCamTarget.transform.eulerAngles = topViewArg.targetRot
                 LuaSystemManager.factory:SetTopViewCamZoomValue(topViewArg.zoomValue)
-                topViewCtrl:RecoverStateOnChangeDevice(topViewArg.selectedTypeIndex, topViewArg.selectedFilters)
+                topViewCtrl:RecoverStateOnChangeDevice(topViewArg)
                 if buildRecoverState and buildRecoverState.controllerMouseWorldPos and DeviceInfo.usingController then
                     topViewCtrl:RecoverControllerMouseOnChangeDevice(buildRecoverState.controllerMouseWorldPos)
                     buildArgs.initMousePos = InputManager.mousePosition
@@ -777,6 +818,7 @@ PhaseLevel.TryRestoreTowerDefense = HL.Method() << function(self)
     end
 end
 
+
 PhaseLevel.OnEnterTowerDefensePreparingPhase = HL.Method() << function(self)
     GameInstance.player.towerDefenseSystem.hudState = CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.Preparing
     LuaSystemManager.factory:AddFactoryModeRequest({ true, "TowerDefensePrepare" })
@@ -935,6 +977,91 @@ PhaseLevel.OnSceneRepatriateNeedUnstuck = HL.Method(HL.Table) << function(self, 
     })
 end
 
+
+
+
+
+local innExpectedPanels = {
+    PanelId.Joystick,
+    PanelId.MainHud,
+    PanelId.LevelCamera,
+    PanelId.CommonItemToast,
+    PanelId.CommonHudToast,
+    PanelId.InteractOption,
+    PanelId.GuideLimited,
+    PanelId.InnMainHud,
+    PanelId.InnKitchenOrderingPopUp,
+    PanelId.InnDrinkMenuPopUp,
+    PanelId.InnKitchenAdditionDetails,
+    PanelId.GeneralTracker,
+    PanelId.InnMenuSettings,
+}
+
+
+local innInGamePanels = {
+    PanelId.InnMainHud,
+    PanelId.InnKitchenOrderingPopUp,
+    PanelId.InnDrinkMenuPopUp,
+    PanelId.InnKitchenAdditionDetails,
+}
+
+PhaseLevel.m_innClearScreenKey = HL.Field(HL.Number) << -1
+
+PhaseLevel._RecoverInnClearScreen = HL.Method() << function(self)
+    if self.m_innClearScreenKey > 0 then
+        self.m_innClearScreenKey = UIManager:RecoverScreen(self.m_innClearScreenKey)
+    end
+end
+
+PhaseLevel._ClearInnScreen = HL.Method() << function(self)
+    self:_RecoverInnClearScreen()
+    self.m_innClearScreenKey = UIManager:ClearScreen(innExpectedPanels)
+end
+
+PhaseLevel.OnInnStartGame = HL.Method() << function(self)
+    local _, menuSettingsCtrl = UIManager:IsOpen(PanelId.InnMenuSettings)
+    if menuSettingsCtrl then
+        menuSettingsCtrl.animationWrapper:SetAnimationOutClip("innmenusettings_out_to_start")
+    end
+    if not PhaseManager:PopPhaseTo(PHASE_ID) then
+        PhaseManager:ExitPhaseFastTo(PHASE_ID, true)
+    end
+    self:_ClearInnScreen()
+    UIManager:AutoOpen(PanelId.InnMainHud)
+    GameAction.PostMusicEvent("au_music_map02_lv010_innmanagement_start", CS.Beyond.Gameplay.Audio.AudioMusicSystem.EMusicEventPreAction.NORMAL)
+
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "InnGame", true)
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidAttack, "InnGame", true)
+end
+
+PhaseLevel.OnInnGameResult = HL.Method() << function(self)
+    for _, panelId in ipairs(innInGamePanels) do
+        UIManager:Close(panelId)
+    end
+    self:_RecoverInnClearScreen()
+    GameAction.PostMusicEvent("au_music_map02_lv010_innmanagement_none", CS.Beyond.Gameplay.Audio.AudioMusicSystem.EMusicEventPreAction.NORMAL)
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "InnGame", false)
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidAttack, "InnGame", false)
+end
+
+PhaseLevel.TryRestoreInnGame = HL.Method() << function(self)
+    if not GameInstance.player.innSystem.isInGame then
+        return
+    end
+    self:_ClearInnScreen()
+end
+
+PhaseLevel.RecoverInnMainHud = HL.Method() << function(self)
+    UIManager:Hide(PanelId.InnKitchenOrderingPopUp)
+    UIManager:Hide(PanelId.InnDrinkMenuPopUp)
+    UIManager:Close(PanelId.InnKitchenAdditionDetails)
+    Notify(MessageConst.ON_INN_SHOW_MAIN_HUD)
+    local innSystem = GameInstance.player.innSystem
+    if innSystem.gameState.isManualPauseHeld then
+        innSystem:ReleaseManualPauseGame()
+        Notify(MessageConst.HIDE_POP_UP)
+    end
+end
 
 
 
@@ -1599,12 +1726,8 @@ end
 PhaseLevel.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
 
-    local opened, buildCtrl = UIManager:IsOpen(PanelId.FacBuildMode)
-    if opened and buildCtrl.m_mode ~= FacConst.FAC_BUILD_MODE.Normal then
-        arg.buildModeInfos = { buildCtrl.m_mode, buildCtrl.m_buildArgs, buildCtrl:GetRecoverBuildStateOnChangeDevice() }
-    else
-        arg.buildModeInfos = nil 
-    end
+    
+    arg.buildModeInfos = LuaSystemManager.factory:GetBuildModeHotSwitchArgs()
 
     arg.inDestroyMode = LuaSystemManager.factory.inDestroyMode
     arg.isSavingBP = arg.inDestroyMode and UIManager:IsShow(PanelId.FacSaveBlueprint)
@@ -1618,8 +1741,7 @@ PhaseLevel.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(sel
             zoomValue = LuaSystemManager.factory:GetTopViewCamZoomValue(),
         }
         local _, topViewCtrl = UIManager:IsOpen(PanelId.FacTopView)
-        arg.topViewArg.selectedTypeIndex = topViewCtrl.m_selectedTypeIndex
-        arg.topViewArg.selectedFilters = topViewCtrl.m_selectedFilters
+        topViewCtrl:GetCurStateArg(arg.topViewArg)
     else
         arg.topViewArg = nil 
     end

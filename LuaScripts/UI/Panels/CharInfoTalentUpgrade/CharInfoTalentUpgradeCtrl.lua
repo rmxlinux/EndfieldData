@@ -290,7 +290,7 @@ CharInfoTalentUpgradeCtrl._RefreshMainSkillUpgradeNode = HL.Method(HL.Any, HL.An
     
     self:_RefreshStanceSwitchSkillDesc(skillUpgradeNode, charInst.instId, skillGroupCfg)
 
-    local isElite = curSkillLv >= UIConst.CHAR_MAX_SKILL_NORMAL_LV
+    local isElite = curSkillLv > UIConst.CHAR_MAX_SKILL_NORMAL_LV
     local showSkillLv = lume.clamp(curSkillLv, 1, UIConst.CHAR_MAX_SKILL_NORMAL_LV)
     local eliteLv = isElite and curSkillLv - UIConst.CHAR_MAX_SKILL_NORMAL_LV or 0
 
@@ -781,8 +781,10 @@ CharInfoTalentUpgradeCtrl._RefreshStanceSwitchSkillDesc = HL.Method(HL.Any, HL.N
     local desc, isActive = CharInfoUtils.generateSkillGroupConditionDescText(charInstId, skillGroupCfg, self.m_curConditionIdx)
     if desc then
         skillUpgradeNode.stanceSwitchSkillDesc:SetAndResolveTextStyle(desc)
-        skillUpgradeNode.stanceSwitchSkillDescStateController:SetState(isActive
-            and "Active" or "Inactive")
+        if skillUpgradeNode.stanceSwitchSkillDescStateController then
+            skillUpgradeNode.stanceSwitchSkillDescStateController:SetState(isActive
+                and "Active" or "Inactive")
+        end
         skillUpgradeNode.stanceSwitchSkillDesc.gameObject:SetActive(true)
     else
         skillUpgradeNode.stanceSwitchSkillDesc.gameObject:SetActive(false)

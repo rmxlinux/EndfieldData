@@ -43,12 +43,14 @@ BalloonTabCell._OnFirstTimeInit = HL.Override() << function(self)
 
     self.view.balloonDragItem.onDragEvent:RemoveAllListeners()
     self.view.balloonDragItem.onDragEvent:AddListener(function(eventData)
+        local phase = self.m_ctrl and self.m_ctrl.m_phase
+        if not phase or not phase.isDragIngCell then
+            return
+        end
         if not IsNull(self.view.balloonDragItem.curDragObj) then
             self.view.balloonDragItem.curDragObj.gameObject:SetActive(true)
         end
-        if self.m_ctrl and self.m_ctrl.m_phase then
-            self.m_ctrl.m_phase:OnDraggingCell(eventData)
-        end
+        phase:OnDraggingCell(eventData)
     end)
 
     self.view.balloonDragItem.onEndDragEvent:RemoveAllListeners()

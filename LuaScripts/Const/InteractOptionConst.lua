@@ -25,6 +25,9 @@ local InteractOptionType = CS.Beyond.Gameplay.Core.InteractOptionType
 
 
 
+
+
+
 INTERACT_OPTION_PARSE_OPTION_DATA_CONFIG = {
     [InteractOptionType.Npc] = function(optInfo, optData)
         optInfo.icon = optInfo.icon or "npc_int_icon"
@@ -36,6 +39,25 @@ INTERACT_OPTION_PARSE_OPTION_DATA_CONFIG = {
         optInfo.icon = optData[5]
         optInfo.iconFolder = optData[6]
         optInfo.isItem = true
+    end,
+    [InteractOptionType.InnFood] = function(optInfo, optData)
+        optInfo.text = optData[2]
+        optInfo.action = optData[3]
+        optInfo.itemId = optData[4]
+        optInfo.bgColor = optData[5]
+        optInfo.icon = nil
+        optInfo.iconFolder = nil
+        optInfo.count = 0
+        optInfo.useOverrideName = true
+        optInfo.isItem = true
+        optInfo.rarityColor = "FFEDED7F"
+        optInfo.hidePickUpNode = true
+        optData.needReSort = true
+        optData.setTopAsSelectedWhenSort = true
+    end,
+    [InteractOptionType.InnGame] = function(optInfo, optData)
+        optInfo.isItemOrder = 0
+        optInfo.typeOrder = InteractOptionType.InnFood:GetHashCode()
     end,
     [InteractOptionType.Crop] = function(optInfo, optData)
         local srcData = optData[2]
@@ -59,6 +81,17 @@ INTERACT_OPTION_PARSE_OPTION_DATA_CONFIG = {
         end
         optInfo.text = srcData.text
         optInfo.action = srcData.cb
+        
+        local nodeId = srcData.buildingNodeId
+        if nodeId and nodeId > 0 then
+            optInfo.longPressAction = function()
+                if FactoryUtils.canMoveBuilding(nodeId, true) then
+                    Notify(MessageConst.FAC_ENTER_BUILDING_MODE, { nodeId = nodeId })
+                else
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_BUILDING_MOVE_NOT_ALLOWED)
+                end
+            end
+        end
     end,
     [InteractOptionType.AbandonPack] = function(optInfo, optData)
         optInfo.itemId = optData.itemId

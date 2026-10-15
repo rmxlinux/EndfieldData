@@ -90,7 +90,8 @@ GemTermOverviewPopupCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
                 break
             end
         end
-        if allSkillMatch then
+        
+        if allSkillMatch and weaponId ~= "wpn_sword_0021_ink" then
             local _, itemCfg = Tables.itemTable:TryGetValue(weaponId)
             
             local weaponItemInfo = {

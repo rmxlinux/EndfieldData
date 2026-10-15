@@ -167,6 +167,8 @@ SNSFriendCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.view.friendDialogContent:ManuallyFocusMessageUp()
         elseif dir == CS.UnityEngine.UI.NaviDirection.Down then
             self.view.friendDialogContent:ManuallyFocusMessageDown()
+        else
+            self.view.friendDialogContent.view.dialogScrollList:ListWrapNavigate(dir)
         end
     end)
 

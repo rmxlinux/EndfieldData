@@ -38,6 +38,11 @@ local MATERIAL_CELL_COUNT_PER_ROW = 2
 local MATERIAL_CELL_ITEM_ROW_SIZE = 138
 local MATERIAL_CELL_TITLE_ROW_SIZE = 84
 
+local ENHANCE_MATERIAL_LIST_TYPE = {
+    OWN = "own",                        
+    MANUFACTURED = "manufactured",      
+}
+
 
 
 
@@ -168,7 +173,8 @@ EquipTechCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(sel
 
     
     if UIManager:IsOpen(PanelId.EquipFormulaChainSelect) then
-        state.formulaChainSelectArg = { formulaId = self.m_selectedProduceFormulaId }
+        local _, chainSelectCtrl = UIManager:IsOpen(PanelId.EquipFormulaChainSelect)
+        state.formulaChainSelectArg = chainSelectCtrl and chainSelectCtrl:GetRecoverStateArg() or { formulaId = self.m_selectedProduceFormulaId }
     elseif UIManager:IsOpen(PanelId.EquipBatchFormulaChainSelect) then
         state.batchFormulaChainSelectOpen = true
         local _, batchCtrl = UIManager:IsOpen(PanelId.EquipBatchFormulaChainSelect)
@@ -215,6 +221,9 @@ EquipTechCtrl._CollectEnhanceMaterialResumeState = HL.Method().Return(HL.Table) 
         selectedEnhancedAttrIndex = attrShowInfo and attrShowInfo.enhancedAttrIndex or 0,
         selectedMaterialInstIdList = self.m_selectedMaterialInstIdList,
         selectedMaterialInstId2Index = self.m_selectedMaterialInstId2Index,
+        materialListMode = self.m_materialListMode,
+        selectedManufacturedFilterTags = self.m_selectedManufacturedFilterTags,
+        manufacturedFormulaCountMap = self.m_manufacturedFormulaCountMap,
     }
     local itemList = self.view.selectMaterials and self.view.selectMaterials.itemList
     if itemList and itemList.gameObject.activeInHierarchy then
@@ -278,6 +287,12 @@ EquipTechCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, re
     end
     
     if resumeState.formulaChainSelectArg then
+        local enhanceMaterialState = resumeState.enhanceMaterial
+        local chainFormulaId = resumeState.formulaChainSelectArg.formulaId
+        if enhanceMaterialState and enhanceMaterialState.materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and not string.isEmpty(chainFormulaId) then
+            self.m_manufacturedChainSelectFormulaId = chainFormulaId
+            self:_ScrollManufacturedListToFormula(chainFormulaId)
+        end
         UIManager:Open(PanelId.EquipFormulaChainSelect, resumeState.formulaChainSelectArg)
     elseif resumeState.batchFormulaChainSelectOpen then
         UIManager:Open(PanelId.EquipBatchFormulaChainSelect, resumeState.batchFormulaChainSelectArg)
@@ -380,6 +395,11 @@ EquipTechCtrl._InitAction = HL.Method() << function(self)
     self:BindInputPlayerAction("equip_tech_close", function()
         PhaseManager:PopPhase(PHASE_ID)
     end)
+    self.m_addManufacturedFormulaBindingId = self:BindInputPlayerAction("equip_tech_add_manufactured_formula", function()
+        self:_TriggerAddManufacturedFormula()
+    end)
+    
+    self:_UpdateAddManufacturedFormulaActionState()
     self.view.topBar.btnClose.onClick:AddListener(function()
         PhaseManager:PopPhase(PHASE_ID)
     end)
@@ -430,6 +450,7 @@ EquipTechCtrl._InitAction = HL.Method() << function(self)
     self.view.middleBar.produceContent.formulaNode.switchFormulaBtnNode.onClick:AddListener(function()
         local args = {
             formulaId = self.m_selectedProduceFormulaId,
+            chainChangeWay = CS.Beyond.SDK.EventLogDefine.EventLogChainChangeWay.Produce,
         }
         UIManager:Open(PanelId.EquipFormulaChainSelect, args)
     end)
@@ -647,6 +668,14 @@ EquipTechCtrl._OnFormulaChainChanged = HL.Method(HL.Any) << function(self, arg)
         Notify(MessageConst.SHOW_EQUIP_TOAST, string.format(Language.LUA_EQUIP_FORMULA_CHAIN_SINGLE_TOAST, materialName))
     end
 
+    
+    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and mode == MODE_SINGLE then
+        local formulaId = self.m_manufacturedChainSelectFormulaId
+        if formulaId then
+            self:_OnManufacturedFormulaChainChanged(formulaId)
+        end
+    end
+
     if self.view.stateController.currentStateName ~= STATE_NAME.PRODUCE then
         return
     end
@@ -811,7 +840,11 @@ EquipTechCtrl._InitProduceList = HL.Method() << function(self)
         local defaultSort = EquipTechUtils.GetSortType()
         defaultSort = CSIndex(defaultSort)
         self.view.leftBarProduce.sortNode:InitSortNode(EquipTechConst.EQUIP_PRODUCE_PACK_SORT_OPTION, function(sortOption, isIncremental)
-            self:_ClearProduceEquipSelection()      
+            
+            
+            if not (self.m_arg and self.m_arg.resumeState) then
+                self:_ClearProduceEquipSelection()
+            end
             self:_ApplyProduceSortOption(sortOption, isIncremental)
             self:_RefreshProduceList()
         end, defaultSort, nil, true, self.view.leftBarProduce.filterBtn)
@@ -959,6 +992,10 @@ EquipTechCtrl._RefreshProduceList = HL.Method() << function(self)
         if targetItem then
             self:_OnProduceItemClicked(targetEquipCell, targetItem, false)
             self:_RefreshProduceEquipInfo(targetItem, true)
+        end
+        local scrollRect = self.view.leftBarProduce.itemList:GetComponent(typeof(CS.Beyond.UI.UIScrollRect))
+        if scrollRect and targetEquipCell then
+            scrollRect:AutoScrollToRectTransform(targetEquipCell.transform, true)
         end
         if DeviceInfo.usingController then
             self:SetNaviTarget(targetEquipCell.view.button)
@@ -1314,8 +1351,21 @@ end
 
 EquipTechCtrl._OnItemChanged = HL.Method(HL.Table) << function(self, args)
     local changedItemId2DiffCount = unpack(args)
+
+    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and self.m_manufacturedCostOwnedCache then
+        local touched = false
+        for resourceId, _ in pairs(self.m_manufacturedCostOwnedCache) do
+            if changedItemId2DiffCount:ContainsKey(resourceId) then
+                touched = true
+                break
+            end
+        end
+        if touched then
+            self:_RefreshManufacturedCostOwnedCache()
+        end
+    end
     local needRefresh = false
-    for _, itemId in pairs(self.m_costItemIds) do
+    for _, itemId in pairs(self.m_costItemIds or {}) do
         if changedItemId2DiffCount:ContainsKey(itemId) then
             needRefresh = true
             break
@@ -1329,8 +1379,12 @@ end
 
 EquipTechCtrl._OnWalletChanged = HL.Method(HL.Table) << function(self, args)
     local itemId = unpack(args)
+    
+    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and self.m_manufacturedCostOwnedCache and self.m_manufacturedCostOwnedCache[itemId] ~= nil then
+        self:_RefreshManufacturedCostOwnedCache()
+    end
     local needRefresh = false
-    for _, costItemId in pairs(self.m_costItemIds) do
+    for _, costItemId in pairs(self.m_costItemIds or {}) do
         if costItemId == itemId then
             needRefresh = true
             break
@@ -1661,7 +1715,48 @@ EquipTechCtrl.m_enhanceCostPerItemCount = HL.Field(HL.Number) << 0
 
 EquipTechCtrl.m_isEnhanceMaterialNaviTargetSet = HL.Field(HL.Boolean) << false
 
+EquipTechCtrl.m_isManufacturedNaviTargetSet = HL.Field(HL.Boolean) << false
+
+EquipTechCtrl.m_addManufacturedFormulaBindingId = HL.Field(HL.Number) << -1
+
 EquipTechCtrl.m_materialFastScrollIndex = HL.Field(HL.Number) << 0
+
+EquipTechCtrl.m_materialListMode = HL.Field(HL.String) << ENHANCE_MATERIAL_LIST_TYPE.OWN
+
+EquipTechCtrl.m_getManufacturedCell = HL.Field(HL.Function)
+
+EquipTechCtrl.m_manufacturedFormulaList = HL.Field(HL.Table)
+
+
+EquipTechCtrl.m_allManufacturedFormulaList = HL.Field(HL.Table)
+
+
+EquipTechCtrl.m_selectedManufacturedFilterTags = HL.Field(HL.Table)
+
+
+EquipTechCtrl.m_manufacturedFormulaCountMap = HL.Field(HL.Table)
+
+
+EquipTechCtrl.m_manufacturedFormulaChainCache = HL.Field(HL.Table)
+
+
+EquipTechCtrl.m_manufacturedCostOwnedCache = HL.Field(HL.Table)
+
+
+EquipTechCtrl.m_isRefreshingManufacturedCells = HL.Field(HL.Boolean) << false
+
+
+EquipTechCtrl.m_manufacturedChainSelectFormulaId = HL.Field(HL.Any) << nil
+
+
+EquipTechCtrl.m_manufacturedAutoSelectChainChanging = HL.Field(HL.Boolean) << false
+
+
+EquipTechCtrl.m_manufacturedSortBySelectedCount = HL.Field(HL.Boolean) << false
+
+
+EquipTechCtrl.m_quickFillOldChainId = HL.Field(HL.Int) << 0
+EquipTechCtrl.m_quickFillCurChainId = HL.Field(HL.Int) << 0
 
 EquipTechCtrl._BackToEnhanceTarget = HL.Method() << function(self)
     self.view.stateController:SetState(STATE_NAME.ENHANCE_TARGET)
@@ -1682,9 +1777,66 @@ EquipTechCtrl._BackToEnhanceTarget = HL.Method() << function(self)
 end
 
 EquipTechCtrl._EnterEnhanceMaterial = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    
+    local ownStateController = self.view.selectMaterials.materialOwnToggleState
+    local produceStateController = self.view.selectMaterials.materialProduceToggleState
+    ownStateController.enabled = false
+    produceStateController.enabled = false
     self.view.stateController:SetState(STATE_NAME.ENHANCE_MATERIAL)
-    self:_RefreshEnhanceMaterialList(resumeState)
-    self:_RefreshEnhanceInfo(true)
+
+    
+    self.m_selectedManufacturedFilterTags = (resumeState and resumeState.selectedManufacturedFilterTags) or {}
+
+    local ownToggle = self.view.selectMaterials.materialOwnToggle               
+    local produceToggle = self.view.selectMaterials.materialProduceToggle       
+    ownToggle.onValueChanged:RemoveAllListeners()
+    ownToggle.onValueChanged:AddListener(function(isOn)
+        if isOn then
+            self:_NotifySwitchMaterialModeClearToast()
+            self:_SwitchMaterialListMode(ENHANCE_MATERIAL_LIST_TYPE.OWN)
+        end
+    end)
+    produceToggle.onValueChanged:RemoveAllListeners()
+    produceToggle.onValueChanged:AddListener(function(isOn)
+        if isOn then
+            self:_NotifySwitchMaterialModeClearToast()
+            self:_SwitchMaterialListMode(ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED)
+        end
+    end)
+
+    
+    
+    local mode
+    local precomputedGroups
+    if resumeState and resumeState.materialListMode then
+        mode = resumeState.materialListMode
+        
+        self.m_manufacturedFormulaCountMap = resumeState.manufacturedFormulaCountMap or {}
+    else
+        precomputedGroups = self:_ComputeEnhanceMaterialGroups()
+        self.m_materialGroups = precomputedGroups
+        mode = self:_GetDefaultMaterialListMode()
+    end
+    self.m_materialListMode = mode
+    ownToggle:SetIsOnWithoutNotify(mode == ENHANCE_MATERIAL_LIST_TYPE.OWN)
+    produceToggle:SetIsOnWithoutNotify(mode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED)
+    
+    ownStateController.enabled = true
+    produceStateController.enabled = true
+    self:_SwitchMaterialListMode(mode, resumeState, precomputedGroups)
+
+    
+    self.view.selectMaterials.manufacturedFilterBtn:InitFilterBtn({
+        tagGroups = FilterUtils.generateConfig_EQUIP_ENHANCE_MANUFACTURED(),
+        selectedTags = self.m_selectedManufacturedFilterTags,
+        onConfirm = function(selectedTags)
+            self:_ApplyManufacturedFilterOption(selectedTags)
+        end,
+        getResultCount = function(selectedTags)
+            return self:_GetManufacturedFilterResultCount(selectedTags)
+        end,
+    })
+
     self.view.middleBar.bottomNode.btnMake.onClick:RemoveAllListeners()
     self.view.middleBar.bottomNode.btnMake.onClick:AddListener(function()
         self:_OnEnhanceClicked()
@@ -1701,20 +1853,952 @@ EquipTechCtrl._EnterEnhanceMaterial = HL.Method(HL.Opt(HL.Any)) << function(self
     self.view.middleBar.centerBg:PlayInAnimation()
 end
 
+EquipTechCtrl._GetSelectedTemplateAttrShowInfo = HL.Method().Return(HL.Any) << function(self)
+    local _, primaryAttrs, nonPrimaryAttrs = CharInfoUtils.getEquipTemplateShowAttributes(self.m_selectedEnhanceEquipItemInfo.id)
+    local selectedTemplateAttrShowInfoList = lume.concat(primaryAttrs, nonPrimaryAttrs)
+    return selectedTemplateAttrShowInfoList[self.m_selectedAttrShowInfoIndex]
+end
+
+EquipTechCtrl._ComputeEnhanceMaterialGroups = HL.Method().Return(HL.Table) << function(self)
+    return EquipTechUtils.getEquipEnhanceMaterialsGroups(self.m_selectedEnhanceEquipItemInfo.partType,
+        self:_GetSelectedTemplateAttrShowInfo(), self.m_selectedEnhanceEquipInstId)
+end
+
+EquipTechCtrl._GetDefaultMaterialListMode = HL.Method().Return(HL.String) << function(self)
+    
+    for _, g in ipairs(self.m_materialGroups) do
+        if g.title == Language.LUA_EQUIP_ENHANCE_MATERIALS_TITLE then
+            return ENHANCE_MATERIAL_LIST_TYPE.OWN
+        end
+    end
+    return ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED
+end
+
+
+EquipTechCtrl._NotifySwitchMaterialModeClearToast = HL.Method() << function(self)
+    local hasSelection = false
+    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+        for _, count in pairs(self.m_manufacturedFormulaCountMap or {}) do
+            if count > 0 then
+                hasSelection = true
+                break
+            end
+        end
+    else
+        hasSelection = next(self.m_selectedMaterialInstIdList or {}) ~= nil
+    end
+    if hasSelection then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_CLEAR_WAIT_FOR_PRODUCE)
+    end
+end
+
+EquipTechCtrl._SwitchMaterialListMode = HL.Method(HL.String, HL.Opt(HL.Any, HL.Table)) << function(self, mode, resumeState, precomputedGroups)
+    self.m_materialListMode = mode
+    
+    self.m_manufacturedChainSelectFormulaId = nil
+    self.m_manufacturedAutoSelectChainChanging = false
+    self.m_isManufacturedNaviTargetSet = false
+    
+    if not resumeState then
+        self.m_selectedMaterialInstIdList = {}
+        self.m_selectedMaterialInstId2Index = {}
+        self.m_manufacturedFormulaCountMap = {}
+    end
+    local materialLayerNaviGroup = self.view.selectMaterials.listNodeNaviGroup
+    if mode == ENHANCE_MATERIAL_LIST_TYPE.OWN then
+        self.view.selectMaterials.itemList.gameObject:SetActive(true)
+        self.view.selectMaterials.manufacturedNode.gameObject:SetActive(false)
+        UIUtils.changeAndTrySetNaviBindingType(materialLayerNaviGroup, CS.UnityEngine.UI.NavigationBindingType.AllDirections)
+        self:_RefreshEnhanceMaterialList(resumeState, precomputedGroups)
+        
+        self:_UpdateAddManufacturedFormulaActionState()
+    else
+        self.view.selectMaterials.itemList.gameObject:SetActive(false)
+        self.view.selectMaterials.manufacturedNode.gameObject:SetActive(true)
+        UIUtils.changeAndTrySetNaviBindingType(materialLayerNaviGroup, CS.UnityEngine.UI.NavigationBindingType.VerticalOnly)
+        
+        self:_ComputeEnhanceLimits()
+        self:_RefreshManufacturedList(resumeState)
+    end
+    self:_RefreshEnhanceInfo(true)
+    self:_RefreshManufacturedComplementRemind()
+end
+
+local function _buildChainCostEntry(chainData)
+    if not chainData then
+        return nil
+    end
+    local hasGoldCost = not string.isEmpty(chainData.costGoldId) and chainData.costGoldNum > 0
+    local costItemId = (#chainData.costItemId > 0) and chainData.costItemId[0] or nil
+    local costItemNum = (#chainData.costItemNum > 0) and chainData.costItemNum[0] or 0
+    local costInfo = EquipTechUtils.GetChainCostInfo(chainData.chainId)
+    return {
+        discount = costInfo and costInfo.discount or nil,
+        hasGoldCost = hasGoldCost,
+        costGoldId = hasGoldCost and chainData.costGoldId or nil,
+        costGoldNum = chainData.costGoldNum,
+        hasMatCost = costItemId ~= nil and costItemNum > 0,
+        costItemId = costItemId,
+        costItemNum = costItemNum,
+    }
+end
+
+
+local function _getCostItemSortId(costItemId)
+    if not costItemId then
+        return 0
+    end
+    local _, matInfo = Tables.EquipCostMaterialTable:TryGetValue(costItemId)
+    return matInfo and matInfo.sortId or 0
+end
+
+
+local function _getDefaultChainCostInfo(formulaId)
+    local defaultChain = EquipTechUtils.GetDefaultFormulaChain(formulaId)
+    if not defaultChain then
+        return nil
+    end
+    return (#defaultChain.costItemId > 0) and defaultChain.costItemId[0] or nil
+end
+
+EquipTechCtrl._RefreshManufacturedList = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    self.m_isManufacturedNaviTargetSet = false
+    local attrShowInfo = self:_GetSelectedTemplateAttrShowInfo()
+    local partType = self.m_selectedEnhanceEquipItemInfo.partType
+
+    
+    local allList = {}
+    for formulaId, formulaData in pairs(Tables.equipFormulaTable) do
+        if FactoryUtils.isEquipFormulaUnlocked(formulaId) then
+            local outcomeEquipId = formulaData.outcomeEquipId
+            local _, equipData = Tables.equipTable:TryGetValue(outcomeEquipId)
+            if equipData and equipData.partType == partType and EquipTechUtils.canEquipEnhance(outcomeEquipId) then
+                local prob = EquipTechUtils.getEquipEnhanceSuccessProbabilityByTemplateId(outcomeEquipId, attrShowInfo)
+                if prob > EquipTechConst.EEquipEnhanceSuccessProb.None then
+                    local itemInfo = FilterUtils.processEquipProduce(formulaData)
+                    if itemInfo then
+                        itemInfo.equipEnhanceSuccessProb = prob
+                        table.insert(allList, itemInfo)
+                    end
+                end
+            end
+        end
+    end
+
+    self.m_allManufacturedFormulaList = allList
+    self:_RefreshManufacturedFilteredList(resumeState)
+end
+
+
+EquipTechCtrl._RefreshManufacturedFilteredList = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    local allList = self.m_allManufacturedFormulaList or {}
+    local tagInfoList = self.m_selectedManufacturedFilterTags
+    local formulaList
+
+    if not tagInfoList or not next(tagInfoList) then
+        
+        formulaList = {}
+        for _, itemInfo in ipairs(allList) do
+            table.insert(formulaList, itemInfo)
+        end
+    else
+        formulaList = {}
+        local countMap = self.m_manufacturedFormulaCountMap or {}
+        for _, itemInfo in ipairs(allList) do
+            local formulaId = itemInfo.equipFormulaData.formulaId
+            
+            if (countMap[formulaId] or 0) > 0 or FilterUtils.checkIfPassFilter(itemInfo, tagInfoList) then
+                table.insert(formulaList, itemInfo)
+            end
+        end
+    end
+
+    
+    self:_BuildManufacturedCostCache(formulaList)
+
+    
+    self:_SortManufacturedList(formulaList)
+
+    self.m_manufacturedFormulaList = formulaList
+
+    self.m_getManufacturedCell = self.m_getManufacturedCell or UIUtils.genCachedCellFunction(self.view.selectMaterials.manufacturedList)
+    self.view.selectMaterials.manufacturedList.onUpdateCell:RemoveAllListeners()
+    self.view.selectMaterials.manufacturedList.onUpdateCell:AddListener(function(object, csIndex)
+        self:_UpdateManufacturedCell(object, LuaIndex(csIndex))
+    end)
+    self.view.selectMaterials.manufacturedList:UpdateCount(#formulaList, not resumeState)
+    
+    self:_RefreshManufacturedComplementRemind()
+    
+    if DeviceInfo.usingController then
+        if #formulaList > 0 then
+            if not self.m_isManufacturedNaviTargetSet then
+                local firstCell = self.m_getManufacturedCell(1)
+                if firstCell and firstCell.selectable then
+                    self:SetNaviTarget(firstCell.selectable)
+                    self.m_isManufacturedNaviTargetSet = true
+                end
+            end
+        else
+            self:SetNaviTarget(nil)
+            self.m_isManufacturedNaviTargetSet = false
+        end
+        self:_UpdateAddManufacturedFormulaActionState()
+    end
+
+    local isEmpty = #formulaList == 0
+    self.view.selectMaterials.emptyNode.gameObject:SetActive(isEmpty)
+    self.view.selectMaterials.explainTxt.gameObject:SetActive(not isEmpty)
+end
+
+
+EquipTechCtrl._ApplyManufacturedFilterOption = HL.Method(HL.Opt(HL.Table)) << function(self, tagInfoList)
+    self.m_selectedManufacturedFilterTags = tagInfoList or {}
+    
+    self.m_isManufacturedNaviTargetSet = false
+    self:_RefreshManufacturedFilteredList()
+    self:_RefreshEnhanceInfo(true)
+end
+
+
+EquipTechCtrl._GetManufacturedFilterResultCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tagInfoList)
+    local count = 0
+    for _, itemInfo in ipairs(self.m_allManufacturedFormulaList or {}) do
+        if FilterUtils.checkIfPassFilter(itemInfo, tagInfoList) then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+
+
+
+
+
+
+EquipTechCtrl._SortManufacturedList = HL.Method(HL.Table) << function(self, formulaList)
+    local chainCache = self.m_manufacturedFormulaChainCache or {}
+    local ownedCache = self.m_manufacturedCostOwnedCache or {}
+
+    
+    local sortKeyMap = {}
+    for _, itemInfo in ipairs(formulaList) do
+        local formulaId = itemInfo.equipFormulaData.formulaId
+        local chain = chainCache[formulaId]
+
+        
+        local canProduce = false
+        if chain then
+            canProduce = true
+            if chain.hasGoldCost and chain.costGoldNum > 0 then
+                if (ownedCache[chain.costGoldId] or 0) < chain.costGoldNum then
+                    canProduce = false
+                end
+            end
+            if canProduce and chain.hasMatCost and chain.costItemNum > 0 then
+                if (ownedCache[chain.costItemId] or 0) < chain.costItemNum then
+                    canProduce = false
+                end
+            end
+        end
+
+        
+        local curCostItemSortId = 0
+        if chain and chain.hasMatCost then
+            curCostItemSortId = _getCostItemSortId(chain.costItemId)
+        end
+
+        
+        local defaultCostItemId = _getDefaultChainCostInfo(formulaId)
+        local defaultCostItemSortId = _getCostItemSortId(defaultCostItemId)
+
+        sortKeyMap[formulaId] = {
+            selectedCount = (self.m_manufacturedFormulaCountMap or {})[formulaId] or 0,
+            canProduce = canProduce,
+            prob = itemInfo.equipEnhanceSuccessProb or 0,
+            curCostItemSortId = curCostItemSortId,
+            defaultCostItemSortId = defaultCostItemSortId,
+        }
+    end
+
+    local sortBySelectedCount = self.m_manufacturedSortBySelectedCount
+    table.sort(formulaList, function(a, b)
+        local ka = sortKeyMap[a.equipFormulaData.formulaId]
+        local kb = sortKeyMap[b.equipFormulaData.formulaId]
+        
+        if sortBySelectedCount then
+            local aSelected = ka.selectedCount > 0
+            local bSelected = kb.selectedCount > 0
+            if aSelected ~= bSelected then
+                return aSelected
+            end
+        end
+        
+        if ka.canProduce ~= kb.canProduce then
+            return ka.canProduce
+        end
+        
+        if ka.prob ~= kb.prob then
+            return ka.prob > kb.prob
+        end
+        
+        if ka.canProduce then
+            if ka.curCostItemSortId ~= kb.curCostItemSortId then
+                return ka.curCostItemSortId > kb.curCostItemSortId
+            end
+        end
+        
+        return ka.defaultCostItemSortId < kb.defaultCostItemSortId
+    end)
+end
+
+
+EquipTechCtrl._BuildManufacturedFormulaChainEntry = HL.Method(HL.String, HL.Any).Return(HL.Opt(HL.Table)) << function(self, formulaId, itemInfo)
+    local chainId = EquipTechUtils.GetCurFormulaChainId(formulaId)
+    local chainData = EquipTechUtils.GetLevelChainDetail(itemInfo.equipFormulaData.level, chainId)
+    return _buildChainCostEntry(chainData)
+end
+
+
+EquipTechCtrl._BuildManufacturedCostCache = HL.Method(HL.Table) << function(self, formulaList)
+    local chainCache = {}
+    local ownedCache = {}
+    local resourceIdSet = {}
+    for _, itemInfo in ipairs(formulaList) do
+        local formulaId = itemInfo.equipFormulaData.formulaId
+        local entry = self:_BuildManufacturedFormulaChainEntry(formulaId, itemInfo)
+        if entry then
+            chainCache[formulaId] = entry
+            if entry.hasGoldCost then
+                resourceIdSet[entry.costGoldId] = true
+            end
+            if entry.hasMatCost then
+                resourceIdSet[entry.costItemId] = true
+            end
+        end
+        
+        local _, chainGroupData = Tables.equipFormulaChainTable:TryGetValue(itemInfo.equipFormulaData.level)
+        if chainGroupData then
+            for _, chainData in pairs(chainGroupData.chainList) do
+                local altEntry = _buildChainCostEntry(chainData)
+                if altEntry then
+                    if altEntry.hasGoldCost then
+                        resourceIdSet[altEntry.costGoldId] = true
+                    end
+                    if altEntry.hasMatCost then
+                        resourceIdSet[altEntry.costItemId] = true
+                    end
+                end
+            end
+        end
+    end
+    
+    for resourceId, _ in pairs(resourceIdSet) do
+        ownedCache[resourceId] = Utils.getItemCount(resourceId, true, true)
+    end
+    self.m_manufacturedFormulaChainCache = chainCache
+    self.m_manufacturedCostOwnedCache = ownedCache
+end
+
+
+EquipTechCtrl._GetManufacturedReservedCount = HL.Method(HL.String, HL.Opt(HL.String)).Return(HL.Number) << function(self, resourceId, excludeFormulaId)
+    local reserved = 0
+    local countMap = self.m_manufacturedFormulaCountMap or {}
+    local chainCache = self.m_manufacturedFormulaChainCache or {}
+    for formulaId, count in pairs(countMap) do
+        if formulaId ~= excludeFormulaId and count > 0 then
+            local chain = chainCache[formulaId]
+            if chain then
+                if chain.hasGoldCost and chain.costGoldId == resourceId then
+                    reserved = reserved + count * chain.costGoldNum
+                end
+                if chain.hasMatCost and chain.costItemId == resourceId then
+                    reserved = reserved + count * chain.costItemNum
+                end
+            end
+        end
+    end
+    return reserved
+end
+
+
+EquipTechCtrl._GetManufacturedOtherSelectedCount = HL.Method(HL.Opt(HL.String)).Return(HL.Number) << function(self, excludeFormulaId)
+    local total = 0
+    for formulaId, count in pairs(self.m_manufacturedFormulaCountMap or {}) do
+        if formulaId ~= excludeFormulaId and count > 0 then
+            total = total + count
+        end
+    end
+    return total
+end
+
+
+
+EquipTechCtrl._ComputeManufacturedMaxWithReason = HL.Method(HL.String, HL.Opt(HL.Table)).Return(HL.Number, HL.Number, HL.Number) << function(self, formulaId, options)
+    local Reason = EquipTechConst.EEquipManufactureMaxReason
+    local chain
+    if options and options.chainId then
+        local _, formulaData = Tables.equipFormulaTable:TryGetValue(formulaId)
+        local chainData = formulaData and EquipTechUtils.GetLevelChainDetail(formulaData.level, options.chainId) or nil
+        chain = _buildChainCostEntry(chainData)
+    else
+        chain = self.m_manufacturedFormulaChainCache and self.m_manufacturedFormulaChainCache[formulaId]
+    end
+    if not chain then
+        return 0, Reason.MaterialInsufficient, 0
+    end
+
+    
+    local materialMax = Tables.equipTechConst.equipProduceMaxCount
+    local ownedCache = self.m_manufacturedCostOwnedCache or {}
+    if chain.hasGoldCost and chain.costGoldNum > 0 then
+        local owned = ownedCache[chain.costGoldId] or 0
+        local available = owned - self:_GetManufacturedReservedCount(chain.costGoldId, formulaId)
+        materialMax = math.min(materialMax, math.floor(math.max(available, 0) / chain.costGoldNum))
+    end
+    if chain.hasMatCost and chain.costItemNum > 0 then
+        local owned = ownedCache[chain.costItemId] or 0
+        local available = owned - self:_GetManufacturedReservedCount(chain.costItemId, formulaId)
+        materialMax = math.min(materialMax, math.floor(math.max(available, 0) / chain.costItemNum))
+    end
+    materialMax = math.max(materialMax, 0)
+    if materialMax <= 0 then
+        return 0, Reason.MaterialInsufficient, 0
+    end
+
+    
+    local otherSelected = self:_GetManufacturedOtherSelectedCount(formulaId)
+    local batchLimit = Tables.equipConst.maxEnhanceIngredientCount - otherSelected
+    local maxFailed = self.m_enhanceGuaranteeMaxFailedCount or 0
+    local guaranteeLimit = math.maxinteger
+    if maxFailed > 0 then
+        local guaranteeCapacity = maxFailed - (self.m_enhanceGuaranteeFailedCount or 0) + 1
+        guaranteeLimit = guaranteeCapacity - otherSelected
+    end
+    local costPerUse = self.m_enhanceCostPerItemCount or 0
+    local checkEnhanceCost = options == nil or options.checkEnhanceCostLimit ~= false
+    local enhanceCostLimit = math.maxinteger
+    if checkEnhanceCost and costPerUse > 0 then
+        local costCapacity = math.floor((self.m_enhanceCostOwnItemCount or 0) / costPerUse)
+        enhanceCostLimit = costCapacity - otherSelected
+    end
+
+    local fullMax = math.min(materialMax, batchLimit, guaranteeLimit, enhanceCostLimit)
+    
+    
+    if fullMax == materialMax then
+        return fullMax, Reason.Ok, materialMax
+    elseif batchLimit == fullMax then
+        return fullMax, Reason.BatchFull, materialMax
+    elseif guaranteeLimit == fullMax then
+        return fullMax, Reason.GuaranteeFull, materialMax
+    elseif enhanceCostLimit == fullMax then
+        return fullMax, Reason.EnhanceCostInsufficient, materialMax
+    end
+
+    
+    if batchLimit <= 0 then
+        return 0, Reason.BatchFull, materialMax
+    elseif guaranteeLimit <= 0 then
+        return 0, Reason.GuaranteeFull, materialMax
+    elseif enhanceCostLimit <= 0 then
+        return 0, Reason.EnhanceCostInsufficient, materialMax
+    end
+    return 0, Reason.MaterialInsufficient, materialMax
+end
+
+
+EquipTechCtrl._ComputeManufacturedMax = HL.Method(HL.String).Return(HL.Number) << function(self, formulaId)
+    local maxProduceCount = self:_ComputeManufacturedMaxWithReason(formulaId)
+    return maxProduceCount
+end
+
+
+EquipTechCtrl._FindManufacturedFormulaReplaceableChain = HL.Method(HL.String, HL.Opt(HL.Table)).Return(HL.Opt(HL.Number)) << function(self, formulaId, options)
+    local _, formulaData = Tables.equipFormulaTable:TryGetValue(formulaId)
+    if not formulaData then
+        return nil
+    end
+    local curChainId = EquipTechUtils.GetCurFormulaChainId(formulaId)
+    
+    if self:_ComputeManufacturedMaxWithReason(formulaId, options) > 0 then
+        return nil
+    end
+    
+    local level = formulaData.level
+    local _, chainGroupData = Tables.equipFormulaChainTable:TryGetValue(level)
+    if not chainGroupData then
+        return nil
+    end
+    for _, chainDetail in pairs(chainGroupData.chainList) do
+        local altChainId = chainDetail.chainId
+        if altChainId ~= curChainId then
+            local altOptions = { checkEnhanceCostLimit = options and options.checkEnhanceCostLimit, chainId = altChainId }
+            if self:_ComputeManufacturedMaxWithReason(formulaId, altOptions) > 0 then
+                return altChainId
+            end
+        end
+    end
+    return nil
+end
+
+
+
+EquipTechCtrl._BuildManufacturedChainSelectRemainState = HL.Method(HL.String).Return(HL.Table) << function(self, formulaId)
+    local availByResource = {}
+    local ownedCache = self.m_manufacturedCostOwnedCache or {}
+    
+    local function getOwned(resourceId)
+        local owned = ownedCache[resourceId]
+        if owned == nil then
+            owned = Utils.getItemCount(resourceId, true, true)
+        end
+        return owned
+    end
+    for _, materialInfo in pairs(Tables.EquipCostMaterialTable) do
+        local costInfo = EquipTechUtils.GetChainCostInfo(materialInfo.chainId)
+        if costInfo then
+            if not string.isEmpty(costInfo.costGoldId) then
+                availByResource[costInfo.costGoldId] = getOwned(costInfo.costGoldId) - self:_GetManufacturedReservedCount(costInfo.costGoldId)
+            end
+            if not string.isEmpty(costInfo.costItemId) then
+                availByResource[costInfo.costItemId] = getOwned(costInfo.costItemId) - self:_GetManufacturedReservedCount(costInfo.costItemId)
+            end
+        end
+    end
+    return {
+        availByResource = availByResource,
+        selfCount = (self.m_manufacturedFormulaCountMap or {})[formulaId] or 0,
+    }
+end
+
+
+EquipTechCtrl._IsAllManufacturedCannotMake = HL.Method().Return(HL.Boolean) << function(self)
+    for _, itemInfo in ipairs(self.m_manufacturedFormulaList or {}) do
+        if self:_ComputeManufacturedMax(itemInfo.equipFormulaData.formulaId) > 0 then
+            return false
+        end
+    end
+    return true
+end
+
+
+EquipTechCtrl._RefreshManufacturedComplementRemind = HL.Method() << function(self)
+    local show = false
+    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+        local allCannotMake = self:_IsAllManufacturedCannotMake()
+        if allCannotMake then
+            for _, itemInfo in ipairs(self.m_manufacturedFormulaList or {}) do
+                if self:_FindManufacturedFormulaReplaceableChain(itemInfo.equipFormulaData.formulaId, { checkEnhanceCostLimit = true }) then
+                    show = true
+                    break
+                end
+            end
+        end
+    end
+    self.view.middleBar.bottomNode.complementRemind2.gameObject:SetActive(show)
+end
+
+
+EquipTechCtrl._UpdateManufacturedCellCostDisplay = HL.Method(HL.Any, HL.String) << function(self, cell, formulaId)
+    local chain = self.m_manufacturedFormulaChainCache and self.m_manufacturedFormulaChainCache[formulaId]
+    if not chain then
+        return
+    end
+    local countMap = self.m_manufacturedFormulaCountMap or {}
+    local selfCount = countMap[formulaId] or 0
+    local ownedCache = self.m_manufacturedCostOwnedCache or {}
+
+    if chain.hasGoldCost then
+        local owned = ownedCache[chain.costGoldId] or 0
+        local remaining = math.max(owned - self:_GetManufacturedReservedCount(chain.costGoldId, formulaId) - selfCount * chain.costGoldNum, 0)
+        local isLack = remaining < chain.costGoldNum
+        cell.costItemCell1.item:UpdateCountSimple(chain.costGoldNum, isLack)
+        cell.costItemCell1.ownCountTxt.text = UIUtils.setCountColor(tostring(remaining), isLack)
+    end
+
+    if chain.hasMatCost then
+        local owned = ownedCache[chain.costItemId] or 0
+        local remaining = math.max(owned - self:_GetManufacturedReservedCount(chain.costItemId, formulaId) - selfCount * chain.costItemNum, 0)
+        local isLack = remaining < chain.costItemNum
+        cell.costItemCell2.item:UpdateCountSimple(chain.costItemNum, isLack)
+        cell.costItemCell2.ownCountTxt.text = UIUtils.setCountColor(tostring(remaining), isLack)
+    end
+end
+
+
+EquipTechCtrl._BindManufacturedCellSelector = HL.Method(HL.Any, HL.String, HL.Number, HL.Number) << function(self, cell, formulaId, curCount, materialMax)
+    cell.numberSelector:InitNumberSelector(curCount, 0, materialMax, function(count, isChangeByBtn)
+        
+        if isChangeByBtn and not self.m_isRefreshingManufacturedCells then
+            local fullMax, reason = self:_ComputeManufacturedMaxWithReason(formulaId)
+            if count > fullMax then
+                count = fullMax
+                self.m_isRefreshingManufacturedCells = true
+                cell.numberSelector:RefreshNumber(fullMax)
+                self.m_isRefreshingManufacturedCells = false
+                self:_NotifyEnhanceIngredientLimitToast(reason)
+                self:_RefreshEnhanceInfo(true)		
+                return
+            end
+        end
+        self.m_manufacturedFormulaCountMap[formulaId] = count
+        cell.stateController:SetState(count > 0 and "Select" or "Normal")
+        
+        self:_UpdateManufacturedCellCostDisplay(cell, formulaId)
+        
+        self:_UpdateAddManufacturedFormulaActionState()
+        
+        if isChangeByBtn and not self.m_isRefreshingManufacturedCells then
+            self:_RefreshManufacturedVisibleCells(formulaId)
+            
+            self:_RefreshEnhanceInfo(true)
+        end
+    end)
+    cell.stateController:SetState(curCount > 0 and "Select" or "Normal")
+    
+    self:_UpdateAddManufacturedFormulaActionState()
+end
+
+
+
+EquipTechCtrl._BindManufacturedCellClickArea = HL.Method(HL.Any, HL.String, HL.Any) << function(self, cell, formulaId, button)
+    button.onPressStart:RemoveAllListeners()
+    button.onPressEnd:RemoveAllListeners()
+    button.onClick:RemoveAllListeners()
+    button.onClick:AddListener(function()
+        self:_TryAddManufacturedFormula(cell, formulaId)
+    end)
+end
+
+
+EquipTechCtrl._TryAddManufacturedFormula = HL.Method(HL.Any, HL.String) << function(self, cell, formulaId)
+    local fullMax, reason = self:_ComputeManufacturedMaxWithReason(formulaId)
+    if fullMax > 0 then
+        cell.numberSelector:Increment()
+    else
+        local Reason = EquipTechConst.EEquipManufactureMaxReason
+        if reason == Reason.MaterialInsufficient then
+            
+            
+        else
+            self:_NotifyEnhanceIngredientLimitToast(reason)
+        end
+    end
+end
+
+EquipTechCtrl._TriggerAddManufacturedFormula = HL.Method() << function(self)
+    if self.m_materialListMode ~= ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+        return
+    end
+    local cell, formulaId = self:_GetCurrentManufacturedNaviCell()
+    if not cell or not formulaId or string.isEmpty(formulaId) or cell.numberSelector == nil then
+        return
+    end
+    self:_TryAddManufacturedFormula(cell, formulaId)
+end
+
+EquipTechCtrl._GetCurrentManufacturedNaviCell = HL.Method().Return(HL.Any, HL.String) << function(self)
+    if self.m_materialListMode ~= ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+        return nil, ""
+    end
+    if not self.m_getManufacturedCell then
+        return nil, ""
+    end
+    local target = InputManagerInst.controllerNaviManager.curTarget
+    if not target or IsNull(target) then
+        return nil, ""
+    end
+    
+    
+    
+    local scrollList = self.view.selectMaterials.manufacturedList
+    local range = scrollList:GetRangeInView()
+    if range.x < 0 or range.y < 0 then
+        return nil, ""
+    end
+    for csIndex = range.x, range.y do
+        local cellGo = scrollList:Get(csIndex)
+        if cellGo then
+            local cell = self.m_getManufacturedCell(cellGo)
+            if cell and (target == cell.selectable or target.naviGroup == cell.costItemNaviGroup) then
+                local formulaId = cell.m_formulaId or ""
+                if not string.isEmpty(formulaId) then
+                    return cell, formulaId
+                end
+                return nil, ""
+            end
+        end
+    end
+    return nil, ""
+end
+
+EquipTechCtrl._UpdateAddManufacturedFormulaActionState = HL.Method() << function(self)
+    if self.m_addManufacturedFormulaBindingId < 0 then
+        return
+    end
+    local list = self.m_manufacturedFormulaList
+    local hasList = self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and list ~= nil and #list > 0
+    if not hasList then
+        InputManagerInst:ToggleBinding(self.m_addManufacturedFormulaBindingId, false)
+        return
+    end
+    InputManagerInst:ToggleBinding(self.m_addManufacturedFormulaBindingId, true)
+    local cell, formulaId = self:_GetCurrentManufacturedNaviCell()
+    local isAddInteractable = true
+    if cell ~= nil and not string.isEmpty(formulaId) then
+        local curCount = self.m_manufacturedFormulaCountMap and self.m_manufacturedFormulaCountMap[formulaId] or 0
+        local _, _, materialMax = self:_ComputeManufacturedMaxWithReason(formulaId)
+        isAddInteractable = curCount < materialMax
+    end
+    InputManagerInst:ForceBindingKeyhintToGray(self.m_addManufacturedFormulaBindingId, not isAddInteractable)
+end
+
+
+EquipTechCtrl._RefreshManufacturedVisibleCells = HL.Method(HL.Opt(HL.String, HL.String)) << function(self, excludeFormulaId, fullRefreshFormulaId)
+    self.m_isRefreshingManufacturedCells = true
+    self.view.selectMaterials.manufacturedList:UpdateShowingCells(function(csIndex, go)
+        local luaIdx = LuaIndex(csIndex)
+        local itemInfo = self.m_manufacturedFormulaList[luaIdx]
+        if itemInfo then
+            local formulaId = itemInfo.equipFormulaData.formulaId
+            if formulaId == fullRefreshFormulaId then
+                
+                self:_UpdateManufacturedCell(go, luaIdx)
+            elseif formulaId ~= excludeFormulaId then
+                local cell = self.m_getManufacturedCell(go)
+                local fullMax, _, materialMax = self:_ComputeManufacturedMaxWithReason(formulaId)
+                local curCount = math.min(self.m_manufacturedFormulaCountMap[formulaId] or 0, fullMax)
+                self.m_manufacturedFormulaCountMap[formulaId] = curCount
+                self:_UpdateManufacturedCellCostDisplay(cell, formulaId)
+                self:_BindManufacturedCellSelector(cell, formulaId, curCount, materialMax)
+            end
+        end
+    end)
+    self.m_isRefreshingManufacturedCells = false
+end
+
+EquipTechCtrl._RefreshManufacturedCostOwnedCache = HL.Method() << function(self)
+    local ownedCache = self.m_manufacturedCostOwnedCache
+    if not ownedCache then
+        return
+    end
+    for resourceId, _ in pairs(ownedCache) do
+        ownedCache[resourceId] = Utils.getItemCount(resourceId, true, true)
+    end
+    self:_RefreshManufacturedVisibleCells()
+    
+    self:_RefreshEnhanceInfo(true, true)
+    
+    self:_RefreshManufacturedComplementRemind()
+end
+
+
+EquipTechCtrl._OnManufacturedFormulaChainChanged = HL.Method(HL.String) << function(self, formulaId)
+    local itemInfo
+    for _, ii in ipairs(self.m_manufacturedFormulaList or {}) do
+        if ii.equipFormulaData.formulaId == formulaId then
+            itemInfo = ii
+            break
+        end
+    end
+    if not itemInfo then
+        return
+    end
+    local entry = self:_BuildManufacturedFormulaChainEntry(formulaId, itemInfo)
+    if not entry then
+        return
+    end
+    self.m_manufacturedFormulaChainCache[formulaId] = entry
+    
+    local ownedCache = self.m_manufacturedCostOwnedCache
+    if ownedCache then
+        if entry.hasGoldCost and ownedCache[entry.costGoldId] == nil then
+            ownedCache[entry.costGoldId] = Utils.getItemCount(entry.costGoldId, true, true)
+        end
+        if entry.hasMatCost and ownedCache[entry.costItemId] == nil then
+            ownedCache[entry.costItemId] = Utils.getItemCount(entry.costItemId, true, true)
+        end
+    end
+    
+    self.m_manufacturedFormulaCountMap = self.m_manufacturedFormulaCountMap or {}
+    if self.m_manufacturedAutoSelectChainChanging then
+        local fullMax = self:_ComputeManufacturedMax(formulaId)
+        self.m_manufacturedFormulaCountMap[formulaId] = fullMax
+        
+        if fullMax > 0 then
+            self:_LogEquipRefinementQuickFill(formulaId, fullMax, CS.Beyond.SDK.EventLogDefine.EventLogQuickFillType.ReplaceFormulaFill, self.m_quickFillOldChainId, self.m_quickFillCurChainId)
+        end
+    else
+        self.m_manufacturedFormulaCountMap[formulaId] = 0
+    end
+    
+    self:_RefreshManufacturedVisibleCells(nil, formulaId)
+    
+    self:_RefreshEnhanceInfo(true)
+    
+    if self.m_manufacturedAutoSelectChainChanging then
+        self.m_manufacturedAutoSelectChainChanging = false
+        
+        self:_RefreshManufacturedFilteredList()
+        
+        self:_ScrollManufacturedListToFormula(formulaId)
+    else
+        
+        self:_RefreshManufacturedComplementRemind()
+    end
+end
+
+EquipTechCtrl._GetManufacturedItemTipsExtraInfo = HL.Method().Return(HL.Table) << function(self)
+    return {
+        isSideTips = DeviceInfo.usingController,
+        tipsPosTransform = self.view.selectMaterials.itemTipsPos,
+        tipsPosType = UIConst.UI_TIPS_POS_TYPE.RightTop,
+        onBeforeJump = function()
+            self:_ClearEnhanceMaterialItemTipsMode()
+        end,
+    }
+end
+
+EquipTechCtrl._UpdateManufacturedCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, luaIndex)
+    local cell = self.m_getManufacturedCell(object)
+    local itemInfo = self.m_manufacturedFormulaList[luaIndex]
+    local formulaId = itemInfo.equipFormulaData.formulaId
+
+    cell.m_formulaId = formulaId
+    cell.gameObject.name = formulaId
+
+    cell.costItemNaviGroup.getDefaultSelectableFunc = function()
+        return cell.equipItemButton
+    end
+    
+    cell.equipItem:InitItem({ id = itemInfo.id, count = 1 }, true)
+    cell.equipItem:SetExtraInfo(self:_GetManufacturedItemTipsExtraInfo())
+
+    
+    cell.equipmentName.text = itemInfo.data.name
+
+    
+    cell.txtNormal.gameObject:SetActive(itemInfo.equipEnhanceSuccessProb == EquipTechConst.EEquipEnhanceSuccessProb.Normal)
+    cell.txtHigh.gameObject:SetActive(itemInfo.equipEnhanceSuccessProb == EquipTechConst.EEquipEnhanceSuccessProb.High)
+
+    
+    local chain = self.m_manufacturedFormulaChainCache and self.m_manufacturedFormulaChainCache[formulaId]
+    if not chain then
+        return
+    end
+    local hasGoldCost = chain.hasGoldCost
+    local hasMatCost = chain.hasMatCost
+
+    
+    cell.costItemCell1.gameObject:SetActive(hasGoldCost)
+    if hasGoldCost then
+        local discount = chain.discount
+        cell.costItemCell1.item:InitItem({ id = chain.costGoldId, count = chain.costGoldNum }, true)
+
+        cell.costItemCell1.item:SetExtraInfo(self:_GetManufacturedItemTipsExtraInfo())
+        if DeviceInfo.usingController then
+            cell.costItemCell1.item:SetEnableHoverTips(false)
+        end
+        if discount and discount >= 0 and discount < 1 then
+            cell.costItemCell1.discountInfoNode.gameObject:SetActive(true)
+            local showDiscountTxt = string.format("-%d", math.floor((1 - discount) * 100 + 0.5))
+            cell.costItemCell1.discountNumTxt.text = showDiscountTxt
+            cell.costItemCell1.discountNumShadownTxt.text = showDiscountTxt
+        else
+            cell.costItemCell1.discountInfoNode.gameObject:SetActive(false)
+        end
+    end
+
+    
+    cell.costItemCell2.gameObject:SetActive(hasMatCost)
+    if hasMatCost then
+        cell.costItemCell2.item:InitItem({ id = chain.costItemId, count = chain.costItemNum }, true)
+        cell.costItemCell2.item:SetExtraInfo(self:_GetManufacturedItemTipsExtraInfo())
+        if DeviceInfo.usingController then
+            cell.costItemCell2.item:SetEnableHoverTips(false)
+        end
+        cell.costItemCell2.discountInfoNode.gameObject:SetActive(false)
+    end
+
+    self.m_manufacturedFormulaCountMap = self.m_manufacturedFormulaCountMap or {}
+    local fullMax, _, materialMax = self:_ComputeManufacturedMaxWithReason(formulaId)
+    local curCount = math.min(self.m_manufacturedFormulaCountMap[formulaId] or 0, fullMax)
+    self.m_manufacturedFormulaCountMap[formulaId] = curCount
+    self:_UpdateManufacturedCellCostDisplay(cell, formulaId)
+    self:_BindManufacturedCellSelector(cell, formulaId, curCount, materialMax)
+
+    
+    cell.switchBtn.onClick:RemoveAllListeners()
+    cell.switchBtn.onClick:AddListener(function()
+        self.m_manufacturedChainSelectFormulaId = formulaId
+        UIManager:Open(PanelId.EquipFormulaChainSelect, {
+            formulaId = formulaId,
+            chainChangeWay = CS.Beyond.SDK.EventLogDefine.EventLogChainChangeWay.WaitForProduce,
+            remainState = self:_BuildManufacturedChainSelectRemainState(formulaId),
+        })
+    end)
+    
+    if materialMax > 0 then     
+        cell.switchBtnStateNode:SetState("Normal")
+    else
+        local replaceableChainId = self:_FindManufacturedFormulaReplaceableChain(formulaId, { checkEnhanceCostLimit = false })
+        cell.switchBtnStateNode:SetState(replaceableChainId and "Remind" or "Normal")
+    end
+    
+    self:_BindManufacturedCellClickArea(cell, formulaId, cell.bgClickArea)
+    self:_BindManufacturedCellClickArea(cell, formulaId, cell.titleClickArea)
+end
+
 EquipTechCtrl._ClearSelectedEnhanceMaterials = HL.Method() << function(self)
+    
+    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+        local hasSelection = false
+        for _, count in pairs(self.m_manufacturedFormulaCountMap or {}) do
+            if count > 0 then
+                hasSelection = true
+                break
+            end
+        end
+        if not hasSelection then
+            return
+        end
+        self.m_manufacturedFormulaCountMap = {}
+        self:_RefreshManufacturedVisibleCells()
+        self:_RefreshEnhanceInfo()
+        
+        self:_RefreshManufacturedComplementRemind()
+        return
+    end
     if not self.m_selectedMaterialInstIdList or #self.m_selectedMaterialInstIdList == 0 then
         return
     end
     self.m_selectedMaterialInstIdList = {}
     self.m_selectedMaterialInstId2Index = {}
+    self.m_manufacturedFormulaCountMap = {}
     self:_UpdateSelectedMaterialCellsIndex()
     self:_RefreshEnhanceInfo()
 end
 
 
-EquipTechCtrl._GetEnhanceIngredientHeadroom = HL.Method().Return(HL.Number, HL.Number, HL.Number) << function(self)
+EquipTechCtrl._GetSelectedEnhanceMaterialCount = HL.Method().Return(HL.Number) << function(self)
+    
+    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+        local total = 0
+        for _, count in pairs(self.m_manufacturedFormulaCountMap or {}) do
+            total = total + (count > 0 and count or 0)
+        end
+        return total
+    end
+    
     local list = self.m_selectedMaterialInstIdList
-    local selectedCount = list and #list or 0
+    return list and #list or 0
+end
+
+
+EquipTechCtrl._GetEnhanceIngredientHeadroom = HL.Method().Return(HL.Number, HL.Number, HL.Number) << function(self)
+    local selectedCount = self:_GetSelectedEnhanceMaterialCount()
     local remainingByBatchLimit = Tables.equipConst.maxEnhanceIngredientCount - selectedCount
     local remainingByGuarantee = math.huge
     local maxFailed = self.m_enhanceGuaranteeMaxFailedCount
@@ -1757,6 +2841,149 @@ EquipTechCtrl._AutoSelectEnhanceMaterials = HL.Method(HL.Opt(HL.Boolean)) << fun
     if self.view.stateController.currentStateName ~= STATE_NAME.ENHANCE_MATERIAL then
         return
     end
+    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+        self:_AutoSelectManufacturedEnhanceMaterials(fromUserClick)
+    else
+        self:_AutoSelectOwnEnhanceMaterials(fromUserClick)
+    end
+end
+
+
+
+
+
+
+
+EquipTechCtrl._LogEquipRefinementQuickFill = HL.Method(HL.String, HL.Int, HL.Userdata, HL.Int, HL.Int) << function(self, formulaId, fillCount, fillType, oldChainId, curChainId)
+    if self.m_selectedEnhanceEquipItemInfo == nil then
+        return
+    end
+    local attrShowInfo = self.m_selectedAttrShowInfoList and self.m_selectedAttrShowInfoList[self.m_selectedAttrShowInfoIndex] or nil
+    local enhancedAttrIndex = attrShowInfo and attrShowInfo.enhancedAttrIndex or 0
+    EquipTechUtils.GameEventLogEquipRefinementQuickFill(
+        self.m_selectedEnhanceEquipInstId,
+        self.m_selectedEnhanceEquipItemInfo.id,
+        enhancedAttrIndex,
+        fillType,
+        fillCount,
+        formulaId,
+        oldChainId,
+        curChainId
+    )
+end
+
+
+EquipTechCtrl._ScrollManufacturedListToFormula = HL.Method(HL.String) << function(self, formulaId)
+    local formulaList = self.m_manufacturedFormulaList or {}
+    local luaIndex
+    for i, itemInfo in ipairs(formulaList) do
+        if itemInfo.equipFormulaData.formulaId == formulaId then
+            luaIndex = i
+            break
+        end
+    end
+    if not luaIndex then
+        return
+    end
+    local csIndex = CSIndex(luaIndex)
+    local scrollList = self.view.selectMaterials.manufacturedList
+    local range = scrollList:GetRangeInView()
+    local inView = range.x >= 0 and range.y >= 0 and csIndex >= range.x and csIndex <= range.y
+    if not inView then
+        scrollList:ScrollToIndex(csIndex, true)
+    end
+    if DeviceInfo.usingController and self.m_getManufacturedCell then
+        local cell = self.m_getManufacturedCell(luaIndex)
+        if cell and cell.selectable then
+            self:SetNaviTarget(cell.selectable)
+            self.m_isManufacturedNaviTargetSet = true
+            self:_UpdateAddManufacturedFormulaActionState()
+        end
+    end
+end
+
+
+EquipTechCtrl._AutoSelectManufacturedEnhanceMaterials = HL.Method(HL.Opt(HL.Boolean)) << function(self, fromUserClick)
+    local formulaList = self.m_manufacturedFormulaList or {}
+    if #formulaList == 0 then
+        return
+    end
+    local isUserClick = fromUserClick == true
+    
+    self:_ComputeEnhanceLimits()
+
+    
+    local costPerUse = self.m_enhanceCostPerItemCount
+    if costPerUse > 0 and math.floor(self.m_enhanceCostOwnItemCount / costPerUse) < 1 then
+        if isUserClick then
+            self:_NotifyEnhanceIngredientLimitToast(EquipTechConst.EEquipManufactureMaxReason.EnhanceCostInsufficient)
+        end
+        return
+    end
+
+    
+    
+    local filledAny = false
+    local firstFilledFormulaId
+    self.m_manufacturedFormulaCountMap = self.m_manufacturedFormulaCountMap or {}
+    for _, itemInfo in ipairs(formulaList) do
+        local formulaId = itemInfo.equipFormulaData.formulaId
+        local fullMax = self:_ComputeManufacturedMax(formulaId)
+        local curCount = self.m_manufacturedFormulaCountMap[formulaId] or 0
+        if fullMax > 0 and fullMax >= curCount then
+            self.m_manufacturedFormulaCountMap[formulaId] = fullMax
+            if not firstFilledFormulaId then
+                firstFilledFormulaId = formulaId
+            end
+            filledAny = true
+            
+            self:_LogEquipRefinementQuickFill(formulaId, fullMax, CS.Beyond.SDK.EventLogDefine.EventLogQuickFillType.QuickFill, 0, 0)
+        end
+    end
+
+    if filledAny then
+        self:_RefreshEnhanceInfo(true)
+        
+        self.m_manufacturedSortBySelectedCount = true
+        self:_RefreshManufacturedFilteredList()
+        self.m_manufacturedSortBySelectedCount = false
+        
+        self:_ScrollManufacturedListToFormula(firstFilledFormulaId)
+        return
+    end
+
+    
+    self:_RefreshManufacturedComplementRemind()
+    if isUserClick then
+        
+        for _, itemInfo in ipairs(formulaList) do
+            local formulaId = itemInfo.equipFormulaData.formulaId
+            local replaceableChainId = self:_FindManufacturedFormulaReplaceableChain(formulaId, { checkEnhanceCostLimit = true })
+            if replaceableChainId then
+                
+                self.m_manufacturedChainSelectFormulaId = formulaId
+                UIManager:Open(PanelId.EquipFormulaPopUp, {
+                    formulaId = formulaId,
+                    chainId = replaceableChainId,
+                    confirm = function(confirmFormulaId, confirmChainId)
+                        
+                        self.m_manufacturedAutoSelectChainChanging = true
+                        
+                        self.m_quickFillOldChainId = EquipTechUtils.GetCurFormulaChainId(confirmFormulaId)
+                        self.m_quickFillCurChainId = confirmChainId
+                        GameInstance.player.equipTechSystem:SetSpecificFormulaChain(confirmFormulaId, confirmChainId)
+                    end,
+                })
+                return
+            end
+        end
+        
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_MANUFACTURE_MATERIAL_NOT_ENOUGH_TOAST)
+    end
+end
+
+
+EquipTechCtrl._AutoSelectOwnEnhanceMaterials = HL.Method(HL.Opt(HL.Boolean)) << function(self, fromUserClick)
     if not self.m_materialGroups or #self.m_materialGroups == 0 then
         return
     end
@@ -1821,15 +3048,11 @@ EquipTechCtrl._AutoSelectEnhanceMaterials = HL.Method(HL.Opt(HL.Boolean)) << fun
     end
 end
 
-EquipTechCtrl._RefreshEnhanceMaterialList = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
-    local _, primaryAttrs, nonPrimaryAttrs = CharInfoUtils.getEquipTemplateShowAttributes(self.m_selectedEnhanceEquipItemInfo.id)
-    local selectedTemplateAttrShowInfoList = lume.concat(primaryAttrs, nonPrimaryAttrs)
-
+EquipTechCtrl._RefreshEnhanceMaterialList = HL.Method(HL.Opt(HL.Any, HL.Table)) << function(self, resumeState, precomputedGroups)
     self.m_selectedMaterialInstIdList = resumeState and resumeState.selectedMaterialInstIdList or {}
     self.m_selectedMaterialInstId2Index = resumeState and resumeState.selectedMaterialInstId2Index or {}
 
-    self.m_materialGroups = EquipTechUtils.getEquipEnhanceMaterialsGroups(self.m_selectedEnhanceEquipItemInfo.partType,
-        selectedTemplateAttrShowInfoList[self.m_selectedAttrShowInfoIndex], self.m_selectedEnhanceEquipInstId)
+    self.m_materialGroups = precomputedGroups or self:_ComputeEnhanceMaterialGroups()
 
     local isEmpty = not self.m_materialGroups or #self.m_materialGroups == 0
     self.view.selectMaterials.emptyNode.gameObject:SetActive(isEmpty)
@@ -2038,18 +3261,31 @@ EquipTechCtrl._FindEnhanceMaterialItemBtnByInstId = HL.Method(HL.Number).Return(
 end
 
 
+EquipTechCtrl._NotifyEnhanceIngredientLimitToast = HL.Method(HL.Number) << function(self, reason)
+    local Reason = EquipTechConst.EEquipManufactureMaxReason
+    if reason == Reason.BatchFull then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_INGREDIENT_BATCH_LIMIT_TOAST)
+    elseif reason == Reason.GuaranteeFull then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_INGREDIENT_GUARANTEED_TOAST)
+    elseif reason == Reason.EnhanceCostInsufficient then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_INGREDIENT_COST_NOT_ENOUGH_TOAST)
+    end
+end
+
+
 EquipTechCtrl._CanAddEnhanceIngredient = HL.Method().Return(HL.Boolean) << function(self)
     local remainingByBatchLimit, remainingByGuarantee, remainingByCostBudget = self:_GetEnhanceIngredientHeadroom()
+    local Reason = EquipTechConst.EEquipManufactureMaxReason
+    local reason = Reason.Ok
     if remainingByBatchLimit < 1 then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_INGREDIENT_BATCH_LIMIT_TOAST)
-        return false
+        reason = Reason.BatchFull
+    elseif remainingByGuarantee < 1 then
+        reason = Reason.GuaranteeFull
+    elseif remainingByCostBudget < 1 then
+        reason = Reason.EnhanceCostInsufficient
     end
-    if remainingByGuarantee < 1 then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_INGREDIENT_GUARANTEED_TOAST)
-        return false
-    end
-    if remainingByCostBudget < 1 then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_INGREDIENT_COST_NOT_ENOUGH_TOAST)
+    if reason ~= Reason.Ok then
+        self:_NotifyEnhanceIngredientLimitToast(reason)
         return false
     end
     return true
@@ -2188,6 +3424,12 @@ EquipTechCtrl._UpdateSelectedMaterialCellsIndex = HL.Method() << function(self)
     end
 end
 
+EquipTechCtrl._ClearEnhanceMaterialItemTipsMode = HL.Method() << function(self)
+    self.m_isEnhanceMaterialItemTipsMode = false
+    self:DeleteInputBinding(self.m_closeEnhanceMaterialItemTipsBindingId)
+    Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.selectMaterials.itemListInputGroup.groupId)
+end
+
 EquipTechCtrl._ShowEnhanceMaterialItemTips = HL.Method(HL.Table) << function(self, itemInfo)
     Notify(MessageConst.SHOW_ITEM_TIPS, {
         itemId = itemInfo.id,
@@ -2196,24 +3438,55 @@ EquipTechCtrl._ShowEnhanceMaterialItemTips = HL.Method(HL.Table) << function(sel
         posType = UIConst.UI_TIPS_POS_TYPE.RightTop,
         isSideTips = DeviceInfo.usingController,
         onBeforeJump = function()
-            self.m_isEnhanceMaterialItemTipsMode = false
-            self:DeleteInputBinding(self.m_closeEnhanceMaterialItemTipsBindingId)
-            Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.selectMaterials.itemListInputGroup.groupId)
+            self:_ClearEnhanceMaterialItemTipsMode()
         end
     })
 end
 
 EquipTechCtrl._CloseEnhanceMaterialItemTips = HL.Method() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
-    self.m_isEnhanceMaterialItemTipsMode = false
-    self:DeleteInputBinding(self.m_closeEnhanceMaterialItemTipsBindingId)
-    Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.selectMaterials.itemListInputGroup.groupId)
+    self:_ClearEnhanceMaterialItemTipsMode()
 end
 
-EquipTechCtrl._RefreshEnhanceInfo = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
-    local isEmpty = self.m_selectedMaterialInstIdList == nil or #self.m_selectedMaterialInstIdList == 0
+
+
+EquipTechCtrl._ComputeEnhanceLimits = HL.Method() << function(self)
     local attrShowInfo = self.m_selectedAttrShowInfoList[self.m_selectedAttrShowInfoIndex]
-    local selectedCount = isEmpty and 0 or #self.m_selectedMaterialInstIdList
+    local enhanceLevel = self.m_selectedEnhanceEquipItemInfo.equipInstData:GetAttrEnhanceLevel(attrShowInfo.enhancedAttrIndex)
+    local nextEnhanceLevel = enhanceLevel + 1
+    local canEnhance = enhanceLevel < Tables.equipConst.maxAttrEnhanceLevel
+
+    self.m_enhanceGuaranteeFailedCount = 0
+    self.m_enhanceGuaranteeMaxFailedCount = 0
+    if canEnhance then
+        local failedCount = self.m_selectedEnhanceEquipItemInfo.equipInstData:GetEnhanceFailedTimes(attrShowInfo.enhancedAttrIndex, nextEnhanceLevel)
+        local maxFailedCount
+        if not string.isEmpty(attrShowInfo.enhanceGuaranteeTimesRuleId) then
+            local _, ruleData = Tables.equipEnhanceGuaranteeTimesRuleTable:TryGetValue(attrShowInfo.enhanceGuaranteeTimesRuleId)
+            if ruleData then
+                maxFailedCount = ruleData[string.format("GuaranteeTimes%d", nextEnhanceLevel)]
+            end
+        end
+        self.m_enhanceGuaranteeFailedCount = failedCount
+        self.m_enhanceGuaranteeMaxFailedCount = maxFailedCount or 0
+    end
+
+    self.m_enhanceCostOwnItemCount = 0
+    self.m_enhanceCostPerItemCount = 0
+    local _, costData = Tables.equipEnhanceCostTable:TryGetValue(self.m_selectedEnhanceEquipItemInfo.equipData.domainId)
+    if costData then
+        local _, costItemData = Tables.itemTable:TryGetValue(costData.consumeItemId)
+        if costItemData then
+            self.m_enhanceCostOwnItemCount = Utils.getItemCount(costItemData.id)
+            self.m_enhanceCostPerItemCount = costData.consumeItemCnt
+        end
+    end
+end
+
+EquipTechCtrl._RefreshEnhanceInfo = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, skipAnim, skipMustAnim)
+    local selectedCount = self:_GetSelectedEnhanceMaterialCount()
+    local isEmpty = selectedCount == 0
+    local attrShowInfo = self.m_selectedAttrShowInfoList[self.m_selectedAttrShowInfoIndex]
 
     if self.m_sliderPreviewTween then
         self.m_sliderPreviewTween:Kill()
@@ -2234,29 +3507,22 @@ EquipTechCtrl._RefreshEnhanceInfo = HL.Method(HL.Opt(HL.Boolean)) << function(se
     self.view.middleBar.enhanceAttrNode.selectedNumTxt.text = tostring(selectedCount)
 
     
+    self:_ComputeEnhanceLimits()
     local successRationNode = self.view.middleBar.enhanceAttrNode.successRationNode
     local enhanceLevel = self.m_selectedEnhanceEquipItemInfo.equipInstData:GetAttrEnhanceLevel(attrShowInfo.enhancedAttrIndex)
     local nextEnhanceLevel = enhanceLevel + 1
     local canEnhance = enhanceLevel < Tables.equipConst.maxAttrEnhanceLevel
-    self.m_enhanceGuaranteeFailedCount = 0
-    self.m_enhanceGuaranteeMaxFailedCount = 0
     successRationNode.animationWrapper:ClearTween(false)
     successRationNode.gameObject:SetActive(canEnhance)
     if canEnhance then
         successRationNode.txtNormal.gameObject:SetActive(not isEmpty)
         successRationNode.txtEmpty.gameObject:SetActive(isEmpty)
+        successRationNode.txtNormal.text = self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and Language.LUA_EQUIP_ENHANCE_WAITING_MODE_EARLY_STOP or Language.LUA_EQUIP_ENHANCE_EQUIP_MODE_EARLY_STOP
+        successRationNode.txtEmpty.text = self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and Language.LUA_EQUIP_ENHANCE_NO_EQUIP_FORMULA_SELECT or Language.LUA_EQUIP_ENHANCE_NO_EQUIP_SELECT
 
-        local failedCount = self.m_selectedEnhanceEquipItemInfo.equipInstData:GetEnhanceFailedTimes(attrShowInfo.enhancedAttrIndex, nextEnhanceLevel)
-        local maxFailedCount
-        if not string.isEmpty(attrShowInfo.enhanceGuaranteeTimesRuleId) then
-            local _, ruleData = Tables.equipEnhanceGuaranteeTimesRuleTable:TryGetValue(attrShowInfo.enhanceGuaranteeTimesRuleId)
-            if ruleData then
-                maxFailedCount = ruleData[string.format("GuaranteeTimes%d", nextEnhanceLevel)]
-            end
-        end
-        self.m_enhanceGuaranteeFailedCount = failedCount
-        self.m_enhanceGuaranteeMaxFailedCount = maxFailedCount or 0
-        if maxFailedCount then
+        local failedCount = self.m_enhanceGuaranteeFailedCount
+        local maxFailedCount = self.m_enhanceGuaranteeMaxFailedCount
+        if maxFailedCount > 0 then
             local isMustEnhance = failedCount + selectedCount > maxFailedCount
             successRationNode.successNode.gameObject:SetActive(isMustEnhance)
             successRationNode.bgLight.gameObject:SetActive(isMustEnhance)
@@ -2274,7 +3540,7 @@ EquipTechCtrl._RefreshEnhanceInfo = HL.Method(HL.Opt(HL.Boolean)) << function(se
                 end, targetValue, 0.3)
             end
 
-            if not isEmpty and isMustEnhance then
+            if not isEmpty and isMustEnhance and not skipMustAnim then
                 successRationNode.animationWrapper:PlayInAnimation()
                 AudioAdapter.PostEvent("Au_UI_Event_EquipForgMS")
             end
@@ -2286,7 +3552,12 @@ EquipTechCtrl._RefreshEnhanceInfo = HL.Method(HL.Opt(HL.Boolean)) << function(se
 
     self.view.middleBar.bottomNode.btnMake.gameObject:SetActive(not isEmpty)
     if self.view.stateController.currentStateName == STATE_NAME.ENHANCE_MATERIAL then
-        local hasCandidates = self.m_materialGroups and #self.m_materialGroups > 0
+        local hasCandidates
+        if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+            hasCandidates = self.m_manufacturedFormulaList and #self.m_manufacturedFormulaList > 0
+        else
+            hasCandidates = self.m_materialGroups and #self.m_materialGroups > 0
+        end
         self.view.middleBar.bottomNode.selectBtn.gameObject:SetActive(hasCandidates)
         self.view.middleBar.bottomNode.clearBtn.gameObject:SetActive(hasCandidates)
     else
@@ -2298,25 +3569,20 @@ EquipTechCtrl._RefreshEnhanceInfo = HL.Method(HL.Opt(HL.Boolean)) << function(se
 end
 
 EquipTechCtrl._RefreshEnhanceCostItem = HL.Method() << function(self)
-    local isEmpty = self.m_selectedMaterialInstIdList == nil or #self.m_selectedMaterialInstIdList == 0
+    self:_ComputeEnhanceLimits()
+    local selectedCount = self:_GetSelectedEnhanceMaterialCount()
+    local isEmpty = selectedCount == 0
     local consumeNode = self.view.middleBar.enhanceAttrNode.consumeNode
     consumeNode.btnIcon.onClick:RemoveAllListeners()
     self.m_isCostItemCountEnough = false
     self.m_costItemIds = {}
-    self.m_enhanceCostOwnItemCount = 0
-    self.m_enhanceCostPerItemCount = 0
-    local itemCount = 0
-    local costItemCount = 0
+    local itemCount = self.m_enhanceCostOwnItemCount
+    local costItemCount = self.m_enhanceCostPerItemCount
     local _, costData = Tables.equipEnhanceCostTable:TryGetValue(self.m_selectedEnhanceEquipItemInfo.equipData.domainId)
     if costData then
         local _, costItemData = Tables.itemTable:TryGetValue(costData.consumeItemId)
         if costItemData then
             table.insert(self.m_costItemIds, costItemData.id)
-            itemCount = Utils.getItemCount(costItemData.id)
-            costItemCount = costData.consumeItemCnt
-            self.m_enhanceCostOwnItemCount = itemCount
-            self.m_enhanceCostPerItemCount = costItemCount
-            local selectedCount = isEmpty and 0 or #self.m_selectedMaterialInstIdList
             local totalNeedCost = costItemCount * selectedCount
             self.m_isCostItemCountEnough = not isEmpty and itemCount >= totalNeedCost
             consumeNode.imgIcon:LoadSprite(UIConst.UI_SPRITE_ITEM, costItemData.iconId)
@@ -2338,16 +3604,40 @@ EquipTechCtrl._RefreshEnhanceCostItem = HL.Method() << function(self)
     consumeNode.txtCost.color = isEmpty and self.view.config.COST_EMPTY_COLOR or
         (self.m_isCostItemCountEnough and self.view.config.COST_ENOUGH_COLOR or self.view.config.COST_NOT_ENOUGH_COLOR)
     consumeNode.txtCost.text = isEmpty and
-        string.format("--/%d", itemCount) or string.format("%d/%d", costItemCount * #self.m_selectedMaterialInstIdList, itemCount)
+        string.format("--/%d", itemCount) or string.format("%d/%d", costItemCount * selectedCount, itemCount)
 end
 
 EquipTechCtrl._OnEnhanceClicked = HL.Method() << function(self)
-    if self.m_selectedEnhanceEquipInstId == 0 or self.m_selectedMaterialInstIdList == nil or not next(self.m_selectedMaterialInstIdList) then
+    if self.m_selectedEnhanceEquipInstId == 0 then
         return
+    end
+    local isManufactured = self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED
+    
+    if isManufactured then
+        local hasSelection = false
+        for _, count in pairs(self.m_manufacturedFormulaCountMap or {}) do
+            if count > 0 then
+                hasSelection = true
+                break
+            end
+        end
+        if not hasSelection then
+            return
+        end
+    else
+        if self.m_selectedMaterialInstIdList == nil or not next(self.m_selectedMaterialInstIdList) then
+            return
+        end
     end
 
     if not self.m_isCostItemCountEnough then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_MATERIAL_NOT_ENOUGH)
+        return
+    end
+
+    
+    if isManufactured then
+        self:_EnhanceEquip()
         return
     end
 
@@ -2359,8 +3649,8 @@ EquipTechCtrl._OnEnhanceClicked = HL.Method() << function(self)
             break
         end
     end
+    local items = {}
     if needConfirm then
-        local items = {}
         for _, instId in pairs(self.m_selectedMaterialInstIdList) do
             local equipInstData = CharInfoUtils.getEquipByInstId(instId)
             if equipInstData and equipInstData:HasAnyEnhanceRecord() then
@@ -2370,6 +3660,14 @@ EquipTechCtrl._OnEnhanceClicked = HL.Method() << function(self)
                 })
             end
         end
+    end
+
+    self:_ConfirmPresetGroupEquipEnhance(function()
+        if not needConfirm then
+            self:_EnhanceEquip()
+            return
+        end
+
         Notify(MessageConst.SHOW_POP_UP, {
             content = Language.LUA_EQUIP_ENHANCE_MATERIAL_POPUP_TITLE,
             items = items,
@@ -2377,41 +3675,131 @@ EquipTechCtrl._OnEnhanceClicked = HL.Method() << function(self)
                 self:_EnhanceEquip()
             end,
         })
-    else
-        self:_EnhanceEquip()
+    end)
+end
+
+EquipTechCtrl._ConfirmPresetGroupEquipEnhance = HL.Method(HL.Function) << function(self, onConfirm)
+    local items = {}
+    local equipPresetGroupSystem = GameInstance.player.equipPresetGroupSystem
+    for _, instId in pairs(self.m_selectedMaterialInstIdList) do
+        if equipPresetGroupSystem:IsEquipInPresetGroup(instId) then
+            local equipInstData = CharInfoUtils.getEquipByInstId(instId)
+            if equipInstData then
+                table.insert(items, {
+                    id = equipInstData.templateId,
+                    instId = instId,
+                })
+            end
+        end
     end
+
+    if #items == 0 then
+        onConfirm()
+        return
+    end
+
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = Language.LUA_EQUIP_PRESET_GROUP_EQUIP_ENHANCE_CONFIRM,
+        items = items,
+        onConfirm = onConfirm,
+    })
 end
 
 EquipTechCtrl._EnhanceEquip = HL.Method() << function(self)
     local attrIndex = self.m_selectedAttrShowInfoList[self.m_selectedAttrShowInfoIndex].enhancedAttrIndex
-    self.m_equipTechSystem:EnhanceEquip(self.m_selectedEnhanceEquipInstId, self.m_selectedMaterialInstIdList, attrIndex)
+    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+        local formulaIds = {}
+        local counts = {}
+        local chainIds = {}
+
+        for _, itemInfo in ipairs(self.m_manufacturedFormulaList or {}) do
+            local formulaId = itemInfo.equipFormulaData.formulaId
+            local count = self.m_manufacturedFormulaCountMap[formulaId] or 0
+            if count > 0 then
+                table.insert(formulaIds, formulaId)
+                table.insert(counts, count)
+                table.insert(chainIds, EquipTechUtils.GetCurFormulaChainId(formulaId))
+            end
+        end
+
+        self.m_equipTechSystem:EnhanceEquipWithProduce(self.m_selectedEnhanceEquipInstId, formulaIds, counts, chainIds, attrIndex)
+    else
+        self.m_equipTechSystem:EnhanceEquip(self.m_selectedEnhanceEquipInstId, self.m_selectedMaterialInstIdList, attrIndex)
+    end
 end
 
 EquipTechCtrl._OnEquipEnhance = HL.Method(HL.Table) << function(self, args)
-    local equipInstId, enhancedAttrIndex = unpack(args)
+    local equipInstId, enhancedAttrIndex, producedFormulaId2Count = unpack(args)
     local attrShowInfo = self.m_selectedAttrShowInfoList[self.m_selectedAttrShowInfoIndex]
     if equipInstId ~= self.m_selectedEnhanceEquipInstId then
         return
     end
 
+    local isManufactured = self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED
     local consumedIngredientInstIds = {}
     local returnedIngredientInstIds = {}
-    local sentList = self.m_selectedMaterialInstIdList
-    if sentList then
-        for _, instId in ipairs(sentList) do
-            if CharInfoUtils.getEquipByInstId(instId) then
-                table.insert(returnedIngredientInstIds, instId)
-            else
-                table.insert(consumedIngredientInstIds, instId)
+    local returnedItemEntries = {}
+    local totalSelectedCount = 0
+    if isManufactured then
+        local countMap = self.m_manufacturedFormulaCountMap or {}
+        local chainCache = self.m_manufacturedFormulaChainCache or {}
+        for _, count in pairs(countMap) do
+            if count > 0 then
+                totalSelectedCount = totalSelectedCount + count
             end
         end
+
+        
+        
+        
+        local returnedByResource = {}
+        for formulaId, selectedCount in pairs(countMap) do
+            if selectedCount > 0 then
+                local producedCount = 0
+                if producedFormulaId2Count then
+                    local _, v = producedFormulaId2Count:TryGetValue(formulaId)
+                    producedCount = v or 0
+                end
+                local returnedCount = selectedCount - producedCount
+                if returnedCount > 0 then
+                    local chainEntry = chainCache[formulaId]
+                    if chainEntry then
+                        if chainEntry.hasGoldCost and chainEntry.costGoldNum > 0 then
+                            returnedByResource[chainEntry.costGoldId] = (returnedByResource[chainEntry.costGoldId] or 0) + returnedCount * chainEntry.costGoldNum
+                        end
+                        if chainEntry.hasMatCost and chainEntry.costItemNum > 0 then
+                            returnedByResource[chainEntry.costItemId] = (returnedByResource[chainEntry.costItemId] or 0) + returnedCount * chainEntry.costItemNum
+                        end
+                    end
+                end
+            end
+        end
+        for resourceId, count in pairs(returnedByResource) do
+            if count > 0 then
+                table.insert(returnedItemEntries, { id = resourceId, count = count })
+            end
+        end
+
+        self.m_manufacturedFormulaCountMap = {}
+    else
+        local sentList = self.m_selectedMaterialInstIdList
+        if sentList then
+            for _, instId in ipairs(sentList) do
+                if CharInfoUtils.getEquipByInstId(instId) then
+                    table.insert(returnedIngredientInstIds, instId)
+                else
+                    table.insert(consumedIngredientInstIds, instId)
+                end
+            end
+        end
+        totalSelectedCount = #consumedIngredientInstIds
+        self.m_selectedMaterialInstIdList = {}
+        self.m_selectedMaterialInstId2Index = {}
     end
-    self.m_selectedMaterialInstIdList = {}
-    self.m_selectedMaterialInstId2Index = {}
 
     local enhanceFailCountDelta
     if enhancedAttrIndex <= 0 then
-        enhanceFailCountDelta = #consumedIngredientInstIds
+        enhanceFailCountDelta = totalSelectedCount
     end
 
     
@@ -2423,10 +3811,21 @@ EquipTechCtrl._OnEquipEnhance = HL.Method(HL.Table) << function(self, args)
         enhanceFailCountDelta = enhanceFailCountDelta,
         consumedIngredientInstIds = consumedIngredientInstIds,
         returnedIngredientInstIds = returnedIngredientInstIds,
+        returnedItemEntries = returnedItemEntries,
+        enhanceMode = self.m_materialListMode,
         closeCallback = function()
             self:_RefreshEnhancedEquip()
             self:_RefreshEnhanceTargetList(nil, true)
-            self:_RefreshEnhanceMaterialList()
+            if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED then
+                self:_ComputeEnhanceLimits()
+                self:_RefreshManufacturedList()
+            else
+                self:_RefreshEnhanceMaterialList()
+                
+                if self:_GetDefaultMaterialListMode() ~= ENHANCE_MATERIAL_LIST_TYPE.OWN then
+                    self.view.selectMaterials.materialProduceToggle.isOn = true
+                end
+            end
             self:_RefreshEnhanceInfo(true)
 
             local equipInstData = EquipTechUtils.getEquipInstData(equipInstId)

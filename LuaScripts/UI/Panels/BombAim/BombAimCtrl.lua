@@ -1,6 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BombAim
+local THROW_REQUEST_KEEP_TIME = 0.5
 BombAimCtrl = HL.Class('BombAimCtrl', uiCtrl.UICtrl)
 
 BombAimCtrl.m_isInitAim = HL.Field(HL.Boolean) << false
@@ -10,6 +11,8 @@ BombAimCtrl.m_isHit = HL.Field(HL.Boolean) << false
 BombAimCtrl.m_controllerTriggerSettingHandlerId = HL.Field(HL.Number) << -1
 
 BombAimCtrl.m_isControllerTriggerUsingVibration = HL.Field(HL.Boolean) << false
+
+BombAimCtrl.m_throwRequestTime = HL.Field(HL.Number) << -1
 
 
 
@@ -25,17 +28,15 @@ BombAimCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 BombAimCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:BindInputPlayerAction("common_cancel_alter", function()
-        self:_OnCancel()
+        self:_TryCancel()
     end)
 
     self:BindInputPlayerAction("battle_throw_mode_throw_show_only", function()
-        if GameWorld.battle.inThrowMode and not InputManager.cursorVisible then
-            GameInstance.playerController.mainCharacter.interactiveInstigatorCtrl:CastThrowSkill()
-        end
+        self:_OnThrowInput()
     end)
 
     self.view.closeBtn.onClick:AddListener(function()
-        self:_OnCancel()
+        self:_TryCancel()
     end)
 end
 
@@ -54,6 +55,7 @@ end
 BombAimCtrl._OnShowBombAim = HL.StaticMethod() << function()
     local bombAimPanel = UIManager:AutoOpen(PANEL_ID)
     bombAimPanel.m_isInitAim = false;
+    bombAimPanel.m_throwRequestTime = -1
     bombAimPanel.view.animationWrapper:PlayWithTween("bombaimfar_in")
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {true, "Bomb"})
     if DeviceInfo.usingController then
@@ -64,6 +66,7 @@ end
 BombAimCtrl._OnHideBombAim = HL.Method() << function(self)
     self:Hide()
     self.m_isHit = false
+    self.m_throwRequestTime = -1
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {false, "Bomb"})
     self:_ToggleControllerTriggerSetting(false)
     
@@ -142,6 +145,56 @@ BombAimCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(s
         UIManager:ShowWithKey(PanelId.BattleAction, "Bomb")
         GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", false)
     end
+end
+
+BombAimCtrl._OnThrowInput = HL.Method() << function(self)
+    if not GameWorld.battle.inThrowMode or InputManager.cursorVisible then
+        return
+    end
+    local mainCharacter = GameInstance.playerController.mainCharacter
+    if mainCharacter == nil then
+        return
+    end
+    local instigatorCtrl = mainCharacter.interactiveInstigatorCtrl
+    if instigatorCtrl == nil or not instigatorCtrl.isPicking then
+        return
+    end
+    self.m_throwRequestTime = Time.unscaledTime
+    instigatorCtrl:CastThrowSkill()
+end
+
+BombAimCtrl._IsThrowRequestPending = HL.Method().Return(HL.Boolean) << function(self)
+    if self.m_throwRequestTime < 0 then
+        return false
+    end
+    return Time.unscaledTime - self.m_throwRequestTime < THROW_REQUEST_KEEP_TIME
+end
+
+BombAimCtrl._IsCastingThrowSkill = HL.Method().Return(HL.Boolean) << function(self)
+    local mainCharacter = GameInstance.playerController.mainCharacter
+    if mainCharacter == nil then
+        return false
+    end
+    local instigatorCtrl = mainCharacter.interactiveInstigatorCtrl
+    if instigatorCtrl == nil or mainCharacter.abilityCom == nil then
+        return false
+    end
+    local curSkill = mainCharacter.abilityCom.curSkill
+    if curSkill == nil then
+        return false
+    end
+    local throwSkillId = instigatorCtrl.throwData.skillId
+    if throwSkillId == nil or throwSkillId == "" then
+        return false
+    end
+    return curSkill.skillId == throwSkillId
+end
+
+BombAimCtrl._TryCancel = HL.Method() << function(self)
+    if self:_IsThrowRequestPending() or self:_IsCastingThrowSkill() then
+        return
+    end
+    self:_OnCancel()
 end
 
 BombAimCtrl._OnCancel = HL.Method() << function(self)

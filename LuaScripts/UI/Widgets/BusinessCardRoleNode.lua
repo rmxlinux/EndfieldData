@@ -32,6 +32,8 @@ BusinessCardRoleNode.InitBusinessCardRoleNode = HL.Method(HL.Number, HL.Boolean)
 
     for i = 1, roleCharCount do
         self.view['friendBusinessCardRoleCell' .. i].aniRoot:SetState(CSIndex(i) < list.Count and "Role" or preview and "OtherEmpty" or "SelfEmpty")
+        
+        self.view['friendBusinessCardRoleCell' .. i].charHeadCell.view.glowAll.gameObject:SetActive(false)
         self.view['friendBusinessCardRoleCell' .. i].addBtn.onClick:RemoveAllListeners()
         self.view['friendBusinessCardRoleCell' .. i].addBtn.onClick:AddListener(function()
             if not self.m_isPreview then
@@ -73,6 +75,7 @@ BusinessCardRoleNode.InitBusinessCardRoleNode = HL.Method(HL.Number, HL.Boolean)
                     UIManager:Open(PanelId.FriendRoleDisplay)
                 end
             end, true)
+            self.view['friendBusinessCardRoleCell' .. i].charHeadCell:SetMaxPotentialGlow(args.potentialLevel, charConfig.rarity)
             
             self.view['friendBusinessCardRoleCell' .. i].charHeadCell.view.button.customBindingViewLabelText = preview and Language.LUA_FRIEND_BUSINESS_EDIT_CHAR_PREVIEW or Language.LUA_FRIEND_BUSINESS_EDIT_CHAR
             if i == 1 then
@@ -80,6 +83,12 @@ BusinessCardRoleNode.InitBusinessCardRoleNode = HL.Method(HL.Number, HL.Boolean)
             end
         end
     end
+end
+
+
+BusinessCardRoleNode.SetMaxPotentialGlowForShare = HL.Method(HL.Boolean) << function(self, isSharing)
+    
+    CS.Beyond.UI.UICharHeadGlowAnimation.instance:SetForShare(isSharing)
 end
 
 BusinessCardRoleNode.NaviToFirstChar = HL.Method() << function(self)

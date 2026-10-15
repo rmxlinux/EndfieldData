@@ -1,5 +1,11 @@
 local ActivityUtils = {}
 local DOUBLE_ASSAULT_REQUIRED_TEAM_COUNT = 2
+local DEFAULT_ACTIVITY_BGM_STOP_EVENT = "au_music_meta_ui_stop"
+local GAMBLE_BATTLE_BGM = "au_music_meta_ui_gambling_v1d6"
+local gambleBattleBgmSuffix = nil
+local ACTIVITY_TYPE_BGM_STOP_EVENT_OVERRIDES = {
+    [GEnums.ActivityType.ContingencyContract] = "au_music_meta_ui_cc_v1d6_empty",
+}
 
 
 
@@ -70,6 +76,15 @@ end
 
 
 
+function ActivityUtils.isActivityRecommended(activityData)
+    return activityData.isRecommend
+        or (not string.isEmpty(activityData.recommendTime)
+            and Utils.isCurTimeInTimeIdRange(activityData.recommendTime))
+end
+
+
+
+
 
 function ActivityUtils.getServerPushOffsetHours(pushData)
     if not pushData or not pushData.offset or not pushData.offset.Count or pushData.offset.Count <= 0 then
@@ -115,7 +130,7 @@ end
 
 
 
-function ActivityUtils.isTabPushConditionSatisfied(pushID, activity)
+function ActivityUtils.isActivityPushConditionSatisfied(pushID, activity)
     if string.isEmpty(pushID) or not Tables.activityPushConditionTable then
         return true
     end
@@ -137,6 +152,11 @@ function ActivityUtils.isTabPushConditionSatisfied(pushID, activity)
         if cond then
             local ok, value = LuaGameConditionUtils.getConditionValueByParameters(cond.conditionType, cond.parameters)
             if not ok then
+                logger.error(
+                    "Activity push condition is unsupported or evaluation failed: pushID=%s, conditionId=%s, conditionType=%s",
+                    tostring(pushID),
+                    tostring(cond.conditionId),
+                    tostring(cond.conditionType))
                 return false
             end
             if not Utils.compareInt(value, cond.progressToCompare, cond.compareOperator) then
@@ -163,7 +183,7 @@ function ActivityUtils.isTabPushActivated(pushData, activity, curTs, curWeekday)
         if curWeekday < (pushData.pushInWeekday or 0) then
             return false
         end
-        return ActivityUtils.isTabPushConditionSatisfied(pushData.pushID)
+        return ActivityUtils.isActivityPushConditionSatisfied(pushData.pushID)
     end
     local offsetHours = ActivityUtils.getServerPushOffsetHours(pushData)
     local activationTime = (activity.startTime or 0) + offsetHours * Const.SEC_PER_HOUR
@@ -200,7 +220,7 @@ function ActivityUtils.hasUnreadUpdateTabPush(activityId, activity)
     end
     return tabPush.tabType == "Update"
         and not string.isEmpty(tabPush.pushID)
-        and ActivityUtils.isTabPushConditionSatisfied(tabPush.pushID, activity)
+        and ActivityUtils.isActivityPushConditionSatisfied(tabPush.pushID, activity)
         and not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID)
 end
 
@@ -212,7 +232,7 @@ function ActivityUtils.hasUnreadEndOnceTabPush(activityId, activity)
     end
     return tabPush.tabType == "End"
         and not string.isEmpty(tabPush.pushID)
-        and ActivityUtils.isTabPushConditionSatisfied(tabPush.pushID, activity)
+        and ActivityUtils.isActivityPushConditionSatisfied(tabPush.pushID, activity)
         and not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID)
         and not ActivityUtils.isActivityEndTabRedDotSeen(tabPush.pushID)
 end
@@ -243,7 +263,7 @@ function ActivityUtils.getActivityCenterTabState(id)
     local pushID = tabPush and tabPush.pushID
     local conditionOk = pushID
         and not string.isEmpty(pushID)
-        and ActivityUtils.isTabPushConditionSatisfied(pushID, activity)
+        and ActivityUtils.isActivityPushConditionSatisfied(pushID, activity)
     local pushUnread = conditionOk
         and not GameInstance.player.activitySystem:IsActivityPushRead(pushID)
 
@@ -290,6 +310,9 @@ function ActivityUtils.checkActivityRedDot(id)
         return true, UIConst.RED_DOT_TYPE.Normal
     end
     if ActivityUtils.isNewIntroMissionActivity(id) then
+        return true, UIConst.RED_DOT_TYPE.Normal
+    end
+    if ActivityUtils.isNewEndMissionActivity(id) then
         return true, UIConst.RED_DOT_TYPE.Normal
     end
     if ActivityUtils.isNewActivity(id) then
@@ -539,11 +562,26 @@ function ActivityUtils.getDebugActivityBubbleId()
 end
 
 
+function ActivityUtils.isActivityPushPopupConditionSatisfied(pushID)
+    if string.isEmpty(pushID) then
+        return false
+    end
+    local hasPopup, popupData = Tables.activityPushPopupTable:TryGetValue(pushID)
+    if not hasPopup or not popupData then
+        logger.error("Activity push popup config not found: pushID=%s", tostring(pushID))
+        return false
+    end
+    local activity = GameInstance.player.activitySystem:GetActivity(popupData.activityId)
+    return ActivityUtils.isActivityPushConditionSatisfied(pushID, activity)
+end
+
 function ActivityUtils.getActivityPushPopupId(activityId)
     local _, pushInfo = Tables.activityPushTable:TryGetValue(activityId)
     if pushInfo then
         for _, pushId in pairs(pushInfo.popups) do
-            if GameInstance.player.activitySystem:IsAvailableActivityPushId(pushId) then
+            if GameInstance.player.activitySystem:IsAvailableActivityPushId(pushId)
+                and ActivityUtils.isActivityPushPopupConditionSatisfied(pushId)
+            then
                 return pushId
             end
         end
@@ -566,6 +604,16 @@ end
 function ActivityUtils.isActivityUnlocked(id)
     local activity = GameInstance.player.activitySystem:GetActivity(id)
     return activity and (activity.status == GEnums.ActivityStatus.InProgress or activity.status == GEnums.ActivityStatus.Completed) or false
+end
+
+
+function ActivityUtils.isGambleBattleEntryUnlocked(activityId)
+    if not ActivityUtils.isActivityUnlocked(activityId) then
+        return false
+    end
+    local questState = GameInstance.player.mission:GetQuestState("a1m19_q#2")
+    local QuestState = CS.Beyond.Gameplay.MissionSystem.QuestState
+    return questState == QuestState.Processing or questState == QuestState.Completed
 end
 
 
@@ -612,6 +660,34 @@ end
 function ActivityUtils.hasIntroMissionAndComplete(id)
     local activity = GameInstance.player.activitySystem:GetActivity(id)
     return activity and (activity.hasIntroMission and ActivityUtils.isActivityUnlocked(id)) or false
+end
+
+
+function ActivityUtils.playGambleBattleBgm(suffix)
+    if gambleBattleBgmSuffix == suffix then
+        return
+    end
+    gambleBattleBgmSuffix = suffix
+    AudioManager.PostEvent(GAMBLE_BATTLE_BGM .. suffix)
+end
+
+function ActivityUtils.playGambleBattleRoundBgm(roundIndex)
+    ActivityUtils.playGambleBattleBgm(roundIndex > 0 and "_02" or "")
+end
+
+function ActivityUtils.isGambleBattleBgmEnding()
+    return gambleBattleBgmSuffix == "_end" or gambleBattleBgmSuffix == "_finish"
+end
+
+
+function ActivityUtils.stopGambleBattleBgm()
+    if gambleBattleBgmSuffix == "" or gambleBattleBgmSuffix == "_02" then
+        ActivityUtils.playGambleBattleBgm("_end")
+    end
+end
+
+function ActivityUtils.getActivityBgmStopEvent(type)
+    return ACTIVITY_TYPE_BGM_STOP_EVENT_OVERRIDES[type] or DEFAULT_ACTIVITY_BGM_STOP_EVENT
 end
 
 function ActivityUtils.getNaviConfig(panel, type)
@@ -785,6 +861,38 @@ function ActivityUtils.getActivityMilestoneInfo(activityId)
         end
     end
     return configTable, level
+end
+
+function ActivityUtils.openDescriptionPopup(activityId, initTab)
+    local __, activityData = Tables.activityTable:TryGetValue(activityId)
+    if not activityData then
+        return
+    end
+
+    ActivityUtils.GameEventLogActivityVisit(activityId, "descriptionButton", "visit_description")
+    local instructionId = activityData.instructionId
+    UIManager:Open(PanelId.ActivityDescriptionPopup, {
+        activityId = activityId,
+        onClose = function()
+            Notify(MessageConst.ON_TOGGLE_ACTIVITY_INSTRUCTION, {
+                isShown = false
+            })
+        end,
+        initTab = initTab,
+    })
+    Notify(MessageConst.ON_TOGGLE_ACTIVITY_INSTRUCTION, {
+        instructionId = instructionId,
+        isShown = true
+    })
+end
+
+
+function ActivityUtils.getStageShowTimeId(stageCfg)
+    local showTimeId = stageCfg.showTimeId
+    if string.isEmpty(showTimeId) then
+        return stageCfg.timeId
+    end
+    return showTimeId
 end
 
 
@@ -1235,6 +1343,12 @@ end
 
 
 
+
+function ActivityUtils.GameEventLogGambleActivityVisit(visitStatus)
+    EventLogManagerInst:GameEvent_GambleActivityVisit(visitStatus)
+end
+
+
 function ActivityUtils.GameEventLogActivityEnter(enterType, activityId)
     EventLogManagerInst:GameEvent_ActivityEnter(enterType, activityId)
 end
@@ -1635,18 +1749,49 @@ end
 
 
 
+function ActivityUtils.TryGetActivityMilestoneCfg(activityId)
+    local haveCfg, milestoneCfg = Tables.activityRacingDungeonMilestoneTable:TryGetValue(activityId)
+    if not haveCfg then
+        haveCfg, milestoneCfg = Tables.activityCommonUIMilestoneTable:TryGetValue(activityId)
+    end
+    return haveCfg, milestoneCfg
+end
+
+
+
 function ActivityUtils.GetRacingDungeonMilestoneCurrScore(activityId)
     local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
     if not activityData then
         return 0
     end
-    return activityData.milestoneScore
+    
+    if activityData.receivedMilestoneNodes ~= nil then
+        return activityData.milestoneScore or 0
+    end
+    return GameInstance.player.activitySystem:GetActivityMilestoneCurrentScore(activityId)
+end
+
+
+
+
+
+
+function ActivityUtils.IsActivityCoinMilestoneReceived(activityId, nodeId)
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    if not activityData then
+        return false
+    end
+    local receivedNodes = activityData.receivedMilestoneNodes
+    if receivedNodes ~= nil then
+        return receivedNodes:Contains(nodeId)
+    end
+    return GameInstance.player.activitySystem:IsActivityMilestoneReceived(activityId, tostring(nodeId))
 end
 
 
 
 function ActivityUtils.GetRacingDungeonMilestoneMaxScore(activityId)
-    local haveCfg, milestoneCfg = Tables.activityRacingDungeonMilestoneTable:TryGetValue(activityId)
+    local haveCfg, milestoneCfg = ActivityUtils.TryGetActivityMilestoneCfg(activityId)
     if not haveCfg then
         return 0
     end
@@ -1674,16 +1819,9 @@ local newMilestoneNodeReadKey = "IS_NEW_MILESTONE_NODE_READ_"
 
 
 
-function ActivityUtils.isNewMilestoneNode(activityId, nodeId)
-    local haveCfg, milestoneCfg = Tables.activityRacingDungeonMilestoneTable:TryGetValue(activityId)
-    if not haveCfg then
-        return false
-    end
-    local nodeData = milestoneCfg.milestoneMap[nodeId]
-    if not nodeData then
-        return false
-    end
 
+
+local function isNewMilestoneNodeByStage(activityId, unlockStageId, readKey)
     local haveStageCfg, multiStageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(activityId)
     if not haveStageCfg then
         return false
@@ -1696,11 +1834,27 @@ function ActivityUtils.isNewMilestoneNode(activityId, nodeId)
             firstStageId = stageId
         end
     end
-    if nodeData.unlockStageId == firstStageId then
+    if unlockStageId == firstStageId then
         return false
     end
 
-    return not ClientDataManagerInst:GetBool(newMilestoneNodeReadKey .. activityId .. "_" .. nodeId, false)
+    return not ClientDataManagerInst:GetBool(newMilestoneNodeReadKey .. activityId .. "_" .. readKey, false)
+end
+
+
+
+
+function ActivityUtils.isNewMilestoneNode(activityId, nodeId)
+    local haveCfg, milestoneCfg = ActivityUtils.TryGetActivityMilestoneCfg(activityId)
+    if not haveCfg then
+        return false
+    end
+    local nodeData = milestoneCfg.milestoneMap[nodeId]
+    if not nodeData then
+        return false
+    end
+
+    return isNewMilestoneNodeByStage(activityId, nodeData.unlockStageId, nodeId)
 end
 
 
@@ -1711,6 +1865,133 @@ function ActivityUtils.setMilestoneNodeRead(activityId, nodeId)
     end
     ClientDataManagerInst:SetBool(newMilestoneNodeReadKey .. activityId .. "_" .. nodeId, true, false)
     Notify(MessageConst.ON_RACING_DUNGEON_MILESTONE_NODE_READ, { activityId = activityId, nodeId = nodeId })
+end
+
+
+
+
+
+
+
+
+
+
+
+
+function ActivityUtils.TryGetCommonUIMilestoneNode(activityId, milestoneId)
+    local haveCfg, milestoneCfg = Tables.activityCommonUIMilestoneTable:TryGetValue(activityId)
+    if not haveCfg then
+        return false, nil
+    end
+    for _, nodeData in pairs(milestoneCfg.milestoneMap) do
+        if nodeData.milestoneId == milestoneId then
+            return true, nodeData
+        end
+    end
+    return false, nil
+end
+
+
+
+
+function ActivityUtils.TryGetConditionalMultiStageMilestone(activityId, milestoneId)
+    local haveCfg, milestoneCfg = Tables.activityConditionalMultiStageMilestoneTable:TryGetValue(activityId)
+    if not haveCfg then
+        return false, nil, nil
+    end
+    local haveNode, nodeData = milestoneCfg.mileStones:TryGetValue(milestoneId)
+    if not haveNode then
+        return false, nil, nil
+    end
+    return true, nodeData.score, nodeData.rewardId
+end
+
+
+
+
+function ActivityUtils.isNewCommonUIMilestoneNode(activityId, milestoneId)
+    local haveNode, nodeData = ActivityUtils.TryGetCommonUIMilestoneNode(activityId, milestoneId)
+    if not haveNode then
+        return false
+    end
+
+    return isNewMilestoneNodeByStage(activityId, nodeData.unlockStageId, milestoneId)
+end
+
+
+
+function ActivityUtils.setCommonUIMilestoneNodeRead(activityId, milestoneId)
+    if not ActivityUtils.isNewCommonUIMilestoneNode(activityId, milestoneId) then
+        return
+    end
+    ClientDataManagerInst:SetBool(newMilestoneNodeReadKey .. activityId .. "_" .. milestoneId, true, false)
+    Notify(MessageConst.ON_RACING_DUNGEON_MILESTONE_NODE_READ,
+        { activityId = activityId, milestoneId = milestoneId })
+end
+
+
+
+
+
+
+local function checkCommonUIMilestoneNodeRedDot(activityId, activityData, nodeData)
+    local _, stageData = activityData.stageDataDict:TryGetValue(nodeData.unlockStageId)
+    local stageStatus = stageData and GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
+    if not stageStatus or stageStatus == GEnums.ActivityConditionalStageState.Locked then
+        return false
+    end
+
+    local milestoneId = nodeData.milestoneId
+    local haveScore, completeScore = ActivityUtils.TryGetConditionalMultiStageMilestone(activityId, milestoneId)
+    if haveScore
+        and not ActivityUtils.IsActivityCoinMilestoneReceived(activityId, milestoneId)
+        and ActivityUtils.GetRacingDungeonMilestoneCurrScore(activityId) >= completeScore then
+        return true, UIConst.RED_DOT_TYPE.Normal
+    end
+    if isNewMilestoneNodeByStage(activityId, nodeData.unlockStageId, milestoneId) then
+        return true, UIConst.RED_DOT_TYPE.New
+    end
+    return false
+end
+
+
+
+
+function ActivityUtils.CheckCommonUIMilestoneNodeRedDot(activityId, milestoneId)
+    if milestoneId == nil then
+        return false
+    end
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    if not activityData then
+        return false
+    end
+    local haveNode, nodeData = ActivityUtils.TryGetCommonUIMilestoneNode(activityId, milestoneId)
+    if not haveNode then
+        return false
+    end
+
+    return checkCommonUIMilestoneNodeRedDot(activityId, activityData, nodeData)
+end
+
+
+
+
+
+function ActivityUtils.CheckCommonUIMilestoneRedDot(activityId)
+    local haveCfg, milestoneCfg = Tables.activityCommonUIMilestoneTable:TryGetValue(activityId)
+    if not haveCfg then
+        return false
+    end
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    if not activityData then
+        return false
+    end
+    for _, nodeData in pairs(milestoneCfg.milestoneMap) do
+        if checkCommonUIMilestoneNodeRedDot(activityId, activityData, nodeData) then
+            return true, UIConst.RED_DOT_TYPE.Normal
+        end
+    end
+    return false
 end
 
 

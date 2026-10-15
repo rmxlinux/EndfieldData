@@ -21,6 +21,10 @@ EquipTechEquipInfo.InitEquipTechEquipInfo = HL.Method(HL.String) << function(sel
     self.view.partTypeTxt.text = equipTypeName
     self.view.rarityLine.color = UIUtils.getItemRarityColor(itemData.rarity)
     self.view.iconImage:LoadSprite(UIConst.UI_SPRITE_EQUIP, UIConst.EQUIP_TYPE_TO_ICON_NAME[equipData.partType])
+
+    if self.view.domainTagNode then
+        self.view.domainTagNode:InitDomainTagNode(equipData.domainId)
+    end
 end
 
 HL.Commit(EquipTechEquipInfo)

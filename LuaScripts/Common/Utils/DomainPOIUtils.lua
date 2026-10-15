@@ -889,6 +889,7 @@ DomainPOIUtils.GetPOIRemindInfoFunc = {
     [GEnums.DomainPoiType.SewageTreatPlant] = "getPOIRemindInfo_SewageTreatPlant",
     [GEnums.DomainPoiType.KiteStation] = "getPOIRemindInfo_KiteStation",
     [GEnums.DomainPoiType.TyphoeaArchery] = "getPOIRemindInfo_TyphoeaArchery",
+    [GEnums.DomainPoiType.Inn] = "getPOIRemindInfo_Inn",
 }
 
 function DomainPOIUtils.getRemindInfoTemplate()
@@ -911,6 +912,8 @@ function DomainPOIUtils.getRemindInfoTemplate()
         blockUpgradeDesc = "",      
         needWarning = false,        
         stateDesc = "",             
+        customLvUpGoFunc = nil,     
+        customLvUpGoText = "",      
     }
 end
 
@@ -1279,6 +1282,45 @@ function DomainPOIUtils.getPOIRemindInfo_TyphoeaArchery(levelId)
     return { info }
 end
 
+function DomainPOIUtils.getPOIRemindInfo_Inn(levelId)
+    if levelId ~= Tables.innManagementConst.innLevelId then
+        return nil
+    end
+    local system = GameInstance.player.innSystem
+    local isLvMax = system.innLevel == system.innMaxLevel
+    local info = DomainPOIUtils.getRemindInfoTemplate()
+    info.poiId = Tables.innManagementConst.innConterSystemInsId
+    info.curLevel = system.innLevel
+    info.maxLevel = system.innMaxLevel
+    info.isLvMax = isLvMax
+    info.isFinalMaxLv = isLvMax
+    info.mapMarkType = GEnums.MarkType.Inn
+    if system:CanUpgrade() then
+        info.customLvUpGoFunc = function()
+            local hasValue, markInstId = DomainPOIUtils.GetPOIMapMarkInstId(info.mapMarkType, info.poiId)
+            if hasValue then
+                MapUtils.openMap(markInstId, Tables.innManagementConst.innLevelId)
+            else
+                logger.error(string.format("【客栈POI总览】关卡id：%s，POI名：%s，GetMapMarkInstId失败！无法跳转", Tables.innManagementConst.innLevelId, info.pidId))
+            end
+        end
+        info.customLvUpGoText = Language.LUA_INN_POI_OVERVIEW_INN_GOTO_UPGRADE
+    else
+        info.isBlockUpgrade = true
+        info.blockUpgradeDesc = Language.LUA_INN_POI_OVERVIEW_INN_DEVELOP
+    end
+
+    if system.customerVolume >= system.customerVolumeData.maxValue then
+        info.needWarning = true
+        info.stateDesc = Language.LUA_INN_POI_OVERVIEW_INN_CUSTOMER_VOLUME_FULL
+    else
+        info.needWarning = false
+        info.stateDesc = Language.LUA_INN_POI_OVERVIEW_INN_CUSTOMER_VOLUME_DESC
+    end
+    
+    return { info }
+end
+
 
 
 DomainPOIUtils.MarkTypeMap = {
@@ -1288,6 +1330,7 @@ DomainPOIUtils.MarkTypeMap = {
     [GEnums.DomainPoiType.DomainDepot] = GEnums.MarkType.DomainDepot,
     [GEnums.DomainPoiType.RecycleBin] = GEnums.MarkType.Recycler,
     [GEnums.DomainPoiType.SewageTreatPlant] = GEnums.MarkType.SewageTreatPlant,
+    [GEnums.DomainPoiType.Inn] = GEnums.MarkType.Inn,
 }
 
 DomainPOIUtils.POICanUnlock = {

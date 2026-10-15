@@ -2,6 +2,56 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 FriendListCell = HL.Class('FriendListCell', UIWidgetBase)
 
+local DYNAMIC_PACKAGE_CONFIG = {
+    LoadingNode = { prefab = "loadingNodePrefab", slot = "loadingNodeSlot", order = 1, refs = {} },
+    NoDataNode = { prefab = "noDataNodePrefab", slot = "noDataNodeSlot", order = 2, stateController = true, refs = { "dynamicStateController", "noDataSplitLineHelper" } },
+    NonGameUserNode = { prefab = "nonGameUserNodePrefab", slot = "nonGameUserNodeSlot", order = 3, refs = { "psnInfoBtnForNoGameUser", "sonyNameTxt", "playerHeadBtnForNoGameUser" } },
+    BlackListBackgroundNode = { prefab = "blackListBackgroundNodePrefab", slot = "blackListBackgroundNodeSlot", order = 3, refs = {} },
+    NormalActionNode = { prefab = "normalActionNodePrefab", slot = "normalActionNodeSlot", order = 9, refs = { "shipBtn", "msgBtn", "messageNumText", "shipBtnStateController", "shipHelp", "msgRedDotNumber", "lockMask", "clueExchange" } },
+    FriendRequestNode = { prefab = "friendRequestNodePrefab", slot = "friendRequestNodeSlot", order = 10, refs = { "acceptFriendBtn", "notAcceptFriendBtn" } },
+    BlackListNode = { prefab = "blackListNodePrefab", slot = "blackListNodeSlot", order = 11, refs = { "removeBlackListBtn", "psnInfoBtnForBlackUser" } },
+    CheckDataListNode = { prefab = "checkDataListNodePrefab", slot = "checkDataListNodeSlot", order = 12, refs = {} },
+    StrangerNode = { prefab = "strangerNodePrefab", slot = "strangerNodeSlot", order = 13, stateController = true, refs = { "addFriendBtn", "dynamicStateController" } },
+    ModeActionNode = { prefab = "modeActionNodePrefab", slot = "modeActionNodeSlot", order = 14, stateController = true, refs = { "chatBtn", "shareBtn", "messageNumNode", "dynamicStateController", "dynamicMessageNumText" } },
+    SpaceshipVisitorNode = { prefab = "spaceshipVisitorNodePrefab", slot = "spaceshipVisitorNodeSlot", order = 15, refs = { "spaceshipVisitorBtn", "spreadBtn", "spreadIconRect", "visitorState", "visitorTxt" } },
+    SpaceshipClueGiftNode = { prefab = "spaceshipClueGiftNodePrefab", slot = "spaceshipClueGiftNodeSlot", order = 16, refs = { "clueNodes", "clueState", "clueNode", "giftBtn" } },
+}
+
+local DYNAMIC_PACKAGE_NAMES = {
+    "LoadingNode",
+    "NoDataNode",
+    "NonGameUserNode",
+    "BlackListBackgroundNode",
+    "NormalActionNode",
+    "FriendRequestNode",
+    "BlackListNode",
+    "CheckDataListNode",
+    "StrangerNode",
+    "ModeActionNode",
+    "SpaceshipVisitorNode",
+    "SpaceshipClueGiftNode",
+}
+
+local CONTENT_STATE_PACKAGE = {
+    Normal = { "NormalActionNode" },
+    FriendRequest = { "FriendRequestNode" },
+    BlackList = { "BlackListBackgroundNode", "BlackListNode" },
+    Stranger = { "StrangerNode" },
+    Stranger_Wait = { "StrangerNode" },
+    Stranger_Friend = { "StrangerNode" },
+    share = { "ModeActionNode" },
+    ChatBtn = { "ModeActionNode" },
+    SpaceshipVisitor = { "SpaceshipVisitorNode" },
+    SpaceshipClueGift = { "SpaceshipClueGiftNode" },
+}
+
+local EMPTY_STATE_PACKAGE = {
+    Loading = "LoadingNode",
+    NoData = "NoDataNode",
+    NoData_Spaceship = "NoDataNode",
+    NonGameUser = "NonGameUserNode",
+}
+
 FriendListCell.info = HL.Field(HL.Userdata)
 
 FriendListCell.id = HL.Field(HL.Number) << 0
@@ -23,6 +73,171 @@ FriendListCell.searchKey = HL.Field(HL.String) << ""
 FriendListCell.m_buildNodeId = HL.Field(HL.Number) << 0
 
 
+FriendListCell._BindDynamicPackage = HL.Method(HL.String, GameObject) << function(self, packageName, obj)
+    local packageView = Utils.wrapLuaNode(obj)
+    local config = DYNAMIC_PACKAGE_CONFIG[packageName]
+    for _, key in ipairs(config.refs) do
+        self.view[key] = packageView[key]
+    end
+
+    if packageName == "NormalActionNode" then
+        self.view.shipBtn.onClick:RemoveAllListeners()
+        self.view.shipBtn.onClick:AddListener(function()
+            logger.info("点击好友飞船")
+            if self.arg.onShipClick then
+                self.arg.onShipClick(self.info.roleId)
+            end
+        end)
+        self.view.msgBtn.onClick:RemoveAllListeners()
+        self.view.msgBtn.onClick:AddListener(function()
+            logger.info("点击好友消息")
+            if self.arg.onMessageClick then
+                self.arg.onMessageClick(self.info.roleId)
+            end
+        end)
+    elseif packageName == "NoDataNode" and self.view.noDataSplitLineHelper then
+        local targets = self.view.noDataSplitLineHelper.checkTargets
+        if targets then
+            targets:Clear()
+            if self.view.msgBtn then
+                targets:Add(self.view.msgBtn.gameObject)
+            end
+            self.view.noDataSplitLineHelper:Sync()
+        end
+    elseif packageName == "FriendRequestNode" then
+        self.view.acceptFriendBtn.onClick:RemoveAllListeners()
+        self.view.acceptFriendBtn.onClick:AddListener(function()
+            logger.info("点击acceptFriend")
+            if self.arg.onAcceptClick then
+                self.arg.onAcceptClick(self.info.roleId)
+            end
+        end)
+        self.view.notAcceptFriendBtn.onClick:RemoveAllListeners()
+        self.view.notAcceptFriendBtn.onClick:AddListener(function()
+            logger.info("点击notAccept消息")
+            if self.arg.onNotAcceptClick then
+                self.arg.onNotAcceptClick(self.info.roleId)
+            end
+        end)
+    elseif packageName == "BlackListNode" then
+        self.view.removeBlackListBtn.onClick:RemoveAllListeners()
+        self.view.removeBlackListBtn.onClick:AddListener(function()
+            logger.info("点击Remove消息")
+            if self.arg.onRemoveClick then
+                self.arg.onRemoveClick(self.info.roleId)
+            end
+        end)
+        self.view.psnInfoBtnForBlackUser.onClick:RemoveAllListeners()
+        self.view.psnInfoBtnForBlackUser.onClick:AddListener(function()
+            logger.info("点击 psnInfoBtn")
+            if self.arg.onPsnInfoClick then
+                self.arg.onPsnInfoClick(self.info.psnData.AccountId)
+            end
+        end)
+    elseif packageName == "StrangerNode" then
+        self.view.addFriendBtn.onClick:RemoveAllListeners()
+        self.view.addFriendBtn.onClick:AddListener(function()
+            logger.info("点击Add消息")
+            FriendUtils.FRIEND_CELL_INIT_FUNC.onAddClick(self.info.roleId, self.m_buildNodeId)
+        end)
+    elseif packageName == "ModeActionNode" then
+        self.view.chatBtn.onClick:RemoveAllListeners()
+        self.view.chatBtn.onClick:AddListener(function()
+            logger.info("点击 chatBtn")
+            if self.arg.onChatClick then
+                self.arg.onChatClick(self.info.roleId)
+            end
+        end)
+    elseif packageName == "SpaceshipVisitorNode" then
+        self.view.spreadBtn.onClick:RemoveAllListeners()
+        self.view.spreadBtn.onClick:AddListener(function()
+            logger.info("点击 spreadBtn")
+            if self.arg.onSpaceshipVisitorClick then
+                self.arg.onSpaceshipVisitorClick(self.info.roleId, self.view.spreadIconRect)
+            end
+        end)
+    elseif packageName == "SpaceshipClueGiftNode" then
+        self.view.giftBtn.onClick:RemoveAllListeners()
+        self.view.giftBtn.onClick:AddListener(function()
+            logger.info("点击 giftBtn")
+            if self.arg.onGiftBtnClick then
+                self.arg.onGiftBtnClick(self.info.roleId, function()
+                    self:_UpdateClueCells()
+                end)
+            end
+        end)
+    elseif packageName == "NonGameUserNode" then
+        self.view.psnInfoBtnForNoGameUser.onClick:RemoveAllListeners()
+        self.view.psnInfoBtnForNoGameUser.onClick:AddListener(function()
+            logger.info("点击 psnInfoBtn")
+            if self.arg.onPsnInfoClick then
+                self.arg.onPsnInfoClick(self.info.psnData.AccountId)
+            end
+        end)
+    end
+end
+
+
+FriendListCell._RestoreDynamicPackageOrders = HL.Method() << function(self)
+    for _, packageName in ipairs(DYNAMIC_PACKAGE_NAMES) do
+        local config = DYNAMIC_PACKAGE_CONFIG[packageName]
+        self.view[config.slot]:SetSiblingIndex(config.order)
+    end
+end
+
+FriendListCell._ToggleDynamicPackage = HL.Method(HL.String, HL.Boolean).Return(HL.Opt(GameObject)) << function(self, packageName, active)
+    local config = DYNAMIC_PACKAGE_CONFIG[packageName]
+    local parent = self.view[config.slot]
+    local prefab = LuaSystemManager.friendListCellPrefabSystem[config.prefab]
+    local obj = self:tryToggleDynamicNode(parent, packageName, prefab, active)
+    if obj and active then
+        self:_BindDynamicPackage(packageName, obj)
+    end
+    return obj
+end
+
+FriendListCell._ResetDynamicPackages = HL.Method() << function(self)
+    self:_RestoreDynamicPackageOrders()
+    for _, packageName in ipairs(DYNAMIC_PACKAGE_NAMES) do
+        self:_ToggleDynamicPackage(packageName, false)
+    end
+end
+
+FriendListCell._SetEmptyState = HL.Method(HL.String) << function(self, stateName)
+    self:_ResetDynamicPackages()
+    self.view.emptyStateCtrl:SetState(stateName)
+    local packageName = EMPTY_STATE_PACKAGE[stateName]
+    if packageName then
+        local packageView = self:_ToggleDynamicPackage(packageName, true)
+        if DYNAMIC_PACKAGE_CONFIG[packageName].stateController and packageView and self.view.dynamicStateController then
+            self.view.dynamicStateController:SetState(stateName)
+        end
+    end
+end
+
+FriendListCell._SetContentState = HL.Method(HL.String) << function(self, stateName)
+    self.view.stateController:SetState(stateName)
+    local packageNames = CONTENT_STATE_PACKAGE[stateName]
+    if packageNames then
+        for _, packageName in ipairs(packageNames) do
+            local packageView = self:_ToggleDynamicPackage(packageName, true)
+            if DYNAMIC_PACKAGE_CONFIG[packageName].stateController and packageView and self.view.dynamicStateController then
+                self.view.dynamicStateController:SetState(stateName)
+            end
+        end
+    end
+end
+
+FriendListCell._SetMessageNumText = HL.Method(HL.String) << function(self, text)
+    if self.view.messageNumText then
+        self.view.messageNumText.text = text
+    end
+    if self.view.dynamicMessageNumText then
+        self.view.dynamicMessageNumText.text = text
+    end
+end
+
+
 FriendListCell._OnFirstTimeInit = HL.Override() << function(self)
     self.showCharInfoCallBack = function()
         
@@ -34,88 +249,12 @@ FriendListCell._OnFirstTimeInit = HL.Override() << function(self)
     self.view.headBtn.onClick:AddListener(function()
         logger.info("点击好友头像")
         if self.arg.onPlayerClick then
-            self.arg.onPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack)
-        end
-    end)
-    self.view.shipBtn.onClick:RemoveAllListeners()
-    self.view.shipBtn.onClick:AddListener(function()
-        logger.info("点击好友飞船")
-        if self.arg.onShipClick then
-            self.arg.onShipClick(self.info.roleId)
-        end
-    end)
-    self.view.msgBtn.onClick:RemoveAllListeners()
-    self.view.msgBtn.onClick:AddListener(function()
-        logger.info("点击好友消息")
-        if self.arg.onMessageClick then
-            self.arg.onMessageClick(self.info.roleId)
-        end
-    end)
-    self.view.acceptFriendBtn.onClick:RemoveAllListeners()
-    self.view.acceptFriendBtn.onClick:AddListener(function()
-        logger.info("点击acceptFriend")
-        if self.arg.onAcceptClick then
-            self.arg.onAcceptClick(self.info.roleId)
-        end
-    end)
-    self.view.notAcceptFriendBtn.onClick:RemoveAllListeners()
-    self.view.notAcceptFriendBtn.onClick:AddListener(function()
-        logger.info("点击notAccept消息")
-        if self.arg.onNotAcceptClick then
-            self.arg.onNotAcceptClick(self.info.roleId)
-        end
-    end)
-    self.view.removeBlackListBtn.onClick:RemoveAllListeners()
-    self.view.removeBlackListBtn.onClick:AddListener(function()
-        logger.info("点击Remove消息")
-        if self.arg.onRemoveClick then
-            self.arg.onRemoveClick(self.info.roleId)
-        end
-    end)
-    self.view.addFriendBtn.onClick:RemoveAllListeners()
-    self.view.addFriendBtn.onClick:AddListener(function()
-        logger.info("点击Add消息")
-        FriendUtils.FRIEND_CELL_INIT_FUNC.onAddClick(self.info.roleId, self.m_buildNodeId)
-    end)
-
-    self.view.chatBtn.onClick:RemoveAllListeners()
-    self.view.chatBtn.onClick:AddListener(function()
-        logger.info("点击 chatBtn")
-        if self.arg.onChatClick then
-            self.arg.onChatClick(self.info.roleId)
-        end
-    end)
-
-    self.view.giftBtn.onClick:RemoveAllListeners()
-    self.view.giftBtn.onClick:AddListener(function()
-        logger.info("点击 giftBtn")
-        if self.arg.onGiftBtnClick then
-            self.arg.onGiftBtnClick(self.info.roleId, function()
-                self:_UpdateClueCells()
-            end)
-        end
-    end)
-
-    self.view.spreadBtn.onClick:RemoveAllListeners()
-    self.view.spreadBtn.onClick:AddListener(function()
-        logger.info("点击 spreadBtn")
-        if self.arg.onSpaceshipVisitorClick then
-            self.arg.onSpaceshipVisitorClick(self.info.roleId, self.view.spreadIconRect)
-        end
-    end)
-
-    self.view.psnInfoBtnForBlackUser.onClick:RemoveAllListeners()
-    self.view.psnInfoBtnForBlackUser.onClick:AddListener(function()
-        logger.info("点击 psnInfoBtn")
-        if self.arg.onPsnInfoClick then
-            self.arg.onPsnInfoClick(self.info.psnData.AccountId)
-        end
-    end)
-    self.view.psnInfoBtnForNoGameUser.onClick:RemoveAllListeners()
-    self.view.psnInfoBtnForNoGameUser.onClick:AddListener(function()
-        logger.info("点击 psnInfoBtn")
-        if self.arg.onPsnInfoClick then
-            self.arg.onPsnInfoClick(self.info.psnData.AccountId)
+            local seasonTag = self.view.commonPlayerHead.view.seasonTag
+            local levelTag = self.view.commonPlayerHead.view.levelTag
+            local recordTipsTransform = seasonTag.gameObject.activeInHierarchy and seasonTag.transform
+                or levelTag.gameObject.activeInHierarchy and levelTag.transform
+                or self.view.headRectTransform
+            self.arg.onPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, nil, recordTipsTransform)
         end
     end)
     self:RegisterMessage(MessageConst.ON_SPACESHIP_CLUE_INFO_CHANGE, function()
@@ -140,11 +279,12 @@ FriendListCell._OnFirstTimeInit = HL.Override() << function(self)
 end
 
 FriendListCell.SetLoadingState = HL.Method() << function(self)
-    self.view.emptyStateCtrl:SetState("Loading")
+    self:_SetEmptyState("Loading")
 end
 
 FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String) << function(self, id, arg, searchKey)
-    self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(false)
+    self:_ResetDynamicPackages()
+    self.info = nil
     self.id = id
     self.arg = arg
     self.searchKey = searchKey
@@ -154,14 +294,14 @@ FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String)
     self.view.emptyStateCtrl:SetState("Normal")
     if stateName == "Stranger" then
         if GameInstance.player.friendSystem.friendInfoDic:ContainsKey(id) then
-            self.view.stateController:SetState(stateName .. "_Friend")
+            stateName = stateName .. "_Friend"
         elseif GameInstance.player.friendSystem:ContainWaitAcceptRequestID(id) then
-            self.view.stateController:SetState(stateName .. "_Wait")
-        else
-            self.view.stateController:SetState(stateName)
+            stateName = stateName .. "_Wait"
         end
-    else
-        self.view.stateController:SetState(stateName)
+    end
+    self:_SetContentState(stateName)
+    if self.view.psnInfoBtnForBlackUser then
+        self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(false)
     end
 
     local showInfo = nil
@@ -171,7 +311,7 @@ FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String)
             showInfo = info
         else
             logger.info("未找到好友数据 " .. self.id)
-            self.view.emptyStateCtrl:SetState("NoData")
+            self:_SetEmptyState("NoData")
             return
         end
     else
@@ -180,9 +320,9 @@ FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String)
             logger.info("未找到好友数据 " .. self.id)
             local friendInfo = GameInstance.player.spaceship:GetFriendRoleInfo()
             if GameInstance.player.spaceship.isViewingFriend and friendInfo and friendInfo.roleId == self.id then
-                self.view.emptyStateCtrl:SetState("NoData_Spaceship")
+                self:_SetEmptyState("NoData_Spaceship")
             else
-                self.view.emptyStateCtrl:SetState("NoData")
+                self:_SetEmptyState("NoData")
             end
             return
         end
@@ -200,12 +340,14 @@ FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String)
         self.view.commonPlayerHead.view.pcNode.gameObject:SetActiveIfNecessary(true)
         self.view.commonPlayerHead.view.psRoot.gameObject:SetActiveIfNecessary(false)
     end
-    if self.view.msgBtn.gameObject.activeSelf then
+    if self.view.msgBtn and self.view.msgBtn.gameObject.activeSelf then
         self.view.msgBtn.gameObject:SetActive(GameInstance.player.friendSystem:PlayerInBlackList(self.info.roleId) == false)
     end
 end
 
 FriendListCell.RefreshFriendListCellByPsnId = HL.Method(HL.String, HL.Table, HL.String) << function(self, id, arg, searchKey)
+    self:_ResetDynamicPackages()
+    self.info = nil
     self.arg = arg
     self.searchKey = searchKey
     
@@ -216,10 +358,9 @@ FriendListCell.RefreshFriendListCellByPsnId = HL.Method(HL.String, HL.Table, HL.
 
     if not success then
         logger.error(CS.Beyond.ELogChannel.Friend, "未找到好友数据 " .. id)
-        self.view.emptyStateCtrl:SetState("NoData")
+        self:_SetEmptyState("NoData")
         return
     end
-    self.view.addFriendBtn.onClick:ChangeBindingPlayerAction("friend_add_psn")
     self.id = info.roleId
     self:_FirstTimeInit()
     
@@ -241,26 +382,33 @@ FriendListCell.RefreshFriendListCellByPsnId = HL.Method(HL.String, HL.Table, HL.
     elseif stateName == "BlackList" and info.roleId == 0 then
         self:_UpdateUnRegisterPlayer(info)
         self.view.playerHeadBtnForNoGameUser.enabled = false
-        self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(false)
+        if self.view.psnInfoBtnForBlackUser then
+            self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(false)
+        end
         self.view.psnInfoBtnForNoGameUser.gameObject:SetActiveIfNecessary(false)
         return
     end
-    self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(false)
-    self.view.stateController:SetState(stateName)
+    self:_SetContentState(stateName)
+    if self.view.addFriendBtn then
+        self.view.addFriendBtn.onClick:ChangeBindingPlayerAction("friend_add_psn")
+    end
+    if self.view.psnInfoBtnForBlackUser then
+        self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(false)
+    end
     self.info = info
     self:_RefreshFriendCellInfo()
     if stateName == "BlackList" then
         
         self.view.removeBlackListBtn.gameObject:SetActiveIfNecessary(false)
     end
-    if self.view.msgBtn.gameObject.activeSelf then
+    if self.view.msgBtn and self.view.msgBtn.gameObject.activeSelf then
         self.view.msgBtn.gameObject:SetActive(not GameInstance.player.spaceship.isViewingFriend)
     end
 end
 
 FriendListCell._UpdateUnRegisterPlayer = HL.Method(HL.Any) << function(self, info)
     
-    self.view.emptyStateCtrl:SetState("NonGameUser")
+    self:_SetEmptyState("NonGameUser")
     self.view.sonyNameTxt.text = info.psName
     self.info = info
     
@@ -300,8 +448,10 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
     self.view.commonPlayerHead:UpdateHideSignature(self.arg.hideSignature)
 
     local hasValue, _ = GameInstance.player.spaceship:TryGetRoom(Tables.spaceshipConst.guestRoomId)
-    local showShipBtn = hasValue and self.view.shipBtn.gameObject.activeSelf
-    self.view.shipBtn.gameObject:SetActiveIfNecessary(showShipBtn)
+    local showShipBtn = self.view.shipBtn and hasValue and self.view.shipBtn.gameObject.activeSelf or false
+    if self.view.shipBtn then
+        self.view.shipBtn.gameObject:SetActiveIfNecessary(showShipBtn)
+    end
 
     local onPlayerHeadClick = self.arg.onPlayerClick and function()
         if self.arg.stateName == "SpaceshipClueGift" then
@@ -319,12 +469,18 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
         end
         local isStranger = not GameInstance.player.friendSystem.friendInfoDic:ContainsKey(self.info.roleId)
 
+        local seasonTag = self.view.commonPlayerHead.view.seasonTag
+        local levelTag = self.view.commonPlayerHead.view.levelTag
+        local recordTipsTransform = seasonTag.gameObject.activeInHierarchy and seasonTag.transform
+            or levelTag.gameObject.activeInHierarchy and levelTag.transform
+            or self.view.headRectTransform
+
         if isStranger then
-            FriendUtils.FRIEND_CELL_INIT_FUNC.onStrangerPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack)
+            FriendUtils.FRIEND_CELL_INIT_FUNC.onStrangerPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, nil, recordTipsTransform)
         else
             local friendInfo = GameInstance.player.spaceship:GetFriendRoleInfo()
             local lshowShipBtn = friendInfo ~= nil and friendInfo.roleId ~= self.info.roleId and showShipBtn and self.info.guestRoomUnlock
-            FriendUtils.FRIEND_CELL_INIT_FUNC.onFriendPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, lshowShipBtn)
+            FriendUtils.FRIEND_CELL_INIT_FUNC.onFriendPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, lshowShipBtn, recordTipsTransform)
         end
     end or false
 
@@ -335,7 +491,9 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
         self.view.onlineState.gameObject:SetActive(false)
         self.view.visitorTxt.text = self.arg.showVisitorTimeText
     else
-        self.view.visitorState.gameObject:SetActive(false)
+        if self.view.visitorState then
+            self.view.visitorState.gameObject:SetActive(false)
+        end
         self.view.onlineState.gameObject:SetActive(true)
     end
 
@@ -352,6 +510,9 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
     self.charInstanceIdList = {}
     for i = 1, FriendUtils.FriendShowCharsCount do
         local state = self.view.charInfoGroup["charCellRoot" .. i]
+        local cell = self.view.charInfoGroup["charHeadCell" .. i]
+        
+        cell.view.glowAll.gameObject:SetActive(false)
         if i <= self.info.charInfos.Count and self.info.charInfos[CSIndex(i)] then
             local item = self.info.charInfos[CSIndex(i)]
             local charConfig = Tables.characterTable:GetValue(item.templateId)
@@ -368,11 +529,11 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
                 selectIndex = -1,
             }
             self.charInstanceIdList[i] = item.instId
-            local cell = self.view.charInfoGroup["charHeadCell" .. i]
             state:SetState("Normal")
             cell:InitCharFormationHeadCell(self.charInfos[i], function()
                 self:_OnCharInfoClick(i)
             end)
+            cell:SetMaxPotentialGlow(self.charInfos[i].potentialLevel, self.charInfos[i].rarity)
         else
             self.charInfos[i] = {}
             state:SetState("NoChar")
@@ -382,21 +543,33 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
     local chatInfo = GameInstance.player.friendChatSystem:GetChatInfo(self.info.roleId)
     if chatInfo then
         if chatInfo.unReadNum > 0 then
-            self.view.messageNumNode.gameObject:SetActive(true)
-            self.view.msgRedDotNumber.gameObject:SetActive(true)
+            if self.view.messageNumNode then
+                self.view.messageNumNode.gameObject:SetActive(true)
+            end
+            if self.view.msgRedDotNumber then
+                self.view.msgRedDotNumber.gameObject:SetActive(true)
+            end
             
-            self.view.messageNumText.text = chatInfo.unReadNum > 99 and "99+" or tostring(chatInfo.unReadNum)
+            self:_SetMessageNumText(chatInfo.unReadNum > 99 and "99+" or tostring(chatInfo.unReadNum))
         else
-            self.view.messageNumNode.gameObject:SetActive(false)
-            self.view.msgRedDotNumber.gameObject:SetActive(false)
+            if self.view.messageNumNode then
+                self.view.messageNumNode.gameObject:SetActive(false)
+            end
+            if self.view.msgRedDotNumber then
+                self.view.msgRedDotNumber.gameObject:SetActive(false)
+            end
         end
     else
-        self.view.messageNumNode.gameObject:SetActive(false)
-        self.view.msgRedDotNumber.gameObject:SetActive(false)
+        if self.view.messageNumNode then
+            self.view.messageNumNode.gameObject:SetActive(false)
+        end
+        if self.view.msgRedDotNumber then
+            self.view.msgRedDotNumber.gameObject:SetActive(false)
+        end
     end
 
     
-    if self.view.shipBtn.gameObject.activeSelf then
+    if self.view.shipBtn and self.view.shipBtn.gameObject.activeSelf then
         local friendInfo = GameInstance.player.spaceship:GetFriendRoleInfo()
         if friendInfo and friendInfo.roleId == self.info.roleId then
             self.view.shipBtn.enabled = false
@@ -438,10 +611,7 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
     end
 
     
-    if self.arg.showContingencyContractActivityState then
-        self.view.commonPlayerHead:UpdateContingencyContractActivityState()
-    end
-    self.view.commonPlayerHead:UpdateSeasonTowerActivityState()
+    self.view.commonPlayerHead:UpdateActivityState()
 end
 
 FriendListCell._UpdateClueCells = HL.Method() << function(self)
@@ -494,17 +664,29 @@ FriendListCell._OnEnable = HL.Override() << function(self)
     local chatInfo = GameInstance.player.friendChatSystem:GetChatInfo(self.info.roleId)
     if chatInfo then
         if chatInfo.unReadNum > 0 then
-            self.view.messageNumNode.gameObject:SetActive(true)
-            self.view.msgRedDotNumber.gameObject:SetActive(true)
+            if self.view.messageNumNode then
+                self.view.messageNumNode.gameObject:SetActive(true)
+            end
+            if self.view.msgRedDotNumber then
+                self.view.msgRedDotNumber.gameObject:SetActive(true)
+            end
             
-            self.view.messageNumText.text = chatInfo.unReadNum > 99 and "99+" or tostring(chatInfo.unReadNum)
+            self:_SetMessageNumText(chatInfo.unReadNum > 99 and "99+" or tostring(chatInfo.unReadNum))
         else
-            self.view.messageNumNode.gameObject:SetActive(false)
-            self.view.msgRedDotNumber.gameObject:SetActive(false)
+            if self.view.messageNumNode then
+                self.view.messageNumNode.gameObject:SetActive(false)
+            end
+            if self.view.msgRedDotNumber then
+                self.view.msgRedDotNumber.gameObject:SetActive(false)
+            end
         end
     else
-        self.view.messageNumNode.gameObject:SetActive(false)
-        self.view.msgRedDotNumber.gameObject:SetActive(false)
+        if self.view.messageNumNode then
+            self.view.messageNumNode.gameObject:SetActive(false)
+        end
+        if self.view.msgRedDotNumber then
+            self.view.msgRedDotNumber.gameObject:SetActive(false)
+        end
     end
 end
 

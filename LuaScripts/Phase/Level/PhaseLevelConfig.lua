@@ -50,7 +50,7 @@ local DefaultConfig = {
         PanelId.CommonPopUp,
         PanelId.Guide,
 
-        PanelId.FacMiniPowerHud,
+        PanelId.FacTopHud,
         PanelId.FacBuildMode,
         PanelId.FacDestroyMode,
 
@@ -71,6 +71,7 @@ local DefaultConfig = {
         PanelId.BattleBossInfo,
         PanelId.BattleBottomScreenEffect,
         PanelId.EnvironmentalPrompt,
+        PanelId.BattleCG,
     },
     specialPanels = {
         PanelId.GeneralTracker,

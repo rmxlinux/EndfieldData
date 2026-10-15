@@ -238,18 +238,14 @@ LevelMapController.InitLevelMapController = HL.Method(HL.Number, HL.Opt(HL.Table
     end
     loaderCustomInfo.expectedStaticElements = customInfo.expectedStaticElements
     loaderCustomInfo.gridsMaskFollowTarget = customInfo.gridsMaskFollowTarget
+    
     if not GameInstance.player.mapManager:IsLevelLoaderDataExists(initialLevelId) then
-        if BEYOND_DEBUG_COMMAND and mode == ControllerMode.DEBUG then
-            self.view.levelMapLoader:InitLevelMapLoader(initialLevelId, { isDebugMode = true })
-        end
         return
     end
 
-    self.view.levelMapLoader:InitLevelMapLoader(initialLevelId, loaderCustomInfo)
-    self:_SetCurrentLevelId(initialLevelId)
-
+    
+    
     self.m_customRefreshMark = customInfo.customRefreshMark or function()end
-
     self.m_onLevelSwitch = customInfo.onLevelSwitch or function()end
     self.m_onLevelSwitchStart = customInfo.onLevelSwitchStart or function()end
     self.m_onLevelSwitchFinish = customInfo.onLevelSwitchFinish or function()end
@@ -260,6 +256,9 @@ LevelMapController.InitLevelMapController = HL.Method(HL.Number, HL.Opt(HL.Table
     self.m_noGeneralTracking = customInfo.noGeneralTracking == true
     self.m_noMissionTracking = customInfo.noMissionTracking == true
     self.m_visibleMarks = {}
+
+    self.view.levelMapLoader:InitLevelMapLoader(initialLevelId, loaderCustomInfo)
+    self:_SetCurrentLevelId(initialLevelId)
 
     self.m_mode = mode
 
@@ -539,13 +538,14 @@ LevelMapController._GetIsMarkViewDataRealVisible = HL.Method(HL.Table).Return(HL
         return false
     end
     local markInstId = markViewData.instId
-    if next(self.m_expectedMarks) and not self.m_expectedMarks[markViewData.runtimeData.templateId] then
+    local expectedMarks = self.m_expectedMarks
+    if expectedMarks ~= nil and next(expectedMarks) and not expectedMarks[markViewData.runtimeData.templateId] then
         if markViewData.runtimeData.isPowerRelated then
-            if not self.m_expectedMarks[MapConst.POWER_RELATED_COMBINED_TEMPLATE_ID] then
+            if not expectedMarks[MapConst.POWER_RELATED_COMBINED_TEMPLATE_ID] then
                 return false
             end
         elseif markViewData.runtimeData.isTravelRelated then
-            if not self.m_expectedMarks[MapConst.TRAVEL_RELATED_COMBINED_TEMPLATE_ID] then
+            if not expectedMarks[MapConst.TRAVEL_RELATED_COMBINED_TEMPLATE_ID] then
                 return false
             end
         else
@@ -944,7 +944,7 @@ LevelMapController.GetControllerTrackingMark = HL.Method(HL.String).Return(HL.An
 end
 
 LevelMapController.NeedPlayMistsUnlockedAnimation = HL.Method().Return(HL.Boolean) << function(self)
-    return next(self.m_waitPlayUnlockedAnimMistList) ~= nil
+    return self.m_waitPlayUnlockedAnimMistList ~= nil and next(self.m_waitPlayUnlockedAnimMistList) ~= nil
 end
 
 LevelMapController.TryPlayMistUnlockedAnimation = HL.Method(HL.Function) << function(self, onComplete)

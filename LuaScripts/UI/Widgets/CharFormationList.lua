@@ -134,17 +134,10 @@ CharFormationList._GetCharIndex = HL.Method(HL.Any).Return(HL.Number) << functio
     return -1;
 end
 
-CharFormationList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
+CharFormationList._OnSortChanged = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Number)) << function(self, optData, isIncremental, singleInstId)
     if self.m_filteredCharList then
-        local tmpSingleInstId = 0
+        local tmpSingleInstId = singleInstId or self:_GetCurSingleSelectInstId()
         local scrollToIndex = 1
-
-        if self.m_mode == UIConst.CharListMode.Single then
-            local cell = self:GetCellByIndex(self.curSingleSelect)
-            if cell then
-                tmpSingleInstId = cell.charInfo.instId
-            end
-        end
 
         local keys = isIncremental and optData.keys or optData.reverseKeys
         self:_SortData(keys, isIncremental)
@@ -193,6 +186,14 @@ CharFormationList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(s
             self.m_clickFunc(true, self.curSingleSelect, self.m_filteredCharList[self.curSingleSelect])
         end
     end
+end
+
+CharFormationList._GetCurSingleSelectInstId = HL.Method().Return(HL.Number) << function(self)
+    if self.m_mode ~= UIConst.CharListMode.Single then
+        return 0
+    end
+    local charItem = self.m_filteredCharList and self.m_filteredCharList[self.curSingleSelect]
+    return charItem and charItem.instId or 0
 end
 
 CharFormationList._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, keys, isIncremental)
@@ -563,8 +564,9 @@ end
 
 CharFormationList._OnFilterConfirm = HL.Method(HL.Any) << function(self, tags)
     self.m_filterTags = tags
+    local singleInstId = self:_GetCurSingleSelectInstId()
     self:_FilterCharList()
-    self:_OnSortChanged(self.view.sortNode:GetCurSortData(), self.view.sortNode.isIncremental)
+    self:_OnSortChanged(self.view.sortNode:GetCurSortData(), self.view.sortNode.isIncremental, singleInstId)
 end
 
 CharFormationList._GroupFilterTagsByFuncName = HL.Method(HL.Table).Return(HL.Table) << function(self, tags)
@@ -632,6 +634,29 @@ CharFormationList._FilterBtnGetResCount = HL.Method(HL.Table).Return(HL.Number) 
         end
     end
     return count
+end
+
+
+CharFormationList.ResetSortAndFilter = HL.Method() << function(self)
+    self.m_filterTags = nil
+    if self.view.filterBtn and self.view.filterBtn.m_args then
+        self.view.filterBtn:_UpdateState({})
+    end
+
+    local sortNode = self.view.sortNode
+    if not sortNode or not sortNode.m_sortOptions then
+        return
+    end
+
+    sortNode.isIncremental = false
+    sortNode.m_curCSOptionIndex = 0
+    sortNode.m_tmpNoCallback = true
+    if sortNode.view and sortNode.view.mobilePCNode and sortNode.view.mobilePCNode.dropDown then
+        sortNode.view.mobilePCNode.dropDown:SetSelected(0, true, false)
+    end
+    sortNode.m_tmpNoCallback = false
+    sortNode:RefreshIncremental()
+    sortNode:UpdateDeviceState()
 end
 
 CharFormationList._OnDisable = HL.Override() << function(self)

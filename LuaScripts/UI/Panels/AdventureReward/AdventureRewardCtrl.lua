@@ -100,6 +100,7 @@ AdventureRewardCtrl._InitWidget = HL.Method(HL.Opt(HL.Any)) << function(self, ar
     if initDataIndex == nil or initDataIndex < 0 then
         initDataIndex = rewardCount
     end
+    self.m_currIndex = initDataIndex
     self.view.levelAdapter.onUpdateCell:AddListener(function(gameObject, csIndex)
         local cell = self.m_levelListCellFunc(gameObject)
         self:_UpdateLevelScrollCell(cell, csIndex)

@@ -124,6 +124,7 @@ end
 
 
 GemEnhanceCtrl._EnterSelectionMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
+    InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.bottomEnhancedNode.itemListNaviGroup)
     self.view.lockNaviGroup.enabled = true
     self.view.controllerFocusHintNode.gameObject:SetActive(true)
     self.view.stateController:SetState("selection")
@@ -141,6 +142,7 @@ GemEnhanceCtrl._RefreshLeftGemList = HL.Method(HL.Opt(HL.Boolean)) << function(s
                 return
             end
 
+            self:_RemoveEntriesNaviLayer()
             self:_OnSelectGem(itemInfo)
         end,
         refreshItemAddOn = function(cell, itemInfo)
@@ -162,6 +164,7 @@ GemEnhanceCtrl._RefreshLeftGemList = HL.Method(HL.Opt(HL.Boolean)) << function(s
         skipGraduallyShow = skipGraduallyShow,
         onFilterNone = function()
             self.m_selectedGemInstId = -1
+            self:_RemoveEntriesNaviLayer()
             self.view.stateController:SetState("empty")
             self:_UpdateSelectedGemSkillInfo()
         end,
@@ -226,15 +229,19 @@ GemEnhanceCtrl._UpdateSelectedGemSkillInfo = HL.Method() << function(self)
         local term = gemInst.termList[i]
         
         local termCell = self.view.entriesGroupNode[string.format("gemSkillEnhanceCell%d", i+1)]
-        termCell:InitGemSkillEnhanceCell({
-            termId = term.termId,
-            termLevel = term.cost,
-            onClick = function(termId, termLevel)
+            termCell:InitGemSkillEnhanceCell({
+                termId = term.termId,
+                termLevel = term.cost,
+                onClick = function(termId, termLevel)
                 self.m_selectedTermIndex = i
-                self:_EnterEnhanceModeWithAnim()
-            end,
-        })
+                    self:_EnterEnhanceModeWithAnim()
+                end,
+            })
     end
+end
+
+GemEnhanceCtrl._RemoveEntriesNaviLayer = HL.Method() << function(self)
+    InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.entriesGroupNode.entriesGroup)
 end
 
 GemEnhanceCtrl._RefreshSelectedGemInfoByInstId = HL.Method() << function(self)

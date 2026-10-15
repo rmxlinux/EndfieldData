@@ -2,6 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local KeyboardKeyCode = CS.Beyond.Input.KeyboardKeyCode
 local GamepadKeyCode = CS.Beyond.Input.GamepadKeyCode
 local HudFadeType = CS.Beyond.HudFadeType
+local CONTROLLER_OPTION_INTERACTION_DELAY_TIME<const> = 0.7
 
 local UI_HIDDEN_TYPE = {
     Active = "active",
@@ -96,17 +97,29 @@ local UI_HIDDEN_OPTION_GAMEPAD_INPUT_BLACK_LIST = {
     [GamepadKeyCode.A] = true,
 }
 
+local QTE_RECOVER_DELAY_TIME = 0.1
+
 DialogCtrlBase = HL.Class('DialogCtrlBase', uiCtrl.UICtrl)
 
 DialogCtrlBase.m_optionCells = HL.Field(HL.Forward("UIListCache"))
 
 DialogCtrlBase.m_optionCount = HL.Field(HL.Number) << 0
 
+DialogCtrlBase.m_controllerOptionDelayTimer = HL.Field(HL.Number) << -1
+
+DialogCtrlBase.m_controllerOptionInteractionReady = HL.Field(HL.Boolean) << false
+
 DialogCtrlBase.m_curEntryLinks = HL.Field(HL.Userdata) << nil
 
 DialogCtrlBase.m_enableGlossaryPopUp = HL.Field(HL.Boolean) << true
 
 DialogCtrlBase.m_isUIHidden = HL.Field(HL.Boolean) << false
+
+DialogCtrlBase.m_isQTEActive = HL.Field(HL.Boolean) << false
+
+DialogCtrlBase.m_ctrlButtonsVisibleBeforeQTE = HL.Field(HL.Boolean) << false
+
+DialogCtrlBase.m_qteRecoverCor = HL.Field(HL.Thread)
 
 DialogCtrlBase.m_showOptionWhenUIHidden = HL.Field(HL.Boolean) << false
 
@@ -133,7 +146,12 @@ DialogCtrlBase.s_messages = HL.StaticField(HL.Table) << {}
 
 
 DialogCtrlBase.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_controllerOptionDelayTimer = -1
+    self.m_controllerOptionInteractionReady = false
     self.m_isUIHidden = self:_GetCurrentUIHidden()
+    self.m_isQTEActive = false
+    self.m_ctrlButtonsVisibleBeforeQTE = false
+    self.m_qteRecoverCor = nil
     self.m_showOptionWhenUIHidden = false
     self.m_autoAndHideButtonsVisible = false
     self.m_uiHiddenStates = {}
@@ -209,6 +227,38 @@ end
 DialogCtrlBase.OnCreated = HL.Virtual(HL.Any) << function(self, arg)
 end
 
+DialogCtrlBase.OnQTEStart = HL.Method(HL.Opt(HL.Any)) << function(self, _)
+    if self.m_qteRecoverCor then
+        self.m_qteRecoverCor = self:_ClearCoroutine(self.m_qteRecoverCor)
+    end
+    if self.m_isQTEActive then
+        return
+    end
+
+    self.m_ctrlButtonsVisibleBeforeQTE = self.view.topRight.gameObject.activeSelf
+    self.m_isQTEActive = true
+    self.view.topRight.gameObject:SetActive(false)
+    self.view.topLeft.gameObject:SetActive(false)
+    self:_DisableDialogControllerOption()
+    self.view.luaPanel:BlockAllInput()
+end
+
+DialogCtrlBase.OnQTEComplete = HL.Method(HL.Opt(HL.Any)) << function(self, _)
+    if not self.m_isQTEActive or self.m_qteRecoverCor then
+        return
+    end
+
+    self.m_qteRecoverCor = self:_StartCoroutine(function()
+        coroutine.wait(QTE_RECOVER_DELAY_TIME)
+        self.m_qteRecoverCor = nil
+        self.m_isQTEActive = false
+        self.view.topRight.gameObject:SetActive(self.m_ctrlButtonsVisibleBeforeQTE)
+        self.view.topLeft.gameObject:SetActive(self.m_ctrlButtonsVisibleBeforeQTE)
+        self.view.luaPanel:RecoverAllInput()
+        self:_RefreshOptionListVisibleState()
+    end)
+end
+
 
 
 DialogCtrlBase._RefreshMouseLeftBindings = HL.Method(HL.Opt(HL.Boolean)) << function(self, cursorVisible)
@@ -227,8 +277,11 @@ DialogCtrlBase._RefreshMouseLeftBindings = HL.Method(HL.Opt(HL.Boolean)) << func
 end
 
 DialogCtrlBase._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
-    if not active then
+    if active then
+        self:_EnableDialogControllerOption()
+    else
         self.m_mouseLeftPressedWhileCursorHidden = false
+        self:_DisableDialogControllerOption()
     end
     self:_RefreshMouseLeftBindings()
 end
@@ -281,8 +334,45 @@ DialogCtrlBase._InitDialogController = HL.Method() << function(self)
     end)
 end
 
+DialogCtrlBase._ClearDialogControllerOptionDelay = HL.Method() << function(self)
+    if self.m_controllerOptionDelayTimer > 0 then
+        self.m_controllerOptionDelayTimer = self:_ClearTimer(self.m_controllerOptionDelayTimer)
+    end
+end
+
+
+DialogCtrlBase._StartDialogControllerOptionDelay = HL.Method() << function(self)
+    self:_ClearDialogControllerOptionDelay()
+    self:_DisableDialogControllerOption()
+    self.m_controllerOptionInteractionReady = false
+    self.m_controllerOptionDelayTimer = self:_StartTimer(CONTROLLER_OPTION_INTERACTION_DELAY_TIME, function()
+        self.m_controllerOptionDelayTimer = -1
+        if self.m_optionCount <= 0 then
+            return
+        end
+
+        self.m_controllerOptionInteractionReady = true
+        self:_EnableDialogControllerOption()
+    end, true)
+end
+
 DialogCtrlBase._EnableDialogControllerOption = HL.Method() << function(self)
-    if not DeviceInfo.usingController or self.m_optionCount <= 0 then
+    if not DeviceInfo.usingController then
+        return
+    end
+    if not self.view.inputGroup.groupEnabled then
+        return
+    end
+    if self.m_isQTEActive then
+        return
+    end
+    if not self.m_controllerOptionInteractionReady then
+        return
+    end
+    if self.m_optionCount <= 0 then
+        return
+    end
+    if not self:_ShouldShowOptionList() then
         return
     end
 
@@ -386,6 +476,9 @@ DialogCtrlBase._OnUpdateUIHiddenInput = HL.Method() << function(self)
     self:_UpdateMouseLeftPressState()
     if self.m_skipNextUIHiddenInputInterrupt then
         self.m_skipNextUIHiddenInputInterrupt = false
+        return
+    end
+    if not self.view.inputGroup.groupEnabled then
         return
     end
     if not self.m_isUIHidden or self:IsHide() then
@@ -578,6 +671,8 @@ DialogCtrlBase.SetTrunkOption = HL.Virtual(HL.Userdata) << function(self, option
     local count = optionData.Count
     self.m_optionCount = count
     if count == 0 then
+        self:_ClearDialogControllerOptionDelay()
+        self.m_controllerOptionInteractionReady = false
         self:_DisableDialogControllerOption()
         self.m_optionCells:PlayAllOut()
         self.m_showOptionWhenUIHidden = false
@@ -605,6 +700,7 @@ DialogCtrlBase.SetTrunkOption = HL.Virtual(HL.Userdata) << function(self, option
             cell.view.animationWrapper:PlayInAnimation()
         end)
 
+        self:_StartDialogControllerOptionDelay()
         self:_RefreshOptionListVisibleState()
     end
 
@@ -814,7 +910,14 @@ end
 
 
 DialogCtrlBase.OnClose = HL.Override() << function(self)
+    if self.m_qteRecoverCor then
+        self.m_qteRecoverCor = self:_ClearCoroutine(self.m_qteRecoverCor)
+    end
+    self:_ClearDialogControllerOptionDelay()
+    self.m_controllerOptionInteractionReady = false
     self.m_isUIHidden = false
+    self.m_isQTEActive = false
+    self.m_ctrlButtonsVisibleBeforeQTE = false
     self.m_showOptionWhenUIHidden = false
     self.m_autoAndHideButtonsVisible = false
     self.m_uiHiddenStates = {}

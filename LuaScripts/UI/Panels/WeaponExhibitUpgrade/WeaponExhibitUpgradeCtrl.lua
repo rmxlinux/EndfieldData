@@ -673,7 +673,6 @@ WeaponExhibitUpgradeCtrl._RefreshCostItemCell = HL.Method(HL.Any, HL.Table, HL.A
         instId = isWeapon and costItemInfo.indexId or 0,
         
     }, true)
-    cell.itemBlack:UpdateRedDot()
 
     cell.itemBlack.view.button.onClick:RemoveAllListeners()
     cell.itemBlack.view.button.onClick:AddListener(function()

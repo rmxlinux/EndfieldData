@@ -326,6 +326,11 @@ MainHudCtrl.m_quickMenuBindingId = HL.Field(HL.Number) << -1
 MainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_hideJumpKeys = {}
     self.m_indicatorControllerDisableKeys = {}
+    if self.animationWrapper then
+        self.animationWrapper.onAnimationInEasingFinished:AddListener(function()
+            Notify(MessageConst.ON_MAIN_HUD_ANIMATION_IN_EASING_FINISHED)
+        end)
+    end
 
     self:_InitOneTopNodeExpand(self.view.topRightBtns)
     self:_InitOneTopNodeExpand(self.view.topLeftBtns)
@@ -348,7 +353,7 @@ MainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:BindInputPlayerAction("common_disable_switch_mode", function()
             if Utils.isInBlackbox() then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_BLACK_BOX_SWITCH_MODE_DISABLED)
-            elseif Utils.isInSpaceShip() then
+            elseif Utils.isInSpaceShip() and not GameInstance.player.spaceship.isViewingFriend then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_SPASCESHIP_SWITCH_MODE_DISABLED)
             end
         end)
@@ -437,6 +442,7 @@ MainHudCtrl._ResetTopBtnLayoutForHotSwitchReuse = HL.Method() << function(self)
     if not self.m_topBtnDataList then
         return
     end
+    local parents = {}
     for _, info in ipairs(self.m_topBtnDataList) do
         if info.oriParentTrans and info.viewNode then
             if info.viewNode.transform.parent ~= info.oriParentTrans then
@@ -449,7 +455,31 @@ MainHudCtrl._ResetTopBtnLayoutForHotSwitchReuse = HL.Method() << function(self)
                     canvasGroup:DOKill()
                     canvasGroup.alpha = 1
                 end
+
+                if not parents[info.oriParentTrans] then
+                    parents[info.oriParentTrans] = true
+                    local animationWrapper = info.oriParentTrans:GetComponent("UIAnimationWrapper")
+                    if NotNull(animationWrapper) and animationWrapper.autoPlay then
+                        animationWrapper:SampleToInAnimationEnd()
+                    end
+                end
+                local animationWrapper = info.viewNode.transform:GetComponent("UIAnimationWrapper")
+                if NotNull(animationWrapper) and animationWrapper.autoPlay then
+                    animationWrapper:SampleToInAnimationEnd()
+                end
             end
+        end
+    end
+    
+    for _, info in ipairs(self.m_topBtnDataList) do
+        if info.oriParentTrans and info.viewNode and info.sortId ~= nil then
+            info.viewNode.transform:SetAsLastSibling()
+        end
+    end
+    
+    for _, info in ipairs(self.m_topBtnDataList) do
+        if info.oriParentTrans and info.viewNode and info.sortId ~= nil then
+            info.viewNode.transform:SetSiblingIndex(info.sortId)
         end
     end
     self.view.topRightBtns.controllerBtnList.moreDeco.gameObject:SetActive(false)
@@ -558,6 +588,11 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
             getCurValue = function()
                 return Utils.isInFactoryMode()
             end,
+            
+            
+            customUpdateBtnInfo = function()
+                self:_UpdateSwitchModeState()
+            end,
         },
         hubData = {
             button = self.view.topLeftBtns.hubDataBtn,
@@ -565,7 +600,20 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
                 if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacYieldStats) then
                     return false
                 end
-                if not Utils.isCurrentMapHasFactoryGrid() or Utils.isInBlackbox() then
+                
+                if Utils.isInBlackbox() then
+                    return false
+                end
+                
+                if LuaSystemManager.factory.inTopView then
+                    return true
+                end
+                
+                local isForbid, forbidParams = Utils.isForbiddenWithReason(ForbidType.DisableSwitchMode)
+                if isForbid and forbidParams and forbidParams.forbidStyle ~= DisableSwitchModeForbidStyle.ShowInvalidIcon then
+                    return false
+                end
+                if not Utils.isCurrentMapHasFactoryGrid() then
                     return false
                 end
                 return true
@@ -734,6 +782,10 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
             controllerPosType = ControllerTopBtnPosTypes.Dynamic,
             controllerPosOrder = 10,
             checkVisible = function()
+                if GameWorld.worldInfo.curSubGameId == Tables.gambleBattleConst.gambleBattleDungeonId then
+                    
+                    return false
+                end
                 return not Utils.isForbidden(ForbidType.ForbidSetSquad)
             end,
             onClick = function()
@@ -1287,8 +1339,11 @@ MainHudCtrl._InitMainHudBinding = HL.Method() << function(self)
     end, self.m_indicatorControllerGroupId)
 
     
-    if not UNITY_EDITOR and DeviceInfo.isAndroid then
+    if not UNITY_EDITOR and DeviceInfo.isAndroidUser then
         self:BindInputPlayerAction("common_quit_game", function()
+            if CS.Beyond.CloudGame.enabled then
+                return 
+            end
             self:Notify(MessageConst.SHOW_POP_UP, {
                 content = Language.LUA_QUIT_GAME_CONFIRM,
                 hideBlur = true,
@@ -1481,8 +1536,6 @@ MainHudCtrl._OnClearScreenOn = HL.StaticMethod() << function()
         if MainHudCtrl.s_waitingToClearScreen then
             MainHudCtrl._PerformClearScreen()
         end
-        
-        Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Const.LevelScriptClearScreenQueueType)
     end, nil, true, function()
         
         MainHudCtrl.s_waitingToClearScreen = false
@@ -1564,8 +1617,6 @@ MainHudCtrl._OnClearScreenOnExceptSomePanel = HL.StaticMethod(HL.Table) << funct
             
             MainHudCtrl._PerformClearScreenExceptSomePanel()
         end
-        
-        Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Const.LevelScriptClearScreenQueueType)
     end, nil, true, function(_)
         
         MainHudCtrl.s_waitingToClearScreenExceptPanels = nil
@@ -1613,6 +1664,7 @@ end
 
 
 MainHudCtrl.OnDungeonStateChanged = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    
     
     self.m_forceBtnOutside = Utils.isInDungeon()
     self:TryUpdateAllTopBtnsVisible()
@@ -2523,7 +2575,11 @@ end
 
 
 MainHudCtrl._RefreshQuickMenuWithTopBtnsVisibleStateInController = HL.Method() << function(self)
-    InputManagerInst:ToggleBinding(self.m_quickMenuBindingId, #self.m_curControllerVisibleTopBtns > 0)
+    local canShowQuickMenu = #self.m_curControllerVisibleTopBtns > 0
+    InputManagerInst:ToggleBinding(self.m_quickMenuBindingId, canShowQuickMenu)
+    if not canShowQuickMenu then
+        UIManager:Close(PanelId.QuickMenu)
+    end
 end
 
 

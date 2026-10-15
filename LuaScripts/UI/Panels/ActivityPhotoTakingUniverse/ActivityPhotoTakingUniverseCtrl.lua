@@ -18,7 +18,7 @@ ActivityPhotoTakingUniverseCtrl.m_activityId = HL.Field(HL.String) << ''
 ActivityPhotoTakingUniverseCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
-    self.view.activityCommonInfo.view.gotoNode.btnDetailRedDot:InitRedDot("ActivityConditionalMultiStage", self.m_activityId)
+    self.view.activityCommonInfo.view.gotoNode.btnDetailRedDot:InitRedDot("ActivityConditionalMultiStageDetail", self.m_activityId)
 end
 
 

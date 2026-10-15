@@ -13,11 +13,14 @@ DomainDepotPackageSellCtrl.m_domainDepotId = HL.Field(HL.String) << ""
 
 DomainDepotPackageSellCtrl.m_resumeState = HL.Field(HL.Table)
 
+DomainDepotPackageSellCtrl.m_isQuickTransferSending = HL.Field(HL.Boolean) << false
+
 
 
 
 
 DomainDepotPackageSellCtrl.s_messages = HL.StaticField(HL.Table) << {
+    [MessageConst.ON_DOMAIN_DEPOT_QUICK_TRANSFER_FAILED] = 'OnQuickTransferFailed',
 }
 
 
@@ -42,6 +45,10 @@ DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
 
         GameInstance.player.domainDepotSystem:SendRequestDomainDepotDeliver(self.m_domainDepotId, self.m_selectId)
+    end)
+    self.view.transferBtn.onClick:RemoveAllListeners()
+    self.view.transferBtn.onClick:AddListener(function()
+        self:_OnClickQuickTransfer()
     end)
 
     if arg == nil or arg.domainDepotId == nil then
@@ -98,10 +105,13 @@ DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.lockedRoot.gameObject:SetActiveIfNecessary(true)
         self.view.taskRoot.gameObject:SetActiveIfNecessary(false)
         self.view.confirmBtn.gameObject:SetActiveIfNecessary(false)
+        self.view.transferBtn.gameObject:SetActiveIfNecessary(false)
     else
         self.view.lockedRoot.gameObject:SetActiveIfNecessary(false)
         self.view.taskRoot.gameObject:SetActiveIfNecessary(true)
         self.view.confirmBtn.gameObject:SetActiveIfNecessary(true)
+        self.view.transferBtn.gameObject:SetActiveIfNecessary(DomainDepotUtils.IsQuickTransferUnlocked(self.m_domainDepotId))
+        self.view.transferBtn.interactable = true
     end
 end
 
@@ -129,11 +139,76 @@ DomainDepotPackageSellCtrl.OnCellChange = HL.Method() << function(self)
     end
 end
 
+DomainDepotPackageSellCtrl.OnQuickTransferFailed = HL.Method() << function(self)
+    self.m_isQuickTransferSending = false
+    self.view.transferBtn.interactable = true
+end
+
 DomainDepotPackageSellCtrl.OnSelectBuyerEnd = HL.Method() << function(self)
     
     
     
     
+end
+
+DomainDepotPackageSellCtrl._OnClickQuickTransfer = HL.Method() << function(self)
+    if self.m_isQuickTransferSending then
+        return
+    end
+    if self.m_selectId == nil or self.m_selectId == "" then
+        logger.error("DomainDepotPackageSellCtrl._OnClickQuickTransfer: No buyer selected")
+        return
+    end
+    if GameInstance.player.domainDepotSystem.m_currAcceptedRemoteDeliver ~= nil or GameInstance.player.domainDepotSystem.deliverInstId ~= 0 then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_DOMAIN_DEPOT_CANNOT_DELIVER_TIP)
+        return
+    end
+
+    local buyerInfo = nil
+    for _, buyerInfoItem in ipairs(self.m_buyerInfos) do
+        if buyerInfoItem.id == self.m_selectId then
+            buyerInfo = buyerInfoItem
+        end
+    end
+    if buyerInfo == nil then
+        logger.error("DomainDepotPackageSellCtrl._OnClickQuickTransfer: Missing selected buyer info")
+        return
+    end
+
+    local depositCount = math.floor(buyerInfo.reward.count * Tables.domainDepotConst.depositRatio / 100)
+    local doQuickTransfer = function()
+        self.m_isQuickTransferSending = true
+        self.view.transferBtn.interactable = false
+        GameInstance.player.domainDepotSystem:SendRequestDomainDepotQuickTransfer(self.m_domainDepotId, self.m_selectId,
+            buyerInfo.reward.id, depositCount)
+    end
+
+    if DomainDepotUtils.IsQuickTransferNoTipToday() then
+        doQuickTransfer()
+        return
+    end
+
+    local noTipToday = false
+    local depositItemCfg = Tables.itemTable:GetValue(buyerInfo.reward.id)
+    local depositIconText = string.format('<image="WalletIcon/%s" width=60 height=60>', depositItemCfg.iconId)
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = string.format(Language.LUA_DOMAIN_DEPOT_QUICK_TRANSFER_CONFIRM_CONTENT, depositIconText, depositCount),
+        warningContent = Language.LUA_DOMAIN_DEPOT_QUICK_TRANSFER_CONFIRM_WARNING,
+        secondWarningContent = Language.LUA_DOMAIN_DEPOT_QUICK_TRANSFER_CONFIRM_SECOND_WARNING,
+        toggle = {
+            isOn = false,
+            onValueChanged = function(isOn)
+                noTipToday = isOn
+            end,
+            toggleText = Language.LUA_TYPHOEA_ARCHERY_NO_TIP_TODAY,
+        },
+        onConfirm = function()
+            if noTipToday then
+                DomainDepotUtils.SetQuickTransferNoTipToday(true)
+            end
+            doQuickTransfer()
+        end,
+    })
 end
 
 DomainDepotPackageSellCtrl._GetCellByIndex = HL.Method(HL.Number).Return(HL.Forward("DomainDepotPriceListCell")) << function(self, cellIndex)

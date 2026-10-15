@@ -29,14 +29,23 @@ GuestroomCluesCell._OnFirstTimeInit = HL.Override() << function(self)
 
     self.view.delBtn.onClick:RemoveAllListeners()
     self.view.delBtn.onClick:AddListener(function()
-        
-        Notify(MessageConst.SHOW_POP_UP, {
-            content = Language.LUA_RECYCLE_CLUE_POPUP_TITLE,
-            subContent = string.format(Language.LUA_RECYCLE_CLUE_POPUP_SUB_TITLE, Tables.spaceshipConst.recycleClueAddCreditCnt),
-            onConfirm = function()
-                GameInstance.player.spaceship:DeleteSelfClue(self.m_clueCellData.instId)
-            end
-        })
+        local isSelfClue = self:_IsSelfClue()
+        if isSelfClue then
+            Notify(MessageConst.SHOW_POP_UP, {
+                content = Language.LUA_RECYCLE_CLUE_POPUP_TITLE,
+                subContent = string.format(Language.LUA_RECYCLE_CLUE_POPUP_SUB_TITLE, Tables.spaceshipConst.recycleClueAddCreditCnt),
+                onConfirm = function()
+                    GameInstance.player.spaceship:DeleteClue(self.m_clueCellData.instId)
+                end
+            })
+        else
+            Notify(MessageConst.SHOW_POP_UP, {
+                content = Language.LUA_DELETE_RECV_CLUE_POPUP_TITLE,
+                onConfirm = function()
+                    GameInstance.player.spaceship:DeleteClue(self.m_clueCellData.instId)
+                end
+            })
+        end
     end)
 
     self.view.inputBindingGroupNaviDecorator.onGroupSetAsNaviTarget:RemoveAllListeners()
@@ -119,9 +128,11 @@ GuestroomCluesCell.InitGuestroomCluesCell = HL.Method(HL.Any, HL.Function) << fu
         })
     end)
 
+    local psName = ""
     if data.fromRoleId ~= 0 then
         local success , friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(data.fromRoleId)
         if success then
+            psName = friendInfo.psName
             if GameInstance.player.roleId == data.fromRoleId then
                 self.view.nameTxt.text = FriendUtils.getFriendInfoByRoleId(data.fromRoleId) .. Language.LUA_SPACESHIP_CLUE_MINE_MARK
             else
@@ -134,14 +145,26 @@ GuestroomCluesCell.InitGuestroomCluesCell = HL.Method(HL.Any, HL.Function) << fu
     else
         self.view.nameTxt.gameObject:SetActive(false)
     end
+    local hasPsName = not string.isEmpty(psName)
+    self.view.sonyNameTxt.text = psName
+    self.view.sonyNameNode.gameObject:SetActive(hasPsName)
+    self.view.decoGroup.gameObject:SetActive(not hasPsName)
 
     self:RefreshDelState()
 end
 
 
+GuestroomCluesCell._IsSelfClue = HL.Method().Return(HL.Boolean) << function(self)
+    local selfDict = GameInstance.player.spaceship:GetCluesByIndex(0, CS.Beyond.Gameplay.GuestRoomClueType.Self)
+    return selfDict and selfDict:ContainsKey(self.m_clueCellData.instId) or false
+end
+
 GuestroomCluesCell.RefreshDelState = HL.Method() << function(self)
     local selfDict = GameInstance.player.spaceship:GetCluesByIndex(0, CS.Beyond.Gameplay.GuestRoomClueType.Self)
-    if selfDict and selfDict:ContainsKey(self.m_clueCellData.instId) then
+    local isSelf = selfDict and selfDict:ContainsKey(self.m_clueCellData.instId)
+    local receiveDict = GameInstance.player.spaceship:GetCluesByIndex(0, CS.Beyond.Gameplay.GuestRoomClueType.Receive)
+    local isReceive = receiveDict and receiveDict:ContainsKey(self.m_clueCellData.instId)
+    if isSelf or isReceive then
         self.view.delBtn.gameObject:SetActive(not self.m_hasBeenPlaced)
         self.view.disable.gameObject:SetActive(self.m_hasBeenPlaced)
     else

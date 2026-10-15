@@ -34,7 +34,11 @@ end
 ActivityCommonShopEntry._InitUI = HL.Method() << function(self)
     local _, activityJumpCfg = Tables.activityAchievementDataTable:TryGetValue(self.m_activityId)
     local shopJumpId = activityJumpCfg.shopJumpId
-    local cfg = Tables.systemJumpTable[shopJumpId]
+    local _, cfg = Tables.systemJumpTable:TryGetValue(shopJumpId)
+    if not cfg then
+        logger.error("ActivityCommonShopEntry: shopJumpId不存在")
+        return
+    end
     local phaseArgs = Json.decode(cfg.phaseArgs)
     local _, shopCfg = Tables.shopTable:TryGetValue(phaseArgs.shopGroupId)
 

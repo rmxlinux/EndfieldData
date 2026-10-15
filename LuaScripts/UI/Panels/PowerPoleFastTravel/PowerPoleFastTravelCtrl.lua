@@ -641,7 +641,8 @@ PowerPoleFastTravelCtrl._OnTravelPoleIdle = HL.Method() << function(self)
         return
     end
     FactoryUtils.likeSocialBuilding(nodeId, function()
-        if self.m_isMoving then
+        
+        if self.m_isClosed or self.m_isMoving or CSFactoryUtil.GetNodeIdByLogicId(self.m_currentLogicId) ~= nodeId or not FactoryUtils.isOthersSocialBuilding(nodeId) then
             return
         end
         if not FactoryUtils.canLikeSocialBuilding(nodeId) then

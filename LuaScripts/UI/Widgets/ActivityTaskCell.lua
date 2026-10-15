@@ -6,6 +6,7 @@ ActivityTaskCell.m_activityId = HL.Field(HL.String) << ""
 ActivityTaskCell.m_taskId = HL.Field(HL.String) << ""
 ActivityTaskCell.m_forcedRewardCellCount = HL.Field(HL.Number) << -1
 ActivityTaskCell.m_rewardCellCache = HL.Field(HL.Forward("UIListCache"))
+ActivityTaskCell.m_receiveAllTaskIds = HL.Field(HL.Table)
 
 
 ActivityTaskCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -22,6 +23,7 @@ ActivityTaskCell.InitActivityTaskCell = HL.Method(HL.Any) << function(self, arg)
     self.m_activityId = arg.activityId
     self.m_taskId = arg.taskId
     self.m_forcedRewardCellCount = arg.forcedRewardCellCount
+    self.m_receiveAllTaskIds = {self.m_taskId}
     local activityData = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     local taskStatusData = activityData:GetTaskData(self.m_taskId)
     local _, taskConfig = Tables.activityConditionalMultiStageTaskConfigTable:TryGetValue(self.m_activityId)
@@ -34,7 +36,9 @@ ActivityTaskCell.InitActivityTaskCell = HL.Method(HL.Any) << function(self, arg)
     
     local state = "Underway"
     local status
-    if activityData.status == GEnums.ActivityStatus.Locked and #taskConfigInfo.unlockConditionId == 0 then
+    local unlockTimeArrived = string.isEmpty(taskConfigInfo.unlockTimeId) or Utils.isCurTimeInTimeIdRange(taskConfigInfo.unlockTimeId)
+    local noUnlockCondition = #taskConfigInfo.unlockConditionId == 0
+    if activityData.status == GEnums.ActivityStatus.Locked and unlockTimeArrived and noUnlockCondition then
         status = GEnums.ActivityConditionalTaskState.Unlocked
     else
         status = GEnums.ActivityConditionalTaskState.__CastFrom(taskStatusData.Status)
@@ -43,10 +47,29 @@ ActivityTaskCell.InitActivityTaskCell = HL.Method(HL.Any) << function(self, arg)
     if status == GEnums.ActivityConditionalTaskState.Locked then
         state = "Lock"
         
-        if #taskConfigInfo.unlockConditionId > 0 then
-            local unlockConditionId = taskConfigInfo.unlockConditionId[CSIndex(1)]
-            local _, unlockCondition = Tables.activityConditionalMultiStageTaskCompleteConditionTable:TryGetValue(unlockConditionId)
-            self.view.lockTxt.text = unlockCondition.desc
+        if not string.isEmpty(taskConfigInfo.unlockTimeId) and not Utils.isCurTimeInTimeIdRange(taskConfigInfo.unlockTimeId) then
+            self.view.lockTxt.gameObject:SetActive(false)
+            self.view.countDownText.gameObject:SetActive(true)
+            local openTimeStamp = Utils.getTimeIdOpenTimeStamp(taskConfigInfo.unlockTimeId)
+            self.view.countDownText:InitCountDownText(openTimeStamp, nil, function(leftSec)
+                local leftTime = UIUtils.getLeftTime(leftSec)
+                return string.format(Language.LUA_ACTIVITY_TASK_UNLOCK_TIME_HINT, leftTime)
+            end)
+        
+        elseif #taskConfigInfo.unlockConditionId > 0 then
+            local uncompletedConditionId
+            for _, unlockConditionId in ipairs(taskConfigInfo.unlockConditionId) do
+                local succ, isConditionCompleted = taskStatusData.Conditions.Flags:TryGetValue(unlockConditionId)
+                
+                if not succ or not isConditionCompleted then
+                    uncompletedConditionId = unlockConditionId
+                    break
+                end
+            end
+           local _, unlockCondition = Tables.activityConditionalMultiStageTaskCompleteConditionTable:TryGetValue(uncompletedConditionId)
+           self.view.lockTxt.gameObject:SetActive(true)
+           self.view.countDownText.gameObject:SetActive(false)
+           self.view.lockTxt.text = unlockCondition.desc
         end
     elseif status == GEnums.ActivityConditionalTaskState.Unlocked then
         local jumpId = taskConfigInfo.jumpId
@@ -64,7 +87,7 @@ ActivityTaskCell.InitActivityTaskCell = HL.Method(HL.Any) << function(self, arg)
         state = "Receive"
         self.view.completeBtn.onClick:RemoveAllListeners()
         self.view.completeBtn.onClick:AddListener(function()
-            GameInstance.player.activitySystem:SendReceiveTaskRewardConditionMultiStage(self.m_activityId, { self.m_taskId })
+            GameInstance.player.activitySystem:SendReceiveTaskRewardConditionMultiStage(self.m_activityId, self.m_receiveAllTaskIds)
         end)
     
     elseif status == GEnums.ActivityConditionalTaskState.Rewarded then
@@ -147,6 +170,10 @@ ActivityTaskCell.InitActivityTaskCell = HL.Method(HL.Any) << function(self, arg)
             self.view.rewardsKeyHint.gameObject:SetActive(isTarget)
         end
     end
+end
+
+ActivityTaskCell.UpdateAllReceiveTaskIds = HL.Method(HL.Any) << function(self, taskIds)
+    self.m_receiveAllTaskIds = taskIds
 end
 
 HL.Commit(ActivityTaskCell)

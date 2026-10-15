@@ -189,6 +189,13 @@ NumberSelector.UpdateKeyHintVisible = HL.Method(HL.Boolean) << function(self, sh
     self.view.keyHintRight.gameObject:SetActive(show)
 end
 
+
+NumberSelector.Increment = HL.Method() << function(self)
+    if self.curNumber < self.m_max then
+        self:_Refresh(self.curNumber + 1, true)
+    end
+end
+
 NumberSelector._UpdateMinMax = HL.Method() << function(self)
     self.view.minText.text = self.m_min
     self.view.maxText.text = self.m_max

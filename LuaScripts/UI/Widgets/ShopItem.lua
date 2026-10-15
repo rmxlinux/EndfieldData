@@ -82,7 +82,7 @@ ShopItem.InitShopItem = HL.Virtual(HL.Table) << function(self, info)
 
     local moneyItemData = Tables.itemTable[info.moneyId]
     local resPath = string.format("Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/%s/%s.png", UIConst.UI_SPRITE_WALLET, moneyItemData.iconId .. "_02")
-    if ResourceManager.CheckExists(resPath) then
+    if self.loader:CheckExists(resPath) then
         local tryIcon2 = self:LoadSprite(UIConst.UI_SPRITE_WALLET, moneyItemData.iconId .. "_02")
         if tryIcon2 then
             self.view.moneyIcon.sprite = tryIcon2

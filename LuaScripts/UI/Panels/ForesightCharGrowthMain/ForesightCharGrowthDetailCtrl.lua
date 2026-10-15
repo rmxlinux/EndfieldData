@@ -1823,7 +1823,7 @@ ForesightCharGrowthDetailCtrl._RefreshGrowthTabByIndex = HL.Method(HL.Number, HL
             for _, e in ipairs(d.convertedList or {}) do
                 if not string.isEmpty(e.itemId) then map[e.itemId] = true end
             end
-            if not string.isEmpty(d.chestItemId) then map[d.chestItemId] = true end
+            for _, chest in ipairs(d.chests or {}) do map[chest.itemId] = true end
         end
     end
 end

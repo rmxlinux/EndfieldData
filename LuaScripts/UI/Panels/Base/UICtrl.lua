@@ -665,51 +665,16 @@ end
 
 
 
-UICtrl._GetDummyNaviLayerKey = HL.Method().Return(HL.String) << function(self)
-    if self.panelCfg.needNaviDummyLayer then
-        return self.panelCfg.name
-    end
-    local phase = self.m_phase
-    if phase ~= nil then
-        if not phase.cfg.notCreateDummyNaviLayer then
-            local key = PhaseManager:GetPhaseDummyNaviLayerName(phase.phaseId)
-            if string.isEmpty(key) then
-                logger.error("[UICtrl] _GetDummyNaviLayerKey", self.panelCfg.name, "无法找到当前面板所属Phase的DummyNaviLayer")
-            end
-            return key
-        end
-    end
-    return ""
-end
-
 UICtrl.SetNaviTarget = HL.Method(HL.Userdata) << function(self, selectable)
-    local needTopDummyLayerKey = self:_GetDummyNaviLayerKey()
-    if string.isEmpty(needTopDummyLayerKey) then
-        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(selectable)
+    if selectable == nil then
+        self:ClearNaviTarget()
         return
     end
-    local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(needTopDummyLayerKey)
-    if needTopDummyLayer ~= nil then
-        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(selectable, needTopDummyLayer)
-    end
+    InputManagerInst.controllerNaviManager:SetTarget(selectable)
 end
 
 UICtrl.ClearNaviTarget = HL.Method() << function(self)
-    local needTopDummyLayerKey = self:_GetDummyNaviLayerKey()
-    if string.isEmpty(needTopDummyLayerKey) then
-        InputManagerInst.controllerNaviManager:ClearTargetIfNecessary()
-        return
-    end
-    local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(needTopDummyLayerKey)
-    if needTopDummyLayer ~= nil then
-        InputManagerInst.controllerNaviManager:ClearTargetIfNecessary(needTopDummyLayer)
-    end
-end
-
-
-UICtrl.SetAsNaviTargetInSilentModeIfNecessary = HL.Method(HL.Userdata, HL.Userdata, HL.Opt(HL.String)) << function(self, targetNaviGroup, targetSelectable, needTopDummyLayerKey)
-    logger.error("[UICtrl] SetAsNaviTargetInSilentModeIfNecessary 已废弃，请使用 self:SetNaviTarget(selectable)", self.panelCfg.name)
-    self:SetNaviTarget(targetSelectable)
+    InputManagerInst.controllerNaviManager:ClearTargetForPanel(self.panelId)
 end
 
 

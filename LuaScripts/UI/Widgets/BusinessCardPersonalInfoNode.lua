@@ -128,11 +128,11 @@ BusinessCardPersonalInfoNode.UpdateContingencyContractActivityState = HL.Method(
         local rangeArray = Tables.activityContingencyContractTable:GetValue(playerInfo.contingencyContractBestRecord.Item1).rangeArray
 
         
-        self.view["levelTagNode" .. postfix]:SetState(tostring(1))
+        self.view["levelTagNode" .. postfix]:SetState(FriendUtils.LEVEL_TAG_STATE_NAME_LIST[1])
         for i = 1, #rangeArray do
             local range = rangeArray[CSIndex(i)]
             if playerInfo.contingencyContractBestRecord.Item2 >= range then
-                self.view["levelTagNode" .. postfix]:SetState(tostring(i + 1))
+                self.view["levelTagNode" .. postfix]:SetState(FriendUtils.LEVEL_TAG_STATE_NAME_LIST[i + 1])
             end
         end
     else

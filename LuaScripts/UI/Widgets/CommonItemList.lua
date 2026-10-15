@@ -55,7 +55,7 @@ local LIST_CONFIG = {
         filterTagGroupFunc = "generateConfig_CHAR_INFO_WEAPON",
     },
     [UIConst.COMMON_ITEM_LIST_TYPE.CHAR_INFO_EQUIP] = {
-        infoProcessFunc = "processEquip",
+        infoProcessFunc = "processEquipCharacterInfo",
         getSortOption = function()
             return UIConst.EQUIP_SORT_OPTION
         end,

@@ -7,6 +7,12 @@ end
 
 FriendUtils.FriendShowCharsCount = 4 
 
+FriendUtils.LEVEL_TAG_STATE_NAME_LIST = {
+    "Low",
+    "Middle",
+    "High",
+}
+
 FriendUtils.FriendDictIndex = 0
 FriendUtils.BlackListDictIndex = 1
 FriendUtils.FriendRequestDictIndex = 2
@@ -323,7 +329,7 @@ end
 
 
 FriendUtils.FRIEND_CELL_INIT_FUNC = {
-    onFriendPlayerClick = function(rectTransform, id, charInfoCallBack, shipBtnShow)
+    onFriendPlayerClick = function(rectTransform, id, charInfoCallBack, shipBtnShow, recordTipsTransform)
         local args = {
             transform = rectTransform,
             cellHeight = FriendUtils.CELL_HEIGHT,
@@ -335,6 +341,9 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
                 table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAR_INFO(charInfoCallBack))
             end
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(id))
+            if FriendUtils.hasAnyRecordTagVisible(id) then
+                table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.VIEW_RECORD_TIPS(id, recordTipsTransform or rectTransform))
+            end
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.REMARK_MODIFY(id))
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.REMOVE_FRIEND(id))
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.ADD_BLACK_LIST(id))
@@ -351,6 +360,9 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
                 [4] = FriendUtils.FRIEND_CELL_HEAD_FUNC.ADD_BLACK_LIST(id),
                 [5] = FriendUtils.FRIEND_CELL_HEAD_FUNC.REPORT(id),
             }
+            if FriendUtils.hasAnyRecordTagVisible(id) then
+                table.insert(args.actions, 2, FriendUtils.FRIEND_CELL_HEAD_FUNC.VIEW_RECORD_TIPS(id, recordTipsTransform or rectTransform))
+            end
         end
         if FriendUtils.isPsnPlatform() and GameInstance.player.friendSystem:IsPsnFriend(id) then
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.PSN_INFO(id))
@@ -360,7 +372,7 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
         end
         Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, args)
     end,
-    onStrangerPlayerClick = function(rectTransform, id, charInfoCallBack)
+    onStrangerPlayerClick = function(rectTransform, id, charInfoCallBack, _, recordTipsTransform)
         local args = {
             transform = rectTransform,
             cellHeight = 60,
@@ -370,6 +382,9 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAR_INFO(charInfoCallBack))
         end
         table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(id))
+        if FriendUtils.hasAnyRecordTagVisible(id) then
+            table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.VIEW_RECORD_TIPS(id, recordTipsTransform or rectTransform))
+        end
         table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.ADD_BLACK_LIST(id))
         table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.REPORT(id))
         if FriendUtils.isPsnPlatform() and GameInstance.player.friendSystem:IsPsnFriend(id) then
@@ -466,6 +481,14 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
         local actions = {}
         local tipsRect = recordTipsTransform or rectTransform
         local success, selfInfo = GameInstance.player.friendSystem:TryGetFriendInfo(id)
+        if GameInstance.player.friendSystem.isCommunicationRestricted then
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SWITCH_AVATAR(id))
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_TOPIC_MODIFY(id))
+        else
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SWITCH_AVATAR(id))
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SIGNATURE_MODIFY(id))
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_TOPIC_MODIFY(id))
+        end
         if not FriendUtils.isSeasonTowerRecordDisplayToggleEnabled() then
             if FriendUtils.hasAnyRecordTagVisible(id) then
                 table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.VIEW_RECORD_TIPS(id, tipsRect))
@@ -480,14 +503,6 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
                 end
                 table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.HIDE_SEASON_TOWER_RECORD())
             end
-        end
-        if GameInstance.player.friendSystem.isCommunicationRestricted then
-            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SWITCH_AVATAR(id))
-            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_TOPIC_MODIFY(id))
-        else
-            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SWITCH_AVATAR(id))
-            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SIGNATURE_MODIFY(id))
-            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_TOPIC_MODIFY(id))
         end
         if Utils.isSystemUnlocked(GEnums.UnlockSystemType.Birthday) then
             if GameInstance.player.friendSystem:IsBirthdayAlreadySet() then
@@ -598,7 +613,6 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
                 keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
             }
         },
-        showContingencyContractActivityState = true,
     },
     Black = {
         stateName = "BlackList",
@@ -634,7 +648,6 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
                 keys = { "isCurrentShip", "roleType", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
         },
-        showContingencyContractActivityState = true,
     },
     Stranger = {
         stateName = "Stranger",
@@ -652,7 +665,6 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
                 keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
             },
         },
-        showContingencyContractActivityState = true,
     },
     NewFriendSearch = {
         stateName = "Stranger",
@@ -674,7 +686,6 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
                 keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
             }
         },
-        showContingencyContractActivityState = true,
     },
     Share = {
         stateName = "share",
@@ -713,8 +724,23 @@ function FriendUtils.friendInfo2SortInfo(csFriendInfo, searchSort)
         searchSort = searchSort,
         accountId = csFriendInfo.psnData ~= nil and csFriendInfo.psnData.AccountId or "",
         helpFlag = csFriendInfo.helpFlag:GetHashCode(),
+        roomHelpTypeCount = FriendUtils.getRoomHelpTypeCount(csFriendInfo),
         isCurrentShip = (csFriendInfo.roleId == GameInstance.player.spaceship:GetFriendRoleInfo().roleId and GameInstance.player.spaceship:GetFriendRoleInfo().roleId ~= 0) and 1 or 0,
     }
+end
+
+
+function FriendUtils.getRoomHelpTypeCount(csFriendInfo)
+    local roomHelpTypeCount = 0
+    if csFriendInfo == nil or csFriendInfo.roomHelpCounts == nil then
+        return roomHelpTypeCount
+    end
+    for _, helpCount in cs_pairs(csFriendInfo.roomHelpCounts) do
+        if helpCount > 0 then
+            roomHelpTypeCount = roomHelpTypeCount + 1
+        end
+    end
+    return roomHelpTypeCount
 end
 
 function FriendUtils.getFriendInfoByRoleId(roleId, searchKey, ignoreRichFont)

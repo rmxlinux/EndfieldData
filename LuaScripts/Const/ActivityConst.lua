@@ -84,6 +84,9 @@ ACTIVITY_TABLE = {
     [ActivityType.GamblingBattle] = {
         redDot = "ActivitySimulationTrainingTask",
     },
+    [ActivityType.GamblingDungeon] = {
+        redDot = "ActivityGambleBattleTab",
+    },
     [ActivityType.DoubleBattle] = {
         redDot = "ActivityDoubleBattle",
     },
@@ -104,6 +107,9 @@ ACTIVITY_TABLE = {
     },
     [ActivityType.InviteBack] = {
         redDot = "ActivityBasic",
+    },
+    [ActivityType.Inn] = {
+        redDot = "ActivityInn",
     },
     
 }
@@ -139,6 +145,7 @@ ACTIVITY_COMMON_SONS = {
     ActivityRacingDungeon = false,
     ActivityReflowNew = false,
     ActivityWEB = false,
+    ActivityInn = false,
     
 }
 ACTIVITY_REMINDER_DRAW_MODE = {

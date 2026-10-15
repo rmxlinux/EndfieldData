@@ -279,7 +279,7 @@ PhaseForesightCharGrowth.GetSkillGrowthHeaderBundle = HL.Method(HL.String, HL.Nu
     growthDataForGoal = growthDataForGoal or self:GetSkillGrowthItemListData(templateId, stageId, stageList)
     local showSkillHidden = false
     local ok, foresightCfg = Tables.foresightCharGrowthTable:TryGetValue(templateId)
-    if ok and foresightCfg.isReplica ~= true and foresightCfg.showSkill == false then
+    if ok and self:IsForesightCharId(templateId) and foresightCfg.showSkill == false then
         showSkillHidden = true
     end
 
@@ -713,7 +713,8 @@ PhaseForesightCharGrowth.IsForesightCharId = HL.Method(HL.String, HL.Opt(HL.Bool
         return false
     end
     if not string.isEmpty(cfg.activityId) then
-        return not ActivityUtils.isActivityUnlocked(cfg.activityId)
+        local hasActivity, activityCfg = Tables.activityTable:TryGetValue(cfg.activityId)
+        return not (ActivityUtils.isActivityUnlocked(cfg.activityId) or (hasActivity and not string.isEmpty(activityCfg.timeId) and Utils.isCurTimeInTimeIdRange(activityCfg.timeId, true)))
     end
     if isInOpenPool ~= nil then
         return not isInOpenPool
@@ -1476,7 +1477,8 @@ end
 local s_operatorCategoryKeys = nil
 local s_itemOrderByCategory = nil
 
-local PRECIOUS_SKILLSP_CHEST_ITEM_ID = "item_case_bp_selfselect_skillsp_1"
+local s_preciousChestTable = nil
+local s_preciousChestIndex = nil
 
 PhaseForesightCharGrowth._EnsureOperatorDisplayConfig = HL.Method() << function(self)
     if s_operatorCategoryKeys then
@@ -1543,16 +1545,89 @@ PhaseForesightCharGrowth._SortDisplayItems = HL.Method(HL.String, HL.Table).Retu
     return itemList
 end
 
-PhaseForesightCharGrowth._PreciousCategoryHasSpMaterial = HL.Method(HL.Table).Return(HL.Boolean) << function(self, itemList)
+PhaseForesightCharGrowth._BuildPreciousChestList = HL.Method(HL.Table).Return(HL.Opt(HL.Table)) << function(self, itemList)
+    local chestTable = Tables.usableItemChestTable
+    if s_preciousChestTable ~= chestTable then
+        s_preciousChestIndex = {}
+        for chestItemId, chestCfg in pairs(chestTable) do
+            local chestListByRewardId = s_preciousChestIndex[chestCfg.rewardType] or {}
+            s_preciousChestIndex[chestCfg.rewardType] = chestListByRewardId
+            for _, rewardId in pairs(chestCfg.rewardIdList) do
+                local chestList = chestListByRewardId[rewardId] or {}
+                chestListByRewardId[rewardId] = chestList
+                table.insert(chestList, chestItemId)
+            end
+        end
+        s_preciousChestTable = chestTable
+    end
+    local chestByItemId = {}
+    local chestSortFunc = Utils.genSortFunction({ "sortId1", "sortId2", "itemId" }, false)
     for _, entry in ipairs(itemList or {}) do
-        if not string.isEmpty(entry.itemId) then
-            local ok, itemCfg = Tables.itemTable:TryGetValue(entry.itemId)
-            if ok and itemCfg.type == GEnums.ItemType.spMaterial then
-                return true
+        local ok, itemCfg = Tables.itemTable:TryGetValue(entry.itemId or "")
+        if ok and itemCfg.type == GEnums.ItemType.spMaterial then
+            local chestCandidate
+            for _, obtainWayId in pairs(itemCfg.obtainWayIds or {}) do
+                local _, obtainWayCfg = Tables.systemJumpTable:TryGetValue(obtainWayId)
+                if obtainWayCfg and obtainWayCfg.phaseId == "UsableItemChest"
+                    and Utils.isSystemUnlocked(obtainWayCfg.bindSystem) then
+                    local phaseArgs = Utils.buildSystemJumpPhaseArgsWithItem(obtainWayCfg, entry.itemId)
+                    local rewardId = phaseArgs and phaseArgs.selectedRewardId
+                    local rewardType = phaseArgs and phaseArgs.rewardType
+                    if type(rewardType) == "string" then
+                        rewardType = GEnums.ItemCaseRewardType[rewardType]
+                    end
+                    local rewardItemCount = 0
+                    local _, rewardCfg = Tables.rewardTable:TryGetValue(rewardId or "")
+                    for _, itemBundle in pairs(rewardCfg and rewardCfg.itemBundles or {}) do
+                        if itemBundle.id == entry.itemId then
+                            rewardItemCount = itemBundle.count
+                            break
+                        end
+                    end
+                    if rewardType and rewardItemCount > 0 then
+                        local chestListByRewardId = s_preciousChestIndex[rewardType]
+                        local chestList = chestListByRewardId and chestListByRewardId[rewardId]
+                        if chestList then
+                            local needCount = math.ceil(math.max(0, (entry.count or 0) - Utils.getItemCount(entry.itemId, true)) / rewardItemCount)
+                            for _, chestItemId in ipairs(chestList) do
+                                local _, chestItemCfg = Tables.itemTable:TryGetValue(chestItemId)
+                                local candidate = {
+                                    itemId = chestItemId,
+                                    needCount = needCount,
+                                    sortId1 = chestItemCfg and chestItemCfg.sortId1 or 0,
+                                    sortId2 = chestItemCfg and chestItemCfg.sortId2 or 0,
+                                }
+                                if not chestByItemId[chestItemId] then
+                                    candidate.needCountByItemId = {}
+                                    chestByItemId[chestItemId] = candidate
+                                end
+                                if not chestCandidate or chestSortFunc(candidate, chestCandidate) then
+                                    chestCandidate = candidate
+                                elseif chestCandidate.itemId == chestItemId then
+                                    chestCandidate.needCount = math.min(chestCandidate.needCount, needCount)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            if chestCandidate then
+                local chest = chestByItemId[chestCandidate.itemId]
+                chest.needCountByItemId[entry.itemId] = math.min(chest.needCountByItemId[entry.itemId] or chestCandidate.needCount, chestCandidate.needCount)
             end
         end
     end
-    return false
+    local chests = {}
+    for _, chest in pairs(chestByItemId) do
+        chest.needCount = 0
+        for _, needCount in pairs(chest.needCountByItemId) do
+            chest.needCount = chest.needCount + needCount
+        end
+        chest.needCountByItemId = nil
+        table.insert(chests, chest)
+    end
+    table.sort(chests, chestSortFunc)
+    return #chests > 0 and chests or nil
 end
 
 PhaseForesightCharGrowth._PrepareOperatorCategoryData = HL.Method(HL.String, HL.Any).Return(HL.Any) << function(self, categoryKey, data)
@@ -1587,10 +1662,11 @@ PhaseForesightCharGrowth._PrepareOperatorCategoryData = HL.Method(HL.String, HL.
     if not categoryHasPendingNeed(list) then
         return nil
     end
-    if categoryKey == "Precious" and self:_PreciousCategoryHasSpMaterial(list) then
+    local chests = categoryKey == "Precious" and self:_BuildPreciousChestList(list)
+    if chests then
         return {
             materials = list,
-            chestItemId = PRECIOUS_SKILLSP_CHEST_ITEM_ID,
+            chests = chests,
         }
     end
     return list
@@ -2030,7 +2106,7 @@ local function buildWeaponGrowthHeaderBundle(
         displayWeaponId = displayWeaponId,
         equippedWeaponId = equippedWeaponId,
         primaryRecommendWeaponId = primaryRecommendWeaponId,
-        isForesightWeapon = Tables.foresightWeaponTable:ContainsKey(displayWeaponId),
+        isForesightWeapon = Tables.foresightWeaponTable:ContainsKey(displayWeaponId) and not Tables.weaponBasicTable:ContainsKey(displayWeaponId),
         displayWeaponLevel = displayWeaponLevel,
         isDisplayWeaponOwned = isDisplayWeaponOwned,
         isDisplayWeaponInGachaPool = isDisplayWeaponInGachaPool,
@@ -2160,7 +2236,7 @@ PhaseForesightCharGrowth._BuildWeaponGemTagMap = HL.Method(HL.String).Return(HL.
     if string.isEmpty(weaponId) then
         return tagMap, false
     end
-    if Tables.foresightWeaponTable:ContainsKey(weaponId) then
+    if Tables.foresightWeaponTable:ContainsKey(weaponId) and not Tables.weaponBasicTable:ContainsKey(weaponId) then
         local okForesight, foresightCfg = Tables.foresightWeaponTable:TryGetValue(weaponId)
         if not okForesight or not foresightCfg.gemTagIds then
             return tagMap, true
@@ -2194,7 +2270,7 @@ end
 
 PhaseForesightCharGrowth.HasWeaponUnknownGemTerms = HL.Method(HL.String).Return(HL.Boolean)
     << function(self, weaponId)
-    if not Tables.foresightWeaponTable:ContainsKey(weaponId) then
+    if not Tables.foresightWeaponTable:ContainsKey(weaponId) or Tables.weaponBasicTable:ContainsKey(weaponId) then
         return false
     end
     local okForesight, foresightCfg = Tables.foresightWeaponTable:TryGetValue(weaponId)
@@ -2300,7 +2376,7 @@ PhaseForesightCharGrowth.BuildWeaponGemTermEntries = HL.Method(
     if string.isEmpty(weaponId) then
         return entries
     end
-    if Tables.foresightWeaponTable:ContainsKey(weaponId) and (not weaponInstId or weaponInstId <= 0) then
+    if Tables.foresightWeaponTable:ContainsKey(weaponId) and not Tables.weaponBasicTable:ContainsKey(weaponId) and (not weaponInstId or weaponInstId <= 0) then
         local okForesight, foresightCfg = Tables.foresightWeaponTable:TryGetValue(weaponId)
         if not okForesight or not foresightCfg.gemTagIds then
             return entries
@@ -2425,7 +2501,7 @@ PhaseForesightCharGrowth.IsGemPerfectMatchWeapon = HL.Method(HL.Number, HL.Strin
     if not gemInstId or gemInstId <= 0 or string.isEmpty(weaponId) then
         return false
     end
-    if Tables.foresightWeaponTable:ContainsKey(weaponId) then
+    if Tables.foresightWeaponTable:ContainsKey(weaponId) and not Tables.weaponBasicTable:ContainsKey(weaponId) then
         local _, foresightCfg = Tables.foresightWeaponTable:TryGetValue(weaponId)
         local isPerfectMatch = foresightCfg
             and UIUtils.isGemPerfectMatchWeaponTagIds(gemInstId, foresightCfg.gemTagIds)
@@ -2519,7 +2595,7 @@ end
 PhaseForesightCharGrowth.BuildGemFilterSelectedTagsForWeapon = HL.Method(HL.String).Return(HL.Table)
     << function(self, weaponId)
     local selectedTermIdMap = {}
-    if Tables.foresightWeaponTable:ContainsKey(weaponId) then
+    if Tables.foresightWeaponTable:ContainsKey(weaponId) and not Tables.weaponBasicTable:ContainsKey(weaponId) then
         local okForesight, foresightCfg = Tables.foresightWeaponTable:TryGetValue(weaponId)
         if okForesight and foresightCfg.gemTagIds then
             for i = 0, foresightCfg.gemTagIds.Count - 1 do
@@ -2639,7 +2715,7 @@ PhaseForesightCharGrowth._GetWeaponDisplayName = HL.Method(HL.String).Return(HL.
     if string.isEmpty(weaponId) then
         return ""
     end
-    if Tables.foresightWeaponTable:ContainsKey(weaponId) then
+    if Tables.foresightWeaponTable:ContainsKey(weaponId) and not Tables.weaponBasicTable:ContainsKey(weaponId) then
         local ok, cfg = Tables.foresightWeaponTable:TryGetValue(weaponId)
         if ok then
             return cfg.name or ""

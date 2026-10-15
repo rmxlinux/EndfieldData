@@ -408,8 +408,10 @@ SnapshotChallengeMainInfoCommon._RefreshContentUI = HL.Virtual(HL.Number) << fun
     local isCompleteOrRewarded = isComplete or isRewarded
     self.m_info.curStageInfo = stageInfo
     
-    viewNode.normalImg:LoadSprite(UIConst.UI_SPRITE_SNAPSHOT_CHALLENGE, stageInfo.normalImg)
-    viewNode.completeImg:LoadSprite(UIConst.UI_SPRITE_SNAPSHOT_CHALLENGE, stageInfo.completeImg)
+    local normalImgPath = Utils.getImgGenderDiffPath(stageInfo.normalImg)
+    local completeImgPath = Utils.getImgGenderDiffPath(stageInfo.completeImg)
+    viewNode.normalImg:LoadSprite(UIConst.UI_SPRITE_SNAPSHOT_CHALLENGE, normalImgPath)
+    viewNode.completeImg:LoadSprite(UIConst.UI_SPRITE_SNAPSHOT_CHALLENGE, completeImgPath)
     viewNode.normalImg.gameObject:SetActive(not isCompleteOrRewarded)
     viewNode.completeImg.gameObject:SetActive(isCompleteOrRewarded)
     viewNode.descTxt.text = isCompleteOrRewarded and stageInfo.completeDesc or stageInfo.normalDesc

@@ -1,6 +1,19 @@
 local DomainDepotUtils = {}
 
 local SYNC_SOCIAL_FRIEND_INFO_BATCH_SIZE = 10
+local QUICK_TRANSFER_NO_TIP_KEY = "DOMAIN_DEPOT_QUICK_TRANSFER_CONFIRM_DAILY"
+local QUICK_TRANSFER_CLIENT_DATA_GROUP = "DomainDepot"
+
+function DomainDepotUtils.IsQuickTransferNoTipToday()
+    local _, noTipToday = ClientDataManagerInst:GetBool(QUICK_TRANSFER_NO_TIP_KEY, false, false,
+        QUICK_TRANSFER_CLIENT_DATA_GROUP)
+    return noTipToday
+end
+
+function DomainDepotUtils.SetQuickTransferNoTipToday(noTipToday)
+    ClientDataManagerInst:SetBool(QUICK_TRANSFER_NO_TIP_KEY, noTipToday, false,
+        QUICK_TRANSFER_CLIENT_DATA_GROUP, EClientDataTimeValidType.CurrentDayUntil4AM)
+end
 
 function DomainDepotUtils.GetBuyerInfo(id)
     local buyerInfo = {}
@@ -75,6 +88,12 @@ function DomainDepotUtils.GetDepotInfo(depotId)
         maxLevelConfig = maxLevelConfig,
         isFinalMaxLevel = maxLevelConfig.isFinalMaxLevel
     }
+end
+
+function DomainDepotUtils.IsQuickTransferUnlocked(depotId)
+    local depotInfo = DomainDepotUtils.GetDepotInfo(depotId)
+    local startLevel = depotInfo.depotTableConfig.quickTransferStartLevel or 0
+    return startLevel > 0 and depotInfo.currLevel >= startLevel
 end
 
 function DomainDepotUtils.InitTopMoneyTitle(topMoneyTitle, domainId, onClose)

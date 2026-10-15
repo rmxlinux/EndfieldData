@@ -49,6 +49,7 @@ FacDestroyModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 FacDestroyModeCtrl.OnShow = HL.Override() << function(self)
+    self.view.batchNode.saveBtn.gameObject:SetActive(not Utils.isInBlackbox())
     self.view.reverseToggle:SetIsOnWithoutNotify(false)
     self.view.reverseToggle.gameObject:SetActive(LuaSystemManager.factory.inTopView and DeviceInfo.usingTouch)
 end
@@ -254,14 +255,12 @@ FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
 
     if inTopView and args.batchSelectTargets then
         
-        
-        local _, facInteract = UIManager:IsOpen(PanelId.FacBuildingInteract)
         for nodeId, info in pairs(args.batchSelectTargets) do
             if info == true then
-                facInteract:_SelectBatchTarget(nodeId, true)
+                LuaSystemManager.factoryInteract:SelectBatchTarget(nodeId, true)
             else
                 for index, _ in pairs(info) do
-                    facInteract:_SelectBatchTarget(nodeId, true, index)
+                    LuaSystemManager.factoryInteract:SelectBatchTarget(nodeId, true, index)
                 end
             end
         end
@@ -576,8 +575,7 @@ FacDestroyModeCtrl._OnClickDel = HL.Method(HL.Boolean) << function(self, isAll)
         Notify(MessageConst.FAC_STOP_DRAG_IN_BATCH_MODE)
         self:_ConfirmBatchDel()
     else
-        local _, interactCtrl = UIManager:IsOpen(PanelId.FacBuildingInteract)
-        interactCtrl:_OnClickFakeInteractOption(isAll)
+        LuaSystemManager.factoryInteract:ExecuteCurrentTarget(isAll)
     end
 end
 
@@ -588,13 +586,12 @@ end
 FacDestroyModeCtrl._InitBatchNode = HL.Method() << function(self)
     local node = self.view.batchNode
 
-    if Utils.isInBlackbox() then
-        node.saveBtn.gameObject:SetActive(false)
-    else
-        node.saveBtn.onClick:AddListener(function()
-            self:_SaveBlueprint()
-        end)
-    end
+    node.saveBtn.onClick:AddListener(function()
+        if Utils.isInBlackbox() then
+            return
+        end
+        self:_SaveBlueprint()
+    end)
     node.moveBtn.onClick:AddListener(function()
         self:TryStartBatchMove()
     end)
@@ -622,6 +619,10 @@ end
 
 
 FacDestroyModeCtrl._SaveBlueprint = HL.Method() << function(self)
+    if not Utils.isInFacMainRegion() then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BLUEPRINT_SAVE_WHEN_OUTSIDE)
+        return
+    end
     if not self:CheckBatchActionValid() then
         return
     end
@@ -713,7 +714,7 @@ FacDestroyModeCtrl._UpdateBatchActionInteractable = HL.Method() << function(self
     end
 
     local bpValid = noPendingNode and allNodesInSameHeight and notOverSize and not batch.hasSocialTargets and not hasDecoTargets and not hasHub
-    local saveValid = bpValid and not overSaveCountLimit
+    local saveValid = bpValid and not overSaveCountLimit and Utils.isInFacMainRegion()
 
     self.view.batchNode.saveBtnStateController:SetState(saveValid and "Valid" or "NotValid")
     self.view.batchNode.copyBtnStateController:SetState(bpValid and "Valid" or "NotValid")

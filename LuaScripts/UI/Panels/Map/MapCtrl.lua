@@ -228,16 +228,9 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
 
     self.m_initialLevelId = not string.isEmpty(levelId) and levelId or GameWorld.worldInfo.curLevelId
-    if BEYOND_DEBUG_COMMAND then
-        if not GameInstance.player.mapManager:IsLevelLoaderDataExists(self.m_initialLevelId) then
-            self:_InitDebugMode()
-            self:_InitTierSwitcherNode()
-            self:_RefreshTitle(levelId)
-            self:_HideNotExpectedNodes()
-            self.view.zoomNode.gameObject:SetActive(false)
-            return
-        end
-    end
+    
+    
+    GameInstance.player.mapManager:EnsureFallbackLoaderData(self.m_initialLevelId)
 
     self:_InitLevelMapController()
     self:_CheckAndRefreshNeedPlayMistUnlockedAnimationState()
@@ -451,7 +444,7 @@ MapCtrl._OnLevelSwitchBtnClicked = HL.Method(HL.Any) << function(self, args)
         return
     end
 
-    if self.m_isResettingToTargetLevel then
+    if self.m_isResettingToTargetLevel or self.m_isResettingToPlayer then
         return
     end
 
@@ -794,6 +787,9 @@ MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL
         return
     end
 
+    
+    self:_RefreshSelectOptionListShownState(false)
+
     needFocusTween = needFocusTween == true
 
     
@@ -855,7 +851,9 @@ MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL
             if needFocusTween then
                 self:_StartCheckSwitchTierOnFocus(markInstId)
             else
-                self:_TrySwitchTierOnFocus(mark)
+                
+                self:_StartCheckSwitchTierOnFocus(markInstId)
+                self:_FinishCheckSwitchTierOnFocus()
             end
         else
             self:_SyncSelectIconPosition()
@@ -1219,8 +1217,10 @@ MapCtrl._RefreshSelectOptionList = HL.Method(HL.String, HL.Table) << function(se
         
         if templateData.markType == GEnums.MarkType.CustomMark then
             cell.name.text = markRuntimeData.note
-        elseif templateData.markType == GEnums.MarkType.SnapshotActivity then
+        elseif templateData.markType == GEnums.MarkType.SnapshotActivity or templateData.markType == GEnums.MarkType.SnapshotActivityNew then
             cell.name.text = MapUtils.getActivitySnapShotMarkTitle(markRuntimeData)
+        elseif templateData.markType == GEnums.MarkType.FoodBox then
+            cell.name.text = InnUtils.getFoodBoxTitle(markRuntimeData.instId)
         else
             cell.name.text = templateData.name
         end
@@ -1263,7 +1263,6 @@ end
 MapCtrl._OnSelectOptionClick = HL.Method(HL.Number) << function(self, index)
     local instId = self.m_selectOptionMarkIdList[index]
     self:_ShowMarkDetail(instId, true, true)
-    self:_RefreshSelectOptionListShownState(false)
 end
 
 MapCtrl._RefreshSelectOptionListShownState = HL.Method(HL.Boolean) << function(self, isShown)
@@ -1872,8 +1871,12 @@ MapCtrl._InitTierSwitcherNode = HL.Method() << function(self)
     self.m_tierCheckTick = LuaUpdate:Add("LateTick", function(deltaTime)
         if self.m_trySwitchTierOnFocusMark ~= nil then
             if self:_GetScreenCenterTierContainerId() == self.m_trySwitchTierOnFocusContainerId then
-                self:_FinishCheckSwitchTierOnFocus()
+                self:_ApplySwitchTierOnFocusIfNeeded()
             end
+            return
+        end
+        
+        if self.m_isMarkDetailShowing then
             return
         end
         self:_CheckNeedShowTierSwitcherList()
@@ -2164,11 +2167,47 @@ MapCtrl._StopCheckSwitchTierOnFocus = HL.Method() << function(self)
 end
 
 
-MapCtrl._FinishCheckSwitchTierOnFocus = HL.Method() << function(self)
+MapCtrl._ApplySwitchTierOnFocus = HL.Method() << function(self)
     local mark = self.m_trySwitchTierOnFocusMark
-    self:_CheckNeedShowTierSwitcherList()
-    if mark ~= nil then
-        self:_TrySwitchTierOnFocus(mark)
+    if mark == nil then
+        return
+    end
+
+    local _, targetTierId = mark:GetMarkTierState()
+    if targetTierId ~= nil and targetTierId > 0 then
+        
+        self.m_waitAutoSwitchTierId = targetTierId
+    end
+
+    local targetContainerId = self.m_trySwitchTierOnFocusContainerId
+    if self.m_currTierContainerId ~= targetContainerId then
+        self.m_currTierContainerId = targetContainerId
+        self:_RefreshTierInfo()
+    end
+    self:_TrySwitchTierOnFocus(mark)
+end
+
+MapCtrl._ApplySwitchTierOnFocusIfNeeded = HL.Method() << function(self)
+    local mark = self.m_trySwitchTierOnFocusMark
+    if mark == nil then
+        return
+    end
+
+    local _, targetTierId = mark:GetMarkTierState()
+    local loader = self.view.levelMapController.view.levelMapLoader
+    local needApply = self.m_currTierContainerId ~= self.m_trySwitchTierOnFocusContainerId
+    if not needApply and targetTierId ~= nil and targetTierId > 0 then
+        needApply = loader.m_tierId ~= targetTierId
+    end
+    if needApply then
+        self:_ApplySwitchTierOnFocus()
+    end
+end
+
+
+MapCtrl._FinishCheckSwitchTierOnFocus = HL.Method() << function(self)
+    if self.m_trySwitchTierOnFocusMark ~= nil then
+        self:_ApplySwitchTierOnFocus()
     end
     self:_StopCheckSwitchTierOnFocus()
 end
@@ -2432,6 +2471,8 @@ MapCtrl._InitMapController = HL.Method() << function(self)
 
     
     self.m_controllerTierBindingGroup = InputManagerInst:CreateGroup(self.view.mainInputGroup.groupId)
+    
+    InputManagerInst:ToggleGroup(self.m_controllerTierBindingGroup, self.m_tierSwitchersShowing)
     local tierPrevBindingId = self:BindInputPlayerAction("map_switch_tier_prev", function()
         self:_OnControllerSelectTier(false)
     end, self.m_controllerTierBindingGroup)
@@ -2458,7 +2499,8 @@ end
 
 
 MapCtrl._ControllerResetToPlayer = HL.Method() << function(self)
-    if self.m_isResettingToPlayer then
+    
+    if self.m_isResettingToPlayer or self.m_isResettingToTargetLevel or not self.view.bigRectHelper.enabled then
         return
     end
     self.m_isResettingToPlayer = true
@@ -2592,27 +2634,6 @@ end
 
 
 if BEYOND_DEBUG_COMMAND or BEYOND_DEBUG then
-    MapCtrl.m_isDebugMode = HL.Field(HL.Boolean) << false
-
-    MapCtrl._InitDebugMode = HL.Method() << function(self)
-        self.view.levelMapController:InitLevelMapController(MapConst.LEVEL_MAP_CONTROLLER_MODE.DEBUG)
-        self.view.infoNode.gameObject:SetActive(false)
-        self.view.filterBtn.gameObject:SetActive(false)
-        self.view.zoomNode.gameObject:SetActive(false)
-
-        self.view.bigRectHelper:SetZoomRangeMax(2)
-        self.view.bigRectHelper:OverrideZoomRangeMin(0.25)
-        self.view.bigRectHelper:SyncZoomValue(0.25, false)
-        self.view.bigRectHelper:Init()
-        self.view.bigRectHelper.enabled = false
-        local playerNode = self.view.levelMapController.view.levelMapLoader.view.player
-        self.view.bigRectHelper:FocusNode(playerNode.rectTransform, false)
-
-        self.m_currLevelId = self.m_initialLevelId
-
-        self:_InitDebugTeleport()
-    end
-
     MapCtrl._InitDebugTeleport = HL.Method() << function(self)
         self.view.touchPanel.onClick:AddListener(function(eventData)
             if not self.view.debugToggle.isOn then

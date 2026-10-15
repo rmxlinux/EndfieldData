@@ -13,6 +13,7 @@ ShopTradeCtrl = HL.Class('ShopTradeCtrl', uiCtrl.UICtrl)
 
 ShopTradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BUY_ITEM_SUCC] = '_OnBuyItemSuccess',
+    [MessageConst.AFTER_ON_BUY_ITEM_SUCC] = '_OnAfterBuyItemSuccess',
     [MessageConst.ON_SELL_ITEM_SUCC] = '_OnSellItemSuccess',
     [MessageConst.ON_SHOP_REFRESH] = '_OnShopRefresh',
     [MessageConst.ON_FRIEND_SHOP_INFO_SYNC] = '_OnFriendShopRefresh',
@@ -98,6 +99,11 @@ ShopTradeCtrl.m_waitBulkSellResp = HL.Field(HL.Boolean) << false
 ShopTradeCtrl.m_resumeArg = HL.Field(HL.Table)
 
 ShopTradeCtrl.m_resumeOpenPanel = HL.Field(HL.Table)
+
+
+ShopTradeCtrl.m_pendingNaviGoodsId = HL.Field(HL.String) << ""
+
+ShopTradeCtrl.m_pendingNaviGroupIndex = HL.Field(HL.Number) << 0
 
 
 
@@ -1754,6 +1760,11 @@ ShopTradeCtrl._OnBuyItemSuccess = HL.Method(HL.Any) << function(self, msg)
         if self.m_isSelectCommonShop then
             self:_RefreshSingleGoods(msg)
         else
+            local unpackMsg = unpack(msg)
+            local goodsId = unpackMsg and unpackMsg.GoodsId or ""
+            local preferGroupIndex = self.m_curSelectTagIndex
+            self.m_pendingNaviGoodsId = goodsId
+            self.m_pendingNaviGroupIndex = preferGroupIndex
             self:_UpdateData()
             self:_RefreshLocalShopGoodsUI(false)
             self:_RefreshLocalShopTabUI()
@@ -1762,6 +1773,20 @@ ShopTradeCtrl._OnBuyItemSuccess = HL.Method(HL.Any) << function(self, msg)
         self:_UpdateData()
         self:_RefreshFriendShopGoodsUI(false)
     end
+end
+
+ShopTradeCtrl._OnAfterBuyItemSuccess = HL.Method(HL.Opt(HL.Any)) << function(self, _)
+    if not self.m_isLocalShop then
+        return
+    end
+    local goodsId = self.m_pendingNaviGoodsId
+    local preferGroupIndex = self.m_pendingNaviGroupIndex
+    self.m_pendingNaviGoodsId = ""
+    self.m_pendingNaviGroupIndex = 0
+    if self.m_isSelectCommonShop or string.isEmpty(goodsId) then
+        return
+    end
+    self:_RestoreNaviToLocalShopGoods(goodsId, preferGroupIndex)
 end
 
 ShopTradeCtrl._RefreshSingleGoods = HL.Method(HL.Any) << function(self, msg)
@@ -1850,6 +1875,7 @@ ShopTradeCtrl._OnFriendShopRefresh = HL.Method() << function(self)
 end
 
 ShopTradeCtrl._ShowBulkSellNode = HL.Method(HL.Boolean) << function(self, isShow)
+    self.view.tabNode.friendRecordBtn.gameObject:SetActive(self.m_showFriendRecord and not isShow)
     self.view.bulkSellNode.gameObject:SetActive(isShow)
     self.view.bulkSellNode.goodsListNaviGroup:ManuallyStopFocus()
     InputManagerInst:ToggleGroup(self.view.goodsNode.inputGroup.groupId, not isShow)
@@ -1913,6 +1939,37 @@ ShopTradeCtrl._GetGoodsGroupFirstGlobalIndex = HL.Method(HL.Number).Return(HL.Nu
         globalIndex = globalIndex + self:_GetGoodsGroupCellCount(groupIndex)
     end
     return globalIndex == 1 and -1 or globalIndex
+end
+
+ShopTradeCtrl._RestoreNaviToLocalShopGoods = HL.Method(HL.String, HL.Number) << function(self, goodsId, preferGroupIndex)
+    if not DeviceInfo.usingController or string.isEmpty(goodsId) or preferGroupIndex <= 0 then
+        return
+    end
+    local groupInfo = self:_GetGoodsGroupInfo(preferGroupIndex)
+    if not groupInfo then
+        return
+    end
+    local goodsIndex
+    for index, goodsInfo in ipairs(groupInfo.goodsList) do
+        if goodsInfo.goodsId == goodsId then
+            goodsIndex = index
+            break
+        end
+    end
+    if not goodsIndex then
+        return
+    end
+    self.view.goodsNode.goodsGroupList:ScrollToIndex(
+        CSIndex(preferGroupIndex),
+        CSIndex(goodsIndex),
+        true,
+        CS.Beyond.UI.UIScrollList.ScrollAlignType.Center
+    )
+    local obj = self.view.goodsNode.goodsGroupList:Get(CSIndex(preferGroupIndex), CSIndex(goodsIndex))
+    local cell = self.m_getGoodsGroupCellFunc(obj)
+    if cell then
+        self:SetNaviTarget(cell.view.selectBtn)
+    end
 end
 
 

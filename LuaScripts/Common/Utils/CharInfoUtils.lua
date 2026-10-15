@@ -33,6 +33,25 @@ function CharInfoUtils.isCharDevAvailable(instId)
     return CharInfoUtils.checkIsCardInTrail(instId) == false
 end
 
+
+
+
+
+function CharInfoUtils.canOpenEquipPresetGroup(charInfo)
+    if not Utils.isInMainScope()
+        or not Utils.isSystemUnlocked(GEnums.UnlockSystemType.EquipPresetGroup) or not charInfo then
+        return false
+    end
+    local charInstId = charInfo.instId or charInfo.charInstId
+    if not charInstId then
+        return false
+    end
+    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
+    return charInst ~= nil
+        and charInst.scope == GameInstance.curScope
+        and CharInfoUtils.IsServerDefaultChar(charInst)
+end
+
 function CharInfoUtils.checkIsCardInTrail(instId)
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(instId)
     local isTrail = charInst ~= nil and charInst.charType == GEnums.CharType.Trial
@@ -478,9 +497,132 @@ function CharInfoUtils.getEquipMinWearLv(tierLv)
 end
 
 function CharInfoUtils.getCharAllEquipAttributeShowInfos(charInstId)
+    return CharInfoUtils._genEquipAttrShowInfos(CharInfoUtils.getCharAllEquipAttributes(charInstId))
+end
+
+
+local ATTR_MODIFIER_MERGE_RULE = {
+    ADD = 1,
+    MULTIPLY = 2,
+    ONE_MINUS_MULTIPLY = 3,
+}
+local DEFAULT_MERGE_RULE = ATTR_MODIFIER_MERGE_RULE.ADD
+
+local EQUIP_ATTR_TYPE_MERGE_RULE = {
+    ["AllDamageTakenReduction"] = ATTR_MODIFIER_MERGE_RULE.ONE_MINUS_MULTIPLY
+}
+local EQUIP_ATTR_MODIFIER_TYPE_MERGE_RULE = {
+    [GEnums.ModifierType.FinalMultiplier] = ATTR_MODIFIER_MERGE_RULE.MULTIPLY,
+    [GEnums.ModifierType.BaseFinalMultiplier] = ATTR_MODIFIER_MERGE_RULE.MULTIPLY,
+}
+
+
+function CharInfoUtils.getCharAllEquipAttributes(charInstId)
+    return CharInfoUtils.getEquipInstListAttributes(CharInfoUtils._getCharEquipInstIds(charInstId))
+end
+
+
+function CharInfoUtils.getAllEquipInstAttributes(charInstId)
+    return CharInfoUtils._collectEquipInstAttributes(CharInfoUtils._getCharEquipInstIds(charInstId))
+end
+
+
+
+
+function CharInfoUtils.getEquipInstListAttributes(equipInstIds)
+    
+
+    
+    local defAttr = {
+        attrType = GEnums.AttributeType.Def,
+        attrValue = 0,
+        attrModifier = GEnums.ModifierType.BaseAddition,
+    }
+    local attrType2ModifierDict = {}
+    local attrModifierDataList = CharInfoUtils._collectEquipInstAttributes(equipInstIds)
+    for _, attr in ipairs(attrModifierDataList) do
+        local keyAttrType = attr.keyAttrType
+        local modifierType = attr.modifierType
+        local attrValue = attr.attrValue
+
+        if modifierType == GEnums.ModifierType.BaseAddition and keyAttrType == GEnums.AttributeType.Def then
+            if defAttr == nil then
+                defAttr = {
+                    attrValue = 0,
+                    attrType = GEnums.AttributeType.Def,
+                    attrModifier = modifierType,
+                }
+            end
+
+            defAttr.attrValue = defAttr.attrValue + attrValue
+        else
+            if attrType2ModifierDict[keyAttrType] == nil then
+                attrType2ModifierDict[keyAttrType] = {}
+            end
+
+            local modifierDict = attrType2ModifierDict[keyAttrType]
+            if modifierDict[modifierType] == nil then
+                modifierDict[modifierType] = attrValue
+            else
+                local mergeRule = EQUIP_ATTR_TYPE_MERGE_RULE[keyAttrType]
+                                    or EQUIP_ATTR_MODIFIER_TYPE_MERGE_RULE[modifierType]
+                                    or DEFAULT_MERGE_RULE
+                if mergeRule == ATTR_MODIFIER_MERGE_RULE.MULTIPLY then
+                    modifierDict[modifierType] = modifierDict[modifierType] * attrValue
+                elseif mergeRule == ATTR_MODIFIER_MERGE_RULE.ADD then
+                    modifierDict[modifierType] = modifierDict[modifierType] + attrValue
+                else 
+                    modifierDict[modifierType] = 1 - (1 - modifierDict[modifierType]) * (1 - attrValue)
+                end
+            end
+
+
+        end
+    end
+
+    local mainAttrs = {}
+    for attrType, modifierDict in pairs(attrType2ModifierDict) do
+        for modifierType, mergedAttrValue in pairs(modifierDict) do
+            table.insert(mainAttrs, {
+                attrValue = mergedAttrValue,
+                attrType = attrType,
+                attrModifier = modifierType,
+            })
+        end
+    end
+    return defAttr, mainAttrs, {}
+end
+
+
+function CharInfoUtils._collectEquipInstAttributes(equipInstIds)
+    local attrTypeDataList = {}
+    for _, equipInstId in ipairs(equipInstIds) do
+        local baseAttr, attrs = CharInfoUtils.getEquipInstAttributes(equipInstId)
+        table.insert(attrTypeDataList, baseAttr)
+
+        for _, attr in ipairs(attrs) do
+            table.insert(attrTypeDataList, attr)
+        end
+    end
+
+    return attrTypeDataList
+end
+
+
+function CharInfoUtils._getCharEquipInstIds(charInstId)
+    local equipInstIds = {}
+    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
+    for slotIndex, equipInstId in pairs(charInst.equipCol) do
+        table.insert(equipInstIds, equipInstId)
+    end
+    return equipInstIds
+end
+
+
+
+function CharInfoUtils._genEquipAttrShowInfos(defAttr, mainAttrs, extraAttrs)
     local mainAttrShowInfos = {}
     local extraAttrShowInfos = {}
-    local defAttr, mainAttrs, extraAttrs = CharInfoUtils.getCharAllEquipAttributes(charInstId)
 
     local defAttrShowInfo = AttributeUtils.generateAttributeShowInfo(defAttr.attrType, defAttr.attrValue, {
         attrModifier = defAttr.attrModifier,
@@ -512,88 +654,10 @@ function CharInfoUtils.getCharAllEquipAttributeShowInfos(charInstId)
 end
 
 
-local ATTR_MODIFIER_MERGE_RULE = {
-    ADD = 1,
-    MULTIPLY = 2,
-}
-local DEFAULT_MERGE_RULE = ATTR_MODIFIER_MERGE_RULE.ADD
-local EQUIP_ATTR_MODIFIER_TYPE_MERGE_RULE = {
-    [GEnums.ModifierType.FinalMultiplier] = ATTR_MODIFIER_MERGE_RULE.MULTIPLY,
-    [GEnums.ModifierType.BaseFinalMultiplier] = ATTR_MODIFIER_MERGE_RULE.MULTIPLY,
-}
-
-function CharInfoUtils.getCharAllEquipAttributes(charInstId)
-    
-
-    
-    local defAttr = {
-        attrType = GEnums.AttributeType.Def,
-        attrValue = 0,
-        attrModifier = GEnums.ModifierType.BaseAddition,
-    }
-    local attrType2ModifierDict = {}
-    local attrModifierDataList = CharInfoUtils.getAllEquipInstAttributes(charInstId)
-    for _, attr in ipairs(attrModifierDataList) do
-        local keyAttrType = attr.keyAttrType
-        local modifierType = attr.modifierType
-        local attrValue = attr.attrValue
-
-        if modifierType == GEnums.ModifierType.BaseAddition and keyAttrType == GEnums.AttributeType.Def then
-            if defAttr == nil then
-                defAttr = {
-                    attrValue = 0,
-                    attrType = GEnums.AttributeType.Def,
-                    attrModifier = modifierType,
-                }
-            end
-
-            defAttr.attrValue = defAttr.attrValue + attrValue
-        else
-            if attrType2ModifierDict[keyAttrType] == nil then
-                attrType2ModifierDict[keyAttrType] = {}
-            end
-
-            local modifierDict = attrType2ModifierDict[keyAttrType]
-            if modifierDict[modifierType] == nil then
-                modifierDict[modifierType] = attrValue
-            else
-                if EQUIP_ATTR_MODIFIER_TYPE_MERGE_RULE[modifierType] == ATTR_MODIFIER_MERGE_RULE.MULTIPLY then
-                    modifierDict[modifierType] = modifierDict[modifierType] * attrValue
-                else
-                    modifierDict[modifierType] = modifierDict[modifierType] + attrValue
-                end
-            end
 
 
-        end
-    end
-
-    local mainAttrs = {}
-    for attrType, modifierDict in pairs(attrType2ModifierDict) do
-        for modifierType, mergedAttrValue in pairs(modifierDict) do
-            table.insert(mainAttrs, {
-                attrValue = mergedAttrValue,
-                attrType = attrType,
-                attrModifier = modifierType,
-            })
-        end
-    end
-    return defAttr, mainAttrs, {}
-end
-
-function CharInfoUtils.getAllEquipInstAttributes(charInstId)
-    local attrTypeDataList = {}
-    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
-    for slotIndex, equipInstId in pairs(charInst.equipCol) do
-        local baseAttr, attrs = CharInfoUtils.getEquipInstAttributes(equipInstId)
-        table.insert(attrTypeDataList, baseAttr)
-
-        for _, attr in ipairs(attrs) do
-            table.insert(attrTypeDataList, attr)
-        end
-    end
-
-    return attrTypeDataList
+function CharInfoUtils.getEquipListAttributeShowInfos(equipInstIds)
+    return CharInfoUtils._genEquipAttrShowInfos(CharInfoUtils.getEquipInstListAttributes(equipInstIds))
 end
 
 
@@ -918,19 +982,15 @@ end
 
 
 
-function CharInfoUtils.getCharInfoList(csTeamIndex, ignoreNotServerDefaultChar)
+
+function CharInfoUtils._buildCharInfoListByMembers(memberInstIdList, ignoreNotServerDefaultChar)
     local charBag = GameInstance.player.charBag
     local charInfoList = {}
     local playerChars = charBag.charInfos
+    local memberSet = {}
 
-    if csTeamIndex == nil then
-        csTeamIndex = charBag.curTeamIndex
-    end
-    local teamInfo = charBag.teamList[csTeamIndex]
-    local memberList = teamInfo.memberList
-
-    for i = 1, memberList.Count do
-        local instId = memberList[CSIndex(i)]
+    for i, instId in ipairs(memberInstIdList) do
+        memberSet[instId] = true
         local charInfo = playerChars[instId]
         local templateId = charInfo.templateId
         
@@ -954,7 +1014,7 @@ function CharInfoUtils.getCharInfoList(csTeamIndex, ignoreNotServerDefaultChar)
         if ignoreNotServerDefaultChar == true then
             passFilter = passFilter and CharInfoUtils.IsServerDefaultChar(charInfo)
         end
-        if passFilter and (CharInfoUtils.checkCharInTeam(instId, LuaIndex(csTeamIndex)) <= 0) then
+        if passFilter and not memberSet[instId] then
             local templateId = charInfo.templateId
             local charCfg = Tables.characterTable:GetValue(templateId)
 
@@ -975,6 +1035,41 @@ function CharInfoUtils.getCharInfoList(csTeamIndex, ignoreNotServerDefaultChar)
     charInfoList = lume.sort(charInfoList, Utils.genSortFunction(UIConst.CHAR_FORMATION_LIST_SORT_OPTION[1].reverseKeys))
 
     return charInfoList
+end
+
+
+
+
+function CharInfoUtils.getCharInfoList(csTeamIndex, ignoreNotServerDefaultChar)
+    local charBag = GameInstance.player.charBag
+
+    if csTeamIndex == nil then
+        csTeamIndex = charBag.curTeamIndex
+    end
+    local teamInfo = charBag.teamList[csTeamIndex]
+    local memberList = teamInfo.memberList
+
+    local memberInstIdList = {}
+    for i = 1, memberList.Count do
+        memberInstIdList[i] = memberList[CSIndex(i)]
+    end
+
+    return CharInfoUtils._buildCharInfoListByMembers(memberInstIdList, ignoreNotServerDefaultChar)
+end
+
+
+
+
+function CharInfoUtils.getCharInfoListBySquad(squad, ignoreNotServerDefaultChar)
+    local memberInstIdList = {}
+    if squad then
+        for i = 1, squad.slots.Count do
+            local slot = squad.slots[CSIndex(i)]
+            table.insert(memberInstIdList, slot.charInstId)
+        end
+    end
+
+    return CharInfoUtils._buildCharInfoListByMembers(memberInstIdList, ignoreNotServerDefaultChar)
 end
 
 
@@ -1030,7 +1125,8 @@ end
 
 
 
-function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData)
+
+function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData, candidateScope)
     local charBag = GameInstance.player.charBag
     local charInfoList = {}
     local playerChars = charBag.charInfos
@@ -1070,29 +1166,31 @@ function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData)
 
 
     for instId, charInfo in pairs(playerChars) do
-        local isInLockedTeam, isLock, isReplaceable = CharInfoUtils.checkCharInLockedTeam(charInfo, lockedTeamData)
-        if not isInLockedTeam and CharInfoUtils.IsServerDefaultChar(charInfo) then
-            local templateId = charInfo.templateId
-            local charData = CharInfoUtils.getCharTableData(templateId)
+        if candidateScope == nil or charInfo.scope == candidateScope then
+            local isInLockedTeam, isLock, isReplaceable = CharInfoUtils.checkCharInLockedTeam(charInfo, lockedTeamData)
+            if not isInLockedTeam and CharInfoUtils.IsServerDefaultChar(charInfo) then
+                local templateId = charInfo.templateId
+                local charData = CharInfoUtils.getCharTableData(templateId)
 
-            
-            local item = {
-                instId = instId,
-                templateId = templateId,
-                ownTime = charInfo.ownTime,
-                level = charInfo.level,
-                rarity = charData.rarity,
-                slotIndex = Const.BATTLE_SQUAD_MAX_CHAR_NUM + 1,
-                slotReverseIndex = -1,
-                isLocked = isLock,
-                isReplaceable = isReplaceable,
                 
-                replaceablePriority = isReplaceable and 1 or 0,
-                replaceablePriorityReverse = isReplaceable and 0 or 1,
-            }
-            table.insert(charInfoList, item)
-            if not isReplaceable and not charInfo.isDead then
-                allCount = allCount + 1
+                local item = {
+                    instId = instId,
+                    templateId = templateId,
+                    ownTime = charInfo.ownTime,
+                    level = charInfo.level,
+                    rarity = charData.rarity,
+                    slotIndex = Const.BATTLE_SQUAD_MAX_CHAR_NUM + 1,
+                    slotReverseIndex = -1,
+                    isLocked = isLock,
+                    isReplaceable = isReplaceable,
+                    
+                    replaceablePriority = isReplaceable and 1 or 0,
+                    replaceablePriorityReverse = isReplaceable and 0 or 1,
+                }
+                table.insert(charInfoList, item)
+                if not isReplaceable and not charInfo.isDead then
+                    allCount = allCount + 1
+                end
             end
         end
     end
@@ -1140,28 +1238,40 @@ function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData)
 end
 
 function CharInfoUtils.getLeaderCharInfo()
-    local leaderIndex = GameInstance.player.squadManager.leaderIndex
-    local curSquad = GameInstance.player.squadManager.curSquad
-    local slot = curSquad.slots[leaderIndex]
-    local charInstId = slot.charInstId
+    local squadManager = GameInstance.player.squadManager
+    local leaderIndex = squadManager.leaderIndex
+    local curSquad = squadManager.curSquad
+    local slot = curSquad and curSquad.slots[leaderIndex]
+    local charInstId = slot and slot.charInstId
 
-    local isClientOnly = GameUtil.IsRuntimeClientId(charInstId)
+    local isClientOnly = charInstId ~= nil and GameUtil.IsRuntimeClientId(charInstId)
     
     if isClientOnly then
         local firstAvailableChar = CharInfoUtils.getServerEndmin()
         return firstAvailableChar
     end
 
-    local playerChar = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
+    local playerChar = charInstId ~= nil and CharInfoUtils.getPlayerCharInfoByInstId(charInstId) or nil
+    if playerChar == nil and curSquad ~= nil then
+        for i = 1, curSquad.slots.Count do
+            local memberInstId = curSquad.slots[CSIndex(i)].charInstId
+            if memberInstId ~= nil and not GameUtil.IsRuntimeClientId(memberInstId) then
+                playerChar = CharInfoUtils.getPlayerCharInfoByInstId(memberInstId)
+                if playerChar ~= nil then
+                    break
+                end
+            end
+        end
+    end
+
     if playerChar ~= nil then
         local charInfo = {
             instId = playerChar.instId,
             templateId = playerChar.templateId,
         }
         return charInfo
-    else
-        return nil
     end
+    return CharInfoUtils.getServerEndmin()
 end
 
 function CharInfoUtils.getServerEndmin()
@@ -2137,6 +2247,28 @@ function CharInfoUtils.getCharSkillGroupCfgByType(templateId, skillGroupType)
     end
 
     return nil
+end
+
+
+function CharInfoUtils.getSkillGroupDisplayIcon(charInstId, skillGroupType)
+    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
+    if not charInst then
+        return nil
+    end
+    local skillGroupCfg = CharInfoUtils.getCharSkillGroupCfgByType(charInst.templateId, skillGroupType)
+    if not skillGroupCfg then
+        return nil
+    end
+    if CharInfoUtils.hasBothSkillGroupConditions(skillGroupCfg) then
+        local activeIdx = CharInfoUtils.getActiveSkillGroupConditionIdx(charInstId, skillGroupCfg)
+        if activeIdx then
+            local conditionIcon = CharInfoUtils.generateSkillGroupConditionIcon(charInstId, skillGroupCfg, activeIdx)
+            if conditionIcon then
+                return conditionIcon
+            end
+        end
+    end
+    return skillGroupCfg.icon
 end
 
 function CharInfoUtils.getCharFirstSkillIdByType(templateId, skillGroupType)
@@ -3439,7 +3571,10 @@ function CharInfoUtils.GetAllCharPotentialInfos()
     local charPotentialIndex2Infos = {}
     local charPotentialPicId2Index = {}
 
-    local charInfos = CharInfoUtils.getCharInfoList()
+    local charInfos = lume.filter(CharInfoUtils.getCharInfoList(), function(info)
+        local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(info.instId)
+        return CharInfoUtils.IsServerDefaultChar(charInfo)
+    end)
     local index = 1
     for i, info in pairs(charInfos) do
         local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(info.instId)
@@ -3497,6 +3632,17 @@ function CharInfoUtils.GetAllCharPotentialInfos()
         end
     end
     return charPotentialIndex2Infos, charPotentialPicId2Index
+end
+
+function CharInfoUtils.filterUnlockedCharPotentialPictureIds(pictureIds)
+    local _, unlockedPictureId2Index = CharInfoUtils.GetAllCharPotentialInfos()
+    local unlockedPictureIds = {}
+    for _, pictureId in ipairs(pictureIds) do
+        if unlockedPictureId2Index[pictureId] then
+            table.insert(unlockedPictureIds, pictureId)
+        end
+    end
+    return unlockedPictureIds
 end
 
 

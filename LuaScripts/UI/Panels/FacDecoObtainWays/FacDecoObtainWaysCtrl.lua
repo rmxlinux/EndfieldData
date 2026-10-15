@@ -99,6 +99,7 @@ FacDecoObtainWaysCtrl._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.T
     
     local itemCfg = Tables.itemTable:GetValue(itemId)
     if itemCfg.obtainWayIds then
+        local decoBuildingData = Tables.factoryDecoBuildingTable[itemId]
         for k, obtainWayId in pairs(itemCfg.obtainWayIds) do
             for _, shieldObtainWay in ipairs(SHIELD_OBTAIN_WAY) do
                 if obtainWayId == shieldObtainWay then
@@ -138,6 +139,7 @@ FacDecoObtainWaysCtrl._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.T
                         sortId = -k / 1000,
                         itemId = itemId,
                         obtainId = obtainWayId,
+                        forceShowForbid = decoBuildingData.obtainWayForceLock,
                     })
                 end
             end
@@ -293,9 +295,13 @@ end
 FacDecoObtainWaysCtrl._OnUpdateObtainWayCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     cell.titleNode.gameObject:SetActiveIfNecessary(true)
     cell.stateList.gameObject:SetActiveIfNecessary(false)
-    cell.titleNode:SetState("Goto")
 
     local info = self.m_unlockObtainWays[index]
+    if info.forceShowForbid then
+        cell.titleNode:SetState("Lock")
+    else
+        cell.titleNode:SetState("Goto")
+    end
     cell.icon:LoadSprite(info.iconFolder, info.iconId)
     cell.description.text = info.name
     cell.goBtn.onClick:RemoveAllListeners()

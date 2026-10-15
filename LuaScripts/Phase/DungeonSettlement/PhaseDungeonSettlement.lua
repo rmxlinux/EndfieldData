@@ -15,8 +15,12 @@ PhaseDungeonSettlement.s_messages = HL.StaticField(HL.Table) << {
 PhaseDungeonSettlement.OnShowDungeonResult = HL.StaticMethod(HL.Any) << function(args)
     local dungeonId, leaveTimeDuration, useStaminaReduce = unpack(args)
     local dungeonCfg = Tables.dungeonTable[dungeonId]
-    local panelId = Category2Panel[dungeonCfg.dungeonCategory] or PanelId.DungeonSettlementPopup
+    local dungeonTypeCfg = Tables.dungeonTypeTable[dungeonCfg.dungeonCategory]
+    if dungeonTypeCfg.ignoreSettlement then
+        return
+    end
 
+    local panelId = Category2Panel[dungeonCfg.dungeonCategory] or PanelId.DungeonSettlementPopup
     LuaSystemManager.commonTaskTrackSystem:AddRequest("DungeonSettlement", function()
         if not Utils.isInDungeon() then
             logger.error(ELogChannel.Dungeon, "error, try to open settlement out of dungeon")

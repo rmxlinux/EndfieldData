@@ -1247,10 +1247,13 @@ FriendShipPresentCtrl._OnItemMinusClicked = HL.Method(HL.String, HL.Number, HL.N
 
     local selectNum = self.m_selected[itemId]
     if selectNum and selectNum > 0 then
-        self.m_selected[itemId] = math.max(self.m_selected[itemId] - count, 0)
+        local newSelectNum = math.max(selectNum - count, 0)
         self.m_curSelectedNum = math.max(self.m_curSelectedNum - count, 0)
 
-        if self.m_selected[itemId] == 0 then
+        if newSelectNum > 0 then
+            self.m_selected[itemId] = newSelectNum
+        else
+            self.m_selected[itemId] = nil
             self:OnFilterChanged(self.m_selectedFilterTags)
         end
     end
@@ -1465,19 +1468,22 @@ FriendShipPresentCtrl._SendPresentToChar = HL.Method() << function(self)
         return
     end
 
-    if self.m_curSelectedNum <= 0 then
-        self:Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_GIFT_COUNT_NONE)
-        return
-    end
-
     local giftIds = {}
     local nums = {}
     local keys = lume.keys(self.m_selected)
     table.sort(keys)
 
     for _, giftId in ipairs(keys) do
-        table.insert(giftIds, giftId)
-        table.insert(nums, self.m_selected[giftId])
+        local count = self.m_selected[giftId]
+        if count > 0 then
+            table.insert(giftIds, giftId)
+            table.insert(nums, count)
+        end
+    end
+
+    if #giftIds == 0 then
+        self:Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_GIFT_COUNT_NONE)
+        return
     end
 
     if self.m_isMaxOnEnter then

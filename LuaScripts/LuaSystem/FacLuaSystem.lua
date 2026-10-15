@@ -1,11 +1,13 @@
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
+local FacRemoteTopViewConfig = require_ex('LuaSystem/FacRemoteTopViewConfig')
+local TopViewExitTrigger = FacRemoteTopViewConfig.TopViewExitTrigger
+
+
 FacLuaSystem = HL.Class('FacLuaSystem', LuaSystemBase.LuaSystemBase)
 
 
 
 FacLuaSystem.inDestroyMode = HL.Field(HL.Boolean) << false
-
-FacLuaSystem.interactPanelCtrl = HL.Field(HL.Forward('FacBuildingInteractCtrl'))
 
 FacLuaSystem.m_disableSwitchModeParams = HL.Field(HL.Userdata)
 
@@ -22,20 +24,14 @@ FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
     end)
 
     self:RegisterMessage(MessageConst.ON_TELEPORT_TO, function(arg)
-        if self.inTopView then
-            self:ToggleTopView(false, true)
-        end
+        self.m_topViewCtrl:TryExitByTrigger(TopViewExitTrigger.Teleport)
         self:SetFacBuildListSelectDecoBuilding(false)
     end)
     self:RegisterMessage(MessageConst.ALL_CHARACTER_DEAD, function(arg)
-        if self.inTopView then
-            self:ToggleTopView(false, true)
-        end
+        self.m_topViewCtrl:TryExitByTrigger(TopViewExitTrigger.FullPartyDead)
     end)
     self:RegisterMessage(MessageConst.ON_REPATRIATE, function(arg)
-        if self.inTopView then
-            self:ToggleTopView(false, true)
-        end
+        self.m_topViewCtrl:TryExitByTrigger(TopViewExitTrigger.Deport)
     end)
 
     self:RegisterMessage(MessageConst.FORBID_SYSTEM_CHANGED, function(args)
@@ -49,14 +45,19 @@ FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
         end
     end)
 
-    self:RegisterMessage(MessageConst.ON_ENTER_FAC_MAIN_REGION, function(arg)
-        CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnEnterFactoryMainRegionChanged(true, arg)
-        self:StartCheckPowerNotEnoughAudio()
+    self:RegisterMessage(MessageConst.ON_ENTER_FAC_REGION, function(facRegion)
+        local facRegionType = facRegion.type
+        if facRegionType == GEnums.FacRegionType.Main then
+            CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnEnterFactoryMainRegionChanged(true, facRegion:GetPanel())
+            self:StartCheckPowerNotEnoughAudio()
+        end
     end)
-    self:RegisterMessage(MessageConst.ON_EXIT_FAC_MAIN_REGION, function(arg)
-        CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnEnterFactoryMainRegionChanged(false, arg)
-        self:StopCheckPowerNotEnoughAudio()
-        self:ToggleTopView(false, true)
+    self:RegisterMessage(MessageConst.ON_EXIT_FAC_REGION, function(facRegionType)
+        if facRegionType == GEnums.FacRegionType.Main then
+            CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnEnterFactoryMainRegionChanged(false, nil)
+            self:StopCheckPowerNotEnoughAudio()
+        end
+        self.m_topViewCtrl:TryExitByTrigger(TopViewExitTrigger.OutOfBoundary)
     end)
 
     self:RegisterMessage(MessageConst.ON_BUILD_MODE_CHANGE, function(arg)
@@ -80,6 +81,9 @@ FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
     self.m_activePipeHighlights = {}
 
     self.m_disableSwitchModeParams = CS.Beyond.Gameplay.DisableSwitchModeForbidParams(CS.Beyond.Gameplay.DisableSwitchModeForbidParams.ForbidStyle.ShowEmptyBtn)
+
+    
+    self.m_topViewCtrl = require_ex('LuaSystem/FacTopViewController')(self)
 end
 
 FacLuaSystem.OnInit = HL.Override() << function(self)
@@ -110,7 +114,9 @@ end
 
 FacLuaSystem.inTopView = HL.Field(HL.Boolean) << false
 
-FacLuaSystem.isTopViewHideUIMode = HL.Field(HL.Boolean) << false
+
+
+FacLuaSystem.m_topViewCtrl = HL.Field(HL.Forward('FacTopViewController'))
 
 FacLuaSystem.topViewCamTarget = HL.Field(Transform)
 
@@ -121,17 +127,27 @@ FacLuaSystem.m_topViewCamCtrl = HL.Field(CS.Beyond.Gameplay.View.FacTopViewCamer
 FacLuaSystem.m_topViewCor = HL.Field(HL.Thread)
 
 
-FacLuaSystem.ToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, fastMode)
-    if active and (Utils.isCurSquadAllDead() or not Utils.isInFacMainRegion()) then
-        
+
+
+
+FacLuaSystem.ToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, HL.Table)) << function(self, active, fastMode, ctx)
+    if active and not FactoryUtils.canEnterTopView(ctx and ctx.configKey) then
         return
     end
 
-    if active == self.inTopView then
+    local ctrl = self.m_topViewCtrl
+    
+    local action, useCtx = ctrl:_ResolveToggleAction(active, ctx)
+
+    
+    if not ctrl:_WillTopViewStackChange(action, useCtx) then
         return
     end
 
-    if not GameWorld.worldInfo.inFactoryMode then
+    
+    
+    local isRemoteEnter = useCtx ~= nil and useCtx.kind == FacConst.TOP_VIEW_KIND.Remote
+    if not isRemoteEnter and not GameWorld.worldInfo.inFactoryMode then
         return
     end
 
@@ -144,121 +160,25 @@ FacLuaSystem.ToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << functi
     end
 
     self.m_topViewCor = self:_ClearCoroutine(self.m_topViewCor)
-    if not active and not fastMode then
-        
+    
+    
+    local useGlitchTransition = not fastMode and (not active or isRemoteEnter)
+    if useGlitchTransition then
         Notify(MessageConst.PREPARE_BLOCK_GLITCH_TRANSITION)
         Notify(MessageConst.ADD_COMMON_BLOCK_MASK, "FacTopView")
         self.m_topViewCor = self:_StartCoroutine(function()
             coroutine.waitForRenderDone()
-            self:_InternalToggleTopView(active, fastMode)
+            ctrl:_InternalToggleTopView(active, fastMode, action, useCtx)
         end)
         return
     end
 
-    self:_InternalToggleTopView(active, fastMode)
+    ctrl:_InternalToggleTopView(active, fastMode, action, useCtx)
 end
 
-FacLuaSystem._InternalToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, fastMode)
-    logger.info("FacLuaSystem._InternalToggleTopView", active, fastMode)
 
-    Notify(MessageConst.REMOVE_COMMON_BLOCK_MASK, "FacTopView")
-
-    Notify(MessageConst.FAC_EXIT_DESTROY_MODE)
-    Notify(MessageConst.FAC_BUILD_EXIT_CUR_MODE)
-
-    self.inTopView = active
-    self:ResetSimpleFigureForTopView()
-    if self.isTopViewHideUIMode then
-        self:ToggleTopViewHideUIMode(false)
-    end
-
-    if active then
-        self:AddFactoryModeRequest({ true, "FacTopView" })
-    else
-        self:RemoveFactoryModeRequest("FacTopView")
-    end
-
-    Notify(MessageConst.TOGGLE_FORBID_ATTACK, { "FacTopView", active })
-    GameInstance.player.forbidSystem:SetForbid(ForbidType.DisableSwitchMode, "FacTopView", active, self.m_disableSwitchModeParams)
-
-    GameInstance.playerController:OnToggleFactoryTopView(active)
-    GameInstance.remoteFactoryManager:ChangeTopViewState(active)
-    
-
-    
-    local _, panel = UIManager:IsOpen(PanelId.LevelCamera)
-    local levelCamCtrl
-    if panel then
-        
-        levelCamCtrl = panel.m_curFreeLookCamCtrl
-    end
-    if active then
-        if not self.topViewCamTarget then
-            self.topViewCamTarget = GameObject("TopViewCamTarget").transform
-            GameObject.DontDestroyOnLoad(self.topViewCamTarget.gameObject)
-            self.topViewControllerMouseMoveTarget = GameObject("TopViewControllerMouseMoveTarget").transform
-            GameObject.DontDestroyOnLoad(self.topViewControllerMouseMoveTarget.gameObject)
-        end
-        local topViewCamCtrl = CameraManager:LoadPersistentController("FacTopViewCamera")
-        topViewCamCtrl:SetTarget(self.topViewCamTarget)
-        local mainCharRoot = GameInstance.playerController.mainCharacter.rootCom
-        local duration = topViewCamCtrl:StartEnterTween(mainCharRoot.transform.position, fastMode)
-        self.topViewControllerMouseMoveTarget.position = mainCharRoot.transform.position
-        if duration > 0 then
-            Notify(MessageConst.SHOW_BLOCK_INPUT_PANEL, duration)
-        end
-        self.m_topViewCamCtrl = topViewCamCtrl
-        self.m_topViewCamCtrl.onZoom = function(zoomPercent)
-            Notify(MessageConst.ON_FAC_TOP_VIEW_CAM_ZOOM, zoomPercent)
-        end
-        
-        CSFactoryUtil.ChangeFacEcsCullingSetting(120, 100) 
-    else
-        self:ToggleAutoMoveTopViewCam()
-        if self.m_topViewCamCtrl then
-            self.m_topViewCamCtrl.onZoom = nil
-            if levelCamCtrl then
-                
-                levelCamCtrl.param:SetHorizontalAngle(self.m_topViewCamCtrl.transform.eulerAngles.y, false)
-                levelCamCtrl.param:SetVerticalValue(0.5, false)
-            end
-            CameraManager:RemoveCameraController(self.m_topViewCamCtrl)
-            self.m_topViewCamCtrl = nil
-            if not fastMode then
-                Notify(MessageConst.SHOW_BLOCK_GLITCH_TRANSITION)
-            end
-        end
-        CSFactoryUtil.ResetFacEcsCullingSetting()
-    end
-
-    if active then
-        if fastMode then
-            Notify(MessageConst.ON_TOGGLE_FAC_TOP_VIEW, true)
-        else
-            UIManager:PreloadPersistentPanelAsset(PanelId.FacTopView)
-            UIManager:PreloadPersistentPanelAsset(PanelId.FacTopViewLowerCfg)
-            UIManager:PreloadPersistentPanelAsset(PanelId.FacTopViewBuildingInfo)
-            UIManager:ClearScreenWithOutAnimation(function(clearScreenKey)
-                self:_StartTimer(0.6, function()
-                    GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.FacTopViewSystemActionConflictName)
-                    if self.inTopView then 
-                        Notify(MessageConst.ON_TOGGLE_FAC_TOP_VIEW, true)
-                    end
-                    UIManager:RecoverScreen(clearScreenKey)
-                end)
-            end)
-        end
-    else
-        Notify(MessageConst.ON_TOGGLE_FAC_TOP_VIEW, false)
-        GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.FacTopViewSystemActionConflictName)
-    end
-
-    EventLogManagerInst:GameEvent_FactoryTopViewSwitch(active)
-end
-
-FacLuaSystem.ToggleTopViewHideUIMode = HL.Method(HL.Boolean) << function(self, active)
-    self.isTopViewHideUIMode = active
-    Notify(MessageConst.ON_FAC_TOP_VIEW_HIDE_UI_MODE_CHANGE, active)
+FacLuaSystem._BuildRemoteTopViewContext = HL.Method(HL.String).Return(HL.Opt(HL.Table)) << function(self, configKey)
+    return self.m_topViewCtrl:_BuildRemoteTopViewContext(configKey)
 end
 
 FacLuaSystem.simpleFigureMode = HL.Field(HL.Number) << FacConst.SIMPLE_FIGURE_MODE.None
@@ -686,8 +606,8 @@ FacLuaSystem._SetFactoryMode = HL.Method(HL.Boolean) << function(self, inFacMode
     local placeType = CS.Beyond.SDK.EventLogManager.FactoryModePlaceType.Outter
     local isOpen, phaseLevel = PhaseManager:IsOpen(PhaseId.Level)
     if isOpen then
-        if phaseLevel.mainRegionPanelIndex ~= -1 then
-            local info = GameInstance.remoteFactoryManager.system.core:GetHubInfoAt(GameWorld.worldInfo.curLevelIdNum, phaseLevel.mainRegionPanelIndex)
+        if phaseLevel.facRegionType == GEnums.FacRegionType.Main and phaseLevel.facRegionPanelIndex ~= FacConst.FAC_REGION_CONST.INVALID_PANEL_INDEX then
+            local info = GameInstance.remoteFactoryManager.system.core:GetHubInfoAt(GameWorld.worldInfo.curLevelIdNum, phaseLevel.facRegionPanelIndex)
             if info then
                 if info.isSub then
                     placeType = CS.Beyond.SDK.EventLogManager.FactoryModePlaceType.Sub
@@ -698,6 +618,51 @@ FacLuaSystem._SetFactoryMode = HL.Method(HL.Boolean) << function(self, inFacMode
         end
     end
     EventLogManagerInst:GameEvent_FactoryModeSwitch(inFacMode, GameWorld.worldInfo.curLevelId, Utils.getCurDomainId(), placeType)
+end
+
+
+
+
+
+
+
+
+FacLuaSystem._GetBuildModeCtrl = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local opened, ctrl = UIManager:IsOpen(PanelId.FacBuildMode)
+    return opened and ctrl or nil
+end
+
+
+FacLuaSystem.GetBuildMode = HL.Method().Return(HL.Number) << function(self)
+    local ctrl = self:_GetBuildModeCtrl()
+    return ctrl and ctrl:GetCurBuildMode() or FacConst.FAC_BUILD_MODE.Normal
+end
+
+
+FacLuaSystem.GetMovingBuildingNodeId = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local ctrl = self:_GetBuildModeCtrl()
+    return ctrl and ctrl:GetMovingBuildingNodeId() or nil
+end
+
+
+FacLuaSystem.CanRotateInBuildMode = HL.Method().Return(HL.Boolean) << function(self)
+    local ctrl = self:_GetBuildModeCtrl()
+    return ctrl ~= nil and ctrl:CanRotateBuild()
+end
+
+
+FacLuaSystem.IsBuildingPipeInBuildMode = HL.Method().Return(HL.Boolean) << function(self)
+    local ctrl = self:_GetBuildModeCtrl()
+    return ctrl ~= nil and ctrl:IsBuildingPipe()
+end
+
+
+FacLuaSystem.GetBuildModeHotSwitchArgs = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
+    local ctrl = self:_GetBuildModeCtrl()
+    if not ctrl or ctrl:GetCurBuildMode() == FacConst.FAC_BUILD_MODE.Normal then
+        return nil
+    end
+    return ctrl:GetHotSwitchStateArgs()
 end
 
 

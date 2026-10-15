@@ -137,7 +137,12 @@ SSGrowCabinBoxInfo._OnCancelBtnClick = HL.Method() << function(self)
                                     itemData.name),
             subContent = Language.LUA_SPACESHIP_ROOM_GROW_CABIN_BOX_CANCEL_SOW_CONFIRM_SUB_DESC,
             onConfirm = function()
-                GameInstance.player.spaceship:GrowCabinCancel(self.m_roomId, self.m_boxId)
+                local currentSpaceship = GameInstance.player.spaceship
+                if currentSpaceship:IsGrowCabinBoxOutcomeReady(self.m_roomId, self.m_boxId) then
+                    currentSpaceship:GrowCabinHarvest(self.m_roomId, self.m_boxId)
+                else
+                    currentSpaceship:GrowCabinCancel(self.m_roomId, self.m_boxId)
+                end
             end,
         }
         self:_ShowPopUp(args)
@@ -250,7 +255,7 @@ SSGrowCabinBoxInfo.Refresh = HL.Method(HL.Any) << function(self, lineCell)
             local itemId = formula.outcomeItemId
             cultureCultivation.ccItem:InitItem({ id = itemId }, true)
 
-            local haveCharSkill = spaceship:IsRoomAttrHaveCharSkill(self.m_roomId, formula.roomAttrType, false)
+            local haveCharSkill = spaceship:IsRoomAttrHaveCharSkill(self.m_roomId, formula.roomAttrType, true)
             cultureCultivation.accNode.gameObject:SetActiveIfNecessary(haveCharSkill)
 
             self:RefreshTimeSchedule()

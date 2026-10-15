@@ -181,6 +181,8 @@ AdventureDungeonCell.InitAdventureDungeonCell = HL.Method(HL.Any, HL.Opt(HL.Bool
         local rewardInfo = self.m_rewardInfos[luaIndex]
         cell:InitItemAdventureReward(rewardInfo)
     end)
+    
+    self.view.rewardListNaviGroup:ClearLastFocusNaviTarget()
 
     
     

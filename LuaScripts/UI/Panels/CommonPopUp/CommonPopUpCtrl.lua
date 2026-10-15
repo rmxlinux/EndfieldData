@@ -250,7 +250,6 @@ end
 
 
 
-
 CommonPopUpCtrl.m_args = HL.Field(HL.Table)
 CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
     Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -553,6 +552,8 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         self.view.worldUpgradeNode.gameObject:SetActive(false)
     end
 
+    self:_UpdateStartDungeonClearData()
+
     self:_TryProcessInterruptMessage(true)
 
     
@@ -673,6 +674,25 @@ CommonPopUpCtrl._RefreshCostStaminaInfo = HL.Method() << function(self)
     end
 
     UIUtils.updateStaminaNode(self.view.staminaNode, self.m_args.staminaInfo)
+end
+
+CommonPopUpCtrl._UpdateStartDungeonClearData = HL.Method() << function(self)
+    local hasStartDungeonClearData = self.m_args.onRestartClick ~= nil
+    if hasStartDungeonClearData then
+        self.view.restartBtn.onClick:RemoveAllListeners()
+        self.view.restartBtn.onClick:AddListener(function()
+            if self:IsPlayingAnimationOut() then
+                self.m_args.onRestartClick()
+                self:Hide()
+            else
+                self:PlayAnimationOutWithCallback(function()
+                    self.m_args.onRestartClick()
+                    self:Hide()
+                end)
+            end
+        end)
+    end
+    self.view.restartNode.gameObject:SetActive(hasStartDungeonClearData)
 end
 
 CommonPopUpCtrl._SetToggleStyle = HL.Method(HL.String) << function(self, styleType)

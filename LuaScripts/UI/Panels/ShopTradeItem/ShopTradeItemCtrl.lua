@@ -47,6 +47,8 @@ ShopTradeItemCtrl.m_getFriendPriceCellFunc = HL.Field(HL.Function)
 
 ShopTradeItemCtrl.m_friendDataIsInit = HL.Field(HL.Boolean) << false
 
+ShopTradeItemCtrl.m_friendGoodsPriceQueryToken = HL.Field(HL.String) << ""
+
 ShopTradeItemCtrl.m_nowNaviFriendCell = HL.Field(HL.Table)
 
 ShopTradeItemCtrl.m_friendDetailKey = HL.Field(HL.Number) << -1
@@ -439,7 +441,7 @@ ShopTradeItemCtrl._SwitchFriendPriceState = HL.Method() << function(self)
     self.m_curState = PANEL_STATE.FriendPrice
     self.view.main:SetState(self.m_curState)
     if not self.m_friendDataIsInit then
-        self.view.loadingNode.gameObject:SetActive(true)
+        self:_ShowFriendGoodsLoading()
     end
 
     
@@ -461,11 +463,15 @@ ShopTradeItemCtrl._SwitchFriendPriceState = HL.Method() << function(self)
     myPriceItem.emptyNode.gameObject:SetActive(string.isEmpty(avatarPath))
     myPriceItem.headIconImg.gameObject:SetActive(not string.isEmpty(avatarPath))
     if not self.m_friendDataIsInit then
-        self.view.noFriendState.gameObject:SetActive(false)
-        self.view.noFriendHaveDomainShopState.gameObject:SetActive(false)
-        self.view.friendPriceScrollList.gameObject:SetActive(false)
         self.m_friendSystem:SyncFriendSimpleInfo()
     end
+end
+
+ShopTradeItemCtrl._ShowFriendGoodsLoading = HL.Method() << function(self)
+    self.view.loadingNode.gameObject:SetActive(true)
+    self.view.noFriendState.gameObject:SetActive(false)
+    self.view.noFriendHaveDomainShopState.gameObject:SetActive(false)
+    self.view.friendPriceScrollList.gameObject:SetActive(false)
 end
 
 ShopTradeItemCtrl._UpdateFriend = HL.Method() << function(self)
@@ -491,21 +497,23 @@ ShopTradeItemCtrl._UpdateFriend = HL.Method() << function(self)
     if noFriend or noFriendUnlockGuestRoom then
         self.view.loadingNode.gameObject:SetActive(false)
         self.view.friendPriceScrollList.gameObject:SetActive(false)
-        if noFriend then
-            self.view.noFriendState.gameObject:SetActive(true)
-        else
-            self.view.noFriendHaveDomainShopState.gameObject:SetActive(true)
-        end
+        self.view.noFriendState.gameObject:SetActive(noFriend)
+        self.view.noFriendHaveDomainShopState.gameObject:SetActive(not noFriend)
     else
-        self.m_shopSystem:SendQueryFriendGoodsPrice(self.m_args.goodsData.shopId, self.m_args.goodsData.goodsId, friendList)
+        self:_ShowFriendGoodsLoading()
+        self.m_friendGoodsPriceQueryToken = self.m_shopSystem:SendQueryFriendGoodsPrice(self.m_args.goodsData.shopId,
+            self.m_args.goodsData.goodsId, friendList)
     end
 end
 
-ShopTradeItemCtrl._UpdateFriendGoodsList = HL.Method() << function(self)
+ShopTradeItemCtrl._UpdateFriendGoodsList = HL.Method(HL.Table) << function(self, args)
     
-    if not self.m_friendList then
+    local queryToken = args[1]
+    local shouldUpdate = queryToken == self.m_friendGoodsPriceQueryToken and self.m_friendList ~= nil
+    if not shouldUpdate then
         return
     end
+    self.m_friendGoodsPriceQueryToken = ""
     self.m_getFriendPriceCellFunc = UIUtils.genCachedCellFunction(self.view.friendPriceScrollList)
 
     local friendList = {}
@@ -534,6 +542,7 @@ ShopTradeItemCtrl._UpdateFriendGoodsList = HL.Method() << function(self)
         end)
         self.view.friendPriceScrollList:UpdateCount(friendCount)
     end
+    self.view.noFriendState.gameObject:SetActive(false)
     self.view.noFriendHaveDomainShopState.gameObject:SetActive(friendCount == 0)
     self.view.friendPriceScrollList.gameObject:SetActive(friendCount ~= 0)
     self.view.loadingNode.gameObject:SetActive(false)

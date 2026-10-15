@@ -4,6 +4,13 @@ local PANEL_ID = PanelId.FacPendingBuilding
 
 FacPendingBuildingCtrl = HL.Class('FacPendingBuildingCtrl', uiCtrl.UICtrl)
 
+local LACK_MATERIAL_STATE = {
+    ALL_CAN_SUBMIT = "AllSubmit",   
+    SOME_CAN_SUBMIT = "SomeSubmit", 
+    CANT_SUBMIT = "CantSubmit",      
+    NO_LACK = "NoLack",             
+}
+
 
 
 
@@ -21,6 +28,11 @@ FacPendingBuildingCtrl.m_getCell = HL.Field(HL.Function)
 
 FacPendingBuildingCtrl.m_infos = HL.Field(HL.Table)
 
+FacPendingBuildingCtrl.m_lackBuildingMap = HL.Field(HL.Table)
+
+FacPendingBuildingCtrl.m_lackMaterialState = HL.Field(HL.String) << ""
+
+FacPendingBuildingCtrl.m_hasItemCanSubmit = HL.Field(HL.Boolean) << false
 
 
 
@@ -68,7 +80,7 @@ FacPendingBuildingCtrl.RefreshList = HL.Method(HL.Opt(HL.Boolean)) << function(s
     local slotInfo = GameInstance.remoteFactoryManager.currentChapterInfo:GetPendingPlaceSlot(self.m_slotId)
     local infoMap = {}
 
-    local hasItemCanSubmit = false
+    self.m_hasItemCanSubmit = false
     slotInfo:FillTotalCostItems({}) 
     for _, v in pairs(slotInfo.totalCostItems) do
         local id, count = v.Item1, v.Item2
@@ -90,18 +102,78 @@ FacPendingBuildingCtrl.RefreshList = HL.Method(HL.Opt(HL.Boolean)) << function(s
         info.sortId = info.isCompleted and 0 or 1
     end
     self.m_infos = {}
+    self.m_lackBuildingMap = {}
     for _, v in pairs(infoMap) do
         table.insert(self.m_infos, v)
         if not v.isCompleted then
-            if Utils.getItemCount(v.id, true, true) > 0 then
-                hasItemCanSubmit = true
+            local hasCount = Utils.getItemCount(v.id, true, true)
+            local lackCount = v.needCount - v.submitCount - hasCount
+            if hasCount > 0 then
+                self.m_hasItemCanSubmit = true
+            end
+            if lackCount > 0 then
+                local buildingId = FactoryUtils.getItemBuildingId(v.id)
+                self.m_lackBuildingMap[buildingId] = lackCount
             end
         end
     end
+    self:_CheckMaterialLackState()
     table.sort(self.m_infos, Utils.genSortFunction({ "sortId", "sortId1", "sortId2", "id" }))
 
     self.view.scrollList:UpdateCount(#self.m_infos, true, false, false, skipGradually == true)
-    self.view.submitBtn.interactable = hasItemCanSubmit
+    self.view.bottomNode:SetState(self.m_lackMaterialState)
+    
+    Notify(MessageConst.REFRESH_CONTROLLER_HINT)
+end
+
+FacPendingBuildingCtrl._CheckMaterialLackState = HL.Method() << function(self)
+    if next(self.m_lackBuildingMap) == nil then
+        self.m_lackMaterialState = LACK_MATERIAL_STATE.NO_LACK
+        return
+    end
+    
+    local enoughAll = true
+    local enoughOne = false
+    local thisMaterialEnough = true
+    local allCostMap = {}
+    for buildingId, lackCount in pairs(self.m_lackBuildingMap) do
+        thisMaterialEnough = true
+        local craftData = Tables.factoryHubCraftTable:GetValue(buildingId)
+        for index = 1, FacConst.FAC_HUB_CRAFT_MAX_INCOME_NUM do
+            if craftData.ingredients.length >= index then
+                local itemBundle = craftData.ingredients[CSIndex(index)]
+                local hasCount = Utils.getItemCount(itemBundle.id, true, true)
+                if hasCount < itemBundle.count then
+                    thisMaterialEnough = false
+                    enoughAll = false
+                elseif hasCount < itemBundle.count * lackCount + (allCostMap[itemBundle.id] or 0) then
+                    enoughAll = false
+                end
+                if allCostMap[itemBundle.id] then
+                    allCostMap[itemBundle.id] = allCostMap[itemBundle.id] + itemBundle.count * lackCount
+                else
+                    allCostMap[itemBundle.id] = itemBundle.count * lackCount
+                end
+            end
+        end
+        if thisMaterialEnough then
+            enoughOne = true
+        end
+        if (self.m_hasItemCanSubmit or enoughOne) and not enoughAll then
+            self.m_lackMaterialState = LACK_MATERIAL_STATE.SOME_CAN_SUBMIT
+            return
+        end
+    end
+
+    if enoughAll then
+        self.m_lackMaterialState = LACK_MATERIAL_STATE.ALL_CAN_SUBMIT
+        return
+    end
+
+    if not enoughOne then
+        self.m_lackMaterialState = LACK_MATERIAL_STATE.CANT_SUBMIT
+        return
+    end
 end
 
 FacPendingBuildingCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
@@ -147,18 +219,20 @@ FacPendingBuildingCtrl._OnClickSubmit = HL.Method() << function(self)
     if self:IsPlayingAnimationIn() then
         return
     end
-    local items = {}
-    for _, info in ipairs(self.m_infos) do
-        if not info.isCompleted then
-            local ownCount = Utils.getItemCount(info.id, true, true)
-            local diff = info.needCount - info.submitCount
-            items[info.id] = math.min(diff, ownCount)
-        end
+    if self.m_lackMaterialState == LACK_MATERIAL_STATE.NO_LACK then
+        local sys = GameInstance.remoteFactoryManager.system
+        sys:SubmitItemToPendingData(Utils.getCurrentChapterId(), self.m_slotId, function()
+            self:FacOnPendingNodeChanged()
+        end)
+    else
+        self:_CheckMaterialLackState()
+        self.view.bottomNode:SetState(self.m_lackMaterialState)
+        Notify(MessageConst.REFRESH_CONTROLLER_HINT)
+        UIManager:AutoOpen(PanelId.FacPendingSubmitPopup, {
+            slotId = self.m_slotId,
+            state = self.m_lackMaterialState,
+        })
     end
-    local sys = GameInstance.remoteFactoryManager.system
-    sys:SubmitItemToPendingData(Utils.getCurrentChapterId(), self.m_slotId, items, function()
-        self:FacOnPendingNodeChanged()
-    end)
 end
 
 FacPendingBuildingCtrl._OnClickCancel = HL.Method() << function(self)
@@ -191,10 +265,12 @@ FacPendingBuildingCtrl.FacOnPendingNodeChanged = HL.Method(HL.Opt(HL.Any)) << fu
         if not self.m_isExiting then
             self.m_isExiting = true
             
-            if PhaseManager:GetTopPhaseId() == PhaseId.FacMachine then
-                PhaseManager:PopPhase(PhaseId.FacMachine)
-            else
-                PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
+            if not PhaseManager:IsInPhaseTransition() then
+                if PhaseManager:GetTopPhaseId() == PhaseId.FacMachine then
+                    PhaseManager:PopPhase(PhaseId.FacMachine)
+                else
+                    PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
+                end
             end
             
             AudioAdapter.PostEvent("Au_UI_Event_Blueprint_BuildingBuild")

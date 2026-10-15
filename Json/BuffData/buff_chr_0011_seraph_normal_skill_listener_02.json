@@ -14,6 +14,7 @@
               "attackTypeMask": -1,
               "checkTargetCurSkill": false,
               "mustBeforeExclusiveTime": false,
+              "normalSkillSubTypeFilter": 0,
               "skillOwner": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -25,11 +26,11 @@
                   "target": null,
                   "targetMountPoint": 0
                 },
-                "centerContextKey": "",
+                "centerContextKey": null,
                 "centerToGround": false,
                 "centerType": 0,
                 "enableAdvancedDirection": false,
-                "ownerContextKey": "",
+                "ownerContextKey": null,
                 "selectorData": {
                   "finderData": null,
                   "postProcessorData": [],
@@ -38,8 +39,8 @@
                 "selectorDirection": 0,
                 "selectorOwner": 1,
                 "target": 0,
-                "targetContextKey": "",
-                "targetGroupKey": "",
+                "targetContextKey": null,
+                "targetGroupKey": null,
                 "targetSource": 0
               },
               "skillTypeList": [
@@ -55,7 +56,7 @@
               "abilityEntityId": "abilityentity_chr_0011_seraph_normal_skill",
               "abilityEntitySkillId": "chr_0011_seraph_normal_skill_abentity_onfield",
               "abilityEntitySource": 0,
-              "abilityEntitySourceContextKey": "",
+              "abilityEntitySourceContextKey": null,
               "abilityEntityTarget": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -67,11 +68,11 @@
                   "target": null,
                   "targetMountPoint": 0
                 },
-                "centerContextKey": "",
+                "centerContextKey": null,
                 "centerToGround": false,
                 "centerType": 0,
                 "enableAdvancedDirection": false,
-                "ownerContextKey": "",
+                "ownerContextKey": null,
                 "selectorData": {
                   "finderData": null,
                   "postProcessorData": [],
@@ -80,8 +81,8 @@
                 "selectorDirection": 0,
                 "selectorOwner": 1,
                 "target": 0,
-                "targetContextKey": "",
-                "targetGroupKey": "",
+                "targetContextKey": null,
+                "targetGroupKey": null,
                 "targetSource": 0
               },
               "advancedDirectionSetting": {
@@ -100,6 +101,7 @@
               "assignEntityBlackboard": false,
               "assignPairs": [],
               "attachToClosestMeshPoint": false,
+              "attachWeaponModel": false,
               "bornAt": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -111,11 +113,11 @@
                   "target": null,
                   "targetMountPoint": 0
                 },
-                "centerContextKey": "",
+                "centerContextKey": null,
                 "centerToGround": false,
                 "centerType": 0,
                 "enableAdvancedDirection": false,
-                "ownerContextKey": "",
+                "ownerContextKey": null,
                 "selectorData": {
                   "finderData": {
                     "$type": "Beyond.Gameplay.Core.Selector+CharacterTeamFinder+Data, Gameplay.Beyond"
@@ -130,8 +132,8 @@
                 "selectorDirection": 0,
                 "selectorOwner": 1,
                 "target": 0,
-                "targetContextKey": "",
-                "targetGroupKey": "",
+                "targetContextKey": null,
+                "targetGroupKey": null,
                 "targetSource": 3
               },
               "bornMountPoint": 0,
@@ -141,7 +143,7 @@
                 "z": 0.0
               },
               "bornRotation": 0,
-              "bornRotationContextTarget": "",
+              "bornRotationContextTarget": null,
               "bornRotationOffset": {
                 "x": 0.0,
                 "y": 0.0,
@@ -150,11 +152,12 @@
               },
               "checkNavmeshAreaName": false,
               "clampToXZPlane": false,
-              "contextKey": "",
+              "contextKey": null,
               "dieOnEnd": false,
               "dieWhenSourceDie": false,
+              "dieWhenTargetDie": false,
               "duration": {
-                "blackboardKey": "",
+                "blackboardKey": null,
                 "useBlackboardKey": false,
                 "value": 0.0
               },
@@ -163,10 +166,12 @@
               "inheritSourceSkillCastId": true,
               "overrideDuration": false,
               "pauseEffectOnEnd": false,
+              "readFullPotentialExtraEffect": false,
               "saveToContext": false,
               "setAbilityEntitySource": true,
               "setAbilityEntityTarget": false,
               "useAdvancedDirectionSetting": false,
+              "weaponIndex": 0,
               "yRotateFromBoneToCurPos": false
             },
             {
@@ -179,21 +184,21 @@
               "autoFinishByAction": false,
               "buffIconDurationSource": {
                 "durationSourceType": 0,
-                "timedMarkerId": ""
+                "timedMarkerId": null
               },
               "buffs": [
                 {
                   "assignBlackboard": false,
                   "assignItems": [],
                   "buffId": "buff_chr_0011_seraph_combo_skill_trigger",
-                  "buffIdKey": "",
+                  "buffIdKey": null,
                   "readIdFromBlackboard": false
                 }
               ],
               "buffSource": 1,
-              "contextKey": "",
+              "contextKey": null,
               "count": {
-                "blackboardKey": "",
+                "blackboardKey": null,
                 "useBlackboardKey": false,
                 "value": 1.0
               },
@@ -215,11 +220,11 @@
                   "target": null,
                   "targetMountPoint": 0
                 },
-                "centerContextKey": "",
+                "centerContextKey": null,
                 "centerToGround": false,
                 "centerType": 0,
                 "enableAdvancedDirection": false,
-                "ownerContextKey": "",
+                "ownerContextKey": null,
                 "selectorData": {
                   "finderData": null,
                   "postProcessorData": [],
@@ -228,8 +233,8 @@
                 "selectorDirection": 0,
                 "selectorOwner": 1,
                 "target": 0,
-                "targetContextKey": "",
-                "targetGroupKey": "",
+                "targetContextKey": null,
+                "targetGroupKey": null,
                 "targetSource": 1
               }
             }
@@ -241,7 +246,7 @@
     }
   ],
   "addingCooldown": {
-    "blackboardKey": "",
+    "blackboardKey": null,
     "useBlackboardKey": false,
     "value": 0.0
   },
@@ -255,7 +260,7 @@
       "isDynamic": false,
       "key": "atk_scale",
       "valueDouble": 0.0,
-      "valueStr": ""
+      "valueStr": null
     }
   ],
   "buffEventAction": [
@@ -280,10 +285,10 @@
                 "targetMountPoint": 0
               },
               "center": 1,
-              "centerContextKey": "",
+              "centerContextKey": null,
               "centerMountPoint": 0,
               "centerToGround": false,
-              "contextKey": "",
+              "contextKey": null,
               "selectorData": {
                 "finderData": {
                   "$type": "Beyond.Gameplay.Core.Selector+HitBoxFinder+Data, Gameplay.Beyond",
@@ -296,24 +301,24 @@
                   "shapeList": [
                     {
                       "angle": {
-                        "blackboardKey": "",
+                        "blackboardKey": null,
                         "useBlackboardKey": false,
                         "value": 0.0
                       },
                       "castDirection": 0,
                       "centerOffset": {
                         "x": {
-                          "blackboardKey": "",
+                          "blackboardKey": null,
                           "useBlackboardKey": false,
                           "value": 0.0
                         },
                         "y": {
-                          "blackboardKey": "",
+                          "blackboardKey": null,
                           "useBlackboardKey": false,
                           "value": 0.0
                         },
                         "z": {
-                          "blackboardKey": "",
+                          "blackboardKey": null,
                           "useBlackboardKey": false,
                           "value": 0.0
                         }
@@ -323,60 +328,109 @@
                       "enablePreview": true,
                       "eulerAngle": {
                         "x": {
-                          "blackboardKey": "",
+                          "blackboardKey": null,
                           "useBlackboardKey": false,
                           "value": 0.0
                         },
                         "y": {
-                          "blackboardKey": "",
+                          "blackboardKey": null,
                           "useBlackboardKey": false,
                           "value": 0.0
                         },
                         "z": {
-                          "blackboardKey": "",
+                          "blackboardKey": null,
                           "useBlackboardKey": false,
                           "value": 0.0
                         }
                       },
                       "height": {
-                        "blackboardKey": "",
+                        "blackboardKey": null,
                         "useBlackboardKey": false,
                         "value": 0.0
                       },
                       "hitEffectTowardsType": 0,
+                      "innerRadius": {
+                        "blackboardKey": null,
+                        "useBlackboardKey": false,
+                        "value": 0.0
+                      },
                       "limitAngle": false,
                       "limitHeight": false,
+                      "lineBoxSize": {
+                        "x": {
+                          "blackboardKey": null,
+                          "useBlackboardKey": false,
+                          "value": 0.0
+                        },
+                        "y": {
+                          "blackboardKey": null,
+                          "useBlackboardKey": false,
+                          "value": 0.0
+                        },
+                        "z": {
+                          "blackboardKey": null,
+                          "useBlackboardKey": false,
+                          "value": 0.0
+                        }
+                      },
+                      "lineEnd": {
+                        "contextKey": null,
+                        "mountPoint": 0,
+                        "source": 1
+                      },
+                      "lineLengthOffset": {
+                        "blackboardKey": null,
+                        "useBlackboardKey": false,
+                        "value": 0.0
+                      },
+                      "lineRadius": {
+                        "blackboardKey": null,
+                        "useBlackboardKey": false,
+                        "value": 0.0
+                      },
+                      "lineShapeType": 0,
+                      "lineStart": {
+                        "contextKey": null,
+                        "mountPoint": 0,
+                        "source": 1
+                      },
                       "maxHeight": {
-                        "blackboardKey": "",
+                        "blackboardKey": null,
+                        "useBlackboardKey": false,
+                        "value": 0.0
+                      },
+                      "outerRadius": {
+                        "blackboardKey": null,
                         "useBlackboardKey": false,
                         "value": 0.0
                       },
                       "positionRef": 1,
                       "posRefMP": 0,
                       "radius": {
-                        "blackboardKey": "",
+                        "blackboardKey": null,
                         "useBlackboardKey": false,
                         "value": 3.0
                       },
                       "shapeType": 2,
                       "size": {
                         "x": {
-                          "blackboardKey": "",
+                          "blackboardKey": null,
                           "useBlackboardKey": false,
                           "value": 0.0
                         },
                         "y": {
-                          "blackboardKey": "",
+                          "blackboardKey": null,
                           "useBlackboardKey": false,
                           "value": 0.0
                         },
                         "z": {
-                          "blackboardKey": "",
+                          "blackboardKey": null,
                           "useBlackboardKey": false,
                           "value": 0.0
                         }
                       },
-                      "useDirection": true
+                      "useDirection": true,
+                      "useFullRotation": false
                     }
                   ],
                   "targetObjectType": 1
@@ -398,7 +452,7 @@
               },
               "selectorDirection": 0,
               "selectorOwner": 1,
-              "selectorOwnerContextKey": "",
+              "selectorOwnerContextKey": null,
               "target": 0,
               "targetGroupKey": "ball",
               "useAdvancedDirectionSetting": false,
@@ -414,21 +468,21 @@
               "autoFinishByAction": false,
               "buffIconDurationSource": {
                 "durationSourceType": 0,
-                "timedMarkerId": ""
+                "timedMarkerId": null
               },
               "buffs": [
                 {
                   "assignBlackboard": false,
                   "assignItems": [],
                   "buffId": "buff_chr_0011_seraph_finishball_02",
-                  "buffIdKey": "",
+                  "buffIdKey": null,
                   "readIdFromBlackboard": false
                 }
               ],
               "buffSource": 1,
-              "contextKey": "",
+              "contextKey": null,
               "count": {
-                "blackboardKey": "",
+                "blackboardKey": null,
                 "useBlackboardKey": false,
                 "value": 1.0
               },
@@ -450,11 +504,11 @@
                   "target": null,
                   "targetMountPoint": 0
                 },
-                "centerContextKey": "",
+                "centerContextKey": null,
                 "centerToGround": false,
                 "centerType": 0,
                 "enableAdvancedDirection": false,
-                "ownerContextKey": "",
+                "ownerContextKey": null,
                 "selectorData": {
                   "finderData": null,
                   "postProcessorData": [],
@@ -463,7 +517,7 @@
                 "selectorDirection": 0,
                 "selectorOwner": 1,
                 "target": 0,
-                "targetContextKey": "",
+                "targetContextKey": null,
                 "targetGroupKey": "ball",
                 "targetSource": 2
               }
@@ -485,10 +539,10 @@
                 "targetMountPoint": 0
               },
               "center": 1,
-              "centerContextKey": "",
+              "centerContextKey": null,
               "centerMountPoint": 0,
               "centerToGround": false,
-              "contextKey": "",
+              "contextKey": null,
               "selectorData": {
                 "finderData": {
                   "$type": "Beyond.Gameplay.Core.Selector+CharacterTeamFinder+Data, Gameplay.Beyond"
@@ -498,7 +552,7 @@
               },
               "selectorDirection": 0,
               "selectorOwner": 1,
-              "selectorOwnerContextKey": "",
+              "selectorOwnerContextKey": null,
               "target": 0,
               "targetGroupKey": "team",
               "useAdvancedDirectionSetting": false,
@@ -526,11 +580,11 @@
                   "target": null,
                   "targetMountPoint": 0
                 },
-                "centerContextKey": "",
+                "centerContextKey": null,
                 "centerToGround": false,
                 "centerType": 0,
                 "enableAdvancedDirection": false,
-                "ownerContextKey": "",
+                "ownerContextKey": null,
                 "selectorData": {
                   "finderData": null,
                   "postProcessorData": [],
@@ -539,7 +593,7 @@
                 "selectorDirection": 0,
                 "selectorOwner": 1,
                 "target": 0,
-                "targetContextKey": "",
+                "targetContextKey": null,
                 "targetGroupKey": "team",
                 "targetSource": 2
               },
@@ -554,11 +608,11 @@
                   "target": null,
                   "targetMountPoint": 0
                 },
-                "centerContextKey": "",
+                "centerContextKey": null,
                 "centerToGround": false,
                 "centerType": 0,
                 "enableAdvancedDirection": false,
-                "ownerContextKey": "",
+                "ownerContextKey": null,
                 "selectorData": {
                   "finderData": null,
                   "postProcessorData": [],
@@ -567,13 +621,13 @@
                 "selectorDirection": 0,
                 "selectorOwner": 1,
                 "target": 0,
-                "targetContextKey": "",
-                "targetGroupKey": "",
+                "targetContextKey": null,
+                "targetGroupKey": null,
                 "targetSource": 1
               },
               "finishAll": true,
               "finishLayerCnt": {
-                "blackboardKey": "",
+                "blackboardKey": null,
                 "useBlackboardKey": false,
                 "value": 1.0
               },
@@ -588,11 +642,11 @@
                   "target": null,
                   "targetMountPoint": 0
                 },
-                "centerContextKey": "",
+                "centerContextKey": null,
                 "centerToGround": false,
                 "centerType": 0,
                 "enableAdvancedDirection": false,
-                "ownerContextKey": "",
+                "ownerContextKey": null,
                 "selectorData": {
                   "finderData": null,
                   "postProcessorData": [],
@@ -601,8 +655,8 @@
                 "selectorDirection": 0,
                 "selectorOwner": 1,
                 "target": 0,
-                "targetContextKey": "",
-                "targetGroupKey": "",
+                "targetContextKey": null,
+                "targetGroupKey": null,
                 "targetSource": 1
               },
               "isFinishedEarly": false,
@@ -637,7 +691,7 @@
       "priorityValue": 0,
       "priorityEnum": 100
     },
-    "_spritePath": "",
+    "_spritePath": null,
     "abnormalColorType": 0,
     "blinkInMainCharHpBar": false,
     "charHpBarVfxType": 0,
@@ -650,6 +704,7 @@
     "showInHeadBarAttached": false,
     "showInHeadBarCommon": false,
     "showInSquadIcon": false,
+    "showProgressInEnemyHeadBar": false,
     "showProgressInHpBar": false,
     "showProgressInNormalSkillButton": false,
     "showProgressInUltimateSkillButton": false,
@@ -662,7 +717,7 @@
   "ignoreTagImmune": false,
   "lifeType": 0,
   "maxTriggerCnt": {
-    "blackboardKey": "",
+    "blackboardKey": null,
     "useBlackboardKey": false,
     "value": 1
   },
@@ -673,12 +728,12 @@
     "identifierType": 0,
     "isNeedStackEffect": false,
     "maxStackCnt": 1,
-    "maxStackCntKey": "",
+    "maxStackCntKey": null,
     "negatePriority": false,
     "priority": 1.0,
-    "priorityKey": "",
+    "priorityKey": null,
     "stackEffects": [],
-    "stackingKey": "",
+    "stackingKey": null,
     "stackingType": 4,
     "useMaxStackCntKey": false,
     "usePriorityKey": false
@@ -686,7 +741,7 @@
   "tagsAfterTriggerExtendBuffAction": [],
   "timelineActions": [],
   "triggerInterval": {
-    "blackboardKey": "",
+    "blackboardKey": null,
     "useBlackboardKey": false,
     "value": -1.0
   },

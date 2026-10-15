@@ -24,6 +24,7 @@ local ReservePanelIds = {
 local NeedClosePanelIds = {
     PanelId.Formula,
     PanelId.FacMarkerManagePopup,
+    PanelId.FacPendingSubmitPopup,
 }
 
 local QuestState = CS.Beyond.Gameplay.MissionSystem.QuestState
@@ -411,6 +412,9 @@ PhaseFacMachine.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL
         if self.m_isHalfPanel and anotherPhaseId == PhaseId.Level then
             Notify(MessageConst.SET_PHASE_LEVEL_TRANSITION_RESERVE_PANELS, ReservePanelIds)
         end
+    elseif transitionType == PhaseConst.EPhaseState.TransitionBehind then
+        
+        self:_SnapshotFacPendingSubmitPopupArg()
     end
 end
 
@@ -441,6 +445,7 @@ PhaseFacMachine._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table))
     self:_TryRecoverFriendRequest()
     self:_TryRecoverFormula()
     self:_TryRecoverInstructionBook()
+    self:_TryRecoverFacPendingSubmitPopup()
 
     if self.m_isHalfPanel then
         Notify(MessageConst.ENTER_LEVEL_HALF_SCREEN_PANEL_MODE)
@@ -482,6 +487,8 @@ PhaseFacMachine._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.
     if self.curPanelId == PanelId.FacPendingBuilding then
         
         self.curPanelItem.uiCtrl:RefreshList(true)
+        
+        self:_TryRecoverFacPendingSubmitPopup()
     end
 end
 
@@ -492,6 +499,7 @@ PhaseFacMachine.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << functio
     arg.needRecoverFriendRequest = self:_ShouldRecoverFriendRequest()
     arg.needRecoverFacSourceDetails = self:_ShouldRecoverFacSourceDetails()
     arg.formulaArg = self:_GetFormulaRecoverArg()
+    arg.facPendingSubmitPopupArg = self:_GetFacPendingSubmitPopupRecoverArg()
     local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
     if self.curPanelId == PanelId.FacHUB and isOpen and instructionCtrl:IsShow() and instructionCtrl.id == "fac_hub_offline" and PhaseManager:GetTopPhaseId() == PHASE_ID then
         arg.instructionBookArg = {
@@ -512,6 +520,24 @@ PhaseFacMachine._GetFormulaRecoverArg = HL.Method().Return(HL.Opt(HL.Any)) << fu
         return nil
     end
     return formulaCtrl:GetRecoverStateArg(self.curNodeId, self.m_panelBuildingDataId)
+end
+
+PhaseFacMachine._GetFacPendingSubmitPopupRecoverArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if self.curPanelId ~= PanelId.FacPendingBuilding then
+        return nil
+    end
+    
+    if UIManager:IsShow(PanelId.FacPendingSubmitPopup, true) then
+        local isOpen, popupCtrl = UIManager:IsOpen(PanelId.FacPendingSubmitPopup)
+        if isOpen and popupCtrl then
+            return popupCtrl:GetRecoverStateArg()
+        end
+    end
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        
+        return self.arg and self.arg.facPendingSubmitPopupArg or nil
+    end
+    return nil
 end
 
 PhaseFacMachine._GetBuildingCommon = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
@@ -660,6 +686,62 @@ PhaseFacMachine._TryRecoverInstructionBook = HL.Method() << function(self)
     end
     UIManager:Open(PanelId.InstructionBook, self.arg.instructionBookArg)
     self.arg.instructionBookArg = nil
+end
+
+PhaseFacMachine._SnapshotFacPendingSubmitPopupArg = HL.Method() << function(self)
+    if self.arg == nil then
+        self.arg = {}
+    end
+    if self.curPanelId ~= PanelId.FacPendingBuilding then
+        self.arg.facPendingSubmitPopupArg = nil
+        return
+    end
+    if UIManager:IsShow(PanelId.FacPendingSubmitPopup, true) then
+        local isOpen, popupCtrl = UIManager:IsOpen(PanelId.FacPendingSubmitPopup)
+        if isOpen and popupCtrl then
+            self.arg.facPendingSubmitPopupArg = popupCtrl:GetRecoverStateArg()
+            return
+        end
+    end
+    self.arg.facPendingSubmitPopupArg = nil
+end
+
+PhaseFacMachine._TryRecoverFacPendingSubmitPopup = HL.Method() << function(self)
+    local recoverArg = self.arg and self.arg.facPendingSubmitPopupArg
+    if recoverArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    if self.curPanelId ~= PanelId.FacPendingBuilding then
+        self.arg.facPendingSubmitPopupArg = nil
+        return
+    end
+    
+    
+    if UIManager:IsShow(PanelId.FacPendingSubmitPopup) then
+        if not PhaseManager.isRecovering then
+            self.arg.facPendingSubmitPopupArg = nil
+        end
+        return
+    end
+    if UIManager:IsOpen(PanelId.FacPendingSubmitPopup) then
+        if UIManager:IsShow(PanelId.FacPendingSubmitPopup, true) then
+            UIManager:Close(PanelId.FacPendingSubmitPopup)
+        else
+            UIManager:Show(PanelId.FacPendingSubmitPopup)
+            if not PhaseManager.isRecovering then
+                self.arg.facPendingSubmitPopupArg = nil
+            end
+            return
+        end
+    end
+    UIManager:AutoOpen(PanelId.FacPendingSubmitPopup, recoverArg)
+    
+    if not PhaseManager.isRecovering then
+        self.arg.facPendingSubmitPopupArg = nil
+    end
 end
 
 

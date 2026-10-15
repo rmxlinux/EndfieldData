@@ -56,6 +56,8 @@ end
 
 PhaseAdventureBook._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     Notify(MessageConst.ON_PHASE_ADVENTURE_BOOK_BEHIND)
+    
+    Notify(MessageConst.HIDE_ITEM_TIPS)
 end
 
 PhaseAdventureBook._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)

@@ -1008,15 +1008,26 @@ BlueprintPreview._UpdateTargetIcon = HL.Method(HL.Number) << function(self, targ
         node.rarityIcon.gameObject:SetActiveIfNecessary(true)
         local color = UIUtils.getItemRarityColor(rarity)
         node.rarityIcon.color = color
-        self:_UpdateAbnormalType(node, info.entry.templateId, itemId)
+        local isFilterItem = false
+        for _, entryInfo in pairs(info.entry.info) do
+            local infoTypeName = entryInfo:GetType().Name
+            if (infoTypeName == "BlueprintEntryInfo_BoxValve" or infoTypeName == "BlueprintEntryInfo_FluidValve")
+                and entryInfo.selectItemId == itemId then
+                isFilterItem = true
+                break
+            end
+        end
+        self:_UpdateAbnormalType(node, info.entry.templateId, itemId, isFilterItem)
     end
     node.changeHint.gameObject:SetActive(info.canChangeIcon)
 end
 
-BlueprintPreview._UpdateAbnormalType = HL.Method(HL.Any, HL.String, HL.Opt(HL.String)) << function(self, node, machineId, itemId)
+BlueprintPreview._UpdateAbnormalType = HL.Method(HL.Any, HL.String, HL.Opt(HL.String, HL.Boolean)) << function(self, node, machineId, itemId, isFilterItem)
     local iconAbnormalType
     if Utils.isInBlackbox() or not self.m_bpAbnormalIconHelper then
         iconAbnormalType = FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Normal
+    elseif isFilterItem then
+        iconAbnormalType = FactoryUtils.getTimeLimitedItemAbnormalType(itemId)
     elseif string.isEmpty(itemId) then
         iconAbnormalType = FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Normal
     else

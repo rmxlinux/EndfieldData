@@ -19,6 +19,9 @@ BigLogoCtrl.m_timelineHandle = HL.Field(HL.Userdata)
 
 BigLogoCtrl.m_onCanvasChangedClosure = HL.Field(HL.Function)
 
+BigLogoCtrl.m_fitTopViewportAspectRatio = HL.Field(HL.Number) << 0
+BigLogoCtrl.m_fitBottomViewportAspectRatio = HL.Field(HL.Number) << 0
+
 
 
 BigLogoCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -43,6 +46,7 @@ BigLogoCtrl._OnShowBigLogo = HL.Method(HL.Table) << function(self, args)
     local hideBackground = playParam.hideBackground
     local useOriginalImage = playParam.useOriginalImage
     local useFitImage = playParam.useFitImage
+    local fitViewportAspectRatio = playParam.fitViewportAspectRatio or 0
 
     self.view.bg.gameObject:SetActive(not hideBackground)
 
@@ -64,16 +68,15 @@ BigLogoCtrl._OnShowBigLogo = HL.Method(HL.Table) << function(self, args)
     elseif useFitImage then
         if showOnTop then
             self.view.fitImageTop.sprite = sprite
+            self.view.fitImageTop.transform.anchoredPosition = Vector2.zero
+            self.m_fitTopViewportAspectRatio = fitViewportAspectRatio
         else
             self.view.fitImageBottom.sprite = sprite
+            self.view.fitImageBottom.transform.anchoredPosition = Vector2.zero
+            self.m_fitBottomViewportAspectRatio = fitViewportAspectRatio
         end
 
         self:_RefreshFitImageSize()
-
-        self.view.fitImageTop.transform.offsetMin = Vector2.zero
-        self.view.fitImageTop.transform.offsetMax = Vector2.zero
-        self.view.fitImageBottom.transform.offsetMin = Vector2.zero
-        self.view.fitImageBottom.transform.offsetMax = Vector2.zero
 
         if self.m_onCanvasChangedClosure == nil then
             self.m_onCanvasChangedClosure = function() self:_RefreshFitImageSize() end
@@ -85,29 +88,35 @@ BigLogoCtrl._OnShowBigLogo = HL.Method(HL.Table) << function(self, args)
 end
 
 BigLogoCtrl._RefreshFitImageSize = HL.Method() << function(self)
-    local sprite
-    if NotNull(self.view.fitImageTop.sprite) then
-        sprite = self.view.fitImageTop.sprite
-    end
+    local screenWidth = self.view.fitImageMain.transform.rect.width
+    local screenHeight = self.view.fitImageMain.transform.rect.height
+    self:_RefreshFitImageLayer(self.view.fitImageTop, self.view.fitNodeTop.transform,
+        self.m_fitTopViewportAspectRatio, screenWidth, screenHeight)
+    self:_RefreshFitImageLayer(self.view.fitImageBottom, self.view.fitNodeBottom.transform,
+        self.m_fitBottomViewportAspectRatio, screenWidth, screenHeight)
+end
 
-    if NotNull(self.view.fitImageBottom.sprite) then
-        sprite = self.view.fitImageBottom.sprite
-    end
-
-    if sprite == nil then
+BigLogoCtrl._RefreshFitImageLayer = HL.Method(CS.Beyond.UI.UIImage, CS.UnityEngine.RectTransform,
+    HL.Number, HL.Number, HL.Number) << function(self, image, fitNode, viewportAspectRatio, screenWidth, screenHeight)
+    local sprite = image.sprite
+    if not NotNull(sprite) then
         return
     end
 
-    local screenWidth = self.view.fitImageMain.transform.rect.width
-    local screenHeight = self.view.fitImageMain.transform.rect.height
     local w = sprite.rect.width
     local h = sprite.rect.height
+    local viewportWidth = viewportAspectRatio > 0 and viewportAspectRatio or w
+    local viewportHeight = viewportAspectRatio > 0 and 1 or h
 
-    local offsetMin, offsetMax = NarrativeUtils.GetFitImageOffset(screenWidth, screenHeight, w, h)
-    self.view.fitNodeTop.transform.offsetMin = offsetMin
-    self.view.fitNodeTop.transform.offsetMax = offsetMax
-    self.view.fitNodeBottom.transform.offsetMin = offsetMin
-    self.view.fitNodeBottom.transform.offsetMax = offsetMax
+    local offsetMin, offsetMax = NarrativeUtils.GetFitImageOffset(screenWidth, screenHeight,
+        viewportWidth, viewportHeight)
+    fitNode.offsetMin = offsetMin
+    fitNode.offsetMax = offsetMax
+
+    local fittedWidth = screenWidth + offsetMax.x - offsetMin.x
+    local fittedHeight = screenHeight + offsetMax.y - offsetMin.y
+    local imageHeight = fittedWidth * h / w
+    image.transform.sizeDelta = Vector2(0, imageHeight - fittedHeight)
 end
 
 BigLogoCtrl._OnLoadNewCutscene = HL.Method(HL.Any) << function(self, args)

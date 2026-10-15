@@ -223,6 +223,136 @@ function Utils.isInclude(table, value)
     return nil
 end
 
+
+
+
+
+
+
+
+
+local function _copyNestedBoolSetValue(info)
+    if info == true then
+        return true
+    end
+    local copy = {}
+    for k, v in pairs(info) do
+        copy[k] = v
+    end
+    return copy
+end
+
+
+
+
+
+
+function Utils.nestedBoolSetUnion(a, b)
+    local result = {}
+    a = a or {}
+    b = b or {}
+
+    
+    for key, infoA in pairs(a) do
+        result[key] = _copyNestedBoolSetValue(infoA)
+    end
+
+    
+    for key, infoB in pairs(b) do
+        local infoA = result[key]
+        if not infoA then
+            result[key] = _copyNestedBoolSetValue(infoB)
+        elseif infoA == true or infoB == true then
+            result[key] = true
+        else
+            
+            for subKey, _ in pairs(infoB) do
+                infoA[subKey] = true
+            end
+        end
+    end
+
+    return result
+end
+
+
+
+
+
+
+
+
+
+
+function Utils.nestedBoolSetSubtract(a, b, expandTrue)
+    local result = {}
+    a = a or {}
+    b = b or {}
+
+    for key, infoA in pairs(a) do
+        local infoB = b[key]
+        if not infoB then
+            
+            result[key] = _copyNestedBoolSetValue(infoA)
+        elseif infoB == true then
+            
+        else
+            
+            local src
+            if infoA == true then
+                if not expandTrue then
+                    logger.error("Utils.nestedBoolSetSubtract: A[key]==true but B is partial, expandTrue is required, key=", key)
+                else
+                    src = expandTrue(key)
+                    if not src then
+                        logger.error("Utils.nestedBoolSetSubtract: expandTrue returned nil, key=", key)
+                    end
+                end
+            else
+                src = infoA
+            end
+
+            if src then
+                local remain = {}
+                local hasRemain = false
+                for subKey, _ in pairs(src) do
+                    if not infoB[subKey] then
+                        remain[subKey] = true
+                        hasRemain = true
+                    end
+                end
+                if hasRemain then
+                    
+                    result[key] = remain
+                end
+            end
+        end
+    end
+
+    return result
+end
+
+
+
+
+
+function Utils.foreachNestedBoolSet(map, callback)
+    if not map then
+        return
+    end
+    for key, info in pairs(map) do
+        if info == true then
+            callback(key, nil)
+        else
+            for subKey, _ in pairs(info) do
+                callback(key, subKey)
+            end
+        end
+    end
+end
+
+
+
 function Utils.transferToCameraCoordinate(v)
     local camera = CameraManager.mainCamera
     local forward = camera.transform.forward
@@ -385,7 +515,8 @@ function Utils.isInFactoryMode()
 end
 
 function Utils.isInSafeZone()
-    if Utils.isInFacMainRegion() then
+    local facRegionTypeData = FactoryUtils.getFacRegionTypeData()
+    if facRegionTypeData.isSafeZone then
         return true
     end
     return GameInstance.playerController.isInSaveZone and not Utils.isInFight()
@@ -401,8 +532,19 @@ function Utils.isInFacMainRegionAndGetIndex()
     return inMainRegion, panelIndex
 end
 
-function Utils.isInFacMainRegion()
-    return GameInstance.remoteFactoryManager:IsPlayerPositionInMainRegion()
+
+
+
+
+function Utils.isInFacMainRegion(forceUsePlayerPos)
+    local rfm = GameInstance.remoteFactoryManager
+    if not forceUsePlayerPos and rfm.isRemoteTopViewActive then
+        local nodePos = FacConst.FAC_REMOTE_TOP_VIEW_NODE_POS
+        local off = rfm.remoteTopViewOffset
+        local logicCenter = Vector3(nodePos.x - off.x, nodePos.y - off.y, nodePos.z - off.z)
+        return rfm:IsWorldPositionInMainRegion(logicCenter)
+    end
+    return rfm:IsPlayerPositionInMainRegion()
 end
 
 function Utils.stringJsonToTable(jsonString)
@@ -1019,30 +1161,7 @@ end
 
 
 function Utils.timeStr2TimeStamp(timeStr, timeZoneSeconds)
-    
-    local pattern = "(%d+)/(%d+)/(%d+) (%d+):(%d+):(%d+)"
-    local year, month, day, hour, min, sec = timeStr:match(pattern)
-
-    
-    local timeTable = {
-        year = tonumber(year),
-        month = tonumber(month),
-        day = tonumber(day),
-        hour = tonumber(hour),
-        min = tonumber(min),
-        sec = tonumber(sec)
-    }
-
-    local localTimestamp = os.time(timeTable)
-    
-    
-    
-    local utcTable = os.date("!*t")
-    utcTable.isdst = nil
-    local localTimeZoneOffset = os.difftime(os.time(), os.time(utcTable))
-    local timestamp = localTimestamp - timeZoneSeconds + localTimeZoneOffset
-
-    return math.floor(timestamp)
+    return CS.Beyond.Gameplay.SystemUtils.TimeStr2TimeStamp(timeStr, math.floor(timeZoneSeconds))
 end
 
 
@@ -1588,6 +1707,47 @@ function Utils.ResumeWorldByUI(handle)
         GameWorld.dialogTimelineManager:PauseTimelineByUI(false)
     end
 end
+
+
+
+
+function Utils.getDynamicParamStringValue(dynamicParam)
+    if not dynamicParam or not dynamicParam.valueStringList or dynamicParam.valueStringList.Count <= 0 then
+        return ""
+    end
+    return dynamicParam.valueStringList[0]
+end
+
+function Utils.getDynamicParamIntValue(dynamicParam)
+    if not dynamicParam or not dynamicParam.valueIntList or dynamicParam.valueIntList.Count <= 0 then
+        return 0
+    end
+    return dynamicParam.valueIntList[0]
+end
+
+function Utils.getDynamicParamFloatValue(dynamicParam)
+    if not dynamicParam or not dynamicParam.valueFloatList or dynamicParam.valueFloatList.Count <= 0 then
+        return 0
+    end
+    return dynamicParam.valueFloatList[0]
+end
+
+function Utils.getDynamicParamBoolValue(dynamicParam)
+    if not dynamicParam or not dynamicParam.valueBoolList or dynamicParam.valueBoolList.Count <= 0 then
+        return false
+    end
+    return dynamicParam.valueBoolList[0]
+end
+
+function Utils.getDynamicParamVector3Value(dynamicParam)
+    if not dynamicParam or dynamicParam.valueVector3 == nil then
+        return Vector3.zero
+    end
+    local v = dynamicParam.valueVector3
+    return Vector3(v.x, v.y, v.z)
+end
+
+
 
 
 _G.Utils = Utils

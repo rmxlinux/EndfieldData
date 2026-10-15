@@ -21,8 +21,6 @@ local LOCKING_LOOP_ANIM_FORMAT = "%s_loop"
 
 local NONE_SUB_CHIP_ICON = "icon_typhoeaarchery_chip_null"
 
-local MAIN_HUD_TOP_BTNS_FORBID_REASON = "TyphoeaArcheryHud"
-
 local EChipLockingFrameStyle2PrefabName = {
     
     [EChipLockingFrameStyle.Style1] = "LockingFrameStyle1",
@@ -133,7 +131,6 @@ TyphoeaArcheryHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitView()
     self:_InitBind()
     self:_StartTick()
-    self:_TryForbidMainHudTopBtns()
 end
 
 
@@ -150,7 +147,6 @@ TyphoeaArcheryHudCtrl.OnClose = HL.Override() << function(self)
     self:_ClearControllerTriggerEffect()
     Notify(MessageConst.TOGGLE_HIDE_INTERACT_OPTION_LIST, { "TyphoeaArchery", false })
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, { false, "TyphoeaArchery" })
-    self:_ReleaseMainHudTopBtnsForbid()
 end
 
 TyphoeaArcheryHudCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
@@ -595,19 +591,6 @@ TyphoeaArcheryHudCtrl._UpdateComponentState = HL.Method() << function(self)
 
     local canManuallyExitAbility = not GameInstance.player.typhoeaArcherySystem:IsInShootingRange()
     self.view.closeBtn.gameObject:SetActive(canManuallyExitAbility)
-end
-
-
-TyphoeaArcheryHudCtrl._TryForbidMainHudTopBtns = HL.Method() << function(self)
-    if GameInstance.player.typhoeaArcherySystem:IsInShootingRange() then
-        return
-    end
-    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, MAIN_HUD_TOP_BTNS_FORBID_REASON, true)
-end
-
-TyphoeaArcheryHudCtrl._ReleaseMainHudTopBtnsForbid = HL.Method() << function(self)
-    
-    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, MAIN_HUD_TOP_BTNS_FORBID_REASON, false)
 end
 
 TyphoeaArcheryHudCtrl._StartTick = HL.Method() << function(self)

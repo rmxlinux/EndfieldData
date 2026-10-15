@@ -378,7 +378,8 @@ SimulationTrainingCtrl._HandleFirstDrawCard = HL.Method() << function(self)
     self:_HandleDrawCardVxPre()
     self.view.decoVxNode.gameObject:SetActive(true)
     self.view.cardDecoVxCell.gameObject:SetActive(true)
-    self.view.middleAnimationWrapper:PlayWithTween("simulationtraining_draw1", function()
+    local vxName = DeviceInfo.isMobile and "mobilesimulationtraining_draw1" or "simulationtraining_draw1"
+    self.view.middleAnimationWrapper:PlayWithTween(vxName, function()
         AudioAdapter.PostEvent("Au_UI_Event_GambleInlay")
         self:_HandleDrawCardVxPost()
         self.view.decoVxNode.gameObject:SetActive(false)
@@ -429,6 +430,9 @@ SimulationTrainingCtrl._HandleNormalDrawCard = HL.Method() << function(self)
         vxName = "simulationtraining_draw4"
     elseif self.m_system.curHandCards.Count == 5 then
         vxName = "simulationtraining_draw5"
+    end
+    if DeviceInfo.isMobile and not DeviceInfo.usingController then
+        vxName = "mobile" .. vxName
     end
 
     self.m_playDrawCardVxIng = true

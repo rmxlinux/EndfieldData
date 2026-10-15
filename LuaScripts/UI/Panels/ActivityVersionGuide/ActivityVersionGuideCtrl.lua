@@ -45,6 +45,11 @@ ActivityVersionGuideCtrl.OnActivityCenterNaviFailed = HL.Method() << function(se
     self.m_versionGuide:OnActivityCenterNaviFailed()
 end
 
+
+ActivityVersionGuideCtrl.OnActivityContentNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
+    self.m_versionGuide:OnActivityContentNaviFailed(dir)
+end
+
 ActivityVersionGuideCtrl.PlayAnimationOut = HL.Override(HL.Opt(HL.Number)) << function(self, outCompleteActionType)
     outCompleteActionType = outCompleteActionType or UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close
     self.m_versionGuide.view.animationWrapper:PlayOutAnimation(function()

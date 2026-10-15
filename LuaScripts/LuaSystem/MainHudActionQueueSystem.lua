@@ -663,6 +663,10 @@ MainHudActionQueueSystem._TryStartAction = HL.Method() << function(self)
         return
     end
 
+    if GameInstance.player.innSystem.isInGame then
+        return
+    end
+
     self:_MoveRequestToTop(nextRequestIndex)
     self:_StartFirstAction()
 end

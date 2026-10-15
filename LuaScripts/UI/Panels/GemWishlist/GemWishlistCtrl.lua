@@ -281,7 +281,8 @@ GemWishlistCtrl._InitData = HL.Method() << function(self)
     for weaponId, weaponCfg in pairs(Tables.weaponBasicTable) do
         local hasValue, itemCfg = Tables.itemTable:TryGetValue(weaponId)
         
-        if hasValue and itemCfg.rarity > 3 then
+        
+        if hasValue and itemCfg.rarity > 3 and weaponId ~= "wpn_sword_0021_ink" then
             
             local weaponItemInfo = {
                 id = weaponId,

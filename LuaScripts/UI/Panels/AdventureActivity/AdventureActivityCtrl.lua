@@ -58,7 +58,37 @@ AdventureActivityCtrl._BindUI = HL.Method() << function(self)
         self:_SetupCellUI(cell, LuaIndex(index))
     end)
 
+    local scrollRect = self.view.itemScrollList:GetComponent(typeof(CS.Beyond.UI.UIScrollRect))
+    scrollRect.naviGroup.onDefaultNaviFailed:AddListener(function(dir)
+        self:_OnActivityListNaviFailed(dir)
+    end)
+
     self.m_cellRewardCellsDict = {}
+end
+
+AdventureActivityCtrl._OnActivityListNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
+    if not DeviceInfo.usingController or dir ~= CS.UnityEngine.UI.NaviDirection.Right then
+        return
+    end
+    local count = #self.m_dataList
+    if count <= 2 or self.m_dataList[count].type ~= "empty" then
+        return
+    end
+
+    
+    local list = self.view.itemScrollList
+    local lastCell = self.m_getCellFunc(list:Get(count - 2))
+    local lastTarget = lastCell and lastCell.normalNode
+    if not lastTarget or not lastTarget.enableControllerNavi or not lastTarget:IsActive() or not lastTarget:IsInteractable()
+            or InputManagerInst.controllerNaviManager.curTarget ~= lastTarget then
+        return
+    end
+    list:ScrollToIndex(0, true)
+    local firstCell = self.m_getCellFunc(list:Get(0))
+    local target = firstCell and firstCell.normalNode
+    if target and target.enableControllerNavi and target:IsActive() and target:IsInteractable() then
+        self:SetNaviTarget(target)
+    end
 end
 
 AdventureActivityCtrl._RefreshUI = HL.Method() << function(self)

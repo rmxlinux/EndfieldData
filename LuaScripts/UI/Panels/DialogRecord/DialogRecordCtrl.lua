@@ -113,8 +113,14 @@ DialogRecordCtrl._RefreshCell = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean
     optionNode.gameObject:SetActive(isOption)
     line.gameObject:SetActive(index > 1 and index == self.view.scrollList.count)
     if isTrunk then
-        local actorName = UIUtils.removePattern(trunkTbData.actorName, UIConst.NARRATIVE_ANONYMITY_PATTERN)
-        trunkNode.characterNameText:SetAndResolveTextStyle(UIUtils.resolveTextCinematic(actorName))
+        local actorName = UIUtils.resolveTextCinematic(trunkTbData.actorName)
+        local isNameFullyWrappedByBraces = string.match(actorName, "^%b{}$") ~= nil
+        local hasActorName = not string.isEmpty(actorName) and not isNameFullyWrappedByBraces
+        trunkNode.characterNameText.gameObject:SetActive(hasActorName)
+        if hasActorName then
+            actorName = UIUtils.removePattern(actorName, UIConst.NARRATIVE_ANONYMITY_PATTERN)
+            trunkNode.characterNameText:SetAndResolveTextStyle(actorName)
+        end
 
         local text, entryLinks = UIUtils.resolveNarrativeTextWithEntryLinks(trunkTbData.dialogText)
         trunkNode.text:SetAndResolveTextStyle(UIUtils.resolveTextCinematic(text))

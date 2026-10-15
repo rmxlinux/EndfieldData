@@ -203,22 +203,36 @@ end
 
 
 
+CommonPOIUpgradeCtrl._CloseAfterUpgradeSuccess = HL.StaticMethod() << function()
+    local isOpen, phase = PhaseManager:IsOpen(PHASE_ID)
+    if not isOpen then
+        return
+    end
+
+    Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = 1, immediateNext = true, })
+    
+    local _, currentPhase = PhaseManager:IsOpen(PHASE_ID)
+    if currentPhase == phase then
+        PhaseManager:ExitPhaseFast(PHASE_ID)
+    end
+end
+
 
 CommonPOIUpgradeCtrl.OnDomainShopChannelUnlock = HL.Method() << function(self)
-    PhaseManager:ExitPhaseFast(PHASE_ID)
+    CommonPOIUpgradeCtrl._CloseAfterUpgradeSuccess()
 end
 
 CommonPOIUpgradeCtrl.OnDomainShopChannelLevelUp = HL.Method() << function(self)
-    PhaseManager:ExitPhaseFast(PHASE_ID)
+    CommonPOIUpgradeCtrl._CloseAfterUpgradeSuccess()
 end
 
 CommonPOIUpgradeCtrl.OnSewageTreatPlantLevelChange = HL.Method() << function(self)
-    PhaseManager:ExitPhaseFast(PHASE_ID)
+    CommonPOIUpgradeCtrl._CloseAfterUpgradeSuccess()
 end
 
 
 CommonPOIUpgradeCtrl.OnSimulationTrainingLevelChange = HL.Method() << function(self)
-    PhaseManager:ExitPhaseFast(PHASE_ID)
+    CommonPOIUpgradeCtrl._CloseAfterUpgradeSuccess()
 end
 
 
@@ -393,6 +407,7 @@ CommonPOIUpgradeCtrl._GetDataDomainDepot = HL.Method().Return(HL.Any) << functio
     info.domainId = domainDepotCfg.domainId
     info.levelId = domainDepotCfg.refLevelId
     info.titleName = Language.LUA_DOMAIN_DEPOT_TITLE
+    local quickTransferStartLevel = domainDepotCfg.quickTransferStartLevel or 0
 
     domainDepotLevelList = domainDepotLevelList.levelList
     local curLevel = domainDepotData.level
@@ -439,6 +454,9 @@ CommonPOIUpgradeCtrl._GetDataDomainDepot = HL.Method().Return(HL.Any) << functio
             UIConst.UI_SPRITE_DOMAIN_DEPOT_UPGRADE .. "/" .. "shop_market_tab_icon_small_special",
             Language.LUA_DOMAIN_DEPOT_SUB_TITLE_DELIVER
         )
+        if quickTransferStartLevel > 0 and curLevel == quickTransferStartLevel then
+            DomainPOIUtils.insertContentTextImgText(info, Language.LUA_DOMAIN_DEPOT_QUICK_TRANSFER_UNLOCK_DESC, nil, 2)
+        end
         
         local itemDescList = {}
         for index = 0, curLevelConfig.deliverItemTypeList.Count - 1 do
@@ -496,13 +514,17 @@ CommonPOIUpgradeCtrl._GetDataDomainDepot = HL.Method().Return(HL.Any) << functio
         local needShowDeliverDesc = curDeliverItemTypeCount <= 0 and targetDeliverItemTypeCount > 0
         local needShowDeliverItemTypeDesc = not string.isEmpty(targetLevelCfg.upgradeDeliverItemTypeDesc)
         local needShowDeliverPackTypeDesc = not string.isEmpty(targetLevelCfg.upgradeDeliverPackTypeDesc)
-        local neeShowDeliverContent = needShowDeliverDesc or needShowDeliverItemTypeDesc or needShowDeliverPackTypeDesc
+        local needShowQuickTransferDesc = quickTransferStartLevel > 0 and targetLevel == quickTransferStartLevel
+        local neeShowDeliverContent = needShowQuickTransferDesc or needShowDeliverDesc or needShowDeliverItemTypeDesc or needShowDeliverPackTypeDesc
         if neeShowDeliverContent then
             DomainPOIUtils.insertContentCommonTitle(
                 info,
                 UIConst.UI_SPRITE_DOMAIN_DEPOT_UPGRADE .. "/" .. "shop_market_tab_icon_small_special",
                 Language.LUA_DOMAIN_DEPOT_SUB_TITLE_DELIVER
             )
+            if needShowQuickTransferDesc then
+                DomainPOIUtils.insertContentTextImgText(info, Language.LUA_DOMAIN_DEPOT_QUICK_TRANSFER_UNLOCK_DESC, nil, 2)
+            end
             
             if needShowDeliverDesc then
                 DomainPOIUtils.insertContentTextImgText(info, Language.LUA_DOMAIN_DEPOT_CONTENT_TITLE_DELIVER, {

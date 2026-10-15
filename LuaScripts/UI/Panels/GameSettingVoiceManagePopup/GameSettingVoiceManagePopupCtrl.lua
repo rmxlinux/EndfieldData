@@ -88,7 +88,7 @@ GameSettingVoiceManagePopupCtrl._UpdateVoiceInfos = HL.Method() << function(self
         local isDownloaded = GameInstance.resPrefManager:IsVoiceResourceReady(vfsBlockType)
         if isDownloaded then
             
-            local resourceSize = GameInstance.resPrefManager:GetResourceSize(vfsBlockType)
+            local resourceSize = GameInstance.resPrefManager:GetVoiceResourceGroupSize(vfsBlockType)
             local voiceInfo = {
                 languageAudio = languageAudio,
                 languageStr = GameSettingHelper.ToLanguageStr(languageAudio),

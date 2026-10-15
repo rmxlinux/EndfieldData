@@ -2,8 +2,6 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 CharInfoBasicNode = HL.Class('CharInfoBasicNode', UIWidgetBase)
 
-local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
-
 do
     CharInfoBasicNode.m_starCellCache = HL.Field(HL.Forward("UIListCache"))
 
@@ -41,27 +39,20 @@ CharInfoBasicNode._OnFirstTimeInit = HL.Override() << function(self)
     end)
     self:RegisterMessage(MessageConst.ON_CHAR_INFO_CLOSE_ATTR_TIP, function(args)
         self:_RefreshImageSelect()
-        self:_ActiveControllerAutoClick(false)
     end)
     self:RegisterMessage(MessageConst.ON_CHAR_INFO_CLOSE_SKILL_TIP, function(args)
         self:_RefreshImageSelect()
-        self:_ActiveControllerAutoClick(false)
     end)
     self:RegisterMessage(MessageConst.CHAR_INFO_SHOW_FULL_ATTRIBUTE, function()
         self:_OnShowCurrentCharFullAttribute()
-    end)
-    self:RegisterMessage(MessageConst.ON_CHAR_INFO_SHOW_ATTR_TIP, function()
-        self:_ActiveControllerAutoClick(true)
-    end)
-    self:RegisterMessage(MessageConst.ON_CHAR_INFO_SHOW_SKILL_TIP, function()
-        self:_ActiveControllerAutoClick(true)
     end)
 
     self:_InitCharInfoBasicNodeController()
 end
 
-CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, charInstId, hideWhenOpenDetail)
+CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, charInstId, hideWhenOpenDetail, showFocusHintNode)
     self:_FirstTimeInit()
+    self:ShowControllerFocusHintNode(showFocusHintNode)
 
     if charInstId == nil then
         return
@@ -102,7 +93,7 @@ CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean
         cell.iconShadow.color = (isMainAttrType or isSubAttrType) and self.view.config.ATTR_SHADOW_COLOR_MAIN or self.view.config.ATTR_SHADOW_COLOR_SUB
 
         local hintData = {
-            key = string.format("fc_%d", index),
+            key = string.format("fc_%d_%d", charInstId, index),
             transform = cell.transform,
             attributeInfo = showInfo,
             charTemplateId = templateId,
@@ -117,6 +108,9 @@ CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean
 
         cell.button.onClick:RemoveAllListeners()
         cell.button.onClick:AddListener(function()
+            if not cell.button.gameObject.activeInHierarchy then
+                return
+            end
             Notify(MessageConst.CHAR_INFO_SHOW_FC_ATTR_HINT, hintData)
         end)
         cell.line.gameObject:SetActive(index ~= #fcAttrShowList)
@@ -130,7 +124,7 @@ CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean
         cell.icon:LoadSprite(UIConst.UI_SPRITE_ATTRIBUTE_ICON, UIConst.UI_ATTRIBUTE_ICON_PREFIX .. showInfo.attributeKey)
 
         local hintData = {
-            key = string.format("sc_%d", index),
+            key = string.format("sc_%d_%d", charInstId, index),
             transform = cell.transform,
             attributeInfo = showInfo,
             charInfo = charInfo,
@@ -144,6 +138,9 @@ CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean
 
         cell.button.onClick:RemoveAllListeners()
         cell.button.onClick:AddListener(function()
+            if not cell.button.gameObject.activeInHierarchy then
+                return
+            end
             Notify(MessageConst.CHAR_INFO_SHOW_SC_ATTR_HINT, hintData)
         end)
     end)
@@ -266,38 +263,89 @@ CharInfoBasicNode._InitCharInfoBasicNodeController = HL.Method() << function(sel
     end
 end
 
-CharInfoBasicNode._ActiveControllerAutoClick = HL.Method(HL.Boolean) << function(self, isActive)
-    local actionOnSetNaviTarget = isActive and ActionOnSetNaviTarget.AutoTriggerOnClick or ActionOnSetNaviTarget.PressConfirmTriggerOnClick
-    for i = 1, self.m_fcAttrCellCache:GetCount() do
-        local cell = self.m_fcAttrCellCache:GetItem(i)
-        if cell.button then
-            cell.button:ChangeActionOnSetNaviTarget(actionOnSetNaviTarget)
-        end
-    end
-    for i = 1, self.m_scAttrCellCache:GetCount() do
-        local cell = self.m_scAttrCellCache:GetItem(i)
-        if cell.button then
-            cell.button:ChangeActionOnSetNaviTarget(actionOnSetNaviTarget)
-        end
-    end
-    local skillCellCache = self.view.charSkillNodeNew.m_skillCells
-    for i = 1, skillCellCache:GetCount() do
-        local cell = skillCellCache:GetItem(i)
-        if cell.view.button then
-            cell.view.button:ChangeActionOnSetNaviTarget(actionOnSetNaviTarget)
-        end
-    end
 
-    local talentCellCache = self.view.charPassiveSkillNode.m_passiveSkillCellCache
-    for i = 1, talentCellCache:GetCount() do
-        local cell = talentCellCache:GetItem(i)
-        if cell.button then
-            cell.button:ChangeActionOnSetNaviTarget(actionOnSetNaviTarget)
-        end
+
+CharInfoBasicNode.GetFirstAttributeSelectable = HL.Method().Return(HL.Userdata) << function(self)
+    if not self.m_fcAttrCellCache then
+        return nil
     end
+    local firstCell = self.m_fcAttrCellCache:GetItem(1)
+    if firstCell and firstCell.button and firstCell.button.gameObject.activeInHierarchy then
+        return firstCell.button
+    end
+    return nil
 end
 
 
+CharInfoBasicNode.IsNaviTargetOnSkillOrAttribute = HL.Method().Return(HL.Boolean) << function(self)
+    local curTarget = InputManagerInst.controllerNaviManager.curTarget
+    if not curTarget then
+        return false
+    end
+    
+    if self.m_fcAttrCellCache then
+        for i = 1, self.m_fcAttrCellCache:GetCount() do
+            if self.m_fcAttrCellCache:GetItem(i).button == curTarget then
+                return true
+            end
+        end
+    end
+    if self.m_scAttrCellCache then
+        for i = 1, self.m_scAttrCellCache:GetCount() do
+            if self.m_scAttrCellCache:GetItem(i).button == curTarget then
+                return true
+            end
+        end
+    end
+    local skillCellCache = self.view.charSkillNodeNew and self.view.charSkillNodeNew.m_skillCells
+    if skillCellCache then
+        for i = 1, skillCellCache:GetCount() do
+            if skillCellCache:GetItem(i).view.button == curTarget then
+                return true
+            end
+        end
+    end
+    local passiveSkillCellCache = self.view.charPassiveSkillNode and self.view.charPassiveSkillNode.m_passiveSkillCellCache
+    if passiveSkillCellCache then
+        for i = 1, passiveSkillCellCache:GetCount() do
+            if passiveSkillCellCache:GetItem(i).button == curTarget then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+
+CharInfoBasicNode.RefreshTipsForCurrentNaviTarget = HL.Method() << function(self)
+    if not DeviceInfo.usingController then
+        return
+    end
+    local curTarget = InputManagerInst.controllerNaviManager.curTarget
+    if not curTarget or not self:IsNaviTargetOnSkillOrAttribute() then
+        return
+    end
+    if not curTarget.gameObject.activeInHierarchy then
+        return
+    end
+    local onClick = curTarget.onClick
+    if not onClick then
+        return
+    end
+    onClick:Invoke(nil)
+end
+
+CharInfoBasicNode.ShowControllerFocusHintNode = HL.Method(HL.Opt(HL.Boolean)) << function(self, isShow)
+    if not DeviceInfo.usingController then
+        self.view.controllerFocusHintNode.gameObject:SetActive(false)
+        return
+    end
+    if isShow == nil then
+        self.view.controllerFocusHintNode.gameObject:SetActive(false)
+        return
+    end
+    self.view.controllerFocusHintNode.gameObject:SetActive(isShow)
+end
 
 
 HL.Commit(CharInfoBasicNode)

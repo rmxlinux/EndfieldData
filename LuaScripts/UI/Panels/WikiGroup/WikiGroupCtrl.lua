@@ -423,6 +423,7 @@ WikiGroupCtrl._InitController = HL.Method() << function(self)
                     if not self.view.leftNaviGroup.IsTopLayer then
                         return
                     end
+                    self.view.scrollListLeft:SkipGraduallyShow()
                     local tabCell = self.m_getTabCell(self.view.scrollListLeft:Get(CSIndex(self.m_naviTabIndex)))
                     self.m_naviTabIndex = 0
                     if tabCell then

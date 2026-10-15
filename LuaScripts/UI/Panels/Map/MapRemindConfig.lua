@@ -300,7 +300,17 @@ local Config = {
             local chapterId = ScopeUtil.GetChapterId(levelId)
             UIManager:Open(PanelId.MapWaitDeleteBuildingList, chapterId)
         end,
-    }
+    },
+    [GEnums.MapRemindType.InnCanUpgrade] = {
+        Check = function(levelId)
+            local ids = {}
+            if levelId == Tables.innManagementConst.innLevelId and GameInstance.player.innSystem:CanUpgrade() then
+                table.insert(ids, Tables.innManagementConst.innConterSystemInsId)
+            end
+            return ids
+        end,
+        mapMarkType = GEnums.MarkType.Inn,
+    },
 }
 
 return Config

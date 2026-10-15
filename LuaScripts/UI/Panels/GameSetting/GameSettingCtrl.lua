@@ -1449,7 +1449,7 @@ GameSettingCtrl._DropdownGetLanguageAudioTextList = HL.Method(HL.Any).Return(HL.
             local isDownloaded = GameInstance.resPrefManager:IsVoiceResourceReady(vfsBlockType)
             if not isDownloaded then
                 
-                local resourceSize = GameInstance.resPrefManager:GetResourceSize(vfsBlockType)
+                local resourceSize = GameInstance.resPrefManager:GetVoiceResourceGroupSize(vfsBlockType)
                 optionText = string.format("%1$s (%2$.2fMB)", optionText, resourceSize / MB)
             end
         end
@@ -1474,7 +1474,7 @@ GameSettingCtrl._DropdownOnValidateSelectLanguageAudio = HL.Method(HL.Userdata, 
 
     
     local languageName = itemData.dropdownOptionTextList[CSIndex(toIndex)]
-    local resourceSize = GameInstance.resPrefManager:GetResourceSize(vfsBlockType)
+    local resourceSize = GameInstance.resPrefManager:GetVoiceResourceGroupSize(vfsBlockType)
     Notify(MessageConst.SHOW_POP_UP, {
         content = string.format(Language.LUA_GAME_SETTING_VOICE_DOWNLOAD_POP_UP_CONTENT, languageName, resourceSize / MB),
         onConfirm = function()
@@ -1598,7 +1598,7 @@ GameSettingCtrl._SliderGetMaxNotchPadding = HL.Method(HL.String).Return(HL.Numbe
     local settingData = self.m_itemDataMap[settingId]
     local originalMaxValue = settingData.sliderMaxValue
     local maxValue = math.min(originalMaxValue, (self.m_rootCanvasWidth - STANDARD_HORIZONTAL_RESOLUTION) / 2)
-    maxValue = math.max(maxValue, GameSettingHelper.GetGameSettingDefaultCanvasPadding(self.m_rootCanvasWidth, STANDARD_HORIZONTAL_RESOLUTION))
+    maxValue = math.max(maxValue, GameSettingHelper.GetGameSettingDefaultCanvasPadding(self.m_rootCanvasWidth))
 
     return maxValue
 end
@@ -2640,19 +2640,11 @@ GameSettingCtrl._SetSettingItemControllerNaviTarget = HL.Method() << function(se
 end
 
 GameSettingCtrl._SetNaviTarget = HL.Method(HL.Userdata) << function(self, selectable)
-    if LuaSystemManager.dummyNaviLayerSystem then
-        self:SetNaviTarget(selectable)
-    else
-        InputManagerInst.controllerNaviManager:SetTarget(selectable)
-    end
+    self:SetNaviTarget(selectable)
 end
 
 GameSettingCtrl._ClearNaviTarget = HL.Method() << function(self)
-    if LuaSystemManager.dummyNaviLayerSystem then
-        self:ClearNaviTarget()
-    else
-        InputManagerInst.controllerNaviManager:SetTarget(nil)
-    end
+    self:ClearNaviTarget()
 end
 
 GameSettingCtrl._OnTryChangeInputDeviceType = HL.Method(HL.Any) << function(self, args)
@@ -2725,11 +2717,7 @@ GameSettingCtrl.OnSystemDisplaySizeChanged = HL.StaticMethod() << function()
     CoroutineManager:StartCoroutine(function()
         coroutine.waitForRenderDone()
 
-        local defaultPadding = GameSettingHelper.GetGameSettingDefaultNotchPadding(
-            UIManager.uiCanvasRect.rect.width,
-            STANDARD_HORIZONTAL_RESOLUTION
-        )
-        GameSetting.videoNotchPaddingSetting.defaultValue = defaultPadding
+        GameSetting.videoNotchPaddingSetting:InvalidateCache()
 
         local rootCanvasHelper = UIManager.m_uiCanvasScaleHelper
         local worldRootCanvasHelper = UIManager.m_worldUICanvasScaleHelper

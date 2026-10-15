@@ -1,6 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ItemTips
 ItemTipsCtrl = HL.Class('ItemTipsCtrl', uiCtrl.UICtrl)
+local LuaProtoUtil = CS.Beyond.Network.LuaProtoUtil
 
 local LIQUID_EMPTY_CAPACITY_TEXT_ID = "LUA_ITEM_TIPS_LIQUID_INFO_EMPTY_CAPACITY"
 local LIQUID_FULL_CAPACITY_TEXT_ID = "LUA_ITEM_TIPS_LIQUID_INFO_FULL_CAPACITY"
@@ -11,6 +12,11 @@ local PRODUCT_NORMAL_TITLE_TEXT_ID = "ui_common_tips_main_product"
 local PRODUCT_LIQUID_TITLE_TEXT_ID = "ui_common_tips_liquid_main_product"
 
 local UIAutoCloseArea = CS.Beyond.UI.UIAutoCloseArea
+
+local function sendDefaultMsgAndDispose(msg)
+    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+    msg:Dispose()
+end
 
 
 
@@ -1296,14 +1302,14 @@ if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
                 local itemData = Tables.itemTable[self.m_itemId]
                 local isMoney = GameInstance.player.inventory:IsMoneyType(itemData.type)
                 if isMoney then
-                    local msg = CS.Proto.CS_GM_COMMAND()
+                    local msg = LuaProtoUtil.AllocateCSGMCommand()
                     msg.Command = "AddMoney " .. self.m_itemId .. " 1000000"
-                    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+                    sendDefaultMsgAndDispose(msg)
                     Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 支付宝到账 一百万%s", self.m_data.name))
                 else
-                    local msg = CS.Proto.CS_GM_COMMAND()
+                    local msg = LuaProtoUtil.AllocateCSGMCommand()
                     msg.Command = "AddItemToItemBagSystem " .. self.m_itemId .. " 50"
-                    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+                    sendDefaultMsgAndDispose(msg)
                     Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 已添加道具 %s 50个", self.m_data.name))
                 end
             end)
@@ -1311,14 +1317,14 @@ if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
                 local itemData = Tables.itemTable[self.m_itemId]
                 local isMoney = GameInstance.player.inventory:IsMoneyType(itemData.type)
                 if isMoney then
-                    local msg = CS.Proto.CS_GM_COMMAND()
+                    local msg = LuaProtoUtil.AllocateCSGMCommand()
                     msg.Command = "AddMoney " .. self.m_itemId .. " 1"
-                    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+                    sendDefaultMsgAndDispose(msg)
                     Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 支付宝到账 1 %s", self.m_data.name))
                 else
-                    local msg = CS.Proto.CS_GM_COMMAND()
+                    local msg = LuaProtoUtil.AllocateCSGMCommand()
                     msg.Command = "AddItemToItemBagSystem " .. self.m_itemId .. " 1"
-                    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+                    sendDefaultMsgAndDispose(msg)
                     Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 已添加道具 %s 1", self.m_data.name))
                 end
             end)

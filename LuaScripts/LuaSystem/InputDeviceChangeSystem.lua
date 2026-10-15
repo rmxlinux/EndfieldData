@@ -42,7 +42,7 @@ InputDeviceChangeSystem._CheckCanChangeInputDevice = HL.Method(HL.Opt(HL.Boolean
     if not ignoreIsChanging and topPhaseId == PhaseId.Level then
         local _, mainHud = UIManager:IsOpen(PanelId.MainHud)
         if mainHud and not mainHud.view.inputGroup.internalEnabled then
-            if not FactoryUtils.isInTopView() then
+            if not FactoryUtils.isInTopView() and not GameInstance.player.innSystem.isInGame then
                 return false
             end
         end

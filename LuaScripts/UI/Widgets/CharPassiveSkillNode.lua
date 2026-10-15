@@ -84,6 +84,9 @@ CharPassiveSkillNode.InitCharPassiveSkillNode = HL.Method(HL.Table) << function(
 
         cell.button.onClick:RemoveAllListeners()
         cell.button.onClick:AddListener(function()
+            if not cell.button.gameObject.activeInHierarchy then
+                return
+            end
             Notify(MessageConst.SHOW_CHAR_SKILL_TIP, {
                 isPassiveSkill = true,
                 skillId = passiveSkillNodeCfg.passiveSkillNodeInfo.index,  

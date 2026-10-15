@@ -34,6 +34,16 @@ BattlePassTaskCtrl.m_taskGroups = HL.Field(HL.Any)
 
 BattlePassTaskCtrl.m_taskViewModels = HL.Field(HL.Any)
 
+
+
+BattlePassTaskCtrl.m_taskStateSnapshot = HL.Field(HL.Table)
+
+
+BattlePassTaskCtrl.m_hasPendingTaskBasicInfoUpdate = HL.Field(HL.Boolean) << false
+
+
+BattlePassTaskCtrl.m_nextTaskStructureRefreshTime = HL.Field(HL.Number) << -1
+
 BattlePassTaskCtrl.m_taskForecastTipId = HL.Field(HL.String) << ''
 
 BattlePassTaskCtrl.m_taskForecastTipPriority = HL.Field(HL.Number) << -99999
@@ -362,12 +372,117 @@ end
 
 
 BattlePassTaskCtrl._LoadData = HL.Method(HL.Opt(HL.Boolean)) << function(self, needReset)
+    
+    self:_CaptureNextTaskStructureRefreshTime()
     self:_LoadLabelData()
     if needReset == true then
         self:_ResetSelectLabel()
     end
     self:_LoadSubLabelData()
     self:_LoadGroupData()
+    self:_CaptureTaskStateSnapshot()
+    self.m_hasPendingTaskBasicInfoUpdate = false
+end
+
+
+BattlePassTaskCtrl._CaptureTaskStateSnapshot = HL.Method() << function(self)
+    
+    local taskStateSnapshot = {}
+    local taskInfos = GameInstance.player.battlePassSystem.taskData.taskInfos
+    for taskId, playerTask in pairs(taskInfos) do
+        taskStateSnapshot[taskId] = playerTask.taskState
+    end
+    self.m_taskStateSnapshot = taskStateSnapshot
+end
+
+
+BattlePassTaskCtrl._CaptureNextTaskStructureRefreshTime = HL.Method() << function(self)
+    local curServerTime = DateTimeUtils.GetCurrentTimestampBySeconds()
+    local nextRefreshTime = -1
+    local collectTime = function(time)
+        if time > curServerTime and (nextRefreshTime < 0 or time < nextRefreshTime) then
+            nextRefreshTime = time
+        end
+    end
+    local bpSystem = GameInstance.player.battlePassSystem
+    collectTime(bpSystem.seasonData.openTime)
+    collectTime(bpSystem.seasonData.closeTime)
+    for _, playerLabel in pairs(bpSystem.taskData.taskLabels) do
+        collectTime(playerLabel.visibleTime)
+    end
+    for _, playerGroup in pairs(bpSystem.taskData.taskGroups) do
+        collectTime(playerGroup.visibleTime)
+        collectTime(playerGroup.disableTime)
+    end
+    for _, playerTask in pairs(bpSystem.taskData.taskInfos) do
+        collectTime(playerTask.visibleTime)
+    end
+    self.m_nextTaskStructureRefreshTime = nextRefreshTime
+end
+
+
+BattlePassTaskCtrl._HasTaskStateChanged = HL.Method().Return(HL.Boolean) << function(self)
+    if self.m_taskStateSnapshot == nil then
+        return true
+    end
+    local taskInfoCount = 0
+    local taskInfos = GameInstance.player.battlePassSystem.taskData.taskInfos
+    for taskId, playerTask in pairs(taskInfos) do
+        taskInfoCount = taskInfoCount + 1
+        if self.m_taskStateSnapshot[taskId] ~= playerTask.taskState then
+            return true
+        end
+    end
+    local snapshotCount = 0
+    for _ in pairs(self.m_taskStateSnapshot) do
+        snapshotCount = snapshotCount + 1
+    end
+    return taskInfoCount ~= snapshotCount
+end
+
+
+BattlePassTaskCtrl._NeedsFullTaskRefresh = HL.Method().Return(HL.Boolean) << function(self)
+    if self.m_hasPendingTaskBasicInfoUpdate then
+        return true
+    end
+    if self.m_nextTaskStructureRefreshTime > 0
+        and DateTimeUtils.GetCurrentTimestampBySeconds() >= self.m_nextTaskStructureRefreshTime then
+        return true
+    end
+    return self:_HasTaskStateChanged()
+end
+
+
+
+
+BattlePassTaskCtrl._TryUpdateTaskProgress = HL.Method().Return(HL.Boolean, HL.Table) << function(self)
+    
+    local changedIndices = {}
+    if self.m_taskViewModels == nil then
+        return false, changedIndices
+    end
+    local taskTable = Tables.battlePassTaskTable
+    local taskInfos = GameInstance.player.battlePassSystem.taskData.taskInfos
+    for index, viewModel in ipairs(self.m_taskViewModels) do
+        if viewModel.viewType == TASK_VIEW_TYPE.TASK then
+            local taskInfo = viewModel.taskInfo
+            if taskInfo == nil then
+                return false, changedIndices
+            end
+            local hasTaskData, taskData = taskTable:TryGetValue(taskInfo.taskId)
+            local hasPlayerTask, playerTask = taskInfos:TryGetValue(taskInfo.taskId)
+            if not hasTaskData or not hasPlayerTask or playerTask.taskState ~= taskInfo.taskState then
+                return false, changedIndices
+            end
+            local taskVal, taskTarget = self:_CheckTaskCondition(taskData, playerTask)
+            if taskInfo.taskVal ~= taskVal or taskInfo.taskTarget ~= taskTarget then
+                taskInfo.taskVal = taskVal
+                taskInfo.taskTarget = taskTarget
+                table.insert(changedIndices, index)
+            end
+        end
+    end
+    return true, changedIndices
 end
 
 BattlePassTaskCtrl._LoadLabelData = HL.Method() << function(self)
@@ -865,10 +980,26 @@ end
 
 BattlePassTaskCtrl._UpdateTasks = HL.Method() << function(self)
     self.view.taskScrollList:UpdateCount(#self.m_taskViewModels, true, true)
+    
+    self.view.taskScrollList:SetTop()
 end
 
 BattlePassTaskCtrl._RefreshTasks = HL.Method() << function(self)
     self.view.taskScrollList:UpdateCount(#self.m_taskViewModels, false, true)
+end
+
+
+
+BattlePassTaskCtrl._RefreshTaskProgressCells = HL.Method(HL.Table) << function(self, changedIndices)
+    for _, index in ipairs(changedIndices) do
+        local viewModel = self.m_taskViewModels[index]
+        if viewModel ~= nil and viewModel.viewType == TASK_VIEW_TYPE.TASK then
+            local cell = self.m_taskCacheFunc(index)
+            if cell ~= nil then
+                self:_RenderTaskCell(cell, viewModel.taskInfo)
+            end
+        end
+    end
 end
 
 BattlePassTaskCtrl._RenderLabel = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Boolean)) << function(self, cell, luaIndex, isRefresh)
@@ -1071,11 +1202,20 @@ BattlePassTaskCtrl._ReadShowingTasks = HL.Method() << function(self)
 end
 
 BattlePassTaskCtrl._OnTaskUpdate = HL.Method() << function(self)
+    
+    if not self:_NeedsFullTaskRefresh() then
+        local canUpdateIncrementally, changedIndices = self:_TryUpdateTaskProgress()
+        if canUpdateIncrementally then
+            self:_RefreshTaskProgressCells(changedIndices)
+            return
+        end
+    end
     self:_LoadData()
     self:_RenderViews(true, true, true)
 end
 
 BattlePassTaskCtrl._OnBasicInfoUpdate = HL.Method() << function(self)
+    self.m_hasPendingTaskBasicInfoUpdate = true
     Notify(MessageConst.SHOW_POP_UP, {
         content = Language.LUA_BATTLE_PASS_TASK_INFO_REFRESH_POPUP,
         onConfirm = function()

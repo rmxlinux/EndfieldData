@@ -18,6 +18,10 @@ LuaSystemManager.inited = HL.Field(HL.Boolean) << false
 
 LuaSystemManager.factory = HL.Field(HL.Forward('FacLuaSystem'))
 
+LuaSystemManager.factoryInteract = HL.Field(HL.Forward('FacInteractSystem'))
+
+LuaSystemManager.factoryHud = HL.Field(HL.Forward('FacHudLuaSystem'))
+
 LuaSystemManager.mainHudActionQueue = HL.Field(HL.Forward('MainHudActionQueueSystem'))
 
 LuaSystemManager.audioEventSystem = HL.Field(HL.Forward('AudioEventLuaSystem'))
@@ -32,6 +36,8 @@ LuaSystemManager.commonTaskTrackSystem = HL.Field(HL.Forward('CommonTaskTrackSys
 
 LuaSystemManager.itemPrefabSystem = HL.Field(HL.Forward('ItemPrefabSystem'))
 
+LuaSystemManager.friendListCellPrefabSystem = HL.Field(HL.Forward('FriendListCellPrefabSystem'))
+
 LuaSystemManager.mapResourceSystem = HL.Field(HL.Forward('MapResourceSystem'))
 
 LuaSystemManager.cinematicSystem = HL.Field(HL.Forward('CinematicSystem'))
@@ -39,8 +45,6 @@ LuaSystemManager.cinematicSystem = HL.Field(HL.Forward('CinematicSystem'))
 LuaSystemManager.radioSystem = HL.Field(HL.Forward('RadioSystem'))
 
 LuaSystemManager.uiRestoreSystem = HL.Field(HL.Forward('UIRestoreSystem'))
-
-LuaSystemManager.dummyNaviLayerSystem = HL.Field(HL.Forward('DummyNaviLayerSystem'))
 
 LuaSystemManager.appStoreSystem = HL.Field(HL.Forward('AppStoreSystem'))
 
@@ -52,6 +56,12 @@ LuaSystemManager.shopTradeGoodsCellPrefabSystem = HL.Field(HL.Forward('ShopTrade
 
 LuaSystemManager.cashShopItemPrefabSystem = HL.Field(HL.Forward('CashShopItemPrefabSystem'))
 
+LuaSystemManager.innNpcSystem = HL.Field(HL.Forward('InnNpcSystem'))
+
+LuaSystemManager.innRadioSystem = HL.Field(HL.Forward('InnRadioSystem'))
+
+LuaSystemManager.innRootSystem = HL.Field(HL.Forward('InnRootSystem'))
+
 
 
 LuaSystemManager.InitSystems = HL.Method() << function(self)
@@ -59,6 +69,8 @@ LuaSystemManager.InitSystems = HL.Method() << function(self)
 
     self.inited = true
     self.factory = self:_AddSystem("FacLuaSystem")
+    self.factoryInteract = self:_AddSystem("FacInteractSystem")
+    self.factoryHud = self:_AddSystem("FacHudLuaSystem")
     self.audioEventSystem = self:_AddSystem("AudioEventLuaSystem")
     self.commonIntTriggerSystem = self:_AddSystem("CommonIntTriggerSystem")
     self.mainHudActionQueue = self:_AddSystem("MainHudActionQueueSystem")
@@ -66,16 +78,19 @@ LuaSystemManager.InitSystems = HL.Method() << function(self)
     self.levelWorldUISystem = self:_AddSystem("LevelWorldUISystem")
     self.commonTaskTrackSystem = self:_AddSystem("CommonTaskTrackSystem")
     self.itemPrefabSystem = self:_AddSystem("ItemPrefabSystem")
+    self.friendListCellPrefabSystem = self:_AddSystem("FriendListCellPrefabSystem")
     self.mapResourceSystem = self:_AddSystem("MapResourceSystem")
     self.cinematicSystem = self:_AddSystem("CinematicSystem")
     self.radioSystem = self:_AddSystem("RadioSystem")
     self.uiRestoreSystem = self:_AddSystem("UIRestoreSystem")
-    self.dummyNaviLayerSystem = self:_AddSystem("DummyNaviLayerSystem")
     self.appStoreSystem = self:_AddSystem("AppStoreSystem")
     self.charInfoSystem = self:_AddSystem("CharInfoSystem")
     self.inputDeviceChangeSystem = self:_AddSystem("InputDeviceChangeSystem")
     self.shopTradeGoodsCellPrefabSystem = self:_AddSystem("ShopTradeGoodsCellPrefabSystem")
     self.cashShopItemPrefabSystem = self:_AddSystem("CashShopItemPrefabSystem")
+    self.innNpcSystem = self:_AddSystem("InnNpcSystem")
+    self.innRadioSystem = self:_AddSystem("InnRadioSystem")
+    self.innRootSystem = self:_AddSystem("InnRootSystem")
 
     
     
@@ -103,7 +118,6 @@ end
 
 LuaSystemManager.ReleaseSystems = HL.Method() << function(self)
     logger.info("LuaSystemManager.ReleaseSystems")
-    CS.Beyond.UI.BattleControllerInputController.DestroyInstance()
     for k = #self.m_systemList, 1, -1 do
         local v = self.m_systemList[k]
         v:OnRelease()

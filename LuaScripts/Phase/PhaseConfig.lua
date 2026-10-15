@@ -39,6 +39,9 @@ config = {
             if GameInstance.player.generalAbilitySystem.isRPressed then
                 return false
             end
+            if DungeonUtils.isGambleBattlePendingSettlement() then
+                return false
+            end
             return true
         end,
     },
@@ -67,7 +70,7 @@ config = {
         panels = {},
         fov = 15.3818,
         cannotForbid = true,
-        notCreateDummyNaviLayer = true,
+        notCreateNaviScope = true,
         sceneVisible = true, 
     },
     
@@ -271,6 +274,10 @@ config = {
             end
             if Utils.isInThrowMode() then
                 return false, Language.LUA_CANT_OPEN_INVENTORY_IN_THROW_MODE
+            end
+            
+            if DungeonUtils.isGambleBattlePendingSettlement() then
+                return false
             end
             return true
         end
@@ -603,6 +610,14 @@ config = {
         isSimpleUIPhase = true,
     },
     
+    SpaceshipSchedule = {
+
+        panels = {
+            PanelId.SpaceshipSchedule,
+        },
+        isSimpleUIPhase = true,
+    },
+    
     SpaceshipManufacturingStation = {
 
         panels = {
@@ -772,6 +787,12 @@ config = {
             PanelId.SubmitItem,
         },
         isSimpleUIPhase = true,
+    },
+    
+    Painter = {
+
+        panels = {},
+        isSimpleUIPhase = false,
     },
     
     FriendShipPresent = {
@@ -1157,6 +1178,14 @@ config = {
         sceneVisible = true,
     },
     
+    MicroModelAlign = {
+
+        panels = {
+            PanelId.MicroModelAlign,
+        },
+        isSimpleUIPhase = true,
+    },
+    
     Friend = {
 
         panels = {},
@@ -1260,6 +1289,7 @@ config = {
            PanelId.CommonPOIUpgrade,
         },
         isSimpleUIPhase = false,
+        sceneVisible = true, 
     },
     
     EquipTech = {
@@ -1592,10 +1622,12 @@ config = {
         isSimpleUIPhase = true,
     },
     Dialog2D = {
+
         panels = {
            PanelId.Dialog2D,
         },
-        isSimpleUIPhase = true,
+        isSimpleUIPhase = false,
+        cannotForbid = true,
     },
     FacReservePowerPopup = {
 
@@ -1738,6 +1770,63 @@ config = {
 
     
     
+    GambleBattleMilestone = {
+
+        panels = {
+           PanelId.GambleBattleMilestone,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    GambleBattleMain = {
+
+        panels = {
+           PanelId.GambleBattleMain,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    GambleBattleExplain = {
+
+        panels = {
+           PanelId.GambleBattleExplain,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    GambleBattleSubSettlement = {
+
+        panels = {
+           PanelId.GambleBattleSubSettlement,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    GambleBattleFinalSettlement = {
+
+        panels = {
+           PanelId.GambleBattleFinalSettlement,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    GambleBattlePreviewHandType = {
+
+        panels = {
+           PanelId.GambleBattlePreviewHandType,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+
+    
+    
     ActivityCoinMilestone = {
 
         panels = {
@@ -1858,10 +1947,179 @@ config = {
 
     
     
+    InnDetail = {
+
+        panels = {
+            PanelId.InnDetail,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnFeedManage = {
+
+        panels = {
+           PanelId.InnFeedManage,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnKitchenSettings = {
+
+        panels = {
+           PanelId.InnKitchenSettings,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnTopicSelection = {
+
+        panels = {
+           PanelId.InnTopicSelection,
+        },
+        isSimpleUIPhase = true,
+    },
+    InnManagementResultDetail = {
+
+        panels = {
+           PanelId.InnManagementResultDetail,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnTopicSelect = {
+
+        panels = {
+            PanelId.InnTopicSelect,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnManagementResultTopic = {
+
+        panels = {
+           PanelId.InnManagementResultTopic,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnMenuSettings = {
+
+        panels = {
+           PanelId.InnMenuSettings,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnRegionUpgrade = {
+
+        panels = {
+            PanelId.InnRegionUpgrade,
+        },
+    },
+    
+    
+    InnRecipeOverview = {
+
+        panels = {
+            PanelId.InnRecipeOverview,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnMilestone = {
+
+        panels = {
+            PanelId.InnMilestone,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnRanchAnimalAdd = {
+
+        panels = {
+           PanelId.InnRanchAnimalAdd,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnMenuOverview = {
+
+        panels = {
+           PanelId.InnMenuOverview,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnKitchenCharSelection = {
+
+        panels = {
+           PanelId.InnKitchenCharSelection,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    InnCharAddition = {
+
+        panels = {
+            PanelId.InnCharAddition,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+
+    
+    
+    QTE = {
+
+        panels = {
+            PanelId.QTE,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+
+    
+    
+    FacFarmTerminal = {
+
+        panels = {
+           PanelId.FacFarmTerminal,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+
+    
+    
     CommonRanking = {
 
         panels = {
            PanelId.CommonRanking,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    EquipPresetGroup = {
+
+        unlockSystemType = GEnums.UnlockSystemType.EquipPresetGroup,
+        panels = {
+           PanelId.EquipPresetGroup,
         },
         isSimpleUIPhase = true,
     },

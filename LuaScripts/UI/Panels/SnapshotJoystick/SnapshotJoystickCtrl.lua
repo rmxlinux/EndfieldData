@@ -85,6 +85,11 @@ SnapshotJoystickCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:OnForbidJoystick(self.m_phase.isForbidJoystick)
 
     self:_UpdateWalkRunRation()
+    
+    local snapshotCtrl = self.m_phase.snapshotPanel and self.m_phase.snapshotPanel.uiCtrl
+    if snapshotCtrl then
+        snapshotCtrl:RefreshTouchJoystickVisible(self.view.joystick)
+    end
 end
 
 SnapshotJoystickCtrl.OnShow = HL.Override() << function(self)

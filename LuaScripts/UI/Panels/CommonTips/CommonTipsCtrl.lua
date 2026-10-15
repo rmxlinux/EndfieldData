@@ -21,6 +21,7 @@ CommonTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:ChangeCurPanelBlockSetting(false)
     end)
     self.view.controllerHintPlaceholder.gameObject:SetActive(false)
+    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
 CommonTipsCtrl.ShowCommonTips = HL.StaticMethod(HL.Table) << function(args)

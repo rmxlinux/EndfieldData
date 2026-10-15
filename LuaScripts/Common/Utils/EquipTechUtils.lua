@@ -147,11 +147,11 @@ end
 
 
 
-function EquipTechUtils.getEquipEnhanceSuccessProbability(equipInstData, attrShowInfo)
-    if not equipInstData then
+function EquipTechUtils.getEquipEnhanceSuccessProbabilityByTemplateId(templateId, attrShowInfo)
+    if not templateId then
         return EquipTechConst.EEquipEnhanceSuccessProb.None
     end
-    local _, equipData = Tables.equipTable:TryGetValue(equipInstData.templateId)
+    local _, equipData = Tables.equipTable:TryGetValue(templateId)
     if not equipData then
         return EquipTechConst.EEquipEnhanceSuccessProb.None
     end
@@ -171,6 +171,17 @@ function EquipTechUtils.getEquipEnhanceSuccessProbability(equipInstData, attrSho
         end
     end
     return EquipTechConst.EEquipEnhanceSuccessProb.None
+end
+
+
+
+
+
+function EquipTechUtils.getEquipEnhanceSuccessProbability(equipInstData, attrShowInfo)
+    if not equipInstData then
+        return EquipTechConst.EEquipEnhanceSuccessProb.None
+    end
+    return EquipTechUtils.getEquipEnhanceSuccessProbabilityByTemplateId(equipInstData.templateId, attrShowInfo)
 end
 
 
@@ -775,6 +786,88 @@ function EquipTechUtils.HasCompleteBatchGuide()
     end
     return false
 end
+
+
+
+
+
+
+
+
+
+
+function EquipTechUtils.GameEventLogFactoryEquipProduceResetScript(formulaId, oldChainId, curChainId, chainChangeWay)
+    if string.isEmpty(formulaId) then
+        return
+    end
+    local _, formulaData = Tables.equipFormulaTable:TryGetValue(formulaId)
+    local equipTemplateId = formulaData and formulaData.outcomeEquipId or ""
+    local defaultChain = EquipTechUtils.GetDefaultFormulaChain(formulaId)
+    local oriChainId = defaultChain and defaultChain.chainId or 0
+    EventLogManagerInst:GameEvent_FactoryEquipProduceResetScript(
+        equipTemplateId,
+        oriChainId,
+        oldChainId,
+        curChainId,
+        chainChangeWay
+    )
+end
+
+
+
+
+
+
+
+
+
+
+
+function EquipTechUtils.GameEventLogEquipRefinementQuickFill(equipInstId, equipTemplateId, enhancedAttrIndex, fillType, fillCount, formulaId, oldChainId, curChainId)
+    
+    local charId = ""
+    if equipInstId and equipInstId > 0 then
+        local equipInstData = EquipTechUtils.getEquipInstData(equipInstId)
+        if equipInstData and equipInstData.equippedCharServerId > 0 then
+            local charInfo = GameInstance.player.charBag:GetCharInfo(equipInstData.equippedCharServerId)
+            if charInfo then
+                charId = charInfo.templateId or ""
+            end
+        end
+    end
+    
+    local termId = ""
+    if enhancedAttrIndex and enhancedAttrIndex > 0 and not string.isEmpty(equipTemplateId) then
+        local _, equipData = Tables.equipTable:TryGetValue(equipTemplateId)
+        if equipData then
+            local modifier = equipData.displayAttrModifiers[enhancedAttrIndex - 1]
+            if modifier then
+                termId = modifier.packAttrType or ""
+            end
+        end
+    end
+    
+    local costEquipTemplateId = ""
+    if not string.isEmpty(formulaId) then
+        local _, formulaData = Tables.equipFormulaTable:TryGetValue(formulaId)
+        if formulaData then
+            costEquipTemplateId = formulaData.outcomeEquipId or ""
+        end
+    end
+    EventLogManagerInst:GameEvent_EquipRefinementQuickFill(
+        charId,
+        tostring(equipInstId or 0),
+        equipTemplateId or "",
+        termId,
+        fillType,
+        fillCount,
+        costEquipTemplateId,
+        oldChainId or 0,
+        curChainId or 0
+    )
+end
+
+
 
 
 

@@ -72,7 +72,7 @@ GachaCharTLHelper.GachaCharTLHelper = HL.Constructor(CS.UnityEngine.Transform, H
         logger.error("没找到LoopTrack", self.m_actorDirector.transform:PathFromRoot())
     end
 
-    self.m_exCamera = root:Find("ExternalCamera")
+    self.m_exCamera = root:Find("GachaCamera")
     
     
     local charModel = self.m_actorDirector.transform:GetChild(0)

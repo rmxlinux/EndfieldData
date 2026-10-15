@@ -65,7 +65,7 @@ ItemSlot.InitLockSlot = HL.Method() << function(self)
         Notify(MessageConst.SHOW_TOAST, Language.LUA_ITEM_BAG_SLOT_LOCKED)
     end)
 
-    self.view.dropItem.onDropEvent:RemoveAllListeners()
+    self.view.dropItem:ClearEvents()
     self.view.dragItem.onBeginDragEvent:RemoveAllListeners()
     self.view.dragItem.onDragEvent:RemoveAllListeners()
     self.view.dragItem.onDragEventWhenCantStartDrag:RemoveAllListeners()

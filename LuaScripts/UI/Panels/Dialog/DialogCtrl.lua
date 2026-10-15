@@ -22,6 +22,8 @@ DialogCtrl.s_overrideMessages = HL.StaticField(HL.Table) << {
     [MessageConst.DIALOG_REFRESH_AUTO_MODE] = 'OnRefreshAutoMode',
     [MessageConst.DIALOG_REFRESH_UI_HIDDEN] = 'OnRefreshUIHidden',
     [MessageConst.ON_TOGGLE_HUD_FADE] = '_OnToggleHudFade',
+    [MessageConst.ON_QTE_START] = 'OnQTEStart',
+    [MessageConst.ON_QTE_COMPLETE] = 'OnQTEComplete',
 }
 
 local UI_HIDDEN_WHITE_LIST = {
@@ -366,7 +368,9 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
     end
 
     local text, entryLinks = UIUtils.resolveNarrativeTextWithEntryLinks(dialogText)
-    local singleTrunk = string.isEmpty(name)
+    local richName = UIUtils.resolveTextCinematic(name)
+    local isNameFullyWrappedByBraces = string.match(richName, "^%b{}$") ~= nil
+    local singleTrunk = string.isEmpty(richName) or isNameFullyWrappedByBraces
     self:SetCurEntryLinks(entryLinks)
 
     self.view.bottomLayout:DOKill()
@@ -397,7 +401,6 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
         end
 
     else
-        local richName = UIUtils.resolveTextCinematic(name)
         richName = UIUtils.removePattern(richName, UIConst.NARRATIVE_ANONYMITY_PATTERN)
         self.view.textName:SetAndResolveTextStyle(richName)
         self.view.textName.gameObject:SetActive(true)
@@ -514,7 +517,7 @@ DialogCtrl._GetRealSprite = HL.Method(HL.String, HL.String).Return(HL.String) <<
         else
             maleSpritePath = UIUtils.getSpritePath(maleSpriteName)
         end
-        local res = ResourceManager.CheckExists(maleSpritePath)
+        local res = self.loader:CheckExists(maleSpritePath)
         if res then
             finalSprite = maleSpriteName
         end

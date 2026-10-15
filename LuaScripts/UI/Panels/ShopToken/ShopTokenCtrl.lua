@@ -80,9 +80,10 @@ ShopTokenCtrl.OnShow = HL.Override() << function(self)
     if DeviceInfo.usingController then
         InputManagerInst:ToggleGroup(self.view.verticalTabList.groupTarget.groupId, self.m_isNaviLeft)
         InputManagerInst:ToggleGroup(self.view.scrollGroupTarget.groupId, not self.m_isNaviLeft)
+        self:_RefreshAndRecoverNaviTarget(self.m_goodsDataList)
+    else
+        self:UpdateAll()
     end
-
-    self:UpdateAll()
 
     if self.m_phase.m_needGameEvent then
         self.m_phase.m_needGameEvent = false
@@ -173,7 +174,7 @@ end
 
 
 ShopTokenCtrl._RefreshAndRecoverNaviTarget = HL.Method(HL.Any) << function(self, goodsDataList)
-    if not self.m_isNaviLeft and self.m_currNaviIndex > 0 and self.m_currNaviIndex < self.m_goodsDataList.Count then
+    if not self.m_isNaviLeft and self.m_currNaviIndex > 0 and self.m_currNaviIndex <= self.m_goodsDataList.Count then
         local currNaviGoodsId = self.m_goodsDataList[CSIndex(self.m_currNaviIndex)].goodsId
         self.m_needSetNaviTargetGoodsId = currNaviGoodsId
     end
@@ -265,6 +266,10 @@ ShopTokenCtrl._InitTabList = HL.Method() << function(self)
         cell.toggle.onValueChanged:RemoveAllListeners()
         cell.toggle.onValueChanged:AddListener(function(isOn)
             if isOn then
+                if self.m_currShopId == shopData.shopId then
+                    return
+                end
+
                 self:_UpdateSeeGoods()
                 self:_SetCurrGoodsRead()
 

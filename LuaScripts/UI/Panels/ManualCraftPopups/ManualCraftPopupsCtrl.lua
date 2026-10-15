@@ -934,7 +934,11 @@ ManualCraftPopupsCtrl._UpdateSelectView = HL.Method(HL.Boolean) << function(self
             self.m_facManualCraftSystem:ReqManuallyUnlock(Utils.getCurrentScope(), unlockId)
         end)
         local progressCount = self.m_facManualCraftSystem:GetItemAccumulateCount(data.itemId)
-        self.view.progressText.text = progressCount
+        local progressText = progressCount
+        if progressCount > 999999 then
+            progressText = "999999+"
+        end
+        self.view.progressText.text = progressText
 
         local view = {}
         self.view.progressBar.transform:GetChild(index):GetComponent(typeof(CS.Beyond.Lua.LuaReference)):BindToLua(view)

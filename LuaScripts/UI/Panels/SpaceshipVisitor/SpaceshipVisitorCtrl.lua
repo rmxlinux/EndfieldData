@@ -326,6 +326,21 @@ SpaceshipVisitorCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(
         haveData = true
     end
 
+    local leftSec = DateTimeUtils.GetCurrentTimestampBySeconds() - opData.lastTs
+    local showTimeText = UIUtils.getShortLeftTime(leftSec)
+    
+    cell.friendListCell:RefreshFriendListCell(opData.roleId, {
+        stateName = "SpaceshipVisitor",
+        showVisitorTimeText = string.format(Language.LUA_SPACESHIP_LAST_VISIT_TIME_TEXT, showTimeText),
+        hideSignature = true,
+        onPlayerClick = function(headRectTransform, roleId)
+            FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(roleId).action()
+        end,
+        onSpaceshipVisitorClick = function(id, iconRect)
+            self:RotationBtnRect(cell, opData, csIndex, false)
+        end
+    }, "")
+
     if haveData then
         self.m_bindSwitchAction[groupId] = InputManagerInst:CreateBindingByActionId("visitor_info_switch_detail", function()
             AudioAdapter.PostEvent("Au_UI_Button_DropDown")
@@ -369,21 +384,6 @@ SpaceshipVisitorCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(
             InputManagerInst:SetBindingText(headNewBindingId, Language.LUA_SPACESHIP_VISITOR_TIP_HEAD)
         end
     end
-
-    local leftSec = DateTimeUtils.GetCurrentTimestampBySeconds() - opData.lastTs
-    local showTimeText = UIUtils.getShortLeftTime(leftSec)
-
-    cell.friendListCell:RefreshFriendListCell(opData.roleId, {
-        stateName = "SpaceshipVisitor",
-        showVisitorTimeText = string.format(Language.LUA_SPACESHIP_LAST_VISIT_TIME_TEXT, showTimeText),
-        hideSignature = true,
-        onPlayerClick = function(headRectTransform, roleId)
-            FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(roleId).action()
-        end,
-        onSpaceshipVisitorClick = function(id, iconRect)
-            self:RotationBtnRect(cell, opData, csIndex, false)
-        end
-    }, "")
 
 end
 

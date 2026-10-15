@@ -128,6 +128,25 @@ function UIUtils.genCachedCellFunction(list, onMiss, isTitle)
     end
 end
 
+function UIUtils.sortRowCellsForOverflow(list, luaIndex, isRightOnTop)
+    local perLine = list.countPerLine
+    if perLine <= 1 then
+        return
+    end
+    local rowStart = (luaIndex - 1) // perLine * perLine + 1
+    local rowEnd = rowStart + perLine - 1
+    local from, to, step = rowEnd, rowStart, -1
+    if isRightOnTop then
+        from, to, step = rowStart, rowEnd, 1
+    end
+    for i = from, to, step do
+        local go = list:Get(CSIndex(i))
+        if go then
+            go.transform:SetAsLastSibling()
+        end
+    end
+end
+
 function UIUtils.addChild(parent, prefab, keepScale)
     if not prefab or IsNull(prefab.gameObject) then
         logger.error("Invalid prefab", parent.transform:PathFromRoot())
@@ -153,6 +172,12 @@ local UIGoCacheClass = require_ex("Common/Utils/UI/UIGoCache").UIGoCache
 
 function UIUtils.genGoCache(goTemplate, wrapFunction, parent)
     return UIGoCacheClass(goTemplate, wrapFunction, parent)
+end
+
+local UIWidgetHost = require_ex('Common/Core/UIWidgetHost')
+
+function UIUtils.initWidgetHost(ctrl, container, args)
+    return UIWidgetHost(ctrl, container, args)
 end
 
 function UIUtils.getStandardScreenX(x)
@@ -205,46 +230,6 @@ function UIUtils.getGamepadKeyImageText(keyCode, isLongPress, scale, color)
         return string.format("<image=\"%s\" scale=%.2f color=%s>", keyIconPath, scale, colorStr)
     end
     return string.format("<image=\"%s\" scale=%.2f>", keyIconPath, scale)
-end
-
-
-
-function UIUtils.setAsNaviTarget(targetSelectable)
-    logger.error("[UIUtils] setAsNaviTarget 已废弃，请使用 self:SetNaviTarget(selectable)")
-    InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable)
-end
-
-
-
-
-
-function UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(targetNaviGroup, targetSelectable, needTopPhaseId)
-    logger.error("[UIUtils] setAsNaviTargetInSilentModeIfPhaseIsTop 已废弃，请使用 self:SetNaviTarget(selectable)")
-    local key = PhaseManager:GetPhaseDummyNaviLayerName(needTopPhaseId)
-    if not string.isEmpty(key) then
-        local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(key)
-        if needTopDummyLayer ~= nil then
-            InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable, needTopDummyLayer)
-        end
-    else
-        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable)
-    end
-end
-
-
-
-
-
-function UIUtils.setAsNaviTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable, needTopDummyLayerKey)
-    logger.error("[UIUtils] setAsNaviTargetInSilentModeIfNecessary 已废弃，请使用 self:SetNaviTarget(selectable)")
-    if string.isEmpty(needTopDummyLayerKey) then
-        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable)
-        return
-    end
-    local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(needTopDummyLayerKey)
-    if needTopDummyLayer ~= nil then
-        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable, needTopDummyLayer)
-    end
 end
 
 
@@ -1148,6 +1133,8 @@ function UIUtils.resolveLinkTypeFromId(linkId)
         return UIConst.UI_TEXT_LINK_TYPE.Narrative
     elseif string.startWith(linkId, CS.Beyond.UI.UIText.HYPERLINK_ID_PREFIX) then
         return UIConst.UI_TEXT_LINK_TYPE.Hyperlink
+    elseif string.startWith(linkId, UIConst.UI_TEXT_ITEM_LINK_PREFIX) then
+        return UIConst.UI_TEXT_LINK_TYPE.Item
     else
         return UIConst.UI_TEXT_LINK_TYPE.Default
     end
@@ -1392,6 +1379,9 @@ function UIUtils.displayEquipInfo(view, loader, itemId, instId)
         if view.equippedSpace then
             view.equippedSpace.gameObject:SetActive(view.equippedNode.gameObject.activeSelf)
         end
+    end
+    if view.domainTagNode then
+        view.domainTagNode:InitDomainTagNode(equipCfg.domainId)
     end
 end
 
@@ -1826,12 +1816,12 @@ function UIUtils.loadSprite(loader, path, name)
     if BEYOND_DEBUG then
         
         local fullDevPath = UIUtils.getSpriteDevPath(path, name)
-        if ResourceManager.CheckExists(fullDevPath) then
+        if loader:CheckExists(fullDevPath) then
             fullPath = fullDevPath
         end
     end
     local pathHash = __beyond_calculate_ab_path_hash(fullPath)
-    if not ResourceManager.CheckExistsWithStringPathHash(pathHash) then
+    if not loader:CheckExists(fullPath) then
         
         logger.error("资源不存在", fullPath, pathHash)
         return nil

@@ -131,6 +131,9 @@ ShopChoicenessWeaponCtrl._RefreshAllUI = HL.Method() << function(self)
         guaranteeNode.guaranteeTxt.text = string.format("<color=#FEF000>%d</color> ", remainNum) .. Language.ui_shop_entry_weapon_shop_numbers_1
         guaranteeNode.btn.onClick:RemoveAllListeners()
         guaranteeNode.btn.onClick:AddListener(function()
+            if self:IsPlayingAnimationIn() then
+                return
+            end
             CashShopUtils.ShowWikiWeaponPreview(poolId, upWeaponId)
         end)
     else
@@ -150,6 +153,9 @@ ShopChoicenessWeaponCtrl._RefreshAllUI = HL.Method() << function(self)
         guaranteeNode.guaranteeTxt.text = string.format("%d ", info.remainNeedPullCount) .. Language.ui_shop_entry_weapon_shop_numbers_2
         guaranteeNode.btn.onClick:RemoveAllListeners()
         guaranteeNode.btn.onClick:AddListener(function()
+            if self:IsPlayingAnimationIn() then
+                return
+            end
             
             logger.info("武器卡池，up武器预览或宝箱预览")
             if info.isWeaponItemCase then

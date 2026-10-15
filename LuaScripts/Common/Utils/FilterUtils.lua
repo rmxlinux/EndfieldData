@@ -259,6 +259,12 @@ function FilterUtils.processEquip(templateId, instId, extraArgs)
         end
     end
 
+    FilterUtils.updateCharInstIdIndex()
+    if infoDefault.equippedCharInstId and infoDefault.equippedCharInstId > 0 and FilterUtils.charInstId2Index then
+        local index = FilterUtils.charInstId2Index[infoDefault.equippedCharInstId]
+        infoDefault.equippedCharIndex = index and -index or -math.huge
+        infoDefault.partTypeReverseNum = -infoDefault.partType:ToInt()
+    end
     return infoDefault
 end
 
@@ -297,11 +303,6 @@ function FilterUtils.processEquipEnhance(templateId, instId)
     infoDefault.canEnhance = infoDefault.equipInstData:IsMaxEnhanced() and 0 or 1
     infoDefault.equipEnhanceLevel = infoDefault.equipInstData:IsMaxEnhanced() and -1 or infoDefault.equipInstData:GetEnhanceLevel()
     infoDefault.equipEnhanceTotalFailedTimes = infoDefault.equipInstData:GetTotalFailedTimes()
-    if infoDefault.equippedCharInstId and infoDefault.equippedCharInstId > 0 and FilterUtils.charInstId2Index then
-        local index = FilterUtils.charInstId2Index[infoDefault.equippedCharInstId]
-        infoDefault.equippedCharIndex = index and -index or -math.huge
-        infoDefault.partTypeReverseNum = -infoDefault.partType:ToInt()
-    end
     return infoDefault
 end
 
@@ -323,6 +324,18 @@ function FilterUtils.processEquipEnhanceMaterial(templateId, instId, extraArgs)
     return infoDefault
 end
 
+function FilterUtils.processEquipCharacterInfo(templateId, instId, extraArgs)
+    local infoDefault = FilterUtils.processEquip(templateId, instId, extraArgs)
+    if not infoDefault then
+        return nil
+    end
+    infoDefault.isCurrentCharacterEquip = infoDefault.equippedCharInstId == extraArgs.charInstId and 1 or 0
+    infoDefault.reverseIsCurrentCharacterEquip = -infoDefault.isCurrentCharacterEquip
+    infoDefault.isOtherCharacterEquip = infoDefault.equippedCharInstId > 0 and 0 or 1
+    infoDefault.reverseIsOtherCharacterEquip = -infoDefault.isOtherCharacterEquip
+    infoDefault.reverse_num_canEquip = -infoDefault.num_canEquip
+    return infoDefault
+end
 
 
 
@@ -712,6 +725,14 @@ function FilterUtils.generateConfig_EQUIP_PRODUCE()
     return filterConfig
 end
 
+function FilterUtils.generateConfig_EQUIP_ENHANCE_MANUFACTURED()
+    local filterConfig = {}
+    table.insert(filterConfig, FilterUtils._generateEquipEnhanceMatchFilterGroup())
+    table.insert(filterConfig, FilterUtils._generateEquipCurFormulaFilterGroup())
+    table.insert(filterConfig, FilterUtils._generateEquipDefaultFormulaFilterGroup())
+    return filterConfig
+end
+
 function FilterUtils.generateConfig_CHAR_FORMATION()
     local professionTags = {}
     for _, proData in pairs(Tables.charProfessionTable) do
@@ -906,6 +927,28 @@ function FilterUtils._generateEquipDefaultFormulaFilterGroup()
     end
 
     return group
+end
+
+
+
+function FilterUtils._generateEquipEnhanceMatchFilterGroup()
+    return {
+        title = Language.LUA_EQUIP_ENHANCE_FILTER_GROUP_MATCH,
+        tags = {
+            {
+                groupType = "EquipEnhanceMatch",
+                name = Language.LUA_EQUIP_ENHANCE_FILTER_TAG_HIGH,
+                funcName = "_filterByEquipEnhanceMatch",
+                param = EquipTechConst.EEquipEnhanceSuccessProb.High,
+            },
+            {
+                groupType = "EquipEnhanceMatch",
+                name = Language.LUA_EQUIP_ENHANCE_FILTER_TAG_NORMAL,
+                funcName = "_filterByEquipEnhanceMatch",
+                param = EquipTechConst.EEquipEnhanceSuccessProb.Normal,
+            },
+        },
+    }
 end
 
 
@@ -1305,6 +1348,10 @@ function FilterUtils._filterByEquipDefaultFormula(info, materialItemId)
     return itemId == materialItemId
 end
 
+function FilterUtils._filterByEquipEnhanceMatch(info, probValue)
+    return info.equipEnhanceSuccessProb == probValue
+end
+
 function FilterUtils._filterByGemSkill(info, gemTermId)
     local skillMap = info.skillMap
     if not skillMap then
@@ -1377,12 +1424,17 @@ function FilterUtils.generateConfig_TACTICAL_ITEM()
     return TACTICAL_ITEM_FILTER_INFO
 end
 
-function FilterUtils.processTacticalItem(itemId, instId)
+function FilterUtils.processTacticalItem(itemId, instId, extraArgs)
     local info = FilterUtils.processItemDefault(itemId, instId)
     local useItemData = Tables.useItemTable:GetValue(itemId)
     info.effectType = useItemData.effectType
     info.targetNumType = useItemData.targetNumType
     info.curCount = Utils.getBagItemCount(itemId)
+
+    local equippedId = extraArgs and extraArgs.selectedIndexId
+    local isEquipped = equippedId ~= nil and not string.isEmpty(equippedId) and equippedId == itemId
+    info.isEquippedSort = isEquipped and 1 or 0
+    info.isEquippedSortReverse = -info.isEquippedSort
     return info
 end
 
@@ -1545,6 +1597,267 @@ end
 
 function FilterUtils.setCharInstIdIndexDirty()
     FilterUtils.isCharInstIdIndexDirty = true
+end
+
+
+
+
+
+
+
+
+
+function FilterUtils._filterInnCharByCategoryTag(charId, categoryTagId)
+    if not charId or string.isEmpty(charId) or string.isEmpty(categoryTagId) then
+        return false
+    end
+    local skills = InnUtils.getCharInnSkills(charId)
+    for _, skill in ipairs(skills) do
+        local side, tagId = InnUtils.classifyInnSkillTag(skill)
+        if side == "category" and tagId == categoryTagId then
+            return true
+        end
+    end
+    return false
+end
+
+
+
+
+
+function FilterUtils._filterInnCharByAffixTag(charId, affixTagId)
+    if not charId or string.isEmpty(charId) or string.isEmpty(affixTagId) then
+        return false
+    end
+    local skills = InnUtils.getCharInnSkills(charId)
+    for _, skill in ipairs(skills) do
+        local side, tagId = InnUtils.classifyInnSkillTag(skill)
+        if side == "affix" and tagId == affixTagId then
+            return true
+        end
+    end
+    return false
+end
+
+
+
+
+
+
+
+
+
+function FilterUtils.generateConfig_INN_KITCHEN_CHAR()
+    local rareTagId = Tables.innManagementConst and Tables.innManagementConst.rareTag or ""
+
+    local function makeTag(groupType, funcName, tagId, data)
+        return {
+            groupType = groupType,
+            name = (data and data.name) or tagId,
+            funcName = funcName,
+            param = tagId,
+            sortId = (data and data.sortId) or 0,
+        }
+    end
+
+    local function buildTagsFromTable(tbl, groupType, funcName, skipTagId, allowTagIds)
+        local tags = {}
+        for tagId, data in pairs(tbl) do
+            local skip = skipTagId and not string.isEmpty(skipTagId) and tagId == skipTagId
+            if not skip and (not allowTagIds or allowTagIds[tagId]) then
+                tags[#tags + 1] = makeTag(groupType, funcName, tagId, data)
+            end
+        end
+        return tags
+    end
+
+    local function sortTags(tags)
+        table.sort(tags, Utils.genSortFunction({ "sortId", "name" }, true))
+        return tags
+    end
+
+    
+    local categoryTags = buildTagsFromTable(Tables.innDishCategoryTable, "InnCategory", "_filterInnCharByCategoryTag", Tables.innManagementConst.drinkCategory)
+    if not string.isEmpty(rareTagId) then
+        local hasRare, rareData = Tables.innAffixTable:TryGetValue(rareTagId)
+        if hasRare then
+            categoryTags[#categoryTags + 1] = makeTag("InnCategory", "_filterInnCharByCategoryTag", rareTagId, rareData)
+        end
+    end
+
+    
+    local usedAffixIds = {}
+    for _, skillData in pairs(Tables.innSkillTable) do
+        local tagId = InnUtils.getSkillItemTagParamString(skillData)
+        if tagId then
+            usedAffixIds[tagId] = true
+        end
+    end
+    local affixTags = buildTagsFromTable(Tables.innAffixTable, "InnAffix", "_filterInnCharByAffixTag", rareTagId, usedAffixIds)
+
+    return {
+        {
+            title = Language.LUA_INN_KITCHEN_CHAR_FILTER_CATEGORY_TITLE,
+            tags = sortTags(categoryTags),
+        },
+        {
+            title = Language.LUA_INN_KITCHEN_CHAR_FILTER_AFFIX_TITLE,
+            tags = sortTags(affixTags),
+        },
+    }
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function FilterUtils.processInnRecipe(itemId, cfg, isDrink, topicId)
+    local _, itemData = Tables.itemTable:TryGetValue(itemId)
+    return {
+        id = itemId,
+        cfg = cfg,
+        isDrink = isDrink == true,
+        topicId = topicId or "",
+        rarity = (itemData and itemData.rarity) or 0,
+    }
+end
+
+
+
+
+
+function FilterUtils.generateConfig_INN_MENU_RECIPE(needQuickTopic, needCraftable)
+    local groups = {}
+
+    
+    if needQuickTopic then
+        table.insert(groups, {
+            title = Language.LUA_INN_MENU_SETTINGS_FILTER_QUICK_TITLE,
+            tags = {
+                {
+                    groupType = "InnQuickTopic",
+                    name = Language.LUA_INN_MENU_SETTINGS_FILTER_QUICK_TOPIC,
+                    funcName = "_filterInnRecipeByQuickTopic",
+                    param = true,
+                },
+            },
+        })
+    end
+
+    
+    local rarityTags = {}
+    for _, r in ipairs({ 2, 3, 4, 5 }) do
+        table.insert(rarityTags, {
+            groupType = "InnRarity",
+            name = string.format(Language.LUA_DEPOT_FILTER_OPTION_RARITY, r),
+            funcName = "_filterByRarity",
+            param = r,
+        })
+    end
+    table.insert(groups, {
+        title = Language.LUA_ITEM_FILTER_GROUP_TITLE_RARITY,
+        tags = rarityTags,
+    })
+
+    
+    if needCraftable then
+        table.insert(groups, {
+            title = Language.LUA_INN_MENU_SETTINGS_FILTER_STOCK_TITLE,
+            tags = {
+                {
+                    groupType = "InnStock",
+                    name = Language.LUA_INN_MENU_SETTINGS_FILTER_STOCK_CRAFTABLE,
+                    funcName = "_filterInnRecipeByStock",
+                    param = true,
+                },
+            },
+        })
+    end
+
+    
+    local rareTag = Tables.innManagementConst and Tables.innManagementConst.rareTag or ""
+    local affixTags = {}
+    for affId, affData in pairs(Tables.innAffixTable) do
+        if affId ~= rareTag then
+            table.insert(affixTags, {
+                groupType = "InnAffix",
+                name = (affData and affData.name) or affId,
+                funcName = "_filterInnRecipeByAffix",
+                param = affId,
+                sortId = (affData and affData.sortId) or 0,
+            })
+        end
+    end
+    table.sort(affixTags, Utils.genSortFunction({ "sortId", "name" }, true))
+    table.insert(groups, {
+        title = Language.LUA_INN_MENU_SETTINGS_FILTER_AFFIX_TITLE,
+        tags = affixTags,
+    })
+
+    return groups
+end
+
+
+
+function FilterUtils._filterInnRecipeByQuickTopic(info, _)
+    return InnUtils.itemSatisfiesAnyTopicReq(info.id, info.topicId)
+end
+
+
+
+function FilterUtils._filterInnRecipeByStock(info, _)
+    if not GameInstance.player or not GameInstance.player.inventory then
+        return false
+    end
+    if info.isDrink then
+        return InnUtils.getIngredientCount(info.id) > 0
+    end
+    local cfg = info.cfg
+    if not cfg or not cfg.ingredient or cfg.ingredient.Count == 0 then
+        return false
+    end
+    for i = 0, cfg.ingredient.Count - 1 do
+        local ingId = cfg.ingredient[i]
+        if not string.isEmpty(ingId) then
+            local need = (cfg.ingredientNum and i < cfg.ingredientNum.Count) and cfg.ingredientNum[i] or 1
+            if need <= 0 then need = 1 end
+            local have = InnUtils.getIngredientCount(ingId)
+            if have < need then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+
+
+
+function FilterUtils._filterInnRecipeByAffix(info, affixId)
+    local cfg = info.cfg
+    if not cfg or not cfg.affix then
+        return false
+    end
+    for i = 0, cfg.affix.Count - 1 do
+        if cfg.affix[i] == affixId then
+            return true
+        end
+    end
+    return false
 end
 
 

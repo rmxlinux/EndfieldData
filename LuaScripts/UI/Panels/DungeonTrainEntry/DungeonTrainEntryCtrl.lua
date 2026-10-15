@@ -249,6 +249,45 @@ DungeonTrainEntryCtrl._InitController = HL.Method() << function(self)
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    self.view.naviGroup.onDefaultNaviFailed:AddListener(function(dir)
+        self:_OnTrainingListNaviFailed(dir)
+    end)
+end
+
+DungeonTrainEntryCtrl._OnTrainingListNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
+    if not DeviceInfo.usingController then
+        return
+    end
+    if dir ~= CS.UnityEngine.UI.NaviDirection.Up and dir ~= CS.UnityEngine.UI.NaviDirection.Down then
+        return
+    end
+
+    
+    local firstTarget
+    local lastTarget
+    for groupIndex, dungeonIds in ipairs(self.m_tabGroups) do
+        local groupCell = self.m_dungeonTabGroupCellCache:Get(groupIndex)
+        if groupCell then
+            for _, dungeonId in ipairs(dungeonIds) do
+                local cell = groupCell:TryGetSubCell(dungeonId)
+                local target = cell and cell.view.clickBtn
+                if target and target.enableControllerNavi and target:IsActive() and target:IsInteractable() then
+                    firstTarget = firstTarget or target
+                    lastTarget = target
+                end
+            end
+        end
+    end
+    if not firstTarget or firstTarget == lastTarget then
+        return
+    end
+
+    local currentTarget = InputManagerInst.controllerNaviManager.curTarget
+    if dir == CS.UnityEngine.UI.NaviDirection.Up and currentTarget == firstTarget then
+        self:SetNaviTarget(lastTarget)
+    elseif dir == CS.UnityEngine.UI.NaviDirection.Down and currentTarget == lastTarget then
+        self:SetNaviTarget(firstTarget)
+    end
 end
 
 DungeonTrainEntryCtrl.OnDirectlyGetReward = HL.Method(HL.Any) << function(self, arg)

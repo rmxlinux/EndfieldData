@@ -156,6 +156,9 @@ ItemObtainWays._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.Table) <
     local obtainInfoList = {}
 
     
+    self:_InsertCropObtainCraft(obtainInfoList, itemId)
+
+    
     local itemCfg = Tables.itemTable:GetValue(itemId)
     if itemCfg.obtainWayIds then
         for k, obtainWayId in pairs(itemCfg.obtainWayIds) do
@@ -202,6 +205,9 @@ ItemObtainWays._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.Table) <
     if canCraft and hasFormula then
         self:_InsertCrafts(obtainInfoList, craftInfoList)
     end
+
+    
+    self:_InsertInnCraft(obtainInfoList, itemId)
 
     
     local manualConvertInfo, mapObtainBlock
@@ -343,6 +349,34 @@ ItemObtainWays._InsertCrafts = HL.Method(HL.Table, HL.Table) << function(self, o
             table.insert(obtainInfoList, groupInfo)
         end
     end
+end
+
+ItemObtainWays._InsertInnCraft = HL.Method(HL.Table, HL.String) << function(self, obtainInfoList, itemId)
+    local craftInfo = InnUtils.getDishCraftInfo(itemId)
+    if not craftInfo then
+        return
+    end
+
+    table.insert(obtainInfoList, {
+        name = Language.LUA_OBTAIN_WAYS_INN_CRAFT_NAME,
+        crafts = { craftInfo },
+        iconFolder = UIConst.UI_SPRITE_ITEM_TIPS,
+        iconId = UIConst.UI_INN_CRAFT_ICON_ID,
+        sortId = -1,
+    })
+end
+
+ItemObtainWays._InsertCropObtainCraft = HL.Method(HL.Table, HL.String) << function(self, obtainInfoList, itemId)
+    local obtainInfo = FactoryUtils.getCropObtainWayInfo(itemId)
+    if not obtainInfo then
+        return
+    end
+    if self.m_jumpExtraArgs and obtainInfo.phaseArgs then
+        obtainInfo.phaseArgs = lume.merge(obtainInfo.phaseArgs, self.m_jumpExtraArgs)
+    elseif self.m_jumpExtraArgs and obtainInfo.phaseId then
+        obtainInfo.phaseArgs = lume.merge({}, self.m_jumpExtraArgs)
+    end
+    table.insert(obtainInfoList, obtainInfo)
 end
 
 

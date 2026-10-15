@@ -162,7 +162,7 @@ SquadIconCtrl._OnTeamChange = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
             showFixed = true
             showTrial = false
         elseif formationData ~= nil and formationData.chars ~= nil then
-            local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(squadSlots[CSIndex(i)].charInstId)
+            local charInfo = squadSlots[CSIndex(i)].charInfo
             if charInfo.charType == GEnums.CharType.Trial then
                 for j = 1, #formationData.chars do
                     if formationData.chars[j].charId == charInfo.templateId then
@@ -242,7 +242,7 @@ SquadIconCtrl._OnManualCraftItemLevelUp = HL.Method(HL.Table) << function(self, 
         local squadSlots = GameInstance.player.squadManager.curSquad.slots
         for j = 1, squadSlots.Count do
             local squadSlot = squadSlots[CSIndex(j)]
-            local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(squadSlot.charInstId)
+            local charInfo = squadSlot.charInfo
             if charInfo.tacticalItemId == itemId then
                 local squadIcon = self:_GetItem(j)
                 if squadIcon ~= nil then

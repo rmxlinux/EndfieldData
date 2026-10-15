@@ -20,9 +20,7 @@ ActivityCoinCtrl.m_activityId = HL.Field(HL.String) << ''
 
 ActivityCoinCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
-    args.showCalendar = true
     args.showMedal = true
-    args.calendarInstructionId = self.view.config.CALENDAR_ID
     args.jumpBtnCallBack = function()
         local dungeonId = ActivityUtils.RacingDungeonGetGameId(self.m_activityId)
         PhaseManager:GoToPhase(PhaseId.CharFormation, {

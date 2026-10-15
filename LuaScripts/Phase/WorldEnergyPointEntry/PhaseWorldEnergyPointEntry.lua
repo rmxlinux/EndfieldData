@@ -34,15 +34,25 @@ end
 PhaseWorldEnergyPointEntry._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local gameGroupId, blendCamCfg = unpack(self.arg)
 
+    self.m_gameGroupId = gameGroupId
+    self.m_blendCamCfg = blendCamCfg
+
+    
+    if InputManagerInst.inChangingInputDevice then
+        return
+    end
+
     if blendCamCfg then
         GameAction.BlendToRelativeCamera(blendCamCfg)
     end
-
-    self.m_gameGroupId = gameGroupId
-    self.m_blendCamCfg = blendCamCfg
 end
 
 PhaseWorldEnergyPointEntry._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    
+    if InputManagerInst.inChangingInputDevice then
+        return
+    end
+
     if not self.m_blendCamCfg then
         return
     end
@@ -98,4 +108,3 @@ end
 
 
 HL.Commit(PhaseWorldEnergyPointEntry)
-

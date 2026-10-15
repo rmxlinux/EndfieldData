@@ -251,6 +251,7 @@ LoadConst = function(reload)
     DungeonConst = require_ex("Const/DungeonConst", reload)
     ActivityConst = require_ex("Const/ActivityConst", reload)
     CashShopConst = require_ex("Const/CashShopConst", reload)
+    InnConst = require_ex("Const/InnConst", reload)
     CharPotentialConst = require_ex("Const/CharPotentialConst", reload)
     DialogConst = require_ex("Const/DialogConst", reload)
     GameSettingConst = require_ex("Const/GameSettingConst", reload)
@@ -298,6 +299,8 @@ ContingencyContractUtils = require_ex("Common/Utils/ContingencyContractUtils")
 SeasonTowerUtils = require_ex("Common/Utils/SeasonTowerUtils")
 GameSettingUtils = require_ex("Common/Utils/GameSettingUtils")
 TyphoeaArcheryUtils = require_ex("Common/Utils/TyphoeaArcheryUtils")
+InnUtils = require_ex("Common/Utils/InnUtils")
+HyperTextNaviHelper = require_ex('Common/Utils/UI/HyperTextNaviHelper')
 
 LuaObjectMemoryLeakChecker = require_ex("Common/Core/LuaObjectMemoryLeakChecker")()
 
@@ -378,6 +381,3 @@ end
 logger.info("Lua init finished.")
 
 Notify(MessageConst.ON_LUA_INIT_FINISHED)
-
-xlua.private_accessible(typeof(CS.MemoryPack.MemoryPackFormatterProvider))
-CS.MemoryPack.MemoryPackFormatterProvider.formatters:TryAdd(typeof(CS.Beyond.Gameplay.Actions.SendLuaEvent1),CS.Beyond.Gameplay.Actions.SendLuaEvent1.SendLuaEvent1Formatter())

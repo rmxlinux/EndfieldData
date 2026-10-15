@@ -1,7 +1,7 @@
 {
   "abilityEventAction": [],
   "addingCooldown": {
-    "blackboardKey": "",
+    "blackboardKey": null,
     "useBlackboardKey": false,
     "value": 0.0
   },
@@ -15,7 +15,7 @@
       "isDynamic": true,
       "key": "timer",
       "valueDouble": 0.0,
-      "valueStr": ""
+      "valueStr": null
     }
   ],
   "buffEventAction": [
@@ -40,59 +40,59 @@
                 "targetMountPoint": 0
               },
               "center": 0,
-              "centerContextKey": "",
+              "centerContextKey": null,
               "centerMountPoint": 0,
               "centerToGround": true,
-              "contextKey": "",
+              "contextKey": null,
               "selectorData": {
                 "finderData": {
                   "$type": "Beyond.Gameplay.Core.Selector+RandomPointFinder+Data, Gameplay.Beyond",
                   "angle": {
-                    "blackboardKey": "",
+                    "blackboardKey": null,
                     "useBlackboardKey": false,
                     "value": 0.0
                   },
                   "extent2D": {
                     "x": {
-                      "blackboardKey": "",
+                      "blackboardKey": null,
                       "useBlackboardKey": false,
                       "value": 0.0
                     },
                     "y": {
-                      "blackboardKey": "",
+                      "blackboardKey": null,
                       "useBlackboardKey": false,
                       "value": 0.0
                     }
                   },
                   "localPlaneRotationEulers": {
                     "x": {
-                      "blackboardKey": "",
+                      "blackboardKey": null,
                       "useBlackboardKey": false,
                       "value": 0.0
                     },
                     "y": {
-                      "blackboardKey": "",
+                      "blackboardKey": null,
                       "useBlackboardKey": false,
                       "value": 0.0
                     },
                     "z": {
-                      "blackboardKey": "",
+                      "blackboardKey": null,
                       "useBlackboardKey": false,
                       "value": 0.0
                     }
                   },
                   "minRadius": {
-                    "blackboardKey": "",
+                    "blackboardKey": null,
                     "useBlackboardKey": false,
                     "value": 30.0
                   },
                   "pointNum": {
-                    "blackboardKey": "",
+                    "blackboardKey": null,
                     "useBlackboardKey": false,
                     "value": 1.0
                   },
                   "radius": {
-                    "blackboardKey": "",
+                    "blackboardKey": null,
                     "useBlackboardKey": false,
                     "value": 10.0
                   },
@@ -105,7 +105,7 @@
               },
               "selectorDirection": 0,
               "selectorOwner": 1,
-              "selectorOwnerContextKey": "",
+              "selectorOwnerContextKey": null,
               "target": 0,
               "targetGroupKey": "random_point_self",
               "useAdvancedDirectionSetting": false,
@@ -127,7 +127,7 @@
                     "priorityOffset": 0,
                     "serverActionIndex": 2,
                     "prob": {
-                      "blackboardKey": "",
+                      "blackboardKey": null,
                       "useBlackboardKey": false,
                       "value": 0.5
                     }
@@ -147,7 +147,7 @@
                     "abilityEntityId": "abilityentity_eny_0111_rytokenw",
                     "abilityEntitySkillId": "eny_0111_rytokenw_skill_boom",
                     "abilityEntitySource": 0,
-                    "abilityEntitySourceContextKey": "",
+                    "abilityEntitySourceContextKey": null,
                     "abilityEntityTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -159,11 +159,11 @@
                         "target": null,
                         "targetMountPoint": 0
                       },
-                      "centerContextKey": "",
+                      "centerContextKey": null,
                       "centerToGround": false,
                       "centerType": 0,
                       "enableAdvancedDirection": false,
-                      "ownerContextKey": "",
+                      "ownerContextKey": null,
                       "selectorData": {
                         "finderData": null,
                         "postProcessorData": [],
@@ -172,8 +172,8 @@
                       "selectorDirection": 0,
                       "selectorOwner": 1,
                       "target": 0,
-                      "targetContextKey": "",
-                      "targetGroupKey": "",
+                      "targetContextKey": null,
+                      "targetGroupKey": null,
                       "targetSource": 0
                     },
                     "advancedDirectionSetting": {
@@ -192,6 +192,7 @@
                     "assignEntityBlackboard": false,
                     "assignPairs": [],
                     "attachToClosestMeshPoint": false,
+                    "attachWeaponModel": false,
                     "bornAt": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -203,11 +204,11 @@
                         "target": null,
                         "targetMountPoint": 0
                       },
-                      "centerContextKey": "",
+                      "centerContextKey": null,
                       "centerToGround": false,
                       "centerType": 0,
                       "enableAdvancedDirection": false,
-                      "ownerContextKey": "",
+                      "ownerContextKey": null,
                       "selectorData": {
                         "finderData": null,
                         "postProcessorData": [],
@@ -216,7 +217,7 @@
                       "selectorDirection": 0,
                       "selectorOwner": 1,
                       "target": 0,
-                      "targetContextKey": "",
+                      "targetContextKey": null,
                       "targetGroupKey": "random_point_self",
                       "targetSource": 2
                     },
@@ -227,7 +228,7 @@
                       "z": 0.0
                     },
                     "bornRotation": 0,
-                    "bornRotationContextTarget": "",
+                    "bornRotationContextTarget": null,
                     "bornRotationOffset": {
                       "x": 0.0,
                       "y": 0.0,
@@ -236,11 +237,12 @@
                     },
                     "checkNavmeshAreaName": false,
                     "clampToXZPlane": false,
-                    "contextKey": "",
+                    "contextKey": null,
                     "dieOnEnd": false,
                     "dieWhenSourceDie": false,
+                    "dieWhenTargetDie": false,
                     "duration": {
-                      "blackboardKey": "",
+                      "blackboardKey": null,
                       "useBlackboardKey": false,
                       "value": 0.0
                     },
@@ -249,10 +251,12 @@
                     "inheritSourceSkillCastId": true,
                     "overrideDuration": false,
                     "pauseEffectOnEnd": false,
+                    "readFullPotentialExtraEffect": false,
                     "saveToContext": false,
                     "setAbilityEntitySource": true,
                     "setAbilityEntityTarget": false,
                     "useAdvancedDirectionSetting": false,
+                    "weaponIndex": 0,
                     "yRotateFromBoneToCurPos": false
                   }
                 ],
@@ -270,7 +274,7 @@
                     "abilityEntityId": "abilityentity_eny_0110_rytoken",
                     "abilityEntitySkillId": "abilityentity_0110_rytoken_boom_abilityrange",
                     "abilityEntitySource": 0,
-                    "abilityEntitySourceContextKey": "",
+                    "abilityEntitySourceContextKey": null,
                     "abilityEntityTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -282,11 +286,11 @@
                         "target": null,
                         "targetMountPoint": 0
                       },
-                      "centerContextKey": "",
+                      "centerContextKey": null,
                       "centerToGround": false,
                       "centerType": 0,
                       "enableAdvancedDirection": false,
-                      "ownerContextKey": "",
+                      "ownerContextKey": null,
                       "selectorData": {
                         "finderData": null,
                         "postProcessorData": [],
@@ -295,8 +299,8 @@
                       "selectorDirection": 0,
                       "selectorOwner": 1,
                       "target": 0,
-                      "targetContextKey": "",
-                      "targetGroupKey": "",
+                      "targetContextKey": null,
+                      "targetGroupKey": null,
                       "targetSource": 0
                     },
                     "advancedDirectionSetting": {
@@ -315,6 +319,7 @@
                     "assignEntityBlackboard": false,
                     "assignPairs": [],
                     "attachToClosestMeshPoint": false,
+                    "attachWeaponModel": false,
                     "bornAt": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -326,11 +331,11 @@
                         "target": null,
                         "targetMountPoint": 0
                       },
-                      "centerContextKey": "",
+                      "centerContextKey": null,
                       "centerToGround": false,
                       "centerType": 0,
                       "enableAdvancedDirection": false,
-                      "ownerContextKey": "",
+                      "ownerContextKey": null,
                       "selectorData": {
                         "finderData": null,
                         "postProcessorData": [],
@@ -339,7 +344,7 @@
                       "selectorDirection": 0,
                       "selectorOwner": 1,
                       "target": 0,
-                      "targetContextKey": "",
+                      "targetContextKey": null,
                       "targetGroupKey": "random_point_self",
                       "targetSource": 2
                     },
@@ -350,7 +355,7 @@
                       "z": 0.0
                     },
                     "bornRotation": 0,
-                    "bornRotationContextTarget": "",
+                    "bornRotationContextTarget": null,
                     "bornRotationOffset": {
                       "x": 0.0,
                       "y": 0.0,
@@ -359,11 +364,12 @@
                     },
                     "checkNavmeshAreaName": false,
                     "clampToXZPlane": false,
-                    "contextKey": "",
+                    "contextKey": null,
                     "dieOnEnd": false,
                     "dieWhenSourceDie": false,
+                    "dieWhenTargetDie": false,
                     "duration": {
-                      "blackboardKey": "",
+                      "blackboardKey": null,
                       "useBlackboardKey": false,
                       "value": 0.0
                     },
@@ -372,10 +378,12 @@
                     "inheritSourceSkillCastId": true,
                     "overrideDuration": false,
                     "pauseEffectOnEnd": false,
+                    "readFullPotentialExtraEffect": false,
                     "saveToContext": false,
                     "setAbilityEntitySource": true,
                     "setAbilityEntityTarget": false,
                     "useAdvancedDirectionSetting": false,
+                    "weaponIndex": 0,
                     "yRotateFromBoneToCurPos": false
                   }
                 ],
@@ -397,7 +405,7 @@
     "dispelledLevel": 0
   },
   "duration": {
-    "blackboardKey": "",
+    "blackboardKey": null,
     "useBlackboardKey": false,
     "value": 1.5
   },
@@ -412,7 +420,7 @@
       "priorityValue": 0,
       "priorityEnum": 100
     },
-    "_spritePath": "",
+    "_spritePath": null,
     "abnormalColorType": 0,
     "blinkInMainCharHpBar": false,
     "charHpBarVfxType": 0,
@@ -425,6 +433,7 @@
     "showInHeadBarAttached": false,
     "showInHeadBarCommon": false,
     "showInSquadIcon": false,
+    "showProgressInEnemyHeadBar": false,
     "showProgressInHpBar": false,
     "showProgressInNormalSkillButton": false,
     "showProgressInUltimateSkillButton": false,
@@ -437,7 +446,7 @@
   "ignoreTagImmune": false,
   "lifeType": 0,
   "maxTriggerCnt": {
-    "blackboardKey": "",
+    "blackboardKey": null,
     "useBlackboardKey": false,
     "value": 1
   },
@@ -448,12 +457,12 @@
     "identifierType": 0,
     "isNeedStackEffect": false,
     "maxStackCnt": 0,
-    "maxStackCntKey": "",
+    "maxStackCntKey": null,
     "negatePriority": false,
     "priority": 0.0,
-    "priorityKey": "",
+    "priorityKey": null,
     "stackEffects": [],
-    "stackingKey": "",
+    "stackingKey": null,
     "stackingType": 0,
     "useMaxStackCntKey": false,
     "usePriorityKey": false

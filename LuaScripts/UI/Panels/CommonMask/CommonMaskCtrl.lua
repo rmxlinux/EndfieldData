@@ -453,7 +453,7 @@ CommonMaskCtrl._RefreshTextCor = HL.Method() << function(self)
         if BEYOND_DEBUG then
             if data.useCustomText then
                 rawText = string.format("<color=red>[Dev Only] Debug Custom Text:</color> %s", data.customText)
-                calculatedDuration = UIUtils.getTextShowDuration(data.customText, speed)
+                calculatedDuration = Tables.cinematicConst.blackScreenTextMinDuration
             else
                 if not res then
                     rawText = key

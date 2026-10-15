@@ -18,6 +18,9 @@ SpaceshipRoomCommonInfo.m_hasPersonStationButNoneWorking = HL.Field(HL.Boolean) 
 
 SpaceshipRoomCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
     self.m_genPersonnelCellCache = UIUtils.genCellCache(self.view.ssRoomPersonnelCell)
+    self:GetUICtrl():BindInputPlayerAction("ss_occupancy_manage", function()
+        self:_OnPersonnelInfoClick()
+    end, self.view.personnelList.groupId)
 
     self:RegisterMessage(MessageConst.SPACESHIP_ON_SYNC_ROOM_STATION, function()
         if GameInstance.player.spaceship.isViewingFriend then
@@ -29,6 +32,13 @@ SpaceshipRoomCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
     self:RegisterMessage(MessageConst.SPACESHIP_ON_ROOM_LEVEL_UP, function(args)
         self:OnSpaceshipLevelUp(args)
     end)
+
+    self:RegisterMessage(MessageConst.SPACESHIP_ON_EDIT_SCHEDULE, function()
+        if GameInstance.player.spaceship.isViewingFriend then
+            return
+        end
+        self:_UpdateStationState()
+    end)
 end
 
 SpaceshipRoomCommonInfo.InitSpaceshipRoomCommonInfo = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean))
@@ -38,8 +48,10 @@ SpaceshipRoomCommonInfo.InitSpaceshipRoomCommonInfo = HL.Method(HL.String, HL.Op
     self.m_roomId = roomId
     local roomType = SpaceshipUtils.getRoomTypeByRoomId(roomId)
     local roomTypeData = Tables.spaceshipRoomTypeTable[roomType]
+    local roomColor = UIUtils.getColorByString(roomTypeData.color)
     self.view.icon:LoadSprite(UIConst.UI_SPRITE_SPACESHIP_ROOM, roomTypeData.icon)
-    self.view.deco.color = UIUtils.getColorByString(roomTypeData.color)
+    self.view.deco.color = roomColor
+    self.view.roomBgImg.color = roomColor
 
     self.view.contentBtn.onClick:AddListener(function()
         GameInstance.player.spaceship:SetCurSpaceshipRoomCamConfig(roomId, CS.Beyond.Gameplay.SpaceshipSystem.UPGRADE_CAM_BLEND_KEY)
@@ -76,13 +88,18 @@ end
 
 
 SpaceshipRoomCommonInfo._UpdateStationState = HL.Method() << function(self)
-    self:_UpdateLvInfo()
-    self:_UpdateStationPersonnelInfo()
-    self:_UpdateRoomAttrInfo()
+    local _, roomInfo = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
+    self:_UpdatePersonnelNodeState(roomInfo)
+    self:_UpdateLvInfo(roomInfo)
+    self:_UpdateStationPersonnelInfo(roomInfo)
+    self:_UpdateRoomAttrInfo(roomInfo)
 end
 
-SpaceshipRoomCommonInfo._UpdateLvInfo = HL.Method() << function(self)
-    local _, roomInfo = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
+SpaceshipRoomCommonInfo._UpdateLvInfo = HL.Method(HL.Opt(HL.Any)) << function(self, roomInfo)
+    if not roomInfo then
+        local _, curRoomInfo = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
+        roomInfo = curRoomInfo
+    end
     self.view.lvDotNode:InitLvDotNode(roomInfo.lv, roomInfo.maxLv, self.view.deco.color)
 
     local showTxt = roomInfo.lv == roomInfo.maxLv and Language.LUA_SPACESHIP_ROOM_MAX_LV_DESC
@@ -90,9 +107,13 @@ SpaceshipRoomCommonInfo._UpdateLvInfo = HL.Method() << function(self)
     self.view.lvStateTxt.text = showTxt
 end
 
-SpaceshipRoomCommonInfo._UpdateStationPersonnelInfo = HL.Method() << function(self)
+SpaceshipRoomCommonInfo._UpdateStationPersonnelInfo = HL.Method(HL.Opt(HL.Any)) << function(self, roomInfo)
     local spaceship = GameInstance.player.spaceship
-    local _, roomInfo = spaceship:TryGetRoom(self.m_roomId)
+    if not roomInfo then
+        local _, curRoomInfo = spaceship:TryGetRoom(self.m_roomId)
+        roomInfo = curRoomInfo
+        self:_UpdatePersonnelNodeState(roomInfo)
+    end
     local stationCharNum = roomInfo.stationedCharList.Count
     local maxStationCharNum = roomInfo.maxStationCharNum
     self.view.numberTxt.text = string.format(Language.LUA_SPACESHIP_ROOM_COMMON_INFO_STATIONED_NUMBER_FORMAT,
@@ -183,12 +204,35 @@ SpaceshipRoomCommonInfo._UpdateStationPersonnelInfo = HL.Method() << function(se
 
 end
 
-SpaceshipRoomCommonInfo._OnPersonnelInfoClick = HL.Method() << function(self)
-    PhaseManager:OpenPhase(PhaseId.SpaceshipStation, { roomId = self.m_roomId })
+SpaceshipRoomCommonInfo._UpdatePersonnelNodeState = HL.Method(HL.Any) << function(self, roomInfo)
+    local roomColor = SpaceshipUtils.getRoomColor(self.m_roomId)
+    self.view.roomBgImg.color = roomColor
+
+    local scheduleEnabled = SpaceshipUtils.isScheduleUnlocked()
+        and SpaceshipUtils.isRoomScheduleSupported(self.m_roomId)
+        and not SpaceshipUtils.isSingleTeamMode(self.m_roomId)
+    if not scheduleEnabled then
+        self.view.personnelNode:SetState("Single")
+        return
+    end
+
+    local TeamType = CS.Proto.SpaceshipCharTeamType
+    local curTeam = GameInstance.player.spaceship:GetRoomCurrentWorkingTeam(self.m_roomId)
+    self.view.personnelNode:SetState(curTeam == TeamType.B and "B" or "A")
+    self.view.personnelNode:SetState(roomInfo.schedule and roomInfo.schedule.AutoSchedule and "AutoOpen" or "AutoClose")
 end
 
-SpaceshipRoomCommonInfo._UpdateRoomAttrInfo = HL.Method() << function(self)
-    local _, roomInfo = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
+SpaceshipRoomCommonInfo._OnPersonnelInfoClick = HL.Method() << function(self)
+    local phaseId = SpaceshipUtils.isSingleTeamMode(self.m_roomId) and PhaseId.SpaceshipStation
+        or PhaseId.SpaceshipSchedule
+    PhaseManager:OpenPhase(phaseId, { roomId = self.m_roomId })
+end
+
+SpaceshipRoomCommonInfo._UpdateRoomAttrInfo = HL.Method(HL.Opt(HL.Any)) << function(self, roomInfo)
+    if not roomInfo then
+        local _, curRoomInfo = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
+        roomInfo = curRoomInfo
+    end
     self.view.ssRoomEffectInfoNode:InitSSRoomEffectInfoNode({
         attrsMap = roomInfo.attrsMap,
         color = SpaceshipUtils.getRoomColor(self.m_roomId),
@@ -205,8 +249,10 @@ SpaceshipRoomCommonInfo.OnSpaceshipLevelUp = HL.Method(HL.Any) << function(self,
         return
     end
 
-    self:_UpdateLvInfo()
-    self:_UpdateStationPersonnelInfo()
+    local _, roomInfo = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
+    self:_UpdatePersonnelNodeState(roomInfo)
+    self:_UpdateLvInfo(roomInfo)
+    self:_UpdateStationPersonnelInfo(roomInfo)
 end
 
 HL.Commit(SpaceshipRoomCommonInfo)

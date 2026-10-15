@@ -42,7 +42,7 @@ DONT_DESTROY_ON_CLOSE_MAP = {
     "ControllerHint",
     "CommonPopUp",
     "Guide",
-    "FacMiniPowerHud",
+    "FacTopHud",
     "FacBuildMode",
     "FacDestroyMode",
     "WaterDroneAim",
@@ -61,4 +61,5 @@ DONT_DESTROY_ON_CLOSE_MAP = {
     "GeneralTracker",
     "Radio",
     "LevelCamera",
+    "HeadLabel",
 }

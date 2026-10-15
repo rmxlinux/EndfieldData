@@ -84,6 +84,10 @@ FacConditionerSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             if not FactoryUtils.canDelBuilding(self.m_nodeId, true) then
                 return
             end
+            
+            if PhaseManager:CheckIsInTransition() then
+                return
+            end
             PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
             GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), self.m_nodeId)
         end
@@ -139,6 +143,11 @@ FacConditionerSelectCtrl.OnClose = HL.Override() << function(self)
     self.m_addSpeedBtnPressCoroutine = self:_ClearCoroutine(self.m_addSpeedBtnPressCoroutine)
     self.m_reduceSpeedBtnPressCoroutine = self:_ClearCoroutine(self.m_reduceSpeedBtnPressCoroutine)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_nodeId)
+end
+
+FacConditionerSelectCtrl.OnShow = HL.Override() << function(self)
+    self:_RefreshThroughCountState()
+    self:_RefreshSpeedLimitState()
 end
 
 FacConditionerSelectCtrl._InitValveNode = HL.Method() << function(self)

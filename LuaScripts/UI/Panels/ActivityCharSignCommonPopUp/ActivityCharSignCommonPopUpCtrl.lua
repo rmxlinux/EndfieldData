@@ -36,6 +36,10 @@ ActivityCharSignCommonPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     if suc then
         local path = string.format(UIConst.UI_ACTIVITY_CHECK_IN_PREFAB_PATH, info.popupPanelWidgetName)
         local prefab = self:LoadGameObject(path)
+        if prefab == nil then
+            logger.critical("ActivityCharSignCommonPopUpCtrl: popupPanelWidgetName 对应的预制体不存在，请 @活动策划 解决。activityId:", args.activityId, "popupPanelWidgetName:", info.popupPanelWidgetName, "path:", path)
+            return
+        end
         if self.m_checkInPrefab then
             CSUtils.ClearUIComponents(self.m_checkInPrefab)
             GameObject.DestroyImmediate(self.m_checkInPrefab)
@@ -64,6 +68,10 @@ end
 ActivityCharSignCommonPopUpCtrl.m_waitingForClose = HL.Field(HL.Boolean) << false
 
 ActivityCharSignCommonPopUpCtrl._Close = HL.Method() << function(self)
+    if not self.m_checkInWidget then
+        self.m_closeCallback()
+        return
+    end
     if self.m_checkInWidget.view.info.view.animationWrapper.curState == UIConst.UI_ANIMATION_WRAPPER_STATE.Out then
         return
     end

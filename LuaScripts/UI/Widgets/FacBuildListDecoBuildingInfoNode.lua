@@ -28,6 +28,8 @@ FacBuildListDecoBuildingInfoNode.m_setQuickBarBindingId = HL.Field(HL.Number) <<
 
 FacBuildListDecoBuildingInfoNode.s_lastSelectId = HL.StaticField(HL.String) << ""
 
+FacBuildListDecoBuildingInfoNode.m_pendingNaviLuaIndex = HL.Field(HL.Number) << -1
+
 
 FacBuildListDecoBuildingInfoNode._OnFirstTimeInit = HL.Override() << function(self)
     self:_PrepareDecoBuildingData()
@@ -55,6 +57,9 @@ end
 
 FacBuildListDecoBuildingInfoNode.OnShow = HL.Method() << function(self)
     self.m_isShow = true
+    if self.m_filteredDecos ~= nil then
+        self:_RefreshItemList()
+    end
     self:_NaviToDecoList()
     if #self.m_filteredDecos > 0 then
         local info = self.m_filteredDecos[LuaIndex(self.view.scrollList.curSelectedIndex)]
@@ -73,6 +78,7 @@ FacBuildListDecoBuildingInfoNode.OnHide = HL.Method() << function(self)
         end
     end
     self.m_isShow = false
+    self.m_pendingNaviLuaIndex = -1
 end
 
 FacBuildListDecoBuildingInfoNode.OnClose = HL.Method() << function(self)
@@ -80,6 +86,7 @@ FacBuildListDecoBuildingInfoNode.OnClose = HL.Method() << function(self)
         self:SetItemRead()
     end
     self.m_isShow = false
+    self.m_pendingNaviLuaIndex = -1
     MessageManager:UnregisterAll(self)
 end
 
@@ -92,6 +99,7 @@ FacBuildListDecoBuildingInfoNode._PrepareDecoBuildingData = HL.Method() << funct
             local result = GameInstance.player.remoteFactory.core:GetDecoBuildingCount(buildingId)
             table.insert(self.m_decoBuilldingInfos, {
                 id = id,
+                buildingId = buildingId,
                 sortId1= itemInfo.sortId1,
                 sortId2 = itemInfo.sortId2,
                 rarity = itemInfo.rarity,
@@ -159,16 +167,16 @@ FacBuildListDecoBuildingInfoNode._RefreshItemList = HL.Method() << function(self
 end
 
 FacBuildListDecoBuildingInfoNode._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
-    local id = self.m_filteredDecos[index].id
+    local info = self.m_filteredDecos[index]
+    local id = info.id
     cell:InitItemSlot({
         id = id,
     }, function()
         self.view.scrollList:SetSelectedIndex(CSIndex(index))
     end)
 
-    local buildingId = Tables.factoryDecoBuildingTable[id].buildingId
     local remoteFactoryCore = GameInstance.player.remoteFactory.core
-    local result, gotCnt, placedCnt = remoteFactoryCore:GetDecoBuildingCount(buildingId)
+    local result, gotCnt, placedCnt = remoteFactoryCore:GetDecoBuildingCount(info.buildingId)
     if not result then
         cell.view.stateController:SetState("Lock")
     elseif gotCnt == 0 or Utils.isInBlackbox() then
@@ -199,6 +207,10 @@ FacBuildListDecoBuildingInfoNode._OnUpdateCell = HL.Method(HL.Any, HL.Number) <<
                 self.view.scrollList:SetSelectedIndex(CSIndex(index))
             end
         end
+        if self.m_pendingNaviLuaIndex == index then
+            self.m_pendingNaviLuaIndex = -1
+            self:SetNaviTarget(cell.view.inputNaviDecorator)
+        end
     else
         local isSelected = index == LuaIndex(self.view.scrollList.curSelectedIndex)
         cell.item:SetSelected(isSelected)
@@ -208,7 +220,10 @@ end
 FacBuildListDecoBuildingInfoNode._OnClickItem = HL.Method(HL.Number) << function(self, index)
     self:_RefreshSelectedInfo()
     local info = self.m_filteredDecos[index]
-    RedDotUtils.setDecoBuildingFirstGetRead(info.id)
+    local result, gotCnt, placedCnt = GameInstance.player.remoteFactory.core:GetDecoBuildingCount(info.buildingId)
+    if result and gotCnt + placedCnt > 0 then
+        RedDotUtils.setDecoBuildingFirstGetRead(info.id)
+    end
     RedDotUtils.setDecoBuildingNewRead(info.id)
     Notify(MessageConst.ON_FAC_DECO_BUILDING_RED_DOT_REFRESH)
     self.view.infoNode.animationWrapper:PlayInAnimation()
@@ -462,9 +477,18 @@ FacBuildListDecoBuildingInfoNode._NaviToDecoList = HL.Method() << function(self)
     if not self.m_isShow or self.m_getItemCell == nil then
         return
     end
-    local slot = self.m_getItemCell(LuaIndex(self.view.scrollList.curSelectedIndex))
+    local csIndex = self.view.scrollList.curSelectedIndex
+    local luaIndex = LuaIndex(csIndex)
+    local slot = self.m_getItemCell(luaIndex)
+    if slot == nil and csIndex >= 0 then
+        self.view.scrollList:ScrollToIndex(csIndex, true)
+        slot = self.m_getItemCell(luaIndex)
+    end
     if slot ~= nil then
+        self.m_pendingNaviLuaIndex = -1
         self:SetNaviTarget(slot.view.inputNaviDecorator)
+    elseif csIndex >= 0 then
+        self.m_pendingNaviLuaIndex = luaIndex
     end
 end
 
@@ -519,8 +543,7 @@ FacBuildListDecoBuildingInfoNode._OnGetDecorate = HL.Method() << function(self)
     self.m_isGettingDecorate = true
     local beforeIndex = LuaIndex(self.view.scrollList.curSelectedIndex)
     local info = self.m_filteredDecos[beforeIndex]
-    local buildingId = Tables.factoryDecoBuildingTable[info.id].buildingId
-    local result = GameInstance.player.remoteFactory.core:GetDecoBuildingCount(buildingId)
+    local result = GameInstance.player.remoteFactory.core:GetDecoBuildingCount(info.buildingId)
     self.m_filteredDecos[beforeIndex].unlock = result
 
     self:_UpdateShowListInfos(self.view.sortNodeUp:GetCurSortData(), self.view.sortNodeUp.isIncremental)

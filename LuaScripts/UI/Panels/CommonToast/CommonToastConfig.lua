@@ -70,6 +70,8 @@ end
 local cfg = {
     [CS.Proto.CODE.ErrItemBagBagOverflowToFactoryDepot] = processItemOverflow,
     [CS.Proto.CODE.ErrItemBagDestroyOverflowItems] = processItemOverflow,
+    [CS.Proto.CODE.ErrItemBagFactoryDepotOverflowToBag] = processItemOverflow,
+    [CS.Proto.CODE.ErrItemBagFactoryDepotPutInSuccess] = processItemOverflow,
 
     [CS.Proto.CODE.ErrUgcpunishedBanChangeName] = processUGCBanned,
     [CS.Proto.CODE.ErrUgcpunishedBanChangeSignature] = processUGCBanned,

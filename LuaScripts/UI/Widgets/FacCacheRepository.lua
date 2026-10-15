@@ -296,8 +296,7 @@ FacCacheRepository._RefreshRepositoryItemInfoList = HL.Method(HL.Boolean) << fun
             dirtyItemIdList[id] = true
         end
     end
-    
-    if self.m_forceUpdateOutRepoWithFormula and self.m_lastFormulaId:isEmpty() and self.m_currFormulaId:isEmpty() then
+    if self.m_lastFormulaId:isEmpty() and self.m_currFormulaId:isEmpty() then
         local toRemoveKey = {}
         for k, v in pairs(self.m_itemInfoList) do
             if v.count == 0 then

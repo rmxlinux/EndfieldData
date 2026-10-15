@@ -162,7 +162,7 @@ end
 RemoteCommCtrl._RefreshSingleBG = HL.Method(HL.Table, HL.Any) << function(self, cell, imageId)
     if imageId then
         local spritePath = UIUtils.getSpritePath(UIConst.UI_SPRITE_VIDEO_COVER, imageId)
-        local res = ResourceManager.CheckExists(spritePath)
+        local res = self.loader:CheckExists(spritePath)
 
         if res then
             cell.banner:LoadSprite(UIConst.UI_SPRITE_VIDEO_COVER, imageId)

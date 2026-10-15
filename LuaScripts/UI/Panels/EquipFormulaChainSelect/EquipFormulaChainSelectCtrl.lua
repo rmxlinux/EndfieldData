@@ -19,6 +19,12 @@ EquipFormulaChainSelectCtrl.m_selectedCell = HL.Field(HL.Any)
 
 EquipFormulaChainSelectCtrl.m_equipTechSystem = HL.Field(HL.Userdata)
 
+EquipFormulaChainSelectCtrl.m_chainChangeWay = HL.Field(HL.Userdata)
+
+EquipFormulaChainSelectCtrl.m_oldChainId = HL.Field(HL.Int) << 0
+
+EquipFormulaChainSelectCtrl.m_remainState = HL.Field(HL.Table)
+
 
 
 
@@ -28,12 +34,14 @@ EquipFormulaChainSelectCtrl.m_equipTechSystem = HL.Field(HL.Userdata)
 
 
 EquipFormulaChainSelectCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
+    [MessageConst.ON_EQUIP_FORMULA_CHAIN_CHANGED] = '_OnFormulaChainChanged',
 }
 
 
 EquipFormulaChainSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_curFormulaId = arg.formulaId or ""
+    self.m_chainChangeWay = arg.chainChangeWay
+    self.m_remainState = arg.remainState
     self.m_equipTechSystem = GameInstance.player.equipTechSystem;
 
     self:_InitAction()
@@ -50,6 +58,9 @@ end
 EquipFormulaChainSelectCtrl.OnClose = HL.Override() << function(self)
     self.m_selectedChainId = 0
     self.m_curFormulaId = ""
+    self.m_chainChangeWay = nil
+    self.m_remainState = nil
+    self.m_oldChainId = 0
 end
 
 EquipFormulaChainSelectCtrl.ClosePanel = HL.Method() << function(self)
@@ -70,7 +81,10 @@ EquipFormulaChainSelectCtrl._InitList = HL.Method() << function(self)
     if not self.m_formulaChainCellCache then
         self.m_formulaChainCellCache = UIUtils.genCellCache(self.view.formulaStateCell)
     end
+    self:_RefreshFormulaChainCells()
+end
 
+EquipFormulaChainSelectCtrl._RefreshFormulaChainCells = HL.Method() << function(self)
     local __, formulaData = Tables.EquipFormulaTable:TryGetValue(self.m_curFormulaId)
     local compatibleChainIdSet = {}
     if formulaData then
@@ -104,12 +118,14 @@ EquipFormulaChainSelectCtrl._UpdateFormulaCell = HL.Method(HL.Table, HL.Table, H
 
     local formulaCurChainId = EquipTechUtils.GetCurFormulaChainId(self.m_curFormulaId)
     local unlocked = EquipTechUtils.IsFormulaChainUnlock(chainId)
+    local isProduceMode = self.m_chainChangeWay == CS.Beyond.SDK.EventLogDefine.EventLogChainChangeWay.Produce
 
     local costInfo = EquipTechUtils.GetChainCostInfo(chainId)
     if costInfo then
         if not string.isEmpty(costInfo.costGoldId) then
             local count = chainDetail and chainDetail.costGoldNum
             cell.costItemCell1.item:InitItem({ id = costInfo.costGoldId, count = count }, true)
+            cell.costItemCell1.stateController:SetState(isProduceMode and "Possess" or "Surplus")
 
             
             if costInfo.discount and costInfo.discount >= 0 and costInfo.discount < 1 then
@@ -123,23 +139,58 @@ EquipFormulaChainSelectCtrl._UpdateFormulaCell = HL.Method(HL.Table, HL.Table, H
             end
 
             
-            local ownCount = Utils.getItemCount(costInfo.costGoldId, true, true)
-            cell.costItemCell1.ownCountTxt.text = UIUtils.setCountColor(tostring(ownCount))
+            if not isProduceMode and self.m_remainState then
+                local remainState = self.m_remainState
+                local remaining = math.max(remainState.availByResource[costInfo.costGoldId] or 0, 0)
+                local isLack = false
+                if count then
+                    isLack = remaining < count
+                end
+                cell.costItemCell1.item:UpdateCountSimple(count, isLack)
+                cell.costItemCell1.ownCountTxt.text = UIUtils.setCountColor(tostring(remaining), isLack)
+            else
+                local ownCount = Utils.getItemCount(costInfo.costGoldId, true, true)
+                cell.costItemCell1.ownCountTxt.text = UIUtils.setCountColor(tostring(ownCount))
+            end
 
             cell.costItemCell1.item:SetExtraInfo({
                 isSideTips = DeviceInfo.usingController,
+                
+                onBeforeJump = function()
+                    if DeviceInfo.usingController then
+                        cell.costItemNaviGroup:ManuallyStopFocus()
+                    end
+                end,
             })
         end
         if not string.isEmpty(costInfo.costItemId) then
             local count = chainDetail and chainDetail.costItemNum[0]
             cell.costItemCell2.item:InitItem({ id = costInfo.costItemId, count = count }, true)
+            cell.costItemCell2.stateController:SetState(isProduceMode and "Possess" or "Surplus")
 
             
-            local ownCount = Utils.getItemCount(costInfo.costItemId, true, true)
-            cell.costItemCell2.ownCountTxt.text = UIUtils.setCountColor(tostring(ownCount))
+            if not isProduceMode and self.m_remainState then
+                local remainState = self.m_remainState
+                local remaining = math.max(remainState.availByResource[costInfo.costItemId] or 0, 0)
+                local isLack = false
+                if count then
+                    isLack = remaining < count
+                end
+                cell.costItemCell2.item:UpdateCountSimple(count, isLack)
+                cell.costItemCell2.ownCountTxt.text = UIUtils.setCountColor(tostring(remaining), isLack)
+            else
+                local ownCount = Utils.getItemCount(costInfo.costItemId, true, true)
+                cell.costItemCell2.ownCountTxt.text = UIUtils.setCountColor(tostring(ownCount))
+            end
 
             cell.costItemCell2.item:SetExtraInfo({
                 isSideTips = DeviceInfo.usingController,
+                
+                onBeforeJump = function()
+                    if DeviceInfo.usingController then
+                        cell.costItemNaviGroup:ManuallyStopFocus()
+                    end
+                end,
             })
         end
     end
@@ -193,7 +244,58 @@ EquipFormulaChainSelectCtrl._UpdateFormulaCell = HL.Method(HL.Table, HL.Table, H
 end
 
 EquipFormulaChainSelectCtrl._DoChangeFormulaChain = HL.Method() << function(self)
+    
+    self.m_oldChainId = EquipTechUtils.GetCurFormulaChainId(self.m_curFormulaId)
     self.m_equipTechSystem:SetSpecificFormulaChain(self.m_curFormulaId, self.m_selectedChainId)
+end
+
+
+EquipFormulaChainSelectCtrl._OnFormulaChainChanged = HL.Method(HL.Any) << function(self, arg)
+    local mode, chainId = unpack(arg)
+    local MODE_SINGLE = CS.Proto.EQUIP_FORMULA_CHAIN_MODE.Single:GetHashCode()
+    if mode ~= MODE_SINGLE then
+        return
+    end
+    
+    if self.m_remainState then
+        local remainState = self.m_remainState
+        local selfCount = remainState.selfCount or 0
+        local _, formulaData = Tables.EquipFormulaTable:TryGetValue(self.m_curFormulaId)
+        local oldChainDetail = formulaData and EquipTechUtils.GetLevelChainDetail(formulaData.level, self.m_oldChainId)
+        if selfCount > 0 and oldChainDetail then
+            local availByResource = remainState.availByResource
+            local hasGoldCost = not string.isEmpty(oldChainDetail.costGoldId) and oldChainDetail.costGoldNum > 0
+            if hasGoldCost then
+                availByResource[oldChainDetail.costGoldId] = (availByResource[oldChainDetail.costGoldId] or 0) + selfCount * oldChainDetail.costGoldNum
+            end
+            local costItemId = (#oldChainDetail.costItemId > 0) and oldChainDetail.costItemId[0] or nil
+            local costItemNum = (#oldChainDetail.costItemNum > 0) and oldChainDetail.costItemNum[0] or 0
+            if costItemId ~= nil and costItemNum > 0 then
+                availByResource[costItemId] = (availByResource[costItemId] or 0) + selfCount * costItemNum
+            end
+        end
+        remainState.selfCount = 0
+        self:_RefreshFormulaChainCells()
+    end
+    
+    if self.m_chainChangeWay == nil then
+        return
+    end
+    EquipTechUtils.GameEventLogFactoryEquipProduceResetScript(
+        self.m_curFormulaId,
+        self.m_oldChainId,
+        chainId,
+        self.m_chainChangeWay
+    )
+end
+
+
+EquipFormulaChainSelectCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        formulaId = self.m_curFormulaId,
+        chainChangeWay = self.m_chainChangeWay,
+        remainState = self.m_remainState,
+    }
 end
 
 HL.Commit(EquipFormulaChainSelectCtrl)

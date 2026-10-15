@@ -370,6 +370,9 @@ end
 
 BlueprintContent.Refresh = HL.Method() << function(self)
     local deviceMap = {} 
+    
+    local hasExpired = not self.isSharing and not Utils.isInBlackbox()
+        and FactoryUtils.isBlueprintHasExpiredTimeLimited(self.m_csBP)
 
     if self.m_csBPInst then
         
@@ -383,7 +386,6 @@ BlueprintContent.Refresh = HL.Method() << function(self)
         
         local hasUnknowItem = false 
         local hasAbnormal = false 
-        local hasExpired = false
         local inBlackbox = Utils.isInBlackbox()
         for _, entry in pairs(self.m_csBP.buildingNodes) do
             local buildingId = entry.templateId
@@ -450,8 +452,6 @@ BlueprintContent.Refresh = HL.Method() << function(self)
         FactoryUtils.SetCreatorName(self, false, self.m_csBPInst)
         self:_RefreshLackTech()
 
-        self.view.expiredNode.gameObject:SetActive(hasExpired)
-
         self.view.lowerTechWarnNode.gameObject:SetActive(self.haveLackTechs and self.canUseBP)
 
         if hasAbnormal then
@@ -503,6 +503,8 @@ BlueprintContent.Refresh = HL.Method() << function(self)
 
         self.view.lackWarnNode.gameObject:SetActive(false)
     end
+
+    self.view.expiredNode.gameObject:SetActive(hasExpired)
 
     
     self.m_deviceInfos = {}
@@ -714,7 +716,7 @@ BlueprintContent._ToggleSelectTag = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) <<
     else
         UIUtils.PlayAnimationAndToggleActive(node.animationWrapper, active)
     end
-    self.view.tagNode.inEditHint.gameObject:SetActive(active)
+    self.view.tagNode.inEditHint.gameObject:SetActive(active and not DeviceInfo.usingController)
     if active and DeviceInfo.usingController then
         node.contentSelectableNaviGroup:ManuallyFocus()
         node.contentSelectableNaviGroup.onIsFocusedChange:RemoveAllListeners()
@@ -1255,7 +1257,11 @@ BlueprintContent._PendingShare = HL.Method() << function(self)
 end
 
 BlueprintContent.FacOnReviewBlueprint = HL.Method(HL.Table) << function(self, arg)
-    local _, status = unpack(arg)
+    local blueprintId, status = unpack(arg)
+    
+    if not self.m_csBPInst or blueprintId ~= self.m_blueprintID then
+        return
+    end
     if status == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress then
         Notify(MessageConst.SHOW_TOAST,Language.LUA_FAC_BLUEPRINT_SHARE_STATEMENT_TIP)
     end

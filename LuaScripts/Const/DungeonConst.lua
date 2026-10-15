@@ -26,6 +26,7 @@ DUNGEON_CATEGORY = {
     Story = "dungeon_story",
     Archery = "dungeon_archery",
     WulingRacing = "dungeon_wuling_racing",
+    GambleBattle = "dungeon_gamblingdungeon",     
 }
 
 DUNGEON_REWARD_TAG_STATE = {

@@ -42,8 +42,10 @@ CommonMoneyExchangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 		local args = {
 			itemId = sourceId,
 			transform = self.view.tipsBtn1.transform,
-            onBeforeJump = function()
-                PhaseManager:ExitPhaseFast(PHASE_ID)
+            onBeforeJump = function(phaseId)
+                if phaseId ~= PHASE_ID then
+                    PhaseManager:ExitPhaseFast(PHASE_ID)
+                end
             end,
 		}
 		if DeviceInfo.usingController then
@@ -59,8 +61,10 @@ CommonMoneyExchangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 		local args = {
 			itemId = targetId,
 			transform = DeviceInfo.usingController and self.view.icon2.transform or self.view.tipsBtn2.transform,
-            onBeforeJump = function()
-                PhaseManager:ExitPhaseFast(PHASE_ID)
+            onBeforeJump = function(phaseId)
+                if phaseId ~= PHASE_ID then
+                    PhaseManager:ExitPhaseFast(PHASE_ID)
+                end
             end,
 		}
 		if DeviceInfo.usingController then
@@ -98,12 +102,24 @@ CommonMoneyExchangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.numberSelector.view.reduceButton.transform:Find("KeyHint"):GetComponent("CustomUIStyle").overrideValidState = state
     end)
 
+    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+
+    self:OnPhaseRefresh(arg)
+end
+
+CommonMoneyExchangeCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
+    
+    self.view.exchangeNodeSelectableNaviGroup:ManuallyStopFocus(false)
+    
+    if arg.sourceId ~= self.m_arg.sourceId or arg.targetId ~= self.m_arg.targetId then
+        arg.initExchangeCount = arg.initExchangeCount or 1
+    end
+    
+    arg.onClose = arg.onClose or self.m_arg.onClose
+    self.m_arg = arg
     if self.m_arg.targetId == Tables.globalConst.gachaWeaponItemId then
         self:_InitWeaponGachaMoneyCount()
     end
-
-    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
-
     self:Refresh()
 end
 
@@ -200,6 +216,7 @@ CommonMoneyExchangeCtrl.Refresh = HL.Method(HL.Opt(HL.Any)) << function(self, ar
         self.view.numWeaponNode.gameObject:SetActive(true)
     else
         self.view.numWeaponNode.gameObject:SetActive(false)
+        self.view.confirmTxt2.gameObject:SetActive(false)
     end
 end
 

@@ -120,6 +120,7 @@ SeasonTowerScoreReviewCtrl._OnUpdateSeasonRecordCell = HL.Method(HL.Any, HL.Numb
     local luaIndex = LuaIndex(csIndex)
     local isSelected = luaIndex == self.m_selectedSeasonIndex
     self:_UpdateSeasonRecordSelectState(isSelected, luaIndex, true)
+    cell.seasonBtn.onClick:RemoveAllListeners()
     cell.seasonBtn.onClick:AddListener(function()
         self:_OnSeasonRecordClicked(luaIndex, true)
     end)

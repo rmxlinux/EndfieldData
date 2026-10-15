@@ -185,7 +185,6 @@ WikiTop._OnFirstTimeInit = HL.Override() << function(self)
         end)
     else
         self.view.closeBtn.onClick:AddListener(function()
-            self.m_args.phase:RemovePhasePanelItemById(PanelId.WikiEmpty)
             PhaseManager:PopPhase(PhaseId.Wiki)
         end)
     end
@@ -313,17 +312,15 @@ end
 WikiTop._RemoveUnusedPanel = HL.Method() << function(self)
     local panelIdToRemove = {}
     for panelId, _ in pairs(self.m_args.phase.m_panel2Item) do
-        if panelId ~= PanelId.WikiEmpty then
-            local found = false
-            for _, folder in pairs(self.m_folderPath) do
-                if folder.panelId == panelId then
-                    found = true
-                    break
-                end
+        local found = false
+        for _, folder in pairs(self.m_folderPath) do
+            if folder.panelId == panelId then
+                found = true
+                break
             end
-            if not found then
-                table.insert(panelIdToRemove, panelId)
-            end
+        end
+        if not found then
+            table.insert(panelIdToRemove, panelId)
         end
     end
     for _, panelId in pairs(panelIdToRemove) do

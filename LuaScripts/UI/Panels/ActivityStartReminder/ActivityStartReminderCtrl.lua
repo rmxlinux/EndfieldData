@@ -17,8 +17,8 @@ ActivityStartReminderCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ACTIVITY_DEBUG_SHOW_BUBBLE] = '_OnDebugForceShowBubble',
     [MessageConst.ON_SCREEN_SIZE_CHANGED] = '_OnScreenSizeChanged',
-    
-    [MessageConst.ON_UI_PANEL_CLOSED] = '_OnUIPanelClosed',
+    [MessageConst.ON_UI_PANEL_CLOSED] = '_OnHudLayoutChanged',
+    [MessageConst.ON_MAIN_HUD_ANIMATION_IN_EASING_FINISHED] = '_OnHudLayoutChanged',
 }
 
 ActivityStartReminderCtrl.s_activityBubbleScrollTextMaxUtf8Len = HL.StaticField(HL.Number) << 21
@@ -214,7 +214,8 @@ ActivityStartReminderCtrl._SyncPositionToActivityBtn = HL.Method() << function(s
         local maxFrames = ActivityStartReminderCtrl.s_posSyncMaxFrames
         local stableThreshold = ActivityStartReminderCtrl.s_posStableThreshold
         local sqrEpsilon = ActivityStartReminderCtrl.s_posStableSqrEpsilon
-        local lastPos = refNode.position
+        local lastPos = node.localPosition
+        local AnimationState = CS.Beyond.UI.UIConst.AnimationState
 
         while frameCount < maxFrames do
             coroutine.step()
@@ -233,8 +234,13 @@ ActivityStartReminderCtrl._SyncPositionToActivityBtn = HL.Method() << function(s
             local curPos = stillRef.position
             node.position = curPos
 
-            local diff = curPos - lastPos
-            if diff.sqrMagnitude < sqrEpsilon then
+            
+            local localPos = node.localPosition
+            local diff = localPos - lastPos
+            local hudAnimation = hud.animationWrapper
+            local isHudEntering = not IsNull(hudAnimation)
+                and (hudAnimation.curState == AnimationState.In or hudAnimation.curState == AnimationState.InEasing)
+            if not isHudEntering and diff.sqrMagnitude < sqrEpsilon then
                 stableCount = stableCount + 1
                 if stableCount >= stableThreshold then
                     break
@@ -242,7 +248,7 @@ ActivityStartReminderCtrl._SyncPositionToActivityBtn = HL.Method() << function(s
             else
                 stableCount = 0
             end
-            lastPos = curPos
+            lastPos = localPos
         end
         self.m_posSyncCoroutine = nil
     end)
@@ -616,7 +622,7 @@ ActivityStartReminderCtrl._EvaluateSinglePush = HL.Method(HL.Any, HL.Any, HL.Num
         if curWeekday < (pushData.pushInWeekday or 0) then
             return nil, nil
         end
-        if not ActivityUtils.isTabPushConditionSatisfied(pushData.pushID) then
+        if not ActivityUtils.isActivityPushConditionSatisfied(pushData.pushID) then
             return nil, nil
         end
     else
@@ -625,7 +631,7 @@ ActivityStartReminderCtrl._EvaluateSinglePush = HL.Method(HL.Any, HL.Any, HL.Num
         if curTs < activationTime then
             return nil, activationTime
         end
-        if not ActivityUtils.isTabPushConditionSatisfied(pushData.pushID) then
+        if not ActivityUtils.isActivityPushConditionSatisfied(pushData.pushID) then
             return nil, nil
         end
     end
@@ -843,6 +849,11 @@ ActivityStartReminderCtrl._InitActivityBubbles = HL.Method() << function(self)
     if NarrativeUtils.inBlackScreen then
         return
     end
+    
+    if UIManager:IsShow(PanelId.TeleportLoading) then
+        self:_StartPendingInitTimer()
+        return
+    end
     if not self:_IsMainHudActivityBtnVisible() then
         self:_StartPendingInitTimer()
         return
@@ -918,7 +929,16 @@ end
 
 
 ActivityStartReminderCtrl._OnBlackScreenBegin = HL.Method(HL.Opt(HL.Any)) << function(self, _)
-    self:_HideBubbleNodeWithOutAnimation()
+    local node = self.view.activityStartReminderNode
+    local nodeActive = not IsNull(node) and not IsNull(node.gameObject) and node.gameObject.activeSelf
+    if not nodeActive then
+        return
+    end
+    local wrapper = self:_GetActivityBubbleAnimationWrapper()
+    if wrapper and not IsNull(wrapper) then
+        wrapper:ClearTween(false)
+    end
+    node.gameObject:SetActive(false)
 end
 
 
@@ -970,7 +990,7 @@ ActivityStartReminderCtrl._OnScreenSizeChanged = HL.Method() << function(self)
     self:_SyncPositionToActivityBtn()
 end
 
-ActivityStartReminderCtrl._OnUIPanelClosed = HL.Method(HL.Opt(HL.Any)) << function(self, _)
+ActivityStartReminderCtrl._OnHudLayoutChanged = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     if not self:_CanProcessBubbleRefresh() then
         return
     end

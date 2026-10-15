@@ -298,6 +298,7 @@ WikiDetailBaseCtrl._InitItemObtainWaysController = HL.Method(HL.Userdata).Return
             lastCraftFirstSelectable.banExplicitOnUp = true
             lastCraftFirstSelectable.banExplicitOnDown = false
             lastCraftFirstSelectable:SetExplicitSelectOnDown(obtainCell.normalNode.button)
+            lastCraftFirstSelectable = nil
         else
             obtainCell.normalNode.button.banExplicitOnUp = true
         end

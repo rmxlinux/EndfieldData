@@ -31,6 +31,10 @@ LuaResourceLoader._PathToHash = HL.StaticMethod(HL.String).Return(HL.Number) << 
     return CS.Beyond.Resource.I18NAssetLoader.GetI18NResourceHash(hash)
 end
 
+LuaResourceLoader.CheckExists = HL.Method(HL.String).Return(HL.Boolean) << function(self, path)
+    return CS.Beyond.Resource.I18NAssetLoader.CheckExists(path)
+end
+
 LuaResourceLoader.LoadGameObject = HL.Method(HL.String).Return(CS.UnityEngine.GameObject, HL.Number) << function(self, path)
     if not self:_CheckLoader() then
         return
@@ -394,7 +398,7 @@ LuaResourceLoader._CheckLoader = HL.Method().Return(HL.Boolean) << function(self
 end
 
 LuaResourceLoader._CheckPathHash = HL.Method(HL.String).Return(HL.Boolean) << function(self, path)
-    local isExist = CS.Beyond.Resource.ResourceManager.RawCheckExists(__beyond_calculate_ab_path_hash(path))
+    local isExist = self:CheckExists(path)
     if not isExist then
         logger.error(path .. " is not exist")
     end

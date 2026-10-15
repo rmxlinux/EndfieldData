@@ -63,8 +63,12 @@ FacMainLeftCtrl._ToggleMachineTarget = HL.Method(HL.Boolean) << function(self, i
 end
 
 FacMainLeftCtrl.OnShow = HL.Override() << function(self)
-    local inMainRegion = Utils.isInFacMainRegion()
-    self.view.main.gameObject:SetActive(inMainRegion)
+    self:_Refresh()
+end
+
+FacMainLeftCtrl._Refresh = HL.Method() << function(self)
+    local facModeData = FactoryUtils.getFacModeData()
+    self.view.main.gameObject:SetActive(facModeData.supportsTopView)
 end
 
 FacMainLeftCtrl.OnSwitchBuildingTargetDisplayMode = HL.Method() << function(self)
@@ -76,7 +80,7 @@ FacMainLeftCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, act
 end
 
 FacMainLeftCtrl.OnInFacMainRegionChange = HL.Method(HL.Boolean) << function(self, inFacMain)
-    self.view.main.gameObject:SetActive(inFacMain)
+    self:_Refresh()
 end
 
 HL.Commit(FacMainLeftCtrl)

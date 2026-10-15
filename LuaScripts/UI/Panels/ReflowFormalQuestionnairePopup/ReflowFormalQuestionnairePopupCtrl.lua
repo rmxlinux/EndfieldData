@@ -11,6 +11,7 @@ ReflowFormalQuestionnairePopupCtrl = HL.Class('ReflowFormalQuestionnairePopupCtr
 ReflowFormalQuestionnairePopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_REFLOW_QUESTIONNAIRE_UPDATE] = '_OnQuestionnaireUpdate',
     [MessageConst.ON_SPECIFIED_SURVEY_STATE_CHANGE] = '_OnQuestionnaireStateChange',
+    [MessageConst.ON_CLOSE_WEB_APPLICATION] = '_OnWebClosed',
 }
 
 ReflowFormalQuestionnairePopupCtrl.m_activityId = HL.Field(HL.String) << ''
@@ -22,6 +23,9 @@ ReflowFormalQuestionnairePopupCtrl.m_questionnaireCfg = HL.Field(HL.Any)
 ReflowFormalQuestionnairePopupCtrl.m_genCellFunction = HL.Field(HL.Function)
 
 ReflowFormalQuestionnairePopupCtrl.m_rewardCacheTable = HL.Field(HL.Table)
+
+
+ReflowFormalQuestionnairePopupCtrl.m_pendingQuestionnaire = HL.Field(HL.Any)
 
 
 ReflowFormalQuestionnairePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -96,12 +100,14 @@ ReflowFormalQuestionnairePopupCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) 
             CS.Beyond.Gameplay.Audio.Utils.AudioControlUtil.Webview.SetMute(true)
             
             local url = self:_GetQuestionnaireFullUrl(questionnaireId)
-            CS.Beyond.SDK.HGBrowserBridge.OpenBrowser(url, nil, function(res)
-                CS.Beyond.Gameplay.Audio.Utils.AudioControlUtil.Webview.SetMute(false)
-                CS.Beyond.SDK.SDKAccountUtils.QuerySpecifiedSurveyState(string.format("[%q]",questionnaireId))   
-                local costTime = DateTimeUtils.GetCurrentTimestampBySeconds() - startTime
-                ActivityUtils.GameEventLogReflowQuestionnaire(self.m_activityId, "finish_questionnaire", questionnaireId, cfg.title, index, "unknown", costTime)
-            end)
+            self.m_pendingQuestionnaire = {
+                url = url,
+                questionnaireId = questionnaireId,
+                title = cfg.title,
+                index = index,
+                startTime = startTime,
+            }
+            CS.Beyond.UI.WebApplication.StartHGBrowser(url)
         end)
     end
     if isLocked then
@@ -152,6 +158,19 @@ end
 
 ReflowFormalQuestionnairePopupCtrl._OnQuestionnaireStateChange = HL.Method() << function(self)
     self:_RefreshAllUIs()
+end
+
+ReflowFormalQuestionnairePopupCtrl._OnWebClosed = HL.Method(HL.Table) << function(self, arg)
+    local url = unpack(arg)
+    local pending = self.m_pendingQuestionnaire
+    if not pending or pending.url ~= url then
+        return
+    end
+    self.m_pendingQuestionnaire = nil
+    CS.Beyond.Gameplay.Audio.Utils.AudioControlUtil.Webview.SetMute(false)
+    CS.Beyond.SDK.SDKAccountUtils.QuerySpecifiedSurveyState(string.format("[%q]", pending.questionnaireId))   
+    local costTime = DateTimeUtils.GetCurrentTimestampBySeconds() - pending.startTime
+    ActivityUtils.GameEventLogReflowQuestionnaire(self.m_activityId, "finish_questionnaire", pending.questionnaireId, pending.title, pending.index, "unknown", costTime)
 end
 
 ReflowFormalQuestionnairePopupCtrl._GetQuestionnaireFullUrl = HL.Method(HL.String).Return(HL.String) << function(self, hashId)

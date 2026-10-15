@@ -147,8 +147,6 @@ PhaseWiki._OnInit = HL.Override() << function(self)
     
     self.arg = self.arg or {}
     self:_ActivateBlackboxEffect(false)
-    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
-    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
 
 PhaseWiki._OnActivated = HL.Override() << function(self)
@@ -157,7 +155,8 @@ PhaseWiki._OnActivated = HL.Override() << function(self)
 end
 
 PhaseWiki._OnDeActivated = HL.Override() << function(self)
-
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterNormal()
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(true)
 end
 
 PhaseWiki._OnDestroy = HL.Override() << function(self)
@@ -181,17 +180,27 @@ PhaseWiki._OnRefresh = HL.Override() << function(self)
 end
 
 PhaseWiki._OpenByArgs = HL.Method() << function(self)
-    self:CreateOrShowPhasePanelItem(PanelId.WikiEmpty)
     if self.arg and self.arg.resumeState then
         self:_RestoreByResumeState(self.arg.resumeState)
         self.arg.resumeState = nil
         return
     end
     if self.arg and self.arg.isWeaponPreview then
+        self:RemovePhasePanelItemById(PanelId.WikiWeaponPreview)
         self:CreatePhasePanelItem(PanelId.WikiWeaponPreview, self.arg)
     elseif self.arg and self.arg.isItemCraft then
         local wikiEntryShowData = WikiUtils.getWikiEntryShowData(self.arg.itemId, WikiConst.EWikiCategoryType.Item)
-        self:CreatePhasePanelItem(PanelId.WikiCraftingTree, { wikiEntryShowData = wikiEntryShowData, craftId = self.arg.craftId })
+        
+        local craftArgs = { wikiEntryShowData = wikiEntryShowData, craftId = self.arg.craftId }
+        local craftPanelItem = self:_GetPanelPhaseItem(PanelId.WikiCraftingTree)
+        if craftPanelItem and craftPanelItem.uiCtrl then
+            if not craftPanelItem.uiCtrl:IsShow(true) then
+                craftPanelItem.uiCtrl:Show()
+            end
+            craftPanelItem.uiCtrl:Refresh(craftArgs)
+        else
+            self:CreatePhasePanelItem(PanelId.WikiCraftingTree, craftArgs)
+        end
     else
         self:OpenCategoryByPhaseArgs()
     end
@@ -273,7 +282,7 @@ PhaseWiki._CollectVisiblePanelStates = HL.Method().Return(HL.Table) << function(
     end
 
     for _, panelId in ipairs(self.panels) do
-        if panelId ~= PanelId.WikiEmpty and not addedPanelIdMap[panelId] then
+        if not addedPanelIdMap[panelId] then
             local panelItem = self:_GetPanelPhaseItem(panelId)
             if panelItem and panelItem.uiCtrl and panelItem.uiCtrl:IsShow(true) then
                 tryAddPanel(panelId, nil, true)
@@ -286,9 +295,7 @@ end
 PhaseWiki._RestoreByResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     local panelIds = {}
     for _, panelId in ipairs(self.panels) do
-        if panelId ~= PanelId.WikiEmpty then
-            table.insert(panelIds, panelId)
-        end
+        table.insert(panelIds, panelId)
     end
     for _, panelId in ipairs(panelIds) do
         self:RemovePhasePanelItemById(panelId)
@@ -445,7 +452,7 @@ PhaseWiki.OpenCategory = HL.Method(HL.Any, HL.Opt(HL.Table)) << function(self, c
                     if panelItem.uiCtrl:IsShow(true) then
                         panelItem.uiCtrl:Hide()
                     end
-                elseif panelId ~= panelCfg.detailPanelId and panelId ~= PanelId.Wiki and panelId ~= PanelId.WikiEmpty then
+                elseif panelId ~= panelCfg.detailPanelId and panelId ~= PanelId.Wiki then
                     self:RemovePhasePanelItem(panelItem)
                 end
             end
@@ -751,7 +758,7 @@ PhaseWiki._ShowMonsterModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(
     
     local modelPath = modelData.path
     local uimodePath = string.format(WIKI_ENY_UIMODEL_PATH, monsterTemplateId)
-    if ResourceManager.CheckExists(uimodePath) then
+    if self.m_resourceLoader:CheckExists(uimodePath) then
         modelPath = uimodePath
     end
 

@@ -33,19 +33,17 @@ ActivityContingencyContractCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self.m_hasCreated = false
     self.m_activityId = args.activityId
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
+    self.view.activityCommonInfo.view.leftBtnGroupNode.activityTaskEntry:InitActivityTaskEntry(args)
+    self.view.activityCommonInfo.view.leftBtnGroupNode.activityShopEntry:InitActivityShopEntry(args)
 
     
     local info = Tables.activityContingencyContractTable[self.m_activityId]
     self.m_gotoDetailJumpId = Tables.activityTable[self.m_activityId].detailJumpId
     self.m_gameId = info.gameId
-    local infosTable = ContingencyContractUtils.GetTagParseInfos(self.m_gameId)
+    local infosTable = ContingencyContractUtils.CreateTagFullInfosTable(self.m_gameId)
     self.m_allTagInfosMap = infosTable.allTagInfosMap
     self.m_stageToTagMap = ContingencyContractUtils.CreateStageToTagMap()
     self.view.activityCommonInfo.view.infoNode.detailsYellowTxt.text = info.otherDesc
-
-    
-    local bgState = DeviceInfo.usingTouch and "Mobile" or "PcController"
-    self.view.stateController:SetState(bgState)
 
     
     local activityData = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
@@ -57,17 +55,37 @@ ActivityContingencyContractCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     end)
 
     
-    local gameData = GameInstance.player.contingencyContractSystem:GetCcGameData(self.m_gameId)
-    if gameData then
-        AudioManager.SetRtpc("au_music_rtpc_cc_v1d3_history_highest_stars", gameData.historyBestScore);
-    else
-        AudioManager.SetRtpc("au_music_rtpc_cc_v1d3_history_highest_stars", 0);
-    end
+    self:_SyncHistoryBestScoreRtpc()
 
     self:_ActivityUpdate()
     self:_StageUpdate(true)
     self:_UpdateData()
     self.m_hasCreated = true
+    self:PlayAnimationIn()
+end
+
+
+ActivityContingencyContractCtrl._SyncHistoryBestScoreRtpc = HL.Method() << function(self)
+    local rtpcName = "au_music_rtpc_cc_v1d6_history_highest_stars"
+    local currentTime = DateTimeUtils.GetCurrentTimestampBySeconds()
+    local isGameplayEnd = self.m_gameplayEndTime - currentTime <= 0
+    if isGameplayEnd then
+        AudioManager.SetRtpc(rtpcName, -20)
+        return
+    end
+
+    local activityData = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
+    if not activityData or activityData.status ~= GEnums.ActivityStatus.InProgress then
+        AudioManager.SetRtpc(rtpcName, -10)
+        return
+    end
+
+    local gameData = GameInstance.player.contingencyContractSystem:GetCcGameData(self.m_gameId)
+    if gameData then
+        AudioManager.SetRtpc(rtpcName, gameData.historyBestScore)
+    else
+        AudioManager.SetRtpc(rtpcName, 0)
+    end
 end
 
 ActivityContingencyContractCtrl._PlayCommonIn = HL.Method() << function(self)
@@ -86,22 +104,17 @@ ActivityContingencyContractCtrl._ActivityUpdate = HL.Method() << function(self)
     if activityData.status == GEnums.ActivityStatus.InProgress then
         
         self.view.activityCommonInfo.view.gotoNode.btnDetailRedDot:InitRedDot("ActivityContingencyContractDetail", self.m_activityId)
-        self.view.activityTaskBtn.redDot:InitRedDot("ActivityContingencyContractTaskDetail", self.m_activityId)
-        self.view.activityShopBtn.redDot:InitRedDot("ActivityContingencyContractShopDetail", self.m_activityId)
+        self.view.activityCommonInfo.view.leftBtnGroupNode.activityTaskEntry.view.redDot:InitRedDot("ActivityContingencyContractTaskDetail", self.m_activityId)
+        self.view.activityCommonInfo.view.leftBtnGroupNode.activityShopEntry.view.redDot:InitRedDot("ActivityContingencyContractShopDetail", self.m_activityId)
         
-        self.view.activityTaskBtn.gameObject:SetActive(true)
-        self.view.activityShopBtn.gameObject:SetActive(true)
-        self.view.activityShopBtn.button.onClick:RemoveAllListeners()
-        self.view.activityShopBtn.button.onClick:AddListener(function()
-            Utils.jumpToSystem(info.shopJumpId)
-        end)
-        self.view.activityShopBtn.countDownWidget:InitCountDownText(self.m_shopEndTime)
+        self.view.activityCommonInfo.view.leftBtnGroupNode.activityTaskEntry.view.gameObject:SetActive(true)
+        self.view.activityCommonInfo.view.leftBtnGroupNode.activityShopEntry.view.gameObject:SetActive(true)
         self.view.activityCommonInfo.view.historyHighNode.gameObject:SetActive(true)
     else
         
         self.view.activityCommonInfo.view.historyHighNode.gameObject:SetActive(false)
-        self.view.activityTaskBtn.gameObject:SetActive(false)
-        self.view.activityShopBtn.gameObject:SetActive(false)
+        self.view.activityCommonInfo.view.leftBtnGroupNode.activityTaskEntry.view.gameObject:SetActive(false)
+        self.view.activityCommonInfo.view.leftBtnGroupNode.activityShopEntry.view.gameObject:SetActive(false)
     end
 end
 
@@ -124,11 +137,6 @@ ActivityContingencyContractCtrl._StageUpdate = HL.Method(HL.Opt(HL.Boolean)) << 
         else
             
             self:_RefreshTagUpdateDetailTip(onCreate)
-            self.view.main:SetState("InProgress")
-            self.view.activityTaskBtn.button.onClick:RemoveAllListeners()
-            self.view.activityTaskBtn.button.onClick:AddListener(function()
-                Utils.jumpToSystem(info.taskJumpId)
-            end)
         end
     
     else
@@ -177,26 +185,16 @@ ActivityContingencyContractCtrl._InitTagRenewTips = HL.Method(HL.String) << func
 end
 
 ActivityContingencyContractCtrl._OnGameplayEnd = HL.Method() << function(self)
-    self.view.main:SetState("End")
     self.view.activityCommonInfo.view.infoNode.countDownWidget:InitCountDownText(self.m_shopEndTime, nil, function(leftSec)
         local leftTime = UIUtils.getLeftTime(leftSec)
         return string.format(Language.LUA_ACTIVITY_CONTINGENCY_CONTRACT_SHOP_REMAIN_TIME_TEXT, leftTime)
     end)
-    
-    if DeviceInfo.usingController then
-        self.view.activityTaskBtn.bindingGroup.enabled = false
-    else
-        self.view.activityTaskBtn.button.onClick:RemoveAllListeners()
-        self.view.activityTaskBtn.button.onClick:AddListener(function()
-            Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_CONTINGENCY_CONTRACT_MECHANICS_END)
-        end)
-    end
     self.view.activityCommonInfo.view.gotoNode.stateController:SetState("None")
     self.view.activityCommonInfo.view.gotoNode.btnDetailRedDot:Stop()
-    self.view.activityTaskBtn.redDot:Stop()
+    self.view.activityCommonInfo.view.leftBtnGroupNode.activityTaskEntry.view.redDot:Stop()
     self.view.activityCommonInfo.view.gotoNode.renewTips.gameObject:SetActive(false)
     self.view.activityCommonInfo.view.historyHighNode.gameObject:SetActive(false)
-    end
+end
 
 ActivityContingencyContractCtrl._OnNewTagRead = HL.Method(HL.Number) << function(self, tagId)
     local stageId = self.m_allTagInfosMap[tagId].unlockStage
@@ -211,6 +209,9 @@ end
 ActivityContingencyContractCtrl._GetCcNewTagStage = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Opt(HL.String)) << function(self, onCreate)
     local activityData = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     local gameData = GameInstance.player.contingencyContractSystem:GetCcGameData(self.m_gameId)
+    if gameData == nil then
+        return nil
+    end
     local unreadStageId
     for stageId, tagList in pairs(self.m_stageToTagMap) do
         local stageData = activityData:GetStageData(stageId)
@@ -269,6 +270,7 @@ ActivityContingencyContractCtrl._OnStageUpdate = HL.Method(HL.Any) << function(s
     end
     self:_StageUpdate()
     self:_UpdateData()
+    self:_SyncHistoryBestScoreRtpc()
 end
 
 ActivityContingencyContractCtrl._OnActivityUpdate = HL.Method(HL.Any) << function(self, arg)
@@ -283,15 +285,28 @@ ActivityContingencyContractCtrl._OnActivityUpdate = HL.Method(HL.Any) << functio
     end
     self:_ActivityUpdate()
     self:_UpdateData()
+    self:_SyncHistoryBestScoreRtpc()
 end
 
 ActivityContingencyContractCtrl._OnAchievementUpdate = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
-    local achievementId = Tables.activityAchievementDataTable[self.m_activityId].achievementId
+    local _, activityAchievementCfg = Tables.activityAchievementDataTable:TryGetValue(self.m_activityId)
+    if not activityAchievementCfg then
+        self.view.activityCommonInfo.view.historyHighNode.stateController:SetState("noMedal")
+        return
+    end
+    local achievementId = activityAchievementCfg.achievementId
     local achievementData = Tables.achievementTable[achievementId]
     local achievementSystem = GameInstance.player.achievementSystem
     local succ, playerInfo = achievementSystem.achievementData.achievementInfos:TryGetValue(achievementId)
     local obtained = succ and playerInfo.level >= achievementData.initLevel
-    self.view.activityCommonInfo.view.historyHighNode.stateController:SetState(obtained and "hasMedal" or "noMedal")
+    local plated = obtained and achievementData.canBePlated and playerInfo.isPlated
+    local medalState = "noMedal"
+    if plated then
+        medalState = "hasMedalPlated"
+    elseif obtained then
+        medalState = "hasMedal"
+    end
+    self.view.activityCommonInfo.view.historyHighNode.stateController:SetState(medalState)
 end
 
 ActivityContingencyContractCtrl._UpdateData = HL.Method() << function(self)
@@ -324,7 +339,6 @@ ActivityContingencyContractCtrl._UpdateData = HL.Method() << function(self)
             completedTaskCount = completedTaskCount + 1
         end
     end
-    self.view.activityTaskBtn.taskNumText.text = string.format("%d/%d", completedTaskCount, totalTaskCount)
 end
 
 ActivityContingencyContractCtrl._OnBackToTop = HL.Method() << function(self)

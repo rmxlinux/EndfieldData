@@ -236,13 +236,9 @@ ActivityCoinMilestoneCtrl._TryGetCurNaviNodeId = HL.Method().Return(HL.Opt(HL.An
         return curTargetNodeId
     end
 
-    local needTopDummyLayerKey = self:_GetDummyNaviLayerKey()
-    if not string.isEmpty(needTopDummyLayerKey) then
-        local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(needTopDummyLayerKey)
-        if needTopDummyLayer ~= nil and InputManagerInst.controllerNaviManager:GetTopDummyLayerGroup() ~= needTopDummyLayer then
-            local rewardScrollNaviGroup = self.view.rewardScroll.gameObject:GetComponent("UISelectableNaviGroup")
-            return rewardScrollNaviGroup ~= nil and getNodeIdByTarget(rewardScrollNaviGroup.LayerSelectedTarget) or nil
-        end
+    if not InputManagerInst.controllerNaviManager:IsPanelScopeTop(self.panelId) then
+        local rewardScrollNaviGroup = self.view.rewardScroll.gameObject:GetComponent("UISelectableNaviGroup")
+        return rewardScrollNaviGroup ~= nil and getNodeIdByTarget(rewardScrollNaviGroup.LayerSelectedTarget) or nil
     end
 
     return nil

@@ -184,9 +184,22 @@ FacTopViewBuildingInfoCtrl._OnAddInfo = HL.Method(CS.Beyond.Gameplay.Factory.Fac
             cell.ignoreState = false
         else
             local data = Tables.factoryBuildingTable[info.dataId]
-            cell.icon:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, data.iconOnPanel)
-            cell.iconShadow:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, data.iconOnPanel)
-            cell.name.text = data.name
+            local ignoreIcon = FacConst.FAC_TOP_VIEW_IGNORE_ICON_BUILDING_TYPES[data.type]
+            if ignoreIcon then
+                cell.iconNode.gameObject:SetActive(false)
+            else
+                cell.iconNode.gameObject:SetActive(true)
+                cell.icon:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, data.iconOnPanel)
+                cell.iconShadow:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, data.iconOnPanel)
+            end
+            cell.m_isSoil = FactoryUtils.isSoilBuilding(info.dataId)
+            if cell.m_isSoil then
+                self:_RefreshSoilName(nodeId, cell)
+                self:_RefreshSoilState(nodeId, cell)
+            else
+                cell.name.text = data.name
+                cell.soilStateNode.gameObject:SetActive(false)
+            end
             cell.nameNodeContentSizeFitter.horizontalFit = self.m_useMinNameSize and Unity.UI.ContentSizeFitter.FitMode.MinSize or Unity.UI.ContentSizeFitter.FitMode.PreferredSize
             cell.ignoreState = FacConst.FAC_TOP_VIEW_IGNORE_STATE_BUILDING_IDS[info.dataId] or FacConst.FAC_TOP_VIEW_IGNORE_STATE_BUILDING_TYPES[data.type]
             if not cell.ignoreState then
@@ -285,6 +298,12 @@ FacTopViewBuildingInfoCtrl._OnUpdateInfo = HL.Method(CS.Beyond.Gameplay.Factory.
             end
         end
         
+        if cell.m_isSoil then
+            self:_RefreshSoilName(nodeId, cell)
+            self:_RefreshSoilState(nodeId, cell)
+        end
+
+        
         if not info.isEnvGenerator and info.envType ~= GEnums.FacEnvGenEnvType.None then
             cell.envBg:SetState(info.envType:ToString())
         else
@@ -319,13 +338,74 @@ FacTopViewBuildingInfoCtrl.m_useMinNameSize = HL.Field(HL.Boolean) << false
 
 FacTopViewBuildingInfoCtrl._UpdateNameSize = HL.Method() << function(self)
     local mode = self.m_useMinNameSize and Unity.UI.ContentSizeFitter.FitMode.MinSize or Unity.UI.ContentSizeFitter.FitMode.PreferredSize
-    for _, cell in pairs(self.m_cells) do
+    for nodeId, cell in pairs(self.m_cells) do
         if not cell.m_isIcon then
             cell.nameNodeContentSizeFitter.horizontalFit = mode
+            if cell.m_isSoil then
+                self:_RefreshSoilName(nodeId, cell)
+            end
         end
     end
 end
 
+FacTopViewBuildingInfoCtrl._RefreshSoilName = HL.Method(HL.Number, HL.Any) << function(self, nodeId, cell)
+    if self.m_useMinNameSize then
+        local info = CSFactoryUtil.s_topViewBuildingInfos[nodeId]
+        local data = Tables.factoryBuildingTable[info.dataId]
+        cell.name.text = data.name
+    else
+        local soilShow = GameInstance.player.facSoilSystem:GetSoilShow(nodeId)
+        cell.name.text = soilShow and soilShow:GetShowNameLabel()
+    end
+end
+
+FacTopViewBuildingInfoCtrl._RefreshSoilState = HL.Method(HL.Number, HL.Any) << function(self, nodeId, cell)
+    local canMutate = FactoryUtils.checkSoilCanMutate(nodeId)
+    if not canMutate or FactoryUtils.isSoilInHarvestStep(nodeId) then
+        cell.soilStateNode.gameObject:SetActive(false)
+        return
+    end
+
+    local mutateData = FactoryUtils.getSoilMutateData(nodeId)
+    local neighborData = FactoryUtils.getSoilNeighborData(nodeId)
+
+    local active = true
+    local stateCtrl = cell.soilStateNode.stateCtrl                  
+    local progressStateCtrl = cell.soilStateNode.progressStateCtrl  
+    local progressImage = cell.soilStateNode.fgBar                  
+    if not mutateData.start then
+        
+        active = false
+    elseif not mutateData.complete and mutateData.inProgress then
+        
+        stateCtrl:SetState("Mutation")
+        progressStateCtrl:SetState("Green")
+        progressImage.fillAmount = mutateData.progress
+    elseif not mutateData.complete and not mutateData.inProgress then
+        
+        stateCtrl:SetState("Mutation")
+        progressStateCtrl:SetState("Red")
+        progressImage.fillAmount = mutateData.progress
+    elseif not neighborData.start then
+        
+        active = false
+    elseif not neighborData.complete and neighborData.inProgress then
+        
+        stateCtrl:SetState("Production")
+        progressStateCtrl:SetState("Green")
+        progressImage.fillAmount = neighborData.progress
+    elseif not neighborData.complete and not neighborData.inProgress then
+        
+        stateCtrl:SetState("Production")
+        progressStateCtrl:SetState("Red")
+        progressImage.fillAmount = neighborData.progress
+    else
+        
+        active = false
+    end
+
+    cell.soilStateNode.gameObject:SetActive(active)
+end
 
 
 

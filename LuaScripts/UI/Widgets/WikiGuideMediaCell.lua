@@ -26,7 +26,8 @@ WikiGuideMediaCell.InitWikiGuideMediaCell = HL.Method(HL.String) << function(sel
     videoGo:SetActive(not isImg)
     self.view.coroutine = self:_ClearCoroutine(self.view.coroutine)
     if isImg then
-        self.view.image:LoadSprite(UIConst.UI_SPRITE_GUIDE, pageData.image)
+        local resolvedImgName = CS.Beyond.Gameplay.GuideSystem.ResolveGuideMediaImageName(pageData.image)
+        self.view.image:LoadSprite(UIConst.UI_SPRITE_GUIDE, resolvedImgName)
     else
         local success, file = CS.Beyond.Gameplay.GuideSystem.TryGetGuideMediaVideoFullPathByVideoNameAndDeviceType(
             pageData.video, pageData.videoDeviceType

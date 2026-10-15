@@ -97,13 +97,6 @@ AdventureStageCtrl.OnShow = HL.Override() << function(self)
         local state = info and (info.state or AdventureBookUtils.StageTaskDisplayState.InProgress) or nil
         cell:PlayStateAnimation(state)
     end
-    self:_SetDefaultNaviTarget()
-end
-
-AdventureStageCtrl._SetDefaultNaviTarget = HL.Method() << function(self)
-    local firstCell = self.m_taskCellList[1]
-    local target = firstCell.gameObject:GetComponent("InputBindingGroupNaviDecorator")
-    self:SetNaviTarget(target)
 end
 
 AdventureStageCtrl._OnIncBtnClick = HL.Method() << function(self)
@@ -555,7 +548,7 @@ end
 
 AdventureStageCtrl.OnAdventureTabChangedSame = HL.Method(HL.Number) << function(self, panelId)
     if panelId == PANEL_ID then
-        self:_SetDefaultNaviTarget()
+        self.view.taskGroup.selectableNaviGroup:NaviToThisGroup()
     end
 end
 

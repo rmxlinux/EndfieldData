@@ -103,10 +103,6 @@ CharInfoEquipSlotCtrl._InitActionEvent = HL.Method() << function(self)
     self.m_extraAttrCellCache = UIUtils.genCellCache(self.view.abilityValueNode.extraAttrCell)
 
     self:BindInputPlayerAction("char_equip_slot_next", function()
-        if not self.view.detailNode.gameObject.activeSelf then
-            return
-        end
-
         local newIndex = self:_GetLoopedSlotIndex(self.m_curSelectSlotIndex + 1)
         AudioAdapter.PostEvent("Au_UI_Toggle_Tab_On")
 
@@ -114,10 +110,6 @@ CharInfoEquipSlotCtrl._InitActionEvent = HL.Method() << function(self)
     end, self.m_changeEquipTypeInputGroupId)
 
     self:BindInputPlayerAction("char_equip_slot_previous", function()
-        if not self.view.detailNode.gameObject.activeSelf then
-            return
-        end
-
         local newIndex = self:_GetLoopedSlotIndex(self.m_curSelectSlotIndex - 1)
         AudioAdapter.PostEvent("Au_UI_Toggle_Tab_On")
 

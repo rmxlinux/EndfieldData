@@ -33,13 +33,29 @@ DungeonInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnBtnCloseClick()
     end, self.view.btnClose.groupId)
 
+
     self.m_params = arg.dungeonId and DungeonUtils.getInfoPopupParams(arg.dungeonId) or arg
     self.m_closeCb = arg.closeCb
     self.m_dungeonInfoCellCache = UIUtils.genCellCache(self.view.dungeonInfoCell)
 
     self:_Refresh()
 
+    self:_InitControllerHint()
+end
+
+
+DungeonInfoPopupCtrl.OnAnimationInFinished = HL.Override() << function(self)
+    self:_InitControllerHint()
+    self:_StartTimer(0.25, function()
+        if self:IsShow() then
+            self:_InitControllerHint()
+        end
+    end)
+end
+
+DungeonInfoPopupCtrl._InitControllerHint = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+    Notify(MessageConst.REFRESH_CONTROLLER_HINT_CONTENT_IMMEDIATELY)
 end
 
 DungeonInfoPopupCtrl._Refresh = HL.Method() << function(self)

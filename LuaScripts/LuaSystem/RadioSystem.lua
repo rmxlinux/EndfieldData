@@ -538,8 +538,24 @@ RadioSystem._TryGetContinueExRadio = HL.Method(HL.Table).Return(HL.Any) << funct
     local interruptedVoiceId = curData.interruptedVoiceId
     local data
     if not string.isEmpty(interruptedVoiceId) then
+        local getRes, radioData = Tables.radioTable:TryGetValue(curData.radioId)
+        if not getRes or radioData.radioContinueType == GEnums.RadioContinueType.None then
+            return data
+        end
+
+        local acceptableOtherSpeakers
+        if radioData.radioContinueType == GEnums.RadioContinueType.Custom then
+            acceptableOtherSpeakers = {}
+            local speakerIds = radioData.radioContinueSpeakerIds
+            for i = 1, speakerIds.Count do
+                table.insert(acceptableOtherSpeakers, speakerIds[CSIndex(i)])
+            end
+        else
+            acceptableOtherSpeakers = VoiceUtils.GetDefaultContinueRadioSpeakers()
+        end
+
         local res, continueRadioId = VoiceUtils.TryGetRadioContinueId(interruptedVoiceId,
-            VoiceUtils.GetDefaultContinueRadioSpeakers())
+            acceptableOtherSpeakers)
         if res then
             data = {
                 radioId = continueRadioId,
@@ -1036,6 +1052,11 @@ RadioSystem._OnDialogStart = HL.Method(HL.Opt(HL.Table)) << function(self, data)
             end
         end
         self:_CutCurRadio(true)
+        
+        
+        if not self.m_curShow then
+            self:_Exit()
+        end
     end
 end
 

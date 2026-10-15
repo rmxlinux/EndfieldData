@@ -15,7 +15,7 @@ CompositeToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 CompositeToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    local needItems = arg[3]
+    local needItems = arg[2]
     local count = #needItems
     local node
     for k = 1, 3 do

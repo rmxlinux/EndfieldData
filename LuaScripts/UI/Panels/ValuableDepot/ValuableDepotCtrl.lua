@@ -85,6 +85,10 @@ local ItemType2DepotConfig = {
         getSortOptions = function()
             return {
                 {
+                    name = Language.LUA_EQUIP_ENHANCE_SORT_OPTION_CHAR,
+                    keys = { "equippedCharIndex", "partTypeReverseNum", "equipEnhanceLevel", "rarity", "sortId1", "sortId2", "id", "instId" }
+                },
+                {
                     name = Language.LUA_DEPOT_SORT_OPTION_RARITY,
                     keys = { "rarity", "minWearLv", "equipEnhanceLevel", "sortId1", "sortId2", "id" },
                 },
@@ -207,7 +211,8 @@ ValuableDepotCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self.view.bottomNode.btnGemEnhance.onClick:AddListener(function()
-        PhaseManager:OpenPhase(PhaseId.GemEnhance)
+        local gemInstId = self.m_curItemIndex > 0 and self.m_curShowItemList[self.m_curItemIndex].instId or nil
+        PhaseManager:OpenPhase(PhaseId.GemEnhance, {gemInstId = gemInstId})
     end)
     self.view.bottomNode.btnGemWishlist.onClick:AddListener(function()
         PhaseManager:OpenPhase(PhaseId.GemWishlist)
@@ -355,6 +360,8 @@ ValuableDepotCtrl._IsLTItemExpirePopupArg = HL.Method(HL.Opt(HL.Any)).Return(HL.
         return false
     end
     return arg.content == Language.LUA_LIMIT_ITEM_EXPIRE_POPUP_TITLE
+        or arg.content == Language.LUA_AP_LIMIT_ITEM_EXPIRE_POPUP_TITLE_OVERFLOW
+        or arg.content == Language.LUA_AP_LIMIT_ITEM_EXPIRE_POPUP_TITLE_NORMAL
 end
 
 ValuableDepotCtrl._ProcessCreateArg = HL.Method(HL.Any).Return(HL.Opt(HL.String, HL.Any, HL.Any)) << function(self, arg)
@@ -831,6 +838,10 @@ ValuableDepotCtrl._TryRecoverDestroyState = HL.Method(HL.Opt(HL.Table)) << funct
         self.m_recoverSelectIndex = -1
     elseif self.m_recoverSelectIndex > 0 then
         self:_TryRecoverScrollToSelectedItem(self.m_recoverSelectIndex, destroyState.isExpandOpen == true) 
+        local cell = self.m_getItemCell(self.m_recoverSelectIndex)
+        if cell then
+            self:_TryFinishRecoverSelect(cell, self.m_recoverSelectIndex)
+        end
     end
 
     self.m_destroyInfo = {}
@@ -919,6 +930,18 @@ ValuableDepotCtrl._TryRecoverDestroyFilterPopupState = HL.Method(HL.Opt(HL.Table
     self:_OpenDestroyFilterPanel(depotConfig, filterPopupState.selectedTags)
 end
 
+ValuableDepotCtrl._TryFinishRecoverSelect = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
+    if self.m_recoverSelectIndex <= 0 or index ~= self.m_recoverSelectIndex then
+        return
+    end
+    if DeviceInfo.usingController then
+        self:SetNaviTarget(cell.view.button)
+    end
+    self.m_curItemIndex = self.m_recoverSelectIndex
+    self:_RefreshItemInfo(false)
+    self.m_recoverSelectIndex = -1
+end
+
 ValuableDepotCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local info = self.m_curShowItemList[index]
     local isEquip = info.data.type == GEnums.ItemType.Equip
@@ -941,14 +964,7 @@ ValuableDepotCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self,
     local isSelected = index == self.m_curItemIndex
     if self.m_recoverSelectIndex > 0 then  
         cell:SetSelected(isSelected)
-        if index == self.m_recoverSelectIndex then
-            if DeviceInfo.usingController then
-                self:SetNaviTarget(cell.view.button)
-            end
-            self.m_curItemIndex = self.m_recoverSelectIndex
-            self:_RefreshItemInfo(false)
-            self.m_recoverSelectIndex = -1
-        end
+        self:_TryFinishRecoverSelect(cell, index)
     else
         cell:SetSelected(isSelected and not DeviceInfo.usingController)
         if isSelected and cell.view.button ~= InputManagerInst.controllerNaviManager.curTarget then
@@ -1954,6 +1970,13 @@ ValuableDepotCtrl._ToggleDestroySelectExpand = HL.Method(HL.Boolean, HL.Opt(HL.B
 
     if active then
         node.selectInfoNode.gameObject:SetActive(true)
+        
+        
+        if node.selectInfoNode.curState == UIConst.UI_ANIMATION_WRAPPER_STATE.In then
+            node.selectInfoNode:PlayInAnimation(function()
+                self:_ReopenExpandNaviTargetHoverTips()
+            end)
+        end
     elseif fastMode then
         node.selectInfoNode.gameObject:SetActive(false)
     else
@@ -1983,6 +2006,19 @@ ValuableDepotCtrl._ToggleDestroySelectExpand = HL.Method(HL.Boolean, HL.Opt(HL.B
         else
             
             self:SetNaviTarget(node.itemCell.view.button)
+        end
+    end
+end
+
+ValuableDepotCtrl._ReopenExpandNaviTargetHoverTips = HL.Method() << function(self)
+    if not DeviceInfo.usingController or not self.view.destroyNode.expandToggle.isOn then
+        return
+    end
+    for index = 1, #self.m_destroyExpandItemList do
+        local cell = self.m_getExpandItemCell(index)
+        if cell and cell.view.button.isNaviTarget then
+            cell:SetEnableHoverTips(true)  
+            return
         end
     end
 end
@@ -2144,7 +2180,42 @@ ValuableDepotCtrl.OnWeaponBatchLock = HL.Method(HL.Table) << function(self, args
     end
 end
 
+ValuableDepotCtrl._RecycleEquip = HL.Method(HL.Table) << function(self, equipInstIds)
+    GameInstance.player.inventory:RecycleEquip(equipInstIds)
+    self:_ToggleDestroyMode(false, false)
+end
+
+ValuableDepotCtrl._ConfirmPresetGroupEquipDestroy = HL.Method(HL.Table, HL.Function) << function(self, equipInstIds, onConfirm)
+    local items = {}
+    local equipPresetGroupSystem = GameInstance.player.equipPresetGroupSystem
+    for _, instId in ipairs(equipInstIds) do
+        if equipPresetGroupSystem:IsEquipInPresetGroup(instId) then
+            local equipInstData = CharInfoUtils.getEquipByInstId(instId)
+            if equipInstData then
+                table.insert(items, {
+                    id = equipInstData.templateId,
+                    instId = instId,
+                })
+            end
+        end
+    end
+
+    if #items == 0 then
+        onConfirm()
+        return
+    end
+
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = Language.LUA_EQUIP_PRESET_GROUP_EQUIP_DESTROY_CONFIRM,
+        items = items,
+        onConfirm = onConfirm,
+    })
+end
+
 ValuableDepotCtrl._ConfirmDestroy = HL.Method() << function(self)
+    if self.m_destroyCount <= 0 then
+        return
+    end
     local items = {}
     local itemDelInfo = {}
     local instDelInfo = {}
@@ -2168,14 +2239,17 @@ ValuableDepotCtrl._ConfirmDestroy = HL.Method() << function(self)
 
     local depotConfig = ItemType2DepotConfig[self.m_tabsInfo[self.m_curTabIndex].type]
     if depotConfig.isEquipDestroy then
-        UIManager:Open(PanelId.DesEquipPopUp, {
-            items = items,
-            returnItems = self:_GetDesEquipReturnItems(self.m_curTabIndex),
-            onConfirm = function()
-                GameInstance.player.inventory:RecycleEquip(instDelInfo[self.m_curTabIndex])
-                self:_ToggleDestroyMode(false, false)
-            end,
-        })
+        local equipInstIds = instDelInfo[self.m_curTabIndex]
+        local returnItems = self:_GetDesEquipReturnItems(self.m_curTabIndex)
+        self:_ConfirmPresetGroupEquipDestroy(equipInstIds, function()
+            UIManager:Open(PanelId.DesEquipPopUp, {
+                items = items,
+                returnItems = returnItems,
+                onConfirm = function()
+                    self:_RecycleEquip(equipInstIds)
+                end,
+            })
+        end)
     elseif depotConfig.isGemDestroy then
         UIManager:Open(PanelId.DesEquipPopUp, {
             items = items,
@@ -2595,26 +2669,37 @@ end
 
 
 ValuableDepotCtrl.ShowLTItemExpirePopup = HL.Method(HL.Any) << function(self, arg)
-    local itemInfos = {}
-    local itemInfoMap = {}  
+    local normalItemInfos, normalItemInfoMap = {}, {}
+    local apLimitItemInfos, apLimitItemInfoMap = {}, {}
+    local apLimitIsStaminaOverflow = false
     local recordIds = unpack(arg)
     local idCount = recordIds.Count - 1
     for i = 0, idCount do
         local recordId = recordIds[i]
         local hasValue, itemBundleList = inventorySystem.waitConfirmExpireLTItemDict:TryGetValue(recordId)
         if hasValue then
+            local _, isStaminaOverflow = inventorySystem.waitConfirmExpireLTItemOverflowDict:TryGetValue(recordId)
             local itemListMaxIndex = itemBundleList.Count - 1
-            for i = 0, itemListMaxIndex do
-                local itemBundle = itemBundleList[i]
+            for j = 0, itemListMaxIndex do
+                local itemBundle = itemBundleList[j]
                 local itemId = itemBundle.Id
                 local itemCount = itemBundle.Count
+                local _, itemData = Tables.itemTable:TryGetValue(itemId)
+                local itemInfoMap, itemInfos
+                if itemData and itemData.type == GEnums.ItemType.APLimitItem then
+                    itemInfoMap, itemInfos = apLimitItemInfoMap, apLimitItemInfos
+                    if isStaminaOverflow then
+                        apLimitIsStaminaOverflow = true
+                    end
+                else
+                    itemInfoMap, itemInfos = normalItemInfoMap, normalItemInfos
+                end
                 local itemInfo = itemInfoMap[itemId]
                 if itemInfo == nil then
                     local itemCfg = Tables.itemTable[itemId]
                     itemInfo = {
                         id = itemId,
                         count = itemCount,
-                        
                         sortId1 = itemCfg.sortId1,
                         sortId2 = itemCfg.sortId2,
                     }
@@ -2628,13 +2713,35 @@ ValuableDepotCtrl.ShowLTItemExpirePopup = HL.Method(HL.Any) << function(self, ar
             logger.error("过期物品Record数据丢失！RecordId：" .. recordId)
         end
     end
-    table.sort(itemInfos, Utils.genSortFunction(UIConst.COMMON_ITEM_SORT_KEYS))
-    
-    Notify(MessageConst.SHOW_POP_UP, {
-        content = Language.LUA_LIMIT_ITEM_EXPIRE_POPUP_TITLE,
-        items = itemInfos,
-        hideCancel = true,
-    })
+    local popupArgsList = {}
+    if #normalItemInfos > 0 then
+        table.sort(normalItemInfos, Utils.genSortFunction(UIConst.COMMON_ITEM_SORT_KEYS))
+        table.insert(popupArgsList, {
+            content = Language.LUA_LIMIT_ITEM_EXPIRE_POPUP_TITLE,
+            items = normalItemInfos,
+            hideCancel = true,
+        })
+    end
+    if #apLimitItemInfos > 0 then
+        table.sort(apLimitItemInfos, Utils.genSortFunction(UIConst.COMMON_ITEM_SORT_KEYS))
+        table.insert(popupArgsList, {
+            content = apLimitIsStaminaOverflow
+                and Language.LUA_AP_LIMIT_ITEM_EXPIRE_POPUP_TITLE_OVERFLOW
+                or Language.LUA_AP_LIMIT_ITEM_EXPIRE_POPUP_TITLE_NORMAL,
+            subContent = Language.LUA_AP_LIMIT_ITEM_EXPIRE_POPUP_SUBTITLE,
+            items = apLimitItemInfos,
+            hideCancel = true,
+        })
+    end
+    if #popupArgsList <= 0 then
+        return
+    end
+    if #popupArgsList > 1 then
+        popupArgsList[1].onConfirm = function()
+            Notify(MessageConst.SHOW_POP_UP, popupArgsList[2])
+        end
+    end
+    Notify(MessageConst.SHOW_POP_UP, popupArgsList[1])
 end
 
 
@@ -2651,6 +2758,7 @@ ValuableDepotCtrl._InitController = HL.Method() << function(self)
     self.m_lockToggleBindingId = self:BindInputPlayerAction("item_lock_toggle", function()
         self.view.itemInfoNode.lockToggle.view.toggle.isOn = not self.view.itemInfoNode.lockToggle.view.toggle.isOn
     end, self.view.contentNodeInputGroup.groupId)
+    self.view.itemInfoNode.lockToggleKeyHint:SetBindingId(self.m_lockToggleBindingId)
 
     self.view.itemInfoNode.itemFlagNaviGroup.onIsTopLayerChanged:AddListener(function(isTopLayer)
         self.view.itemInfoNode.itemFlagControllerFocusHintNode.gameObject:SetActive(not isTopLayer)

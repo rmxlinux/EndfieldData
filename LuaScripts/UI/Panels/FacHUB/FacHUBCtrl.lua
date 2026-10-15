@@ -34,6 +34,8 @@ FacHUBCtrl.m_activeAreaList = HL.Field(HL.Forward('UIListCache'))
 
 FacHUBCtrl.m_curDomainDepotStackLimitCount = HL.Field(HL.Number) << 0
 
+FacHUBCtrl.m_onlyPower = HL.Field(HL.Boolean) << true
+
 FacHUBCtrl.m_waitingForNaviFirstShowCell = HL.Field(HL.Boolean) << true
 
 
@@ -49,7 +51,9 @@ FacHUBCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local nodeId = arg.uiInfo.nodeId
     self.m_nodeId = nodeId
     self.m_hubInfo = GameInstance.player.facSpMachineSystem:GetCurHubInfo()
-    self.view.titleText.text = Tables.factoryBuildingTable:GetValue(arg.uiInfo.buildingId).name
+    local cfgData = Tables.factoryBuildingTable:GetValue(arg.uiInfo.buildingId)
+    self.view.titleText.text = cfgData.name
+    self.m_onlyPower = cfgData.type == GEnums.FacBuildingType.SubHubOnlyPower
     self.m_domainId = Utils.getCurDomainId()
     self.m_curDomainDepotStackLimitCount = Utils.getDepotItemStackLimitCountInCurrentDomain()
 
@@ -57,7 +61,7 @@ FacHUBCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.domainName.text = Tables.domainDataTable[self.m_domainId].domainName
     end
 
-    self.view.moveBtn.gameObject:SetActive(FactoryUtils.canMoveBuilding(nodeId))
+    self.view.moveBtn.gameObject:SetActive(FactoryUtils.canMoveBuilding(nodeId) and not self.m_onlyPower)
     self.view.moveBtn.onClick:AddListener(function()
         self:_MoveBuilding()
     end)
@@ -426,7 +430,7 @@ FacHUBCtrl._InitFacHubController = HL.Method() << function(self)
         end
     end)
 
-    if FactoryUtils.canMoveBuilding(self.m_nodeId) then
+    if FactoryUtils.canMoveBuilding(self.m_nodeId) and not self.m_onlyPower then
         self.view.controllerSideMenuBtn.gameObject:SetActiveIfNecessary(true)
         self.view.controllerSideMenuBtn:InitControllerSideMenuBtn({
             extraBtnInfos = {

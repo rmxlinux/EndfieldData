@@ -6,6 +6,14 @@ ShopDetailCtrl = HL.Class('ShopDetailCtrl', uiCtrl.UICtrl)
 
 
 
+local storageWayProvider = {
+    [InnConst.INN_SHOP_GROUP_ID] = function(shopId)
+        return InnUtils.GetShopStorageWayToggleInfo(shopId)
+    end
+}
+
+
+
 
 
 
@@ -13,6 +21,7 @@ ShopDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BUY_ITEM_SUCC] = 'OnBuyItemSucc',
     
     [MessageConst.ON_SHOP_REFRESH] = '_OnHandleShopRefresh',
+    [MessageConst.ON_INN_SHOP_DEPOT_STORAGE_WAY_CHANGED] = "_OnInnShopDepotStorageWayChanged",
 }
 
 ShopDetailCtrl.m_info = HL.Field(HL.Any)
@@ -27,6 +36,14 @@ ShopDetailCtrl.m_bundleCount = HL.Field(HL.Number) << 0
 
 ShopDetailCtrl.m_isWaitingBuyResponse = HL.Field(HL.Boolean) << false
 
+ShopDetailCtrl.m_innTagCache = HL.Field(HL.Forward("UIListCache"))
+
+ShopDetailCtrl.m_shopGroupId = HL.Field(HL.String) << ""
+
+ShopDetailCtrl.m_shopId = HL.Field(HL.String) << ""
+
+ShopDetailCtrl.m_canBuy = HL.Field(HL.Boolean) << false
+
 
 ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_isWaitingBuyResponse = false
@@ -39,6 +56,12 @@ ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local goodsInfo = type(arg) == "table" and arg.goodsInfo or arg
     self.m_info = goodsInfo
     self.view.numeberTxt.text = 1
+
+    local shopId = self.m_info.shopId or ""
+    self.m_shopId = shopId
+    local __, shopData = Tables.shopTable:TryGetValue(shopId)
+    local shopGroupId = shopData and shopData.shopGroupId or ""
+    self.m_shopGroupId = shopGroupId
 
     local goodsId = goodsInfo.goodsTemplateId
     local goodsTableData = Tables.shopGoodsTable:GetValue(goodsId)
@@ -153,6 +176,10 @@ ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     self:_ApplyResumeState(arg and arg.resumeState or nil)
 
+    self.view.itemBtnState:SetState("Normal")
+    self:_RefreshInnNode()
+    self:_RefreshDepotStorageToggle()
+
     GameInstance.player.shopSystem:SetSingleGoodsIdSee(goodsId)
 end
 
@@ -165,6 +192,10 @@ ShopDetailCtrl._OnHandleShopRefresh = HL.Method() << function(self)
     GameInstance.player.guide:OnShopRefreshItemInfo()
     Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
     self:TryClose()
+end
+
+ShopDetailCtrl._OnInnShopDepotStorageWayChanged = HL.Method(HL.Any) << function(self, arg)
+    self:_RefreshDepotStorageToggle()
 end
 
 ShopDetailCtrl._OnShopRefresh = HL.Method() << function(self)
@@ -190,6 +221,7 @@ ShopDetailCtrl._OnShopRefresh = HL.Method() << function(self)
     maxBuy = math.max(maxBuy, 1)
     maxBuy = math.min(maxBuy, 99)
     maxBuy = math.min(maxBuy, remainCount == -1 and 99 or remainCount)
+    self.m_canBuy = unlock and haveMoney >= self.m_realPrice and (remainCount > 0 or remainCount == -1)
     if haveMoney >= self.m_realPrice and (remainCount > 0 or remainCount == -1) then
         self.view.btnCommonYellow.onClick:AddListener(function()
             self:_OnClickConfirm()
@@ -368,6 +400,72 @@ ShopDetailCtrl._RefreshCharAnimNode = HL.Method(HL.String, HL.Any) << function(s
     end
 end
 
+
+ShopDetailCtrl._RefreshInnNode = HL.Method() << function(self)
+    self.view.innTagNode.gameObject:SetActive(false)
+
+    local itemId = self.m_itemId
+    if self.m_shopGroupId ~= InnConst.INN_SHOP_GROUP_ID then
+        return
+    end
+
+    
+    local __, drinkData = Tables.innDrinkTable:TryGetValue(itemId)
+    if drinkData ~= nil then
+        self.view.itemBtnState:SetState("Inn")
+        self.view.innTagNode.gameObject:SetActive(true)
+
+        self.view.innPriceNumTxt.text = drinkData.price
+
+        local tagConfig = {}
+        table.insert(tagConfig, {
+            tagId = Tables.innManagementConst.drinkCategory,
+            isHot = false,
+            upCount = 0,
+        })
+
+        for _, affixTagId in pairs(drinkData.affix or {}) do
+            if affixTagId and not string.isEmpty(affixTagId) then
+                table.insert(tagConfig, {
+                    tagId = affixTagId,
+                    isHot = false,
+                    upCount = 0,
+                })
+            end
+        end
+
+        self.m_innTagCache = self.m_innTagCache or UIUtils.genCellCache(self.view.innItemTagBig)
+        self.m_innTagCache:Refresh(#tagConfig, function(cell, index)
+            cell:InitInnItemTag(tagConfig[index])
+        end)
+    end
+end
+
+ShopDetailCtrl._RefreshDepotStorageToggle = HL.Method() << function(self)
+    self.view.storageWayToggle.gameObject:SetActive(false)
+    local infoFunc = storageWayProvider[self.m_shopGroupId]
+    if not infoFunc or type(infoFunc) ~= "function" then
+        return
+    end
+    local shopDepotFirst, onChangeFunc = infoFunc(self.m_shopId)
+    
+    if shopDepotFirst == nil then
+        return
+    end
+    if not self.m_canBuy then   
+        return
+    end
+
+    self.view.storageWayToggle.gameObject:SetActive(true)
+    self.view.storageWayToggle:SetIsOnWithoutNotify(shopDepotFirst)
+    self.view.storageWayToggle.onValueChanged:RemoveAllListeners()
+    self.view.storageWayToggle.onValueChanged:AddListener(function(isOn)
+        if onChangeFunc then
+            onChangeFunc(isOn)
+        end
+    end)
+end
+
 ShopDetailCtrl._CanPutWeaponCount = HL.Method(HL.String, HL.Number).Return(HL.Boolean) << function(self, weaponId, count)
     local depots = GameInstance.player.inventory.valuableDepots
     if not depots:ContainsKey(GEnums.ItemValuableDepotType.Weapon) then
@@ -416,8 +514,16 @@ ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
         local totalCount = self.m_bundleCount * buyCount
         local canPut = inventorySystem:CanItemBagPutInItem(Utils.getCurrentScope(), self.m_itemId, totalCount)
         if not canPut then
-            Notify(MessageConst.SHOW_TOAST, Language.LUA_SHOP_BACKPACK_FULL)
-            return
+            if not self:_CheckPutToFactoryDepot() then
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_SHOP_BACKPACK_FULL)
+                return
+            end
+
+            local canPutWithDepot = inventorySystem:CanItemBagAndFactoryDepotPutInItem(Utils.getCurrentScope(), self.m_itemId, totalCount)
+            if not canPutWithDepot then
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_SHOP_TOTALLY_FULL)
+                return
+            end
         end
     end
 
@@ -427,6 +533,15 @@ ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
     else
         GameInstance.player.shopSystem:BuyGoods(info.shopId, info.goodsId, buyCount)
     end
+end
+
+
+ShopDetailCtrl._CheckPutToFactoryDepot = HL.Method() << function(self)
+    if self.m_shopGroupId == InnConst.INN_SHOP_GROUP_ID then
+        return true
+    end
+
+    return false
 end
 
 ShopDetailCtrl.OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)

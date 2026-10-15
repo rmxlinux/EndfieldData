@@ -19,6 +19,9 @@ SnapshotRotate3DSlider.m_rotateDragLastDir = HL.Field(HL.Any)
 SnapshotRotate3DSlider.m_rotateDragLastAngle = HL.Field(HL.Number) << 0
 SnapshotRotate3DSlider.m_rootTransform = HL.Field(CS.UnityEngine.Transform)
 SnapshotRotate3DSlider.m_rotateBtnIconWorldCorners = HL.Field(HL.Any)
+SnapshotRotate3DSlider.m_faceCameraYaw = HL.Field(HL.Number) << 0
+SnapshotRotate3DSlider.m_rotateBtnIconBaseLocalEulerY = HL.Field(HL.Number) << 0
+SnapshotRotate3DSlider.m_rotateBtnIconBaseLocalEulerZ = HL.Field(HL.Number) << 0
 
 
 
@@ -57,6 +60,12 @@ SnapshotRotate3DSlider._InitUI = HL.Method() << function(self)
     self.m_sliderTailStartPos = tailRect.anchoredPosition
     self.m_sliderTailRadius = self.m_sliderTailStartPos.magnitude
     self.m_rotateBtnIconWorldCorners = CS.System.Array.CreateInstance(typeof(Vector3), 4)
+    local iconEuler = self.view.rotateBtnNode.rotateBtnIcon.transform.localEulerAngles
+    self.m_rotateBtnIconBaseLocalEulerY = iconEuler.y
+    self.m_rotateBtnIconBaseLocalEulerZ = iconEuler.z
+    if not IsNull(self.m_rootTransform) then
+        self.m_faceCameraYaw = self.m_rootTransform.eulerAngles.y
+    end
     self:EndRotateDrag()
     self.view.rotateBtnNode.gameObject:SetActiveIfNecessary(true)
     self.view.rotateSliderNode.gameObject:SetActiveIfNecessary(false)
@@ -375,16 +384,26 @@ end
 
 SnapshotRotate3DSlider._FaceCamera = HL.Method(CS.UnityEngine.Camera) << function(self, camera)
     local lookDir = self.m_rootTransform.position - camera.transform.position
-    if lookDir.sqrMagnitude <= 0 then
+    local lookDirSqr = lookDir.sqrMagnitude
+    if lookDirSqr <= 0 then
         return
     end
-    local lookEulerAngles = Quaternion.LookRotation(lookDir, Vector3.up).eulerAngles
-    local xAngle = lookEulerAngles.x
-    if xAngle > 180 then
-        xAngle = xAngle - 360
+
+    
+    
+    local flatLookDir = Vector3(lookDir.x, 0, lookDir.z)
+    local yaw
+    if flatLookDir.sqrMagnitude <= lookDirSqr * 0.01 then
+        yaw = self.m_faceCameraYaw
+    else
+        yaw = Quaternion.LookRotation(flatLookDir, Vector3.up).eulerAngles.y
+        self.m_faceCameraYaw = yaw
     end
+
+    local atan2 = math.atan2 or math.atan
+    local xAngle = -atan2(lookDir.y, math.sqrt(flatLookDir.sqrMagnitude)) * 180 / math.pi
     xAngle = lume.clamp(xAngle, self.view.config.FACE_CAMERA_MIN_X_ANGLE, self.view.config.FACE_CAMERA_MAX_X_ANGLE)
-    self.m_rootTransform.rotation = Quaternion.Euler(xAngle, lookEulerAngles.y, lookEulerAngles.z)
+    self.m_rootTransform.rotation = Quaternion.Euler(xAngle, yaw, 0)
 end
 
 SnapshotRotate3DSlider._FaceRotateButtonIconToCamera = HL.Method(CS.UnityEngine.Camera) << function(self, camera)
@@ -400,9 +419,16 @@ SnapshotRotate3DSlider._FaceRotateButtonIconToCamera = HL.Method(CS.UnityEngine.
 
     
     local cameraForward = iconParentTrans:InverseTransformDirection(camera.transform.forward)
-    local curEulerAngles = iconTrans.localEulerAngles
-    local xAngle = -math.atan(cameraForward.y, cameraForward.z) * 180 / math.pi
-    iconTrans.localEulerAngles = Vector3(xAngle, curEulerAngles.y, curEulerAngles.z)
+    local yzSqr = cameraForward.y * cameraForward.y + cameraForward.z * cameraForward.z
+    
+    if yzSqr <= 1e-8 then
+        return
+    end
+
+    local atan2 = math.atan2 or math.atan
+    local xAngle = -atan2(cameraForward.y, cameraForward.z) * 180 / math.pi
+    
+    iconTrans.localRotation = Quaternion.Euler(xAngle, self.m_rotateBtnIconBaseLocalEulerY, self.m_rotateBtnIconBaseLocalEulerZ)
 end
 
 SnapshotRotate3DSlider._GetFollowEntity = HL.Method().Return(HL.Opt(HL.Any)) << function(self)

@@ -23,6 +23,7 @@ end
 
 
 
+
 SSRoomEffectInfoNode.InitSSRoomEffectInfoNode = HL.Method(HL.Table) << function(self, args)
     self:_FirstTimeInit()
 
@@ -33,7 +34,7 @@ SSRoomEffectInfoNode.InitSSRoomEffectInfoNode = HL.Method(HL.Table) << function(
         for k, v in pairs(args.attrsMap) do
             local attrType = GEnums.SpaceshipRoomAttrType.__CastFrom(k)
             local succ, data = Tables.spaceshipRoomAttrTypeTable:TryGetValue(attrType)
-            if succ then
+            if succ and (not args.roomType or SpaceshipUtils.isRoomAttrTypeDisplayed(args.roomType, attrType)) then
                 local combineType = SpaceshipConst.SPACESHIP_ATTR_COMBINE_TYPE[attrType]
                 if not combineType then
                     table.insert(self.m_attrInfoList, {

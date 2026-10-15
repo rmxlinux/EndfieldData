@@ -255,9 +255,6 @@ end
 
 
 MiniMapCtrl._OnRefreshPhaseLevel = HL.Method() << function(self)
-    if not self:IsShow() then
-        return
-    end
     local isSystemUnlocked = Utils.isSystemUnlocked(GEnums.UnlockSystemType.Map)
     if not isSystemUnlocked then
         return

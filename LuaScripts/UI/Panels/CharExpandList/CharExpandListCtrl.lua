@@ -42,7 +42,7 @@ CharExpandListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_charInfo = self.m_args.charInfo
     self.m_charInfoList = self.m_args.charInfoList
     self.view.emptyCloseBtn.onClick:AddListener(function()
-        self:Notify(MessageConst.CHAR_INFO_EMPTY_BUTTON_CLICK)
+        self:TryClose()
     end)
 
     self.m_getCharHeadCell = UIUtils.genCachedCellFunction(self.view.charHeadCell)
@@ -84,6 +84,10 @@ CharExpandListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         return -1
     end
 
+    self:BindInputPlayerAction("char_info_back_from_char_expand_list", function()
+        self:TryClose()
+    end)
+
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
@@ -92,7 +96,47 @@ CharExpandListCtrl.OnShow = HL.Override() << function(self)
     self:RefreshCharExpandList(self.m_charInfo, self.m_charInfoList)
 end
 
+CharExpandListCtrl.OnHide = HL.Override() << function(self)
+    self:_ClearFilter()
+    self:_ResetSortToDefault()
+end
 
+
+
+CharExpandListCtrl.TryClose = HL.Method() << function(self)
+    self:Notify(MessageConst.CHAR_INFO_EMPTY_BUTTON_CLICK)
+end
+
+
+CharExpandListCtrl._ResetSortToDefault = HL.Method() << function(self)
+    local sortNode = self.view.sortNode
+    if not sortNode or not sortNode.m_sortOptions then
+        return
+    end
+
+    sortNode.isIncremental = false
+    sortNode.m_curCSOptionIndex = 0
+    sortNode.m_tmpNoCallback = true
+    sortNode.view.mobilePCNode.dropDown:SetSelected(0, true, false)
+    sortNode.m_tmpNoCallback = false
+    sortNode:RefreshIncremental()
+    sortNode:UpdateDeviceState()
+
+    local optData = sortNode:GetCurSortData()
+    if not optData or not self.m_charInfoList then
+        return
+    end
+    local keys = optData.reverseKeys or optData.keys
+    table.sort(self.m_charInfoList, Utils.genSortFunction(keys, false))
+end
+
+CharExpandListCtrl._ClearFilter = HL.Method() << function(self)
+    self.m_filterTags = nil
+    if self.view.filterBtn then
+        self.view.filterBtn:_UpdateState({})
+    end
+    self:_FilterCharList()
+end
 
 CharExpandListCtrl.RefreshCharExpandList = HL.Method(HL.Opt(HL.Table, HL.Table, HL.Boolean)) << function(self, charInfo, charInfoList, skipGraduallyShow)
     self.m_charInfo = charInfo

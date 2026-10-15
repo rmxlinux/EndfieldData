@@ -629,6 +629,10 @@ Depot._CustomOnUpdateCell = HL.Method(HL.Forward("ItemSlot"), HL.Table, HL.Numbe
             end
         end
         self:_TryDisableHoverBindingOnEmptyItem(cell, info)
+        local button = cell.item.view.button
+        
+        InputManagerInst:ToggleGroup(button.hoverBindingGroupId, not self.m_inDestroyMode and button.isNaviTarget)
+        self:_RefreshCellHoverTipsEnabledState(cell)
 
         
         if self.depotContent.view.config.IS_SET_TIPS_POS then

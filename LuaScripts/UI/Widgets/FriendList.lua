@@ -99,12 +99,14 @@ FriendList.InitFriendListCtrl = HL.Method(HL.Any) << function(self, arg)
             cell.view.gameObject:SetActiveIfNecessary(false)
         end
 
-        cell.view.shareBtn.onClick:RemoveAllListeners()
-        cell.view.shareBtn.onClick:AddListener(function()
-            if self.m_arg.onShareClick then
-                self.m_arg.onShareClick(self.m_friendList[index].roleId)
-            end
-        end)
+        if cell.view.shareBtn then
+            cell.view.shareBtn.onClick:RemoveAllListeners()
+            cell.view.shareBtn.onClick:AddListener(function()
+                if self.m_arg.onShareClick then
+                    self.m_arg.onShareClick(self.m_friendList[index].roleId)
+                end
+            end)
+        end
 
         if self.m_clueGiftNaviModel then
             local groupId = cell.view.friendListCellGroupMonoTarget.groupId
@@ -383,56 +385,6 @@ end
 FriendList.NaviToFirstCell = HL.Method() << function(self)
     local go = self.view.scrollList:Get(0)
     self:_SetCellAsNaviTarget(go)
-end
-
-
-FriendList.ReleaseCachedNaviLayer = HL.Method() << function(self)
-    local naviGroup = self.view.scrollListSelectableNaviGroup
-    if not IsNull(naviGroup) then
-        naviGroup:ManuallyStopFocus()
-    end
-end
-
-
-FriendList.RestoreNaviIfNeeded = HL.Method() << function(self)
-    if not DeviceInfo.usingController or IsNull(self.view.gameObject) or not self.view.gameObject.activeInHierarchy then
-        return
-    end
-
-    local ctrl = self:GetUICtrl()
-    if ctrl == nil or ctrl.view == nil or ctrl.view.inputGroup == nil or not ctrl.view.inputGroup.groupEnabled then
-        return
-    end
-
-    local naviGroup = self.view.scrollListSelectableNaviGroup
-    if IsNull(naviGroup) then
-        return
-    end
-
-    local naviManager = InputManagerInst.controllerNaviManager
-    local layer = naviGroup:GetLayerGroup()
-    if naviManager:IsLayerInStack(layer) then
-        return
-    end
-
-    local dummyLayerKey = ctrl:_GetDummyNaviLayerKey()
-    if not string.isEmpty(dummyLayerKey) then
-        local dummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(dummyLayerKey)
-        if dummyLayer ~= nil and naviManager:GetTopDummyLayerGroup() ~= dummyLayer then
-            return
-        end
-    end
-
-    local curTarget = naviManager.curTarget
-    if not IsNull(curTarget) and curTarget.gameObject.activeInHierarchy then
-        local curNaviGroup = curTarget.naviGroup
-        local curLayer = not IsNull(curNaviGroup) and curNaviGroup:GetLayerGroup() or nil
-        if not IsNull(curLayer) and not curLayer.isDummy then
-            return
-        end
-    end
-
-    self:NaviToFirstCell()
 end
 
 FriendList._CanRecordNaviTarget = HL.Method().Return(HL.Boolean) << function(self)

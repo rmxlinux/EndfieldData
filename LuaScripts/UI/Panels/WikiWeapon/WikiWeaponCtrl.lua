@@ -64,6 +64,8 @@ end
 WikiWeaponCtrl._CollectLocalResumeState = HL.Override().Return(HL.Table) << function(self)
     return {
         isShowWeaponMaxInfo = self.m_isShowWeaponMaxInfo == true,
+        isAttributesTabOn = self.view.right.attributesTab.isOn,
+        isArchiveTabOn = self.view.right.archiveTab.isOn,
     }
 end
 
@@ -74,6 +76,8 @@ WikiWeaponCtrl._ApplyLocalResumeState = HL.Override(HL.Opt(HL.Any)) << function(
     self.m_isShowWeaponMaxInfo = resumeState.isShowWeaponMaxInfo == true
     self:_RefreshModel()
     self:_RefreshRight()
+    self.view.right.attributesTab.isOn = resumeState.isAttributesTabOn == true
+    self.view.right.archiveTab.isOn = resumeState.isArchiveTabOn == true
 end
 
 WikiWeaponCtrl._RefreshModel = HL.Method(HL.Opt(HL.Boolean)) << function(self, playInAnim)

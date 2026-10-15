@@ -30,6 +30,8 @@ ContingencyContractTaskCtrl.m_taskCell = HL.Field(HL.Table)
 
 ContingencyContractTaskCtrl.m_readTasks = HL.Field(HL.Table)
 
+ContingencyContractTaskCtrl.m_waitToReceiveTasks = HL.Field(HL.Table)
+
 ContingencyContractTaskCtrl.m_taskTypeInitStatus = HL.Field(HL.Table)
 
 ContingencyContractTaskCtrl.m_selectedTabIndex = HL.Field(HL.Number) << 0
@@ -52,13 +54,20 @@ ContingencyContractTaskCtrl.m_groupHeight = HL.Field(HL.Table)
 
 ContingencyContractTaskCtrl.m_topViewedTaskGroupIndex = HL.Field(HL.Number) << 0
 
+ContingencyContractTaskCtrl.m_smallTagCacheTable = HL.Field(HL.Table)
 
+ContingencyContractTaskCtrl.m_pendingImportFinalScore = HL.Field(HL.Number) << 0
+
+ContingencyContractTaskCtrl.m_pendingImportTitle = HL.Field(HL.String) << ""
+
+ContingencyContractTaskCtrl.m_pendingImportToast = HL.Field(HL.Boolean) << false
 
 
 
 
 ContingencyContractTaskCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE] = '_OnTaskProgress', 
+    [MessageConst.ON_CONTINGENCY_CONTRACT_SET_TAG] = '_OnSetTagSuccess',
 }
 
 
@@ -74,10 +83,15 @@ ContingencyContractTaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.m_taskCell = {}
     self.m_rewardCellTable = {}
     self.m_rewardCacheTable = {}
+    self.m_smallTagCacheTable = {}
     self.m_readTasks = {}
+    self.m_waitToReceiveTasks = {}
     self.m_groupHeight = {}
     self.m_taskInfoDict = Tables.activityConditionalMultiStageTaskConfigTable[self.m_activityId].TaskConfigMap
     self.m_pendingRecoverPopupState = recoverState and recoverState.popupState or nil
+    self.m_pendingImportToast = false
+    self.m_pendingImportFinalScore = 0
+    self.m_pendingImportTitle = ""
     local activityConfig = Tables.activityTable[self.m_activityId]
     local info = Tables.activityContingencyContractTable[self.m_activityId]
     self.m_gameId = info.gameId
@@ -90,14 +104,17 @@ ContingencyContractTaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.m_taskTypeInitStatus = {}
 
     
+    self.m_groupToTaskMap = ContingencyContractUtils.CreateGroupToTaskMap(self.m_activityId)
+    
     self.m_groupData = {}
-    for _, groupData in pairs(Tables.activityContingencyContractTaskGroupTable) do
-        table.insert(self.m_groupData, groupData)
+    for groupId, _ in pairs(self.m_groupToTaskMap) do
+        local groupData = Tables.activityContingencyContractTaskGroupTable[groupId]
+        if groupData then
+            table.insert(self.m_groupData, groupData)
+        end
     end
     table.sort(self.m_groupData, Utils.genSortFunction({ "sortId" }, true))
     self.m_groupCount = #self.m_groupData
-    
-    self.m_groupToTaskMap = ContingencyContractUtils.CreateGroupToTaskMap(self.m_activityId)
     self:_InitSelectedIndex(recoverState and recoverState.selectedTabIndex or -1)
 
     
@@ -112,6 +129,13 @@ ContingencyContractTaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.topRightNode)
     self.view.walletBarPlaceholder:InitWalletBarPlaceholder({moneyId})
+
+    
+    if self.m_pendingRecoverPopupState ~= nil then
+        local popupState = self.m_pendingRecoverPopupState
+        self.m_pendingRecoverPopupState = nil
+        self:TryRecoverPopupState(popupState)
+    end
 end
 
 ContingencyContractTaskCtrl.OnShow = HL.Override() << function(self)
@@ -129,7 +153,7 @@ ContingencyContractTaskCtrl.OnShow = HL.Override() << function(self)
         
         for _,list in pairs(self.m_taskCell) do
             for _,task in pairs(list) do
-                if self.view.taskListNode.scrollView:IsCellViewed(task.cell.rectTransform) then
+                if task.id and self.view.taskListNode.scrollView:IsCellViewed(task.cell.rectTransform) then
                     self.m_readTasks[task.id] = true
                 end
             end
@@ -202,15 +226,22 @@ ContingencyContractTaskCtrl._UpdateContentHeight = HL.Method() << function(self)
     local height = 0
     for index, groupData in ipairs(self.m_groupData) do
         local taskCount = 0
+        local latestUnlockTime
         local taskIds = self.m_groupToTaskMap[groupData.taskGroupId]
         for _, taskId in ipairs(taskIds) do
             local taskData = activityData:GetTaskData(taskId)
             if taskData then
                 local status = GEnums.ActivityConditionalTaskState.__CastFrom(taskData.Status)
-                if status ~= GEnums.ActivityConditionalTaskState.Locked then
+                if status == GEnums.ActivityConditionalTaskState.Locked then
+                    local unlockTime = taskData.UnlockTimestamp
+                    latestUnlockTime = latestUnlockTime and (latestUnlockTime <= unlockTime and latestUnlockTime or unlockTime) or unlockTime
+                else
                     taskCount = taskCount + 1
                 end
             end
+        end
+        if groupData.canUpdate and latestUnlockTime then
+            taskCount = taskCount + 1 
         end
         self.m_groupHeight[index] = titleHeight + (cellHeight + innerPadding) * taskCount
         height = height +  self.m_groupHeight[index]
@@ -232,11 +263,11 @@ ContingencyContractTaskCtrl._OnTaskProgress = HL.Method(HL.Any) << function(self
         if PhaseManager:GetTopPhaseId()==PHASE_ID then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU)
             
-            self:_OnClickTab(1,true, true) 
+            self:_OnClickTab(1, false, true, true) 
             if DeviceInfo.usingController then
                 
                 local firstTab = self.m_tabCell[1]
-                UIUtils.setAsNaviTarget(firstTab.button)
+                self:SetNaviTarget(firstTab.button)
             end
         end
     end
@@ -288,22 +319,22 @@ ContingencyContractTaskCtrl._OnUpdate = HL.Method() << function(self)
     end
 
     
-    local waitToReceiveTasks = {}
+    self.m_waitToReceiveTasks = {}
     local activityData = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     local taskDataDict = activityData.taskDataDict
     for _, taskData in pairs(taskDataDict) do
         local status = GEnums.ActivityConditionalTaskState.__CastFrom(taskData.Status)
         if status == GEnums.ActivityConditionalTaskState.Completed then
-            table.insert(waitToReceiveTasks, taskData.Id)
+            table.insert(self.m_waitToReceiveTasks, taskData.Id)
         end
     end
     local receiveAllState
-    if #waitToReceiveTasks > 0 then
+    if #self.m_waitToReceiveTasks > 0 then
         receiveAllState = "NormalState"
         self.view.taskListNode.receiveAll.interactable = true
         self.view.taskListNode.receiveAll.onClick:RemoveAllListeners()
         self.view.taskListNode.receiveAll.onClick:AddListener(function()
-            GameInstance.player.activitySystem:SendReceiveTaskRewardConditionMultiStage(self.m_activityId, waitToReceiveTasks)
+            self:_ReceiveAllTaskRewards()
         end)
     else
         receiveAllState = "DisableState"
@@ -311,9 +342,16 @@ ContingencyContractTaskCtrl._OnUpdate = HL.Method() << function(self)
     end
     self.view.taskListNode.receiveAllStateCtrl:SetState(receiveAllState)
     if DeviceInfo.usingController then
-        InputManagerInst:ToggleGroup(self.view.taskListNode.receiveAllBindingGroup.groupId, #waitToReceiveTasks > 0)
-        self.view.taskListNode.receiveAllKeyHint.gameObject:SetActive(#waitToReceiveTasks > 0)
+        InputManagerInst:ToggleGroup(self.view.taskListNode.receiveAllBindingGroup.groupId, #self.m_waitToReceiveTasks > 0)
+        self.view.taskListNode.receiveAllKeyHint.gameObject:SetActive(#self.m_waitToReceiveTasks > 0)
     end
+end
+
+ContingencyContractTaskCtrl._ReceiveAllTaskRewards = HL.Method() << function(self)
+    if #self.m_waitToReceiveTasks <= 0 then
+        return
+    end
+    GameInstance.player.activitySystem:SendReceiveTaskRewardConditionMultiStage(self.m_activityId, self.m_waitToReceiveTasks)
 end
 
 ContingencyContractTaskCtrl._OnUpdateTaskGroupTab = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
@@ -321,7 +359,7 @@ ContingencyContractTaskCtrl._OnUpdateTaskGroupTab = HL.Method(HL.Any, HL.Number)
     self.m_tabCell[index] = cell
     cell.button.onClick:RemoveAllListeners()
     cell.button.onClick:AddListener(function()
-        self:_OnClickTab(index, true)
+        self:_OnClickTab(index, true, true)
     end)
     local groupData = self.m_groupData[index]
     cell.iconImg:LoadSprite(UIConst.UI_SPRITE_CONTINGENCY_CONTRACT, groupData.icon)
@@ -369,6 +407,7 @@ ContingencyContractTaskCtrl._OnUpdateTaskList = HL.Method(HL.Any, HL.Number, HL.
     cell.iconImg:LoadSprite(UIConst.UI_SPRITE_CONTINGENCY_CONTRACT, groupData.icon)
     cell.gameObject.name = "taskList_" .. groupData.taskGroupId
     self.m_rewardCacheTable[index] = self.m_rewardCacheTable[index] or {}
+    self.m_smallTagCacheTable[index] = self.m_smallTagCacheTable[index] or {}
 
     
     local currentTaskCount = 0
@@ -410,42 +449,62 @@ ContingencyContractTaskCtrl._OnUpdateTaskList = HL.Method(HL.Any, HL.Number, HL.
     cell.titleNode:SetState(countdownState)
     table.sort(currentTasks, Utils.genSortFunction({ "completed", "inProgress", "sortId" }, true))
 
+    local showNoOpen = groupData.canUpdate and latestUnlockTime ~= nil
+    local displayCount = currentTaskCount + (showNoOpen and 1 or 0)
+
     
     local taskCache = self.m_taskCacheTable[index]
     taskCache = taskCache or UIUtils.genCellCache(cell.taskCell)
     self.m_taskCacheTable[index] = taskCache
     self.m_taskCell[index] = {}
     if graduallyShow then
-        taskCache:GraduallyRefresh(currentTaskCount, self.view.config.TASK_SHOW_INTERVAL, function(innerCell, innerIndex)
-            self:_OnUpdateTask(innerCell, innerIndex, currentTasks, index)
-            table.insert(self.m_taskCell[index], {cell = innerCell, id = currentTasks[innerIndex].id})
-            
-            if innerIndex == currentTaskCount then
-                self.m_taskTypeInitStatus[index] = true
-                
-                if index == self.m_groupCount then
-                    self.m_hasTaskInit = true
-                    self:_UpdateInit()
-                end
-            end
+        taskCache:GraduallyRefresh(displayCount, self.view.config.TASK_SHOW_INTERVAL, function(taskCell, taskIndex)
+            self:_OnRefreshTaskCell(taskCell, taskIndex, currentTasks, index, showNoOpen, displayCount, latestUnlockTime, true)
         end)
     else
-        taskCache:Refresh(currentTaskCount, function(innerCell, innerIndex)
-            self:_OnUpdateTask(innerCell, innerIndex, currentTasks, index)
-            table.insert(self.m_taskCell[index], {cell = innerCell, id = currentTasks[innerIndex].id})
+        taskCache:Refresh(displayCount, function(taskCell, taskIndex)
+            self:_OnRefreshTaskCell(taskCell, taskIndex, currentTasks, index, showNoOpen, displayCount, latestUnlockTime, false)
         end)
     end
+end
+
+ContingencyContractTaskCtrl._OnRefreshTaskCell = HL.Method(HL.Any, HL.Number, HL.Table, HL.Number, HL.Boolean, HL.Number, HL.Any, HL.Boolean) << function(self, taskCell, taskIndex, currentTasks, groupIndex, showNoOpen, displayCount, latestUnlockTime, graduallyShow)
+    if showNoOpen and taskIndex == displayCount then
+        self:_OnUpdateNoOpenTaskCell(taskCell, latestUnlockTime)
+        table.insert(self.m_taskCell[groupIndex], {cell = taskCell, id = nil})
+    else
+        self:_OnUpdateTask(taskCell, taskIndex, currentTasks, groupIndex)
+        table.insert(self.m_taskCell[groupIndex], {cell = taskCell, id = currentTasks[taskIndex].id})
+    end
+    if graduallyShow and taskIndex == displayCount then
+        self.m_taskTypeInitStatus[groupIndex] = true
+        if groupIndex == self.m_groupCount then
+            self.m_hasTaskInit = true
+            self:_UpdateInit()
+        end
+    end
+end
+
+ContingencyContractTaskCtrl._OnUpdateNoOpenTaskCell = HL.Method(HL.Any, HL.Any) << function(self, cell, latestUnlockTime)
+    cell.gameObject.name = "TaskCell_NoOpen"
+    cell.stateController:SetState("NoOpen")
+    cell.countDownText:InitCountDownText(latestUnlockTime, function()
+        self.m_needUpdateRefresh = true
+    end)
 end
 
 ContingencyContractTaskCtrl._OnUpdateTask = HL.Method(HL.Any, HL.Number, HL.Table, HL.Number) << function(self, cell, index, currentTasks, tabIndex)
     local activityData = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     local taskId = currentTasks[index].id
     local taskData = activityData:GetTaskData(taskId)
+    local taskInfo = self.m_taskInfoDict[taskId]
+    local jumpId = taskInfo.jumpId
+    local isTagType = not string.isEmpty(jumpId)
 
     cell.gameObject.name = "TaskCell" .. taskId
-    cell.missionTxt.text = self.m_taskInfoDict[taskId].desc
+    cell.missionTxt.text = taskInfo.desc
     
-    local rewardId = self.m_taskInfoDict[taskId].rewardId
+    local rewardId = taskInfo.rewardId
     local rewardBundles = UIUtils.getRewardItems(rewardId)
     local rewardCellCache = self.m_rewardCacheTable[tabIndex][index] or UIUtils.genCellCache(cell.rewardItem)
     self.m_rewardCacheTable[tabIndex][index] = rewardCellCache
@@ -471,72 +530,31 @@ ContingencyContractTaskCtrl._OnUpdateTask = HL.Method(HL.Any, HL.Number, HL.Tabl
     self.m_rewardCellTable[taskId] = rewardCell
 
     
-    local state = "InProgress"
+    cell.stateController:SetState("Open")
+    cell.stateController:SetState(isTagType and "TagType" or "ProgType")
 
-    
     local status = GEnums.ActivityConditionalTaskState.__CastFrom(taskData.Status)
     if status == GEnums.ActivityConditionalTaskState.Unlocked then
-        local jumpId = self.m_taskInfoDict[taskId].jumpId
-        if not string.isEmpty(jumpId) then
-            state = "Goto"
-            cell.btnGoto.onClick:RemoveAllListeners()
-            cell.btnGoto.onClick:AddListener(function()
-                
-                ActivityUtils.setCcNewTaskRead(self.m_activityId, taskId)
-                
-                local cfg = Tables.systemJumpTable[jumpId]
-                local phaseArgs = Json.decode(cfg.phaseArgs)
-                local jumpTagIds = phaseArgs.tagIds
-                local jumpShareCode = phaseArgs.shareCode
-                local isValid = jumpTagIds and ContingencyContractUtils.CheckJoinedTagListValid(self.m_gameId, jumpTagIds, true) or ContingencyContractUtils.AnalyzeShareCode(self.m_gameId, jumpShareCode, true)
-                
-                if isValid then
-                    
-                    Notify(MessageConst.SHOW_POP_UP, {
-                        content = Language.LUA_ACTIVITY_CONTINGENCY_CONTRACT_JUMP_CONFIRM_POP_UP,
-                        warningContent = Language.LUA_CONTINGENCY_CONTRACT_SHARE_CONFIRM_POP_UP_WARN_TITLE,
-                        onConfirm = function()
-                            Utils.jumpToSystem(jumpId)
-                            self.m_readTasks[taskId] = true
-                            self:_UpdateReadInfo()
-                        end
-                    })
-                else
-                    
-                    Notify(MessageConst.SHOW_POP_UP, {
-                        content = Language.LUA_ACTIVITY_CONTINGENCY_CONTRACT_JUMP_HAS_LOCKED_TAG_CONFIRM_POP_UP,
-                        onConfirm = function()
-                            PhaseManager:OpenPhase(PhaseId.ContingencySelectTag, {
-                                gameId = self.m_gameId
-                            })
-                            self.m_readTasks[taskId] = true
-                            self:_UpdateReadInfo()
-                        end
-                    })
-                end
-            end)
-        else
-            state = "InProgress"
-        end
-        
+        cell.stateController:SetState("InProgress")
     elseif status == GEnums.ActivityConditionalTaskState.Completed then
-        state = "Complete"
+        cell.stateController:SetState("Complete")
         cell.completedNode.onClick:RemoveAllListeners()
         cell.completedNode.onClick:AddListener(function()
-            GameInstance.player.activitySystem:SendReceiveTaskRewardConditionMultiStage(self.m_activityId, { taskId })
+            self:_ReceiveAllTaskRewards()
         end)
-        
     else
-        state = "Received"
-        for _, rewardCell in ipairs(self.m_rewardCellTable[taskId]) do
-            rewardCell.view.stateCtrl:SetState("Received")
+        cell.stateController:SetState("Received")
+        for _, rewardCellItem in ipairs(self.m_rewardCellTable[taskId]) do
+            rewardCellItem.view.stateCtrl:SetState("Received")
         end
     end
 
-    cell.stateController:SetState(state)
+    if isTagType then
+        self:_RefreshTagTypeTaskCell(cell, taskId, jumpId, tabIndex, index)
+    end
 
     
-    local conditionIdList = self.m_taskInfoDict[taskId].completeConditionId
+    local conditionIdList = taskInfo.completeConditionId
     local isInProgress = status == GEnums.ActivityConditionalTaskState.Unlocked
     local progress = 0
     local target = 0
@@ -567,18 +585,126 @@ ContingencyContractTaskCtrl._OnUpdateTask = HL.Method(HL.Any, HL.Number, HL.Tabl
 
     
     if DeviceInfo.usingController then
-        
-        cell.rewardsKeyHint.gameObject:SetActive(false)
         cell.naviDecorator.onIsNaviTargetChanged = function(isTarget)
-            cell.rewardsKeyHint.gameObject:SetActive(isTarget)
             if isTarget then
                 
                 ActivityUtils.setCcNewTaskRead(self.m_activityId, taskId)
                 
-                self:_OnClickTab(tabIndex, false)
+                self:_OnClickTab(tabIndex, false, false)
             end
         end
     end
+end
+
+ContingencyContractTaskCtrl._GetJoinedStateName = HL.Method(HL.Table).Return(HL.String) << function(self, tagInfo)
+    if tagInfo.isJoined then
+        return "JoinedState"
+    end
+    if tagInfo.isConflict then
+        return "ConflictState"
+    end
+    return "NormalState"
+end
+
+ContingencyContractTaskCtrl._ParseJumpPhaseArgs = HL.Method(HL.String).Return(HL.Table, HL.Table) << function(self, jumpId)
+    local tagIds, tagGroupIds = {}, {}
+    local cfg = Tables.systemJumpTable[jumpId]
+    if not cfg or string.isEmpty(cfg.phaseArgs) then
+        return tagIds, tagGroupIds
+    end
+    local phaseArgs = Json.decode(cfg.phaseArgs)
+    tagIds = phaseArgs.tagIds or {}
+    tagGroupIds = phaseArgs.tagGroupIds or {}
+    return tagIds, tagGroupIds
+end
+
+ContingencyContractTaskCtrl._RefreshTagTypeTaskCell = HL.Method(HL.Any, HL.String, HL.String, HL.Number, HL.Number) << function(self, cell, taskId, jumpId, tabIndex, taskIndex)
+    local tagIds, tagGroupIds = self:_ParseJumpPhaseArgs(jumpId)
+    local tagInfos = ContingencyContractUtils.CreateTagBasicInfoWithKeyLockJoinedInfosFilterGroup(
+        self.m_gameId, tagIds, tagGroupIds)
+
+    local smallTagCache = self.m_smallTagCacheTable[tabIndex][taskIndex] or UIUtils.genCellCache(cell.smallTagCell)
+    self.m_smallTagCacheTable[tabIndex][taskIndex] = smallTagCache
+    smallTagCache:Refresh(#tagInfos, function(tagCell, luaIndex)
+        local tagInfo = tagInfos[luaIndex]
+        tagCell.tagIcon:LoadSprite(UIConst.UI_SPRITE_CONTINGENCY_CONTRACT_BUFF, tagInfo.icon)
+        tagCell.stateController:SetState(self:_GetJoinedStateName(tagInfo))
+    end)
+
+    cell.openImportTagBtn.onClick:RemoveAllListeners()
+    cell.openImportTagBtn.onClick:AddListener(function()
+        UIManager:Open(PanelId.ContingencyContractImportTag, {
+            gameId = self.m_gameId,
+            title = self.m_taskInfoDict[taskId].taskName,
+            tagIds = tagIds,
+            tagGroupIds = tagGroupIds,
+        })
+    end)
+
+    local importResult = ContingencyContractUtils.BuildImportTagResult(self.m_gameId, tagInfos)
+    self:_ApplyImportTagBtnState(cell, importResult)
+    cell.importTagBtn.onClick:RemoveAllListeners()
+    cell.importTagBtn.onClick:AddListener(function()
+        ActivityUtils.setCcNewTaskRead(self.m_activityId, taskId)
+        local warningScore1, warningScore2 = ContingencyContractUtils.GetImportWarningScores(self.m_gameId)
+        ContingencyContractUtils.TryImportTagConfirmation(self.m_gameId, importResult, {
+            warningScore1 = warningScore1,
+            warningScore2 = warningScore2,
+        }, {
+            gotoAfter = false,
+            onSend = function(mergedIds, finalScore)
+                self.m_pendingImportToast = true
+                self.m_pendingImportFinalScore = finalScore
+                self.m_pendingImportTitle = self.m_taskInfoDict[taskId].taskName
+                
+                local ccSystem = GameInstance.player.contingencyContractSystem
+                ccSystem:SendSetTag(self.m_gameId, mergedIds)
+            end,
+            onGotoSelectTag = function()
+                PhaseManager:OpenPhase(PhaseId.ContingencySelectTag, {
+                    gameId = self.m_gameId,
+                })
+            end,
+        })
+    end)
+end
+
+ContingencyContractTaskCtrl._ApplyImportTagBtnState = HL.Method(HL.Any, HL.Table) << function(self, cell, importResult)
+    if importResult.allJoined then
+        cell.importTagBtnStateCtrl:SetState("AllImportState")
+        cell.importTagBtn.enabled = false
+    else
+        cell.importTagBtnStateCtrl:SetState("CanImportState")
+        cell.importTagBtn.enabled = true
+    end
+end
+
+ContingencyContractTaskCtrl._RefreshAllTagTypeTaskCells = HL.Method() << function(self)
+    for tabIndex, list in pairs(self.m_taskCell) do
+        for taskIndex, taskEntry in ipairs(list) do
+            local taskId = taskEntry.id
+            if taskId then
+                local jumpId = self.m_taskInfoDict[taskId].jumpId
+                if not string.isEmpty(jumpId) then
+                    self:_RefreshTagTypeTaskCell(taskEntry.cell, taskId, jumpId, tabIndex, taskIndex)
+                end
+            end
+        end
+    end
+end
+
+ContingencyContractTaskCtrl._OnSetTagSuccess = HL.Method(HL.Any) << function(self, arg)
+    local gameId = unpack(arg)
+    if gameId ~= self.m_gameId then
+        return
+    end
+    if self.m_pendingImportToast then
+        self.m_pendingImportToast = false
+        Notify(MessageConst.SHOW_TOAST, string.format(
+            Language.LUA_CONTINGENCY_CONTRACT_IMPORT_TAG_SUCCESS_TOAST, self.m_pendingImportTitle, self.m_pendingImportFinalScore))
+        self.m_pendingImportTitle = ""
+    end
+    self:_RefreshAllTagTypeTaskCells()
 end
 
 ContingencyContractTaskCtrl._GetTab = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
@@ -589,9 +715,13 @@ ContingencyContractTaskCtrl._GetList = HL.Method(HL.Number).Return(HL.Any) << fu
     return self.m_listCell[index]
 end
 
-ContingencyContractTaskCtrl._OnClickTab = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, index, needScroll, noTween)
+ContingencyContractTaskCtrl._OnClickTab = HL.Method(HL.Number, HL.Boolean, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, index, fromClick, needScroll, noTween)
     
     if index ~= self.m_selectedTabIndex then
+        if not fromClick and not noTween then
+            
+            AudioAdapter.PostEvent("Au_UI_Toggle_Common_On")
+        end
         local oldTab = self:_GetTab(self.m_selectedTabIndex)
         if oldTab then
             self:_SetTabSelected(oldTab, false)
@@ -671,7 +801,7 @@ ContingencyContractTaskCtrl._UpdateTabByScrollPos = HL.Method() << function(self
         
 
     end
-    self:_OnClickTab(closestIndex, false)
+    self:_OnClickTab(closestIndex, false, false)
 end
 
 ContingencyContractTaskCtrl._CheckCanScrollTo = HL.Method(HL.Number, HL.Number).Return(HL.Boolean) << function(self, index, judgeLineLocalY)
@@ -756,6 +886,19 @@ ContingencyContractTaskCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(
     if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
         return
     end
+
+    
+    local isImportTagOpen, importTagCtrl = UIManager:IsOpen(PanelId.ContingencyContractImportTag)
+    if isImportTagOpen and importTagCtrl and importTagCtrl:IsShow() then
+        local popupState = {
+            popupType = "ImportTag",
+        }
+        if HL.TryGet(importTagCtrl, "GetRecoverStateArg") then
+            popupState.recoverState = importTagCtrl:GetRecoverStateArg()
+        end
+        return popupState
+    end
+
     local isOpen, instructionBookCtrl = UIManager:IsOpen(PanelId.InstructionBook)
     if not isOpen or not instructionBookCtrl or not instructionBookCtrl:IsShow() then
         return
@@ -777,6 +920,24 @@ ContingencyContractTaskCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function
     if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
         return
     end
+    if popupState.popupType == "ImportTag" then
+        local isOpen = UIManager:IsOpen(PanelId.ContingencyContractImportTag)
+        if isOpen then
+            return
+        end
+        local recoverState = popupState.recoverState
+        if recoverState == nil then
+            return
+        end
+        UIManager:Open(PanelId.ContingencyContractImportTag, {
+            gameId = recoverState.gameId or self.m_gameId,
+            title = recoverState.title or "",
+            tagIds = recoverState.tagIds or {},
+            tagGroupIds = recoverState.tagGroupIds or {},
+            recoverState = recoverState,
+        })
+        return
+    end
     if popupState.popupType ~= "InstructionBook" then
         return
     end
@@ -796,12 +957,6 @@ ContingencyContractTaskCtrl._UpdateInit = HL.Method() << function(self)
     if self.m_hasTabInit and self.m_hasTaskInit then
         
         self:_SetNavi()
-        
-        if self.m_pendingRecoverPopupState ~= nil then
-            local popupState = self.m_pendingRecoverPopupState
-            self.m_pendingRecoverPopupState = nil
-            self:TryRecoverPopupState(popupState)
-        end
     end
 end
 

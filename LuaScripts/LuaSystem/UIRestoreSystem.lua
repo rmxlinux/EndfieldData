@@ -8,7 +8,7 @@ UIRestoreSystem = HL.Class('UIRestoreSystem', LuaSystemBase.LuaSystemBase)
 
 
 UIRestoreSystem.m_restoreRequestMap = HL.Field(HL.Table)
-
+UIRestoreSystem.m_lastLeaveDungeonId = HL.Field(HL.String) << ""
 UIRestoreSystem.m_restoreRestoreData = HL.Field(HL.Table)
 
 UIRestoreSystem.UIRestoreSystem = HL.Constructor() << function(self)
@@ -75,6 +75,9 @@ UIRestoreSystem.RemovePhaseFromRequest = HL.Method(HL.String, HL.Number) << func
 end
 
 UIRestoreSystem.TryRestore = HL.Method().Return(HL.Boolean) << function(self)
+    self.m_restoreRestoreData = self.m_restoreRequestMap[self.m_lastLeaveDungeonId]
+    self.m_restoreRequestMap[self.m_lastLeaveDungeonId] = nil
+    self.m_lastLeaveDungeonId = ""
     if self.m_restoreRestoreData then
         local restoreData = self.m_restoreRestoreData
         self.m_restoreRestoreData = nil
@@ -91,17 +94,15 @@ UIRestoreSystem.TryRestore = HL.Method().Return(HL.Boolean) << function(self)
 end
 
 UIRestoreSystem.HasValidAction = HL.Method().Return(HL.Boolean) << function(self)
-    if self.m_restoreRestoreData and self.m_restoreRestoreData.checkFunc() then
+    local request = self.m_restoreRequestMap[self.m_lastLeaveDungeonId]
+    if request and request.checkFunc() then
         return true
     end
     return false
 end
 
 UIRestoreSystem._OnLeaveDungeon = HL.Method(HL.String) << function(self, dungeonId)
-    
-    local request = self.m_restoreRequestMap[dungeonId]
-    self.m_restoreRestoreData = request
-    self.m_restoreRequestMap[dungeonId] = nil
+    self.m_lastLeaveDungeonId = dungeonId
 end
 
 UIRestoreSystem._DefaultCheck = HL.Method().Return(HL.Boolean) << function(self)

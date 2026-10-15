@@ -297,9 +297,10 @@ PhaseWeaponInfo._ToggleWeaponPotential = HL.Method(HL.Boolean, HL.Boolean) << fu
     end
 
     if isFast then
+        weaponContainer.animation:Stop()
         weaponContainer.animation:SeekToPercent(potentialAnim, 1)
     else
-        weaponContainer.animation:Play(potentialAnim)
+        weaponContainer.animation:Play(potentialAnim, CS.UnityEngine.PlayMode.StopAll)
     end
 end
 
@@ -621,6 +622,9 @@ end
 
 PhaseWeaponInfo.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
+    if self.m_curPageType > 0 then
+        arg.pageType = self.m_curPageType
+    end
     local stateArg = {}
     arg.stateArg = stateArg
     for _, panelItem in pairs(self.m_panel2Item) do

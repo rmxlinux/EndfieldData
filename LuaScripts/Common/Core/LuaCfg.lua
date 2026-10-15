@@ -98,7 +98,7 @@ local function I18nGetText(id, text, ...)
     else
         local hotfixText = CS.Beyond.I18n.I18nHotfixManager.instance:GetHotFixText(id)
         if hotfixText ~= '' then
-            if BEYOND_DEBUG_COMMAND then
+            if BEYOND_DEBUG_COMMAND and CS.Beyond.I18n.I18nUtils.GetShowHotfixTextToast() then
                 Notify(MessageConst.SHOW_TOAST, string.format("使用了RemoteConfig里的热更文本 id(%d)text(%s)", id, hotfixText))
             end
             return hotfixText
@@ -132,7 +132,7 @@ local function I18nGetText(id, text, ...)
                 end
             end
             if patchText ~= '' then
-                if BEYOND_DEBUG_COMMAND then
+                if BEYOND_DEBUG_COMMAND and CS.Beyond.I18n.I18nUtils.GetShowHotfixTextToast() then
                     Notify(MessageConst.SHOW_TOAST, string.format("使用了文本热更表里的热更文本 id(%d)text(%s)", id, patchText))
                 end
                 return patchText
@@ -141,9 +141,6 @@ local function I18nGetText(id, text, ...)
 
         local serverText = CS.Beyond.I18n.I18nServerTextManager.instance:GetText(id, hg.curEnvLang)
         if serverText ~= '' then
-            if BEYOND_DEBUG_COMMAND then
-                Notify(MessageConst.SHOW_TOAST, string.format("使用了服务器下发的多语言文本 id(%d)text(%s)", id, serverText))
-            end
             return serverText
         end
 

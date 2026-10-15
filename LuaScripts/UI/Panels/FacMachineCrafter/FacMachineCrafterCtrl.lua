@@ -37,7 +37,6 @@ local SMART_ALERT_FUNCTION_NAME_LIST = {
 
 
 FacMachineCrafterCtrl.s_messages = HL.StaticField(HL.Table) << {
-    [MessageConst.ON_FAC_MACHINE_MODE_CHANGE_SYNC_PORT] = '_OnModeChangeSyncPort',
     [MessageConst.FAC_ON_DEL_TIME_LIMITED_FORMULA] = "_OnFormulaDelete",
 }
 
@@ -63,13 +62,13 @@ FacMachineCrafterCtrl.m_smartAlertConditionDataCache = HL.Field(HL.Table)
 
 FacMachineCrafterCtrl.m_isCacheAreaInitialized = HL.Field(HL.Boolean) << false
 
-FacMachineCrafterCtrl.m_needRefreshPortState = HL.Field(HL.Boolean) << false
-
 FacMachineCrafterCtrl.m_layoutData = HL.Field(HL.Table)
 
 FacMachineCrafterCtrl.m_cacheInCanDropLevel = HL.Field(HL.Number) << 0
 
 FacMachineCrafterCtrl.m_cacheOutCanDropLevel = HL.Field(HL.Number) << 0
+
+FacMachineCrafterCtrl.m_needRefreshPortState = HL.Field(HL.Boolean) << false
 
 
 FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -224,7 +223,7 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(nodeId)
-    end
+end
 
 FacMachineCrafterCtrl.OnClose = HL.Override() << function(self)
     self.view.buildingCommon:ClearSmartAlertUpdate()
@@ -746,7 +745,7 @@ FacMachineCrafterCtrl._CheckAlertNormalInputSingleBlockedCondition = HL.Method(H
                 end
             end
             
-            if itemIdOrMultiTag then
+            if itemIdOrMultiTag and not string.isEmpty(itemIdOrMultiTag) then
                 local checkOpen = DeviceInfo.usingController and
                     self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) and
                     self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
@@ -821,7 +820,7 @@ FacMachineCrafterCtrl._CheckAlertFluidInputSingleBlockedCondition = HL.Method(HL
                 end
             end
             
-            if itemIdOrMultiTag then
+            if itemIdOrMultiTag and not string.isEmpty(itemIdOrMultiTag) then
                 local checkOpen = DeviceInfo.usingController and
                     self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) and
                     self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()

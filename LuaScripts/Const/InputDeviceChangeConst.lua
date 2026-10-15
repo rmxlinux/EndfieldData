@@ -13,6 +13,8 @@ FORBID_INPUT_DEVICE_CHANGE_PANELS = {
 
     "PlayerRename", 
     "DungeonSettlementPopup", 
+    "GambleBattleSubSettlement", 
+    "GambleBattleFinalSettlement", 
     "WulingParkourSettlement", 
     "WulingParkourChallengeResult", 
     "SimulationTrainingSettlementPopup", 
@@ -53,9 +55,17 @@ FORBID_INPUT_DEVICE_CHANGE_PANELS = {
 
     
     "ContingencyContractSettlement",
+    "ContingencyContractSettlementNew",
+
+    
+    "InnManagementResultDetail",
+    "InnManagementResultTopic",
 
     
     "HudLayout",
+
+    
+    "QTE",
 }
 
 
@@ -117,6 +127,13 @@ EXCEPT_CHANGE_DEVICE_CLOSE_PANEL = {
     "TyphoeaArcheryHud",
 
     
+    "InnMainHud",
+    "InnKitchenOrderingPopUp",
+    "InnDrinkMenuPopUp",
+    "InnKitchenAdditionDetails",
+    "InnRecipeHud",
+
+    
     "MiniMap",
     "FacTopViewBuildingInfo",
     "CommonItemToast",
@@ -127,7 +144,7 @@ EXCEPT_CHANGE_DEVICE_CLOSE_PANEL = {
     "BattleDamageText",
     "ControllerHint",
     "FacBuildingInteract",
-    "FacMiniPowerHud",
+    "FacTopHud",
     "GeneralAbility",
     "GeneralTracker",
     "Guide",

@@ -65,6 +65,9 @@ SpaceshipCharTipsCtrl.UpdateContent = HL.Method(HL.Table) << function(self, args
     self.m_charId = charId
 
     SpaceshipUtils.updateSSCharInfos(self.view, charId,nil,true)
+    local spaceship = GameInstance.player.spaceship
+    local succ, char = spaceship.characters:TryGetValue(charId)
+    self:_UpdateGroupNode(args, succ and char or nil)
     
     if args.ignoreWorkNode then
         self.view.workStateNode.gameObject:SetActive(false)
@@ -74,6 +77,24 @@ SpaceshipCharTipsCtrl.UpdateContent = HL.Method(HL.Table) << function(self, args
 
     local posType = args.posType or UIConst.UI_TIPS_POS_TYPE.LeftTop
     UIUtils.updateTipsPosition(self.view.content.transform, transform, self.view.rectTransform, self.uiCamera, posType, args.padding)
+end
+
+SpaceshipCharTipsCtrl._UpdateGroupNode = HL.Method(HL.Table, HL.Opt(HL.Any)) << function(self, args, char)
+    local TeamType = CS.Proto.SpaceshipCharTeamType
+    local roomId = char and char.stationedRoomId or args.targetRoomId
+    local scheduleEnabled = not string.isEmpty(roomId)
+            and SpaceshipUtils.isScheduleUnlocked()
+            and SpaceshipUtils.isRoomScheduleSupported(roomId)
+            and not SpaceshipUtils.isSingleTeamMode(roomId)
+    local teamType = scheduleEnabled and char and char.teamType or nil
+    local state = "Single"
+    if teamType == TeamType.A then
+        state = "A"
+    elseif teamType == TeamType.B then
+        state = "B"
+    end
+    self.view.groupNode:SetState(state)
+    self.view.abTxt.color = not string.isEmpty(roomId) and SpaceshipUtils.getRoomColor(roomId) or Color.white
 end
 
 SpaceshipCharTipsCtrl.HideTips = HL.Method() << function(self)

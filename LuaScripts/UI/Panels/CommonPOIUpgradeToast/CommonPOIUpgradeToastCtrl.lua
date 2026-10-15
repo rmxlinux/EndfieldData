@@ -78,6 +78,12 @@ CommonPOIUpgradeToastCtrl.OnCommonPOILevelUp = HL.StaticMethod(HL.Opt(HL.Table))
     end)
 end
 
+CommonPOIUpgradeToastCtrl.OpenCustomToast = HL.StaticMethod(HL.Table) << function(args)
+    LuaSystemManager.mainHudActionQueue:AddRequest(MAIN_HUD_TOAST_TYPE, function()
+        UIManager:Open(PANEL_ID, { GEnums.DomainPoiType.None, args.instId or "", args.preLv or 0, args.lv or 0, { customInfo = args }})
+    end)
+end
+
 
 
 
@@ -161,6 +167,21 @@ end
 CommonPOIUpgradeToastCtrl._InitBaseInfo = HL.Method() << function(self)
     self.view.content:SetState(self.m_state)
 
+    local customInfo = self.m_args.customInfo
+    if customInfo then
+        self.view.nameTxt.text = customInfo.title or ""
+        if self.m_state == PANEL_STATE.LevelUp then
+            self.view.preLvTxt.text = self.m_preLv
+            self.view.curLvTxt.text = self.m_lv
+        end
+        local hasIcon = not string.isEmpty(customInfo.iconId or "")
+        self.view.icon.gameObject:SetActive(hasIcon)
+        if hasIcon then
+            self.view.icon:LoadSprite(customInfo.iconAtlas or UIConst.UI_SPRITE_COMMON_POI_UPGRADE_TOAST, customInfo.iconId)
+        end
+        return
+    end
+
     local domainPOITypeCfg = Tables.domainPoiTable[self.m_domainPOIType]
     if self.m_state == PANEL_STATE.Unlock then
         self.view.nameTxt.text = domainPOITypeCfg.unlockToastTitle
@@ -171,12 +192,20 @@ CommonPOIUpgradeToastCtrl._InitBaseInfo = HL.Method() << function(self)
         self.view.curLvTxt.text = self.m_lv
     end
 
-    if not string.isEmpty(domainPOITypeCfg.upgradeToastIcon) then
+    local hasIcon = not string.isEmpty(domainPOITypeCfg.upgradeToastIcon)
+    self.view.icon.gameObject:SetActive(hasIcon)
+    if hasIcon then
         self.view.icon:LoadSprite(UIConst.UI_SPRITE_COMMON_POI_UPGRADE_TOAST, domainPOITypeCfg.upgradeToastIcon)
     end
 end
 
 CommonPOIUpgradeToastCtrl._InitDesc = HL.Method() << function(self)
+    local customInfo = self.m_args.customInfo
+    if customInfo then
+        self:_RefreshDescList(customInfo.descList or {})
+        return
+    end
+
     local funcName = GetDescFunc[self.m_domainPOIType]
     if not funcName then
         logger.error("[CommonPOIUpgradeToastCtrl] GetDescFunc定义缺失，类型为：", self.m_domainPOIType)
@@ -184,6 +213,10 @@ CommonPOIUpgradeToastCtrl._InitDesc = HL.Method() << function(self)
     end
 
     local descList = self[funcName](self)
+    self:_RefreshDescList(descList)
+end
+
+CommonPOIUpgradeToastCtrl._RefreshDescList = HL.Method(HL.Table) << function(self, descList)
     self.m_descTxtCellCache:RefreshCoroutine(#descList, 0.1, function(cell, index)
         if type(descList[index])=="table" then
             cell.infoTxt.text = descList[index][1]
@@ -247,8 +280,9 @@ CommonPOIUpgradeToastCtrl._GetDescDomainDepot = HL.Method().Return(HL.Table) << 
     local descList = {}
     local domainDepotId = self.m_instId
     local domainDepotData = GameInstance.player.domainDepotSystem:GetDomainDepotDataById(domainDepotId)
+    local depotSuccess, domainDepotCfg = Tables.domainDepotTable:TryGetValue(domainDepotId)
     local levelSuccess, domainDepotLevelList = Tables.domainDepotLevelTable:TryGetValue(domainDepotId)
-    if not levelSuccess or domainDepotData == nil then
+    if not levelSuccess or not depotSuccess or domainDepotData == nil then
         return descList
     end
 
@@ -268,6 +302,11 @@ CommonPOIUpgradeToastCtrl._GetDescDomainDepot = HL.Method().Return(HL.Table) << 
         lastExtraDepotLimit = lastLevelConfig.extraDepotLimit
         lastDeliverItemTypeCount = lastLevelConfig.deliverItemTypeList.Count
         lastDeliverPackTypeCount = lastLevelConfig.deliverPackTypeList.Count
+    end
+
+    local quickTransferStartLevel = domainDepotCfg.quickTransferStartLevel or 0
+    if quickTransferStartLevel > 0 and self.m_lv == quickTransferStartLevel then
+        table.insert(descList, Language.LUA_DOMAIN_DEPOT_QUICK_TRANSFER_UNLOCK_TOAST_DESC)
     end
 
     if lastDeliverItemTypeCount == 0 and currDeliverItemTypeCount > 0 then

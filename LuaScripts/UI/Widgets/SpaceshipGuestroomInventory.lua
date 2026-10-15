@@ -45,7 +45,7 @@ SpaceshipGuestroomInventory._OnFirstTimeInit = HL.Override() << function(self)
         self:_UpdateView()
     end)
 
-    self:RegisterMessage(MessageConst.ON_SPACESHIP_SELF_CLUE_DELETE, function()
+    self:RegisterMessage(MessageConst.ON_SPACESHIP_CLUE_DELETE, function()
         if not self.m_isOpen then
             return
         end

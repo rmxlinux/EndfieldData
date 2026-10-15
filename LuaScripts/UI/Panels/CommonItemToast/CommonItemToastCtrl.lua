@@ -2,6 +2,8 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonItemToast
 local EXP_ITEM_ID = -1
+local DEFAULT_DISABLE_KEY = "Default"
+local PHASE_LEVEL_DISABLE_KEY = "PhaseLevel"
 
 CommonItemToastCtrl = HL.Class('CommonItemToastCtrl', uiCtrl.UICtrl)
 
@@ -51,7 +53,11 @@ CommonItemToastCtrl.m_getToastCell = HL.Field(HL.Function)
 CommonItemToastCtrl.s_isActive = HL.StaticField(HL.Boolean) << true
 
 
+
 CommonItemToastCtrl.s_isCommonToastEnable = HL.StaticField(HL.Boolean) << false
+
+
+CommonItemToastCtrl.s_disableKeys = HL.StaticField(HL.Table) << {}
 
 
 CommonItemToastCtrl.OnShowExpToast = HL.Method(HL.Any) << function(self, arg)
@@ -136,15 +142,26 @@ CommonItemToastCtrl.ToggleCommonItemToast = HL.StaticMethod(HL.Boolean) << funct
     end
 end
 
-CommonItemToastCtrl.OnDisableCommonToast = HL.StaticMethod() << function()
+
+CommonItemToastCtrl.OnDisableCommonToast = HL.StaticMethod(HL.Opt(HL.String)) << function(key)
+    CommonItemToastCtrl.s_disableKeys[key or DEFAULT_DISABLE_KEY] = true
     CommonItemToastCtrl.s_isCommonToastEnable = false
     if UIManager:IsShow(PANEL_ID) then
         UIManager:Hide(PANEL_ID)
     end
 end
 
-CommonItemToastCtrl.OnEnableCommonToast = HL.StaticMethod() << function()
-    CommonItemToastCtrl.s_isCommonToastEnable = true
+CommonItemToastCtrl.OnEnableCommonToast = HL.StaticMethod(HL.Opt(HL.String)) << function(key)
+    CommonItemToastCtrl.s_disableKeys[key or DEFAULT_DISABLE_KEY] = nil
+    CommonItemToastCtrl.s_isCommonToastEnable = next(CommonItemToastCtrl.s_disableKeys) == nil
+end
+
+CommonItemToastCtrl.OnPhaseLevelNotOnTop = HL.StaticMethod() << function()
+    CommonItemToastCtrl.OnDisableCommonToast(PHASE_LEVEL_DISABLE_KEY)
+end
+
+CommonItemToastCtrl.OnPhaseLevelOnTop = HL.StaticMethod() << function()
+    CommonItemToastCtrl.OnEnableCommonToast(PHASE_LEVEL_DISABLE_KEY)
 end
 
 

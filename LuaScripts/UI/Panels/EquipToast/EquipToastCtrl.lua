@@ -17,7 +17,7 @@ EquipToastCtrl.m_pendingToasts = HL.Field(HL.Forward("Queue"))
 
 EquipToastCtrl.m_cacheToasts = HL.Field(HL.Forward("Stack"))
 
-EquipToastCtrl.m_maxCount = HL.Field(HL.Number) << 5
+EquipToastCtrl.m_maxCount = HL.Field(HL.Number) << 2
 
 EquipToastCtrl.OnShowToast = HL.StaticField(HL.Any) << function (arg)
     local ctrl = EquipToastCtrl.AutoOpen(PANEL_ID, nil, false)
@@ -41,7 +41,7 @@ EquipToastCtrl.OnShow = HL.Override() << function(self)
 end
 
 EquipToastCtrl._InitMaxCount = HL.Method() << function (self)
-    self.m_maxCount = self.view.config.MAX_TOAST_COUNT or 10
+    self.m_maxCount = self.view.config.MAX_TOAST_COUNT or 2
 end
 
 EquipToastCtrl._GetCurTextToast = HL.Method(HL.String).Return(HL.Table, HL.Number) << function (self, text)

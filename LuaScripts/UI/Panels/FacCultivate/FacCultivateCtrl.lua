@@ -1,24 +1,16 @@
-
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
+local PANEL_ID = PanelId.FacCultivate
+
 local EOperationType = CS.Beyond.Gameplay.EOperationType
 local FertilizeIncreaseType = GEnums.FertilizeIncreaseType
-local UnlockSystemType = GEnums.UnlockSystemType
-local PANEL_ID = PanelId.FacCultivate
+
+local stopUpdateShow = false
+local STEP_INFO_CELL_ANIMATION_INTERVAL = 0.02
+
 FacCultivateCtrl = HL.Class('FacCultivateCtrl', uiCtrl.UICtrl)
 
 
 
-
-
-
-FacCultivateCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
-    [MessageConst.ON_CROP_STEP_CHANGE] = '_OnStepChange',
-    [MessageConst.ON_CROP_OPERATION_FAILED] = '_OnOperationFailed',
-    [MessageConst.ON_CROP_OPERATION_FAILED_FORCE_CLOSE] = '_OnOperationFailedForce',
-    [MessageConst.ON_CROP_EXTRA_OPERATION_FINISH] = '_OnExtraOperationFinish',
-    [MessageConst.On_FERTILIZE_PANEL_DO_OPERATION] = '_OnUpdateIfDoOperation'
-}
 FacCultivateCtrl.m_nodeId = HL.Field(HL.Any)
 
 FacCultivateCtrl.m_soilNode = HL.Field(CS.Beyond.Gameplay.FacSoilSystem.SoilNode)
@@ -27,7 +19,7 @@ FacCultivateCtrl.m_soilShow = HL.Field(CS.Beyond.Gameplay.SoilShow)
 
 FacCultivateCtrl.m_soilComp = HL.Field(CS.Beyond.Gameplay.Core.IntFacSoilComponent)
 
-FacCultivateCtrl.m_soilCfg = HL.Field(CS.Beyond.Cfg.PlantingStepData)
+FacCultivateCtrl.m_soilCfg = HL.Field(HL.Userdata)
 
 FacCultivateCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_Soil)
 
@@ -41,7 +33,11 @@ FacCultivateCtrl.m_progressImgMap = HL.Field(HL.Table)
 
 FacCultivateCtrl.m_partNodeList = HL.Field(HL.Table)
 
-FacCultivateCtrl.m_getCell = HL.Field(HL.Function)
+FacCultivateCtrl.m_stepInfoCellCache = HL.Field(HL.Forward("UIListCache"))
+
+FacCultivateCtrl.m_stepInfoAnimationCoroutine = HL.Field(HL.Thread)
+
+FacCultivateCtrl.m_hasPlayedStepInfoAnimation = HL.Field(HL.Boolean) << false
 
 FacCultivateCtrl.m_showInfo = HL.Field(HL.Boolean) << false
 
@@ -55,18 +51,102 @@ FacCultivateCtrl.m_waitingExitPhase = HL.Field(HL.Boolean) << false
 
 FacCultivateCtrl.s_key = HL.StaticField(HL.Number) << -1
 
-FacCultivateCtrl.m_inNaviState = HL.Field(HL.Boolean) << false
+FacCultivateCtrl.m_mutateLabelCellCache = HL.Field(HL.Any)
+
+FacCultivateCtrl.m_naviToItemBindingId = HL.Field(HL.Number) << -1
+
+FacCultivateCtrl.m_cancelNaviItemBindingId = HL.Field(HL.Number) << -1
+
+
+
+FacCultivateCtrl.s_messages = HL.StaticField(HL.Table) << {
+    
+    [MessageConst.ON_CROP_STEP_CHANGE] = '_OnStepChange',
+    [MessageConst.ON_CROP_OPERATION_FAILED] = '_OnOperationFailed',
+    [MessageConst.ON_CROP_OPERATION_FAILED_FORCE_CLOSE] = '_OnOperationFailedForce',
+    [MessageConst.ON_CROP_EXTRA_OPERATION_FINISH] = '_OnExtraOperationFinish',
+    [MessageConst.On_FERTILIZE_PANEL_DO_OPERATION] = '_OnUpdateIfDoOperation'
+}
+
+
 
 
 FacCultivateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self:_InitData(arg)
+    if CSFactoryUtil.CheckMinaCharOperateNodeBlockByTeammate(self.m_nodeId) then
+        
+        self.view.mainPanel.gameObject:SetActiveIfNecessary(false)
+        self:_SetCancelBtn(false)
+        self.view.bottomNode.gameObject:SetActiveIfNecessary(false)
+        self:_ClosePanel()
+        return
+    end
+    self:_BindUI()
+    local t = self.view.nodeContainer
+    local curStep = self.m_soilNode.soilStage
+    local maxCnt = self.m_soilCfg.plantingSteps.Count
+    for index, key in ipairs(self.m_partNodeList) do
+        local i = index - 1
+        local curChild = t[key]
+        local visible = (i < maxCnt)
+        local currentActive = (i == curStep)
+        local currentHasDone = (i < curStep)
+        local currentNotStart = (i > curStep)
+        if curChild ~= nil then
+            if i < maxCnt then
+                local cfg = self.m_enumMap[self.m_soilCfg.plantingSteps[i].plantingStepType]
+                if cfg ~= nil then
+                    curChild.icon:LoadSprite(UIConst.UI_SPRITE_CROP, cfg.icon)
+                end
+            end
+            curChild.gameObject:SetActiveIfNecessary(visible)
+        end
+    end
+    self.view.mainPanel.gameObject:SetActiveIfNecessary(not self.m_soilComp.isNatureResourceBusy)
+    self:_SetCancelBtn(self.m_soilComp.isNatureResourceBusy)
+    self.view.bottomNode.gameObject:SetActiveIfNecessary(self.m_soilComp.isNatureResourceBusy)
 
+    if self.m_soilComp.isNatureResourceBusy then
+        self:_PlayDoTweenAnim()
+    end
+
+    self:_SetupUI()
+
+    self:_UpdateShow()
+    self:_StartCoroutine(function()
+        while true do
+            coroutine.wait(UIConst.FAC_COMMON_UI_LARGER_UPDATE_INTERVAL)
+            self:_UpdateShow()
+        end
+    end)
+end
+
+
+
+FacCultivateCtrl.OnHide = HL.Override() << function(self)
+    self:_FinishStepInfoCellAnimation()
+end
+
+FacCultivateCtrl.OnClose = HL.Override() << function(self)
+    self:_KillTween()
+    self:_ClearCellCaches()
+end
+
+
+
+
+
+
+FacCultivateCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_uiInfo = arg.uiInfo
     local nodeId = self.m_uiInfo.nodeId
     self.m_nodeId = nodeId
     self.m_soilNode = GameInstance.player.facSoilSystem:GetSoilNodeInCurrentRegion(nodeId)
     self.m_soilShow = GameInstance.player.facSoilSystem:GetSoilShow(nodeId)
-    self.m_soilCfg = self.m_soilShow:GetCurPlantConfig()
+    local _, cfg = Tables.plantingDataTable:TryGetValue(self.m_uiInfo.buildingId)
+    self.m_soilCfg = cfg
     self.m_soilComp = self.m_soilShow.facSoilComponent
+	self.m_openedInProgress = self.m_soilComp.isNatureResourceBusy
 
     self.m_enumMap = {
         [GEnums.PlantingStepType.Reclaim] = {
@@ -117,11 +197,27 @@ FacCultivateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         [4] = GEnums.PlantingStepType.Harvest,
     }
 
+    
     self.m_enumReverseLookup = {}
     for k, v in pairs(self.m_enumList) do
         self.m_enumReverseLookup[v] = k
     end
+end
 
+
+FacCultivateCtrl._BindUI = HL.Method() << function(self)
+    self.view.btnCommonYellow.onClick:AddListener(function()
+        self:_UpdateProgressNode()
+        self:_DoOperation()
+    end)
+    self.view.closeInfoBtn.onClick:AddListener(function()
+        AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close")     
+        self:_SetInfoVisible(false)
+    end)
+    self.view.itemContent.onClick:AddListener(function()
+        self:_KillTween()
+        self.m_soilShow:DoInterrupt()
+    end)
     self.view.buildingCommon:InitBuildingCommon(self.m_uiInfo, {
         onStateChanged = function(state)
         end
@@ -129,17 +225,121 @@ FacCultivateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if not GameInstance.player.facTechTreeSystem:NodeIsLocked("tech_jinlong_4_vaporizer_1") then
         self.view.buildingCommon.isModeEnvRelated = true
     end
-    self:_SetInfoVisible(false)
     self.view.showStepInfoBtn.onClick:AddListener(function()
-        AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Open") 
+        AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Open")     
         self:_SetInfoVisible(true)
     end)
+    
+    self.m_stepInfoCellCache = UIUtils.genCellCache(self.view.stepInfoCell)
+    if DeviceInfo.usingController then
+        self.view.closeContentInfoBtn.onClick:AddListener(function()
+            AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close") 
+            self:_SetInfoVisible(false)
+        end)
+        self.view.doubleClickCloseBtn.onClick:AddListener(function()
+            AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close") 
+            self:_SetInfoVisible(false)
+        end)
+        self.view.itemPlantNode.onIsFocusedChange:AddListener(function(isFocused)
+            if not isFocused then
+                Notify(MessageConst.HIDE_ITEM_TIPS)
+            end
+        end)
+        self.m_naviToItemBindingId = UIUtils.bindInputPlayerAction("fac_cultivate_item", function()
+            self:SetNaviTarget(self.view.item.view.button)
+            InputManagerInst:ToggleBinding(self.m_naviToItemBindingId, false)
+            InputManagerInst:ToggleBinding(self.m_cancelNaviItemBindingId, true)
+            InputManagerInst:ToggleGroup(self.view.buttonNodeGroup.groupId, false)
+        end, self.view.inputGroup.groupId)
+        self.m_cancelNaviItemBindingId = UIUtils.bindInputPlayerAction("common_cancel", function()
+            self:ClearNaviTarget()
+            InputManagerInst:ToggleBinding(self.m_naviToItemBindingId, true)
+            InputManagerInst:ToggleBinding(self.m_cancelNaviItemBindingId, false)
+            InputManagerInst:ToggleGroup(self.view.buttonNodeGroup.groupId, true)
+        end, self.view.inputGroup.groupId)
+        InputManagerInst:ToggleBinding(self.m_naviToItemBindingId, true)
+        InputManagerInst:ToggleBinding(self.m_cancelNaviItemBindingId, false)
+        InputManagerInst:ToggleGroup(self.view.buttonNodeGroup.groupId, true)
+    end
+
+    
+    self.view.facProgressNode:InitFacProgressNode(1, 1)
+
+    self.m_mutateLabelCellCache = UIUtils.genCellCache(self.view.soilNode.tybeState)
+end
+
+
+
+
+
+
+FacCultivateCtrl._SetupUI = HL.Method() << function(self)
+    
+    local stepInfoCount = #self.m_enumList
+    if FactoryUtils.checkSoilCanMutate(self.m_nodeId) then
+        stepInfoCount = stepInfoCount + 2
+    end
+    self.m_stepInfoCellCache:Refresh(stepInfoCount, function(cell, index)
+        self:_OnUpdateStepCell(cell, index)
+    end)
+    self:_SetInfoVisible(false)
+    self:_UpdateProgressNode()
+    self:_SetupNameAndDesc()
+end
+
+
+FacCultivateCtrl._UpdateShow = HL.Method() << function(self)
+    
+    if self.m_nodeId == nil then
+        self:_ExitAnyWay()
+        return
+    end
+    if CSFactoryUtil.CheckMinaCharOperateNodeBlockByTeammate(self.m_nodeId) then
+        self:_ExitAnyWay()
+        return
+    end
+	
+    if self.m_openedInProgress and not self.m_soilComp.isNatureResourceBusy then
+        self:_ExitAnyWay()
+        return
+    end
+    
+    if stopUpdateShow then
+        return
+    end
     local t = self.view.nodeContainer
-    local childCount = t.childCount
     local curStep = self.m_soilNode.soilStage
+    local curStepCfg = self.m_soilCfg.plantingSteps[curStep]
+
+    
+    self.view.facProgressNode:UpdateProgress(1 - self.m_soilShow:GetProgress())
+    if curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow then
+        self.view.countTimeText.text = self.m_soilShow:GetRemainTimeString()
+    end
+    if curStepCfg.plantingStepType ~= GEnums.PlantingStepType.Grow and curStepCfg.plantingStepType ~= GEnums.PlantingStepType.Harvest then
+        self.view.textNode.gameObject:SetActiveIfNecessary(false)
+        self.view.textNodeYellow.gameObject:SetActiveIfNecessary(true)
+    else
+        self.view.textNode.gameObject:SetActiveIfNecessary(true)
+        self.view.textNodeYellow.gameObject:SetActiveIfNecessary(false)
+    end
+
+    
+    self:_SetupReward()
+
+    
+    self:_SetupMutateAndNeighbor()
+
+    
+    if curStep == self.m_currentStep then
+        return
+    end
+
+    
+    self.m_currentStep = curStep
     local maxCnt = self.m_soilCfg.plantingSteps.Count
     for index, key in ipairs(self.m_partNodeList) do
-        local i = index - 1
+        local i = index - 1;
         local curChild = t[key]
         local visible = (i < maxCnt)
         local currentActive = (i == curStep)
@@ -149,76 +349,125 @@ FacCultivateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             if i < maxCnt then
                 local cfg = self.m_enumMap[self.m_soilCfg.plantingSteps[i].plantingStepType]
                 if cfg ~= nil then
-                    curChild.icon:LoadSprite(UIConst.UI_SPRITE_CROP, cfg.icon)
+                    curChild.bgLine1.gameObject:SetActiveIfNecessary(currentActive)
+                    curChild.bgLine2.gameObject:SetActiveIfNecessary(currentActive)
+                    curChild.bgBlock1.gameObject:SetActiveIfNecessary(currentNotStart)
+                    curChild.bgBlock2.gameObject:SetActiveIfNecessary(currentHasDone)
+                    curChild.line1.gameObject:SetActiveIfNecessary((currentActive) or (currentHasDone))
+                    curChild.line2.gameObject:SetActiveIfNecessary(currentHasDone)
+                    curChild.dotLine1.gameObject:SetActiveIfNecessary(currentNotStart)
+                    curChild.dotLine2.gameObject:SetActiveIfNecessary(currentNotStart or currentActive)
+                    if currentNotStart then
+                        curChild.icon.color = self.view.config.COLOR_ICON_INACTIVE;
+                    end
                 end
             end
             curChild.gameObject:SetActiveIfNecessary(visible)
         end
     end
-    local hasFound, curStepConstCfg = Tables.plantingStepConstTable:TryGetValue(self.m_soilCfg.id)
-    local rewardId = self.m_soilNode.fertilizeIncreaseType == FertilizeIncreaseType.None and self.m_soilCfg.rewardId or self.m_soilCfg.newRewardId
-    local rewardValid, rewardCfg = Tables.rewardSoilTable:TryGetValue(rewardId)
-    self.m_openedInProgress = self.m_soilComp.isNatureResourceBusy
-    self.view.mainPanel.gameObject:SetActiveIfNecessary(not self.m_soilComp.isNatureResourceBusy)
-    self:_SetCancelBtn(self.m_soilComp.isNatureResourceBusy)
-    self.view.bottomNode.gameObject:SetActiveIfNecessary(self.m_soilComp.isNatureResourceBusy)
-    self.view.btnCommonYellow.onClick:AddListener(function()
-        self:_UpdateProgressNode()
-        self:_DoOperation()
-    end)
     
-    self.view.closeInfoBtn.onClick:AddListener(function()
-        AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close") 
-        self.view.closeInfoBtn.gameObject:SetActiveIfNecessary(false)
-        self.view.stepContainer.gameObject:SetActiveIfNecessary(true)
-        self.view.stepInfoContainer.gameObject:SetActiveIfNecessary(false)
-    end)
-    self.view.bottomNodeBtn.onClick:AddListener(function()
+    local hasFound, curStepConstCfg = Tables.plantingStepConstTable:TryGetValue(curStepCfg.plantingStepType)
+    if curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow then
+        self.view.mainBtnText.text = Language.LUA_FAC_FERTILIZATION_FERTILIZE_BTN
+        Notify(MessageConst.REFRESH_CONTROLLER_HINT)
+    else
+        self.view.mainBtnText.text = curStepConstCfg.btnText
+        Notify(MessageConst.REFRESH_CONTROLLER_HINT)
+    end
+
+    
+    local isFertilizeUnlock = self.m_soilNode.system:IsFertilizeSystemUnlock()
+    if LuaSystemManager.factory.inTopView then
         
+        self.view.btnCommonYellow.gameObject:SetActiveIfNecessary(true)
+        self.view.btnCommonYellow.interactable = false
+        self.view.mainBtnText.text = Language.LUA_FAC_SOIL_OPERATION_NOT_ALLOWED_IN_TOP_VIEW
+        Notify(MessageConst.REFRESH_CONTROLLER_HINT)
+    else
+        if curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow then
+            self.view.mainBtnText.text = Language.LUA_FAC_FERTILIZATION_FERTILIZE_BTN
+            Notify(MessageConst.REFRESH_CONTROLLER_HINT)
+        else
+            self.view.mainBtnText.text = curStepConstCfg.btnText
+            Notify(MessageConst.REFRESH_CONTROLLER_HINT)
+        end
+
         
-    end)
-    self.view.itemContent.onClick:AddListener(function()
-        self:_KillTween()
-        self.m_soilShow:DoInterrupt()
-    end)
-    local showItemId = rewardCfg.itemBundles[0].id
-    local showItemNum = rewardCfg.itemBundles[0].count
+        local hideBtnCommonYellow = curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow and
+            (not self.m_soilNode:CanFertilize() or
+                (not isFertilizeUnlock))
+        self.view.btnCommonYellow.gameObject:SetActiveIfNecessary(not hideBtnCommonYellow)
+        self.view.btnCommonYellow.interactable = not hideBtnCommonYellow
+    end
+
+    
+    if curStepCfg.plantingStepType ~= GEnums.PlantingStepType.Grow and curStepCfg.plantingStepType ~= GEnums.PlantingStepType.Harvest then
+        self.view.curStepIconYellow:LoadSprite(UIConst.UI_SPRITE_CROP, self.m_enumMap[curStepCfg.plantingStepType].icon)
+        self.view.hintTextYellow.text = curStepConstCfg.hintText
+    else
+        self.view.curStepIcon:LoadSprite(UIConst.UI_SPRITE_CROP, self.m_enumMap[curStepCfg.plantingStepType].icon)
+        self.view.hintText.text = curStepConstCfg.hintText
+    end
+    if curStepCfg.plantingStepType ~= GEnums.PlantingStepType.Grow then
+        self.view.countTimeText.text = "--:--:--"
+    end
+
+    
+    self:_UpdateFertilizeState(isFertilizeUnlock, curStepCfg)
+
+    
+    self:_RefreshBtn()
+end
+
+
+FacCultivateCtrl._SetupReward = HL.Method() << function(self)
+    local hasDisplayItem, showItemId = self.m_soilNode:TryGetHarvestDisplayItemId()
+    if not hasDisplayItem then
+        logger.error(ELogChannel.Factory, "[FacCultivateCtrl] failed to select harvest display item",
+            "nodeId:", self.m_nodeId)
+        self.view.item:InitItem(nil, true)
+        return
+    end
+    local showItemNum = 0
+    local curStepCfg = self.m_soilCfg.plantingSteps[self.m_soilNode.soilStage]
+    if curStepCfg.plantingStepType == GEnums.PlantingStepType.Harvest then
+        local hasFound, harvestItemCount = self.m_soilNode:TryGetHarvestItemCount(showItemId)
+        if not hasFound then
+            logger.error(ELogChannel.Factory, "[FacCultivateCtrl] harvest item is missing from server snapshot",
+                "nodeId:", self.m_nodeId, "itemId:", showItemId)
+            showItemNum = 0
+        elseif harvestItemCount < 0 then
+            logger.error(ELogChannel.Factory, "[FacCultivateCtrl] harvest item count from server is negative",
+                "nodeId:", self.m_nodeId, "itemId:", showItemId, "count:", harvestItemCount)
+            showItemNum = 0
+        else
+            showItemNum = harvestItemCount
+        end
+    else
+        local hasFound, estimatedItemCount = self.m_soilNode:TryGetEstimatedHarvestItemCount(showItemId)
+        if not hasFound then
+            logger.error(ELogChannel.Factory, "[FacCultivateCtrl] failed to estimate harvest item count",
+                "nodeId:", self.m_nodeId, "itemId:", showItemId)
+        end
+        showItemNum = estimatedItemCount
+    end
     self.view.item:InitItem({
         id = showItemId,
         count = showItemNum
     }, true)
-    if DeviceInfo.usingController then
-        
-        
-        
-        
-        
-    end
-    self.m_getCell = UIUtils.genCachedCellFunction(self.view.scrollList)
-    self.view.scrollList.onUpdateCell:AddListener(function(obj, csIndex)
-        self:_OnUpdateStepCell(self.m_getCell(obj), LuaIndex(csIndex))
-    end)
-    self.view.scrollList:UpdateCount(#self.m_enumList)
+end
 
-    self:_UpdateProgressNode()
 
-    self.view.facProgressNode:InitFacProgressNode(1, 1)
-    if self.m_soilComp.isNatureResourceBusy then
-        self:_PlayDoTweenAnim()
-    end
-
-    self:_UpdateShow()
-    self:_StartCoroutine(function()
-        while true do
-            coroutine.wait(UIConst.FAC_COMMON_UI_LARGER_UPDATE_INTERVAL)
-            self:_UpdateShow()
-        end
-    end)
-
-    if DeviceInfo.usingController then
-        self:_InitController()
+FacCultivateCtrl._SetupNameAndDesc = HL.Method() << function(self)
+    local facValid, curFacCfg = Tables.factoryBuildingTable:TryGetValue(self.m_soilCfg.id)
+    self.view.soilItemDescText.text = curFacCfg.desc
+    local data = UIUtils.getSoilRewardFirstItem(self.m_soilCfg.rewardId)
+    local itemCfg = Tables.itemTable:GetValue(data.id)
+    if itemCfg ~= nil then
+        self.view.soilItemNameDescText.text = itemCfg.name
     end
 end
+
 
 FacCultivateCtrl._UpdateProgressNode = HL.Method() << function(self)
     
@@ -235,8 +484,195 @@ FacCultivateCtrl._UpdateProgressNode = HL.Method() << function(self)
 end
 
 
+FacCultivateCtrl._SetupMutateAndNeighbor = HL.Method() << function(self)
+    
+    local canMutate = FactoryUtils.checkSoilCanMutate(self.m_nodeId)
+    if not canMutate or self.m_showInfo then
+        self.view.soilNode.gameObject:SetActive(false)
+        return
+    end
+
+    
+    local curStep = self.m_soilNode.soilStage
+    local curStepCfg = self.m_soilCfg.plantingSteps[curStep]
+    
+    
+    
+    
+    
+
+    self.view.soilNode.gameObject:SetActive(true)
+
+    local mutateData = FactoryUtils.getSoilMutateData(self.m_nodeId)
+    local neighborData = FactoryUtils.getSoilNeighborData(self.m_nodeId)
+
+    
+    self.m_mutateLabelCellCache:Refresh(2, function(cell, index)
+        
+        cell = cell
+        
+        local stateCtrl = cell.stateController
+        if index == 1 then
+            stateCtrl:SetState(mutateData.complete and "LeftClose" or "LeftOpen")
+        end
+        if index == 2 then
+            stateCtrl:SetState(neighborData.complete and "RightClose" or "RightOpen")
+            
+            
+            
+        end
+    end)
+
+    if curStepCfg.plantingStepType == GEnums.PlantingStepType.Harvest
+       or curStepCfg.plantingStepType == GEnums.PlantingStepType.Water then
+        self.view.soilNode.scheduleState.gameObject:SetActive(false)
+        return
+    end
+
+    
+    
+    local progressStateCtrl = self.view.soilNode.scheduleState 
+    local progressTimeTxt = self.view.soilNode.timeTxt         
+    local progressImage = self.view.soilNode.fgBar             
+    local progressHintTxt = self.view.soilNode.soilTxt         
+    if not mutateData.start then
+        
+        progressStateCtrl.gameObject:SetActive(true)
+        progressStateCtrl:SetState("Red")
+        progressTimeTxt.text = "--:--:--"
+        progressImage.fillAmount = mutateData.progress
+        progressHintTxt.text = Language.LUA_FAC_CULTIVATE_MUTATE_PROGRESS_HINT_1
+    elseif not mutateData.complete and mutateData.inProgress then
+        
+        progressStateCtrl.gameObject:SetActive(true)
+        progressStateCtrl:SetState("Green")
+        progressTimeTxt.text = UIUtils.getRemainingText(mutateData.time)
+        progressImage.fillAmount = mutateData.progress
+        progressHintTxt.text = Language.LUA_FAC_CULTIVATE_MUTATE_PROGRESS_HINT_2
+    elseif not mutateData.complete and not mutateData.inProgress then
+        
+        progressStateCtrl.gameObject:SetActive(true)
+        progressStateCtrl:SetState("Red")
+        progressTimeTxt.text = "--:--:--"
+        progressImage.fillAmount = mutateData.progress
+        progressHintTxt.text = Language.LUA_FAC_CULTIVATE_MUTATE_PROGRESS_HINT_3
+    elseif not neighborData.start then
+        
+        progressStateCtrl.gameObject:SetActive(true)
+        progressStateCtrl:SetState("Red")
+        progressTimeTxt.text = "--:--:--"
+        progressImage.fillAmount = neighborData.progress
+        progressHintTxt.text = Language.LUA_FAC_CULTIVATE_MUTATE_PROGRESS_HINT_5
+    elseif not neighborData.complete and neighborData.inProgress then
+        
+        progressStateCtrl.gameObject:SetActive(true)
+        progressStateCtrl:SetState("Green")
+        progressTimeTxt.text = UIUtils.getRemainingText(neighborData.time)
+        progressImage.fillAmount = neighborData.progress
+        local format = Language.LUA_FAC_CULTIVATE_MUTATE_PROGRESS_HINT_6
+        progressHintTxt.text = string.format(format,
+            neighborData.count,
+            neighborData.count,
+            math.floor(Tables.factorySoilConst.SoilIncreaseProducePerSoil * 100 + 0.5))
+    elseif not neighborData.complete and not neighborData.inProgress then
+        
+        progressStateCtrl.gameObject:SetActive(true)
+        progressStateCtrl:SetState("Red")
+        progressTimeTxt.text = "--:--:--"
+        progressImage.fillAmount = neighborData.progress
+        progressHintTxt.text = Language.LUA_FAC_CULTIVATE_MUTATE_PROGRESS_HINT_7
+    else
+        
+        progressStateCtrl.gameObject:SetActive(false)
+    end
+end
 
 
+FacCultivateCtrl._UpdateFertilizeState = HL.Method(HL.Boolean, HL.Any) << function(self, isFertilizeUnlock, curStepCfg)
+    if isFertilizeUnlock then    
+        if curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow or curStepCfg.plantingStepType == GEnums.PlantingStepType.Harvest then
+            self:_UpdateFertilizeIfUnlock()
+        else
+            self.view.righNodeState:SetState("Normal")
+        end
+    else
+        self.view.righNodeState:SetState("Normal")
+    end
+end
+
+
+FacCultivateCtrl._UpdateFertilizeIfUnlock = HL.Method() << function(self)
+    local curStep = self.m_soilNode.soilStage
+    local curStepCfg = self.m_soilCfg.plantingSteps[curStep]
+
+    
+    if self.m_soilNode:CanFertilize() then 
+        self.view.righNodeState:SetState("Fertilization")
+    else    
+        if self.m_soilNode.fertilizeCount == 0 then 
+            self.view.righNodeState:SetState("Normal")
+        else
+            self.view.righNodeState:SetState("FertilizationDone")
+        end
+    end
+
+    
+    local fertilizeData = FactoryUtils.getSoilFertilizaDataBySoilNode(self.m_soilNode)
+    
+    local foundAccelerate = lume.match(fertilizeData, function(data)
+        return data.type == "Accelerate"
+    end)
+    local accelerateText = foundAccelerate and foundAccelerate.desc or ""
+    local foundIncrease = lume.match(fertilizeData, function(data)
+        return data.type == "Increase"
+    end)
+    local increaseText = foundIncrease and foundIncrease.desc or ""
+    if string.isEmpty(accelerateText) and string.isEmpty(increaseText) then
+        
+        self.view.righNodeState:SetState("Normal")
+    elseif not string.isEmpty(accelerateText) and string.isEmpty(increaseText) then
+        
+        self.view.righNodeState:SetState("AccelerateGrowth")
+        self.view.textNodeLuaReference.accelerate.accelerateTxt.text = accelerateText
+    elseif string.isEmpty(accelerateText) and not string.isEmpty(increaseText) then
+        
+        self.view.righNodeState:SetState("Increase")
+        
+        self.view.textNodeLuaReference.accelerate.accelerateTxt.text = increaseText
+    elseif not string.isEmpty(accelerateText) and not string.isEmpty(increaseText) then
+        self.view.righNodeState:SetState("Both")
+        self.view.textNodeLuaReference.accelerate.accelerateTxt.text = accelerateText
+        self.view.textNodeLuaReference.increase.increaseTxt.text = increaseText
+    end
+    
+    self.view.textNodeLuaReference.accelerate.textLayout.gameObject:SetActive(false)
+    self.view.textNodeLuaReference.increase.textLayout.gameObject:SetActive(false)
+    if not string.isEmpty(increaseText) then
+        local increaseDataList = foundIncrease.increaseDataList
+        local count = #increaseDataList
+        if count > 1 then
+            local increaseDataFertilize = lume.match(increaseDataList, function(data)
+                return data.increaseType == "Fertilize"
+            end)
+            local increaseDataNeighbor = lume.match(increaseDataList, function(data)
+                return data.increaseType == "Neighbor"
+            end)
+            local increaseDataFertilizeText = increaseDataFertilize and increaseDataFertilize.descRight or ""
+            local increaseDataNeighborText = increaseDataNeighbor and increaseDataNeighbor.descRight or ""
+            
+            
+            local useTextLayout
+            if string.isEmpty(accelerateText) and not string.isEmpty(increaseText) then
+                useTextLayout = self.view.textNodeLuaReference.accelerate.textLayout
+            else
+                useTextLayout = self.view.textNodeLuaReference.increase.textLayout
+            end
+            useTextLayout.gameObject:SetActive(true)
+            useTextLayout.text1Node.muckNumTxt.text = increaseDataFertilizeText
+            useTextLayout.text2Node.borderNumTxt.text = increaseDataNeighborText
+        end
+    end
+end
 
 
 
@@ -258,10 +694,22 @@ FacCultivateCtrl._RefreshBtn = HL.Method() << function(self)
     self:_SetCancelBtn(self.m_soilComp.isNatureResourceBusy)
 end
 
+
 FacCultivateCtrl._SetInfoVisible = HL.Method(HL.Boolean) << function(self, infoVisible)
+    if not infoVisible then
+        self:_FinishStepInfoCellAnimation()
+    end
+    self.m_showInfo = infoVisible
     self.view.closeInfoBtn.gameObject:SetActiveIfNecessary(infoVisible)
     self.view.stepContainer.gameObject:SetActiveIfNecessary(not infoVisible)
+    local showSoilNode = not infoVisible and FactoryUtils.checkSoilCanMutate(self.m_nodeId)
+    self.view.soilNode.gameObject:SetActiveIfNecessary(showSoilNode)
     self.view.stepInfoContainer.gameObject:SetActiveIfNecessary(infoVisible)
+    if infoVisible then
+        LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.stepInfoListContainer)
+        LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.stepInfoContainer)
+        self:_PlayStepInfoCellAnimation()
+    end
     if DeviceInfo.usingController then
         if infoVisible then
             InputManagerInst:ToggleGroup(self.view.contentInfoStateInputBindingGroupMonoTarget.groupId,true)
@@ -280,6 +728,7 @@ FacCultivateCtrl._SetInfoVisible = HL.Method(HL.Boolean) << function(self, infoV
     end
 end
 
+
 FacCultivateCtrl._DoOperation = HL.Method() << function(self)
     if self.m_soilComp.isNatureResourceBusy then
         
@@ -294,15 +743,24 @@ FacCultivateCtrl._DoOperation = HL.Method() << function(self)
             return
             
         end
-    else
+    end
+
+    if not self.m_soilShow:DoOperation(false) then
+        return
+    end
+    
+    if self.m_isClosed or self.m_waitingExitPhase then
+        return
+    end
+
+    if stepType ~= GEnums.PlantingStepType.Grow then
         self.view.mainPanel.gameObject:SetActiveIfNecessary(false)
         self:_SetCancelBtn(true)
         self.view.bottomNode.gameObject:SetActiveIfNecessary(true)
         self:_PlayDoTweenAnim()
     end
-
-    self.m_soilShow:DoOperation(false)
 end
+
 
 FacCultivateCtrl._OnStepChange = HL.Method(HL.Table) << function(self, args)
     local nodeId = unpack(args)
@@ -326,8 +784,10 @@ end
 
 FacCultivateCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     self:_KillTween()
+    self:_ClearCellCaches()
     return nil
 end
+
 
 FacCultivateCtrl._KillTween = HL.Method() << function(self)
     if self.m_doTweenAnim then
@@ -336,9 +796,11 @@ FacCultivateCtrl._KillTween = HL.Method() << function(self)
     self.m_doTweenAnim = nil
 end
 
+
 FacCultivateCtrl._SetCancelBtn = HL.Method(HL.Boolean) << function(self, showBtn)
     self.view.itemContent.gameObject:SetActiveIfNecessary(showBtn)
 end
+
 
 FacCultivateCtrl._OnOperationFailed = HL.Method(HL.Any) << function(self, arg)
     local nodeId = unpack(arg)
@@ -347,6 +809,7 @@ FacCultivateCtrl._OnOperationFailed = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
+
 FacCultivateCtrl._OnExtraOperationFinish = HL.Method(HL.Any) << function(self, arg)
     local nodeId = unpack(arg)
     if self.m_nodeId == nodeId then
@@ -354,11 +817,14 @@ FacCultivateCtrl._OnExtraOperationFinish = HL.Method(HL.Any) << function(self, a
     end
 end
 
+
 FacCultivateCtrl._OnOperationFailedForce = HL.Method(HL.Any) << function(self, arg)
     self:_ExitAnyWay()
 end
 
+
 FacCultivateCtrl._ExitAnyWay = HL.Method() << function(self)
+    self:_KillTween()
     if self.view.bottomNode.gameObject.activeInHierarchy then   
         self.view.progressAnim:PlayOutAnimation(function()
             self:_ClosePanel()
@@ -369,6 +835,7 @@ FacCultivateCtrl._ExitAnyWay = HL.Method() << function(self)
         end)
     end
 end
+
 
 FacCultivateCtrl._ClosePanel = HL.Method() << function(self)
     
@@ -405,145 +872,6 @@ FacCultivateCtrl._ClosePanel = HL.Method() << function(self)
     end)
 end
 
-FacCultivateCtrl._UpdateShow = HL.Method() << function(self)
-    if self.m_nodeId == nil then
-        self:_ExitAnyWay()
-        return
-    end
-    if CSFactoryUtil.CheckMinaCharOperateNodeBlockByTeammate(self.m_nodeId) then
-        self:_ExitAnyWay()
-        return
-    end
-
-    
-    if self.m_openedInProgress and not self.m_soilComp.isNatureResourceBusy then
-        self:_ExitAnyWay()
-        return
-    end
-    local t = self.view.nodeContainer
-    local childCount = t.childCount
-    local curStep = self.m_soilNode.soilStage
-    local curStepCfg = self.m_soilCfg.plantingSteps[curStep]
-
-    self.view.facProgressNode:UpdateProgress(1 - self.m_soilShow:GetProgress())
-    if curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow then
-        self.view.countTimeText.text = self.m_soilShow:GetRemainTimeString()
-    end
-    if curStepCfg.plantingStepType ~= GEnums.PlantingStepType.Grow then
-        self.view.textNode.gameObject:SetActiveIfNecessary(false)
-        self.view.textNodeYellow.gameObject:SetActiveIfNecessary(true)
-    else
-        self.view.textNode.gameObject:SetActiveIfNecessary(true)
-        self.view.textNodeYellow.gameObject:SetActiveIfNecessary(false)
-    end
-
-    if curStep == self.m_currentStep then
-        return
-    end
-
-    self.m_currentStep = curStep
-    local maxCnt = self.m_soilCfg.plantingSteps.Count
-    for index, key in ipairs(self.m_partNodeList) do
-        local i = index - 1;
-        local curChild = t[key]
-        local visible = (i < maxCnt)
-        local currentActive = (i == curStep)
-        local currentHasDone = (i < curStep)
-        local currentNotStart = (i > curStep)
-        if curChild ~= nil then
-            if i < maxCnt then
-                local cfg = self.m_enumMap[self.m_soilCfg.plantingSteps[i].plantingStepType]
-                if cfg ~= nil then
-                    curChild.bgLine1.gameObject:SetActiveIfNecessary(currentActive)
-                    curChild.bgLine2.gameObject:SetActiveIfNecessary(currentActive)
-                    curChild.bgBlock1.gameObject:SetActiveIfNecessary(currentNotStart)
-                    curChild.bgBlock2.gameObject:SetActiveIfNecessary(currentHasDone)
-                    curChild.line1.gameObject:SetActiveIfNecessary((currentActive) or (currentHasDone))
-                    curChild.line2.gameObject:SetActiveIfNecessary(currentHasDone)
-                    curChild.dotLine1.gameObject:SetActiveIfNecessary(currentNotStart)
-                    curChild.dotLine2.gameObject:SetActiveIfNecessary(currentNotStart or currentActive)
-                    if currentNotStart then
-                        curChild.icon.color = self.view.config.COLOR_ICON_INACTIVE;
-                    end
-                end
-            end
-            curChild.gameObject:SetActiveIfNecessary(visible)
-        end
-    end
-    local hasFound, curStepConstCfg = Tables.plantingStepConstTable:TryGetValue(curStepCfg.plantingStepType)
-    local facValid, curFacCfg = Tables.factoryBuildingTable:TryGetValue(self.m_soilCfg.id)
-    if curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow then
-        self.view.mainBtnText.text = Language.LUA_FAC_FERTILIZATION_FERTILIZE_BTN
-        Notify(MessageConst.REFRESH_CONTROLLER_HINT)
-    else
-        self.view.mainBtnText.text = curStepConstCfg.btnText
-        Notify(MessageConst.REFRESH_CONTROLLER_HINT)
-    end
-
-    local isFertilizeUnlock = self.m_soilNode.system:IsFertilizeSystemUnlock()
-    
-    local hideBtnCommonYellow = curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow and
-        (not self.m_soilNode:CanFertilize() or
-        (not isFertilizeUnlock))
-    self.view.btnCommonYellow.gameObject:SetActiveIfNecessary(not hideBtnCommonYellow)
-
-    self.view.soilItemDescText.text = curFacCfg.desc
-    local data = UIUtils.getSoilRewardFirstItem(self.m_soilCfg.rewardId)
-    local itemCfg = Tables.itemTable:GetValue(data.id)
-    if itemCfg ~= nil then
-        self.view.soilItemNameDescText.text = itemCfg.name
-    end
-
-    if curStepCfg.plantingStepType ~= GEnums.PlantingStepType.Grow then
-        self.view.curStepIconYellow:LoadSprite(UIConst.UI_SPRITE_CROP, self.m_enumMap[curStepCfg.plantingStepType].icon)
-        self.view.hintTextYellow.text = curStepConstCfg.hintText
-    else
-        self.view.curStepIcon:LoadSprite(UIConst.UI_SPRITE_CROP, self.m_enumMap[curStepCfg.plantingStepType].icon)
-        self.view.hintText.text = curStepConstCfg.hintText
-    end
-    if curStepCfg.plantingStepType ~= GEnums.PlantingStepType.Grow then
-        self.view.countTimeText.text = "--:--:--"
-    end
-
-    
-    self:_UpdateFertilizeState(isFertilizeUnlock, curStepCfg)
-
-    self:_RefreshBtn()
-end
-
-FacCultivateCtrl._UpdateFertilizeState = HL.Method(HL.Boolean, HL.Any) << function(self, isFertilizeUnlock, curStepCfg)
-    if isFertilizeUnlock then    
-        if curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow then
-            self:_UpdateFertilizeIfUnlock()
-        else
-            self.view.righNodeState:SetState("Normal")
-        end
-    else
-        self.view.righNodeState:SetState("Normal")
-    end
-end
-
-FacCultivateCtrl._UpdateFertilizeIfUnlock = HL.Method() << function(self)
-    if self.m_soilNode:CanFertilize() then 
-        self.view.righNodeState:SetState("Fertilization")
-    else    
-    self:_UpdateFertilizeIfCannot()
-    end
-end
-
-FacCultivateCtrl._UpdateFertilizeIfCannot = HL.Method() << function(self)
-    if self.m_soilNode.fertilizeCount == 0 then 
-        self.view.righNodeState:SetState("Normal")
-    else    
-        if self.m_soilNode.fertilizeIncreaseType ~= FertilizeIncreaseType.None then
-            self.view.righNodeState:SetState("Increase")
-        elseif self.m_soilNode.fertilizeRipenCount > 0 then
-            self.view.righNodeState:SetState("AccelerateGrowth")
-        else
-            self.view.righNodeState:SetState("Normal")
-        end
-    end
-end
 
 FacCultivateCtrl._OnUpdateIfDoOperation = HL.Method() << function(self)
     
@@ -552,6 +880,7 @@ FacCultivateCtrl._OnUpdateIfDoOperation = HL.Method() << function(self)
     
     self:_ClosePanel()
 end
+
 
 FacCultivateCtrl._PlayDoTweenAnim = HL.Method() << function(self)
     local curStep = self.m_soilNode.soilStage
@@ -562,7 +891,7 @@ FacCultivateCtrl._PlayDoTweenAnim = HL.Method() << function(self)
 
     local stepNum = CSIndex(self.m_enumReverseLookup[curStepCfg.plantingStepType])
     local totalTime = 0
-    local plantingSteps = Tables.plantingDataTable[self.m_uiInfo.buildingId].plantingSteps
+    local plantingSteps = self.m_soilCfg.plantingSteps
 
     if curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow and Tables.fertilizeDataTable[self.m_soilNode.fertilizeId] then
         totalTime = Tables.fertilizeDataTable[self.m_soilNode.fertilizeId].fertilizeTime
@@ -578,14 +907,81 @@ FacCultivateCtrl._PlayDoTweenAnim = HL.Method() << function(self)
     end
 end
 
+
+FacCultivateCtrl._PlayStepInfoCellAnimation = HL.Method() << function(self)
+    if self.m_hasPlayedStepInfoAnimation or not self.m_stepInfoCellCache then
+        return
+    end
+    self.m_hasPlayedStepInfoAnimation = true
+
+    local count = self.m_stepInfoCellCache:GetCount()
+    self.m_stepInfoCellCache:Update(function(cell)
+        cell.animationWrapper:SampleToInAnimationBegin()
+    end)
+    self.m_stepInfoAnimationCoroutine = self:_StartCoroutine(function()
+        for index = 1, count do
+            if index > 1 then
+                coroutine.wait(STEP_INFO_CELL_ANIMATION_INTERVAL)
+            end
+            local cell = self.m_stepInfoCellCache:GetItem(index)
+            cell.animationWrapper:PlayInAnimation()
+        end
+        self.m_stepInfoAnimationCoroutine = nil
+    end)
+end
+
+
+FacCultivateCtrl._FinishStepInfoCellAnimation = HL.Method() << function(self)
+    if self.m_stepInfoAnimationCoroutine then
+        self.m_stepInfoAnimationCoroutine = self:_ClearCoroutine(self.m_stepInfoAnimationCoroutine)
+    end
+    if not self.m_hasPlayedStepInfoAnimation or not self.m_stepInfoCellCache then
+        return
+    end
+    self.m_stepInfoCellCache:Update(function(cell)
+        cell.animationWrapper:ClearTween(false)
+        cell.animationWrapper:SampleToInAnimationEnd()
+    end)
+end
+
+
+FacCultivateCtrl._ClearCellCaches = HL.Method() << function(self)
+    self:_FinishStepInfoCellAnimation()
+    if self.m_stepInfoCellCache then
+        self.m_stepInfoCellCache:Refresh(0)
+        self.m_stepInfoCellCache:ClearAll()
+        self.m_stepInfoCellCache = nil
+    end
+    if self.m_mutateLabelCellCache then
+        self.m_mutateLabelCellCache:Refresh(0)
+        self.m_mutateLabelCellCache:ClearAll()
+        self.m_mutateLabelCellCache = nil
+    end
+end
+
+
 FacCultivateCtrl._OnUpdateStepCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
-    local curEnum = self.m_enumList[index]
-    local hasFound, curStepConstCfg = Tables.plantingStepConstTable:TryGetValue(curEnum)
-    local showCfg = self.m_enumMap[curEnum]
-    cell.icon:LoadSprite(UIConst.UI_SPRITE_CROP, showCfg.icon)
-    cell.text.text = curStepConstCfg.stepDescription
+    
+    local uiStateCtrl = cell.animationNode
+    if index <= #self.m_enumList then
+        uiStateCtrl:SetState("Normal")
+        local curEnum = self.m_enumList[index]
+        local hasFound, curStepConstCfg = Tables.plantingStepConstTable:TryGetValue(curEnum)
+        local showCfg = self.m_enumMap[curEnum]
+        cell.icon:LoadSprite(UIConst.UI_SPRITE_CROP, showCfg.icon)
+        cell.text.text = curStepConstCfg.stepDescription
+    else
+        
+        uiStateCtrl:SetState("Desc")
+        local extraIndex = index - #self.m_enumList
+        local text = extraIndex == 1
+            and Language.LUA_FAC_CULTIVATE_TIPS_MUTATE
+            or Language.LUA_FAC_CULTIVATE_TIPS_NEIGHBOR
+        cell.descTxt.text = text
+    end
     cell.blackBG.gameObject:SetActiveIfNecessary(index % 2 == 0)
 end
+
 
 FacCultivateCtrl._OnOpenCrop = HL.StaticMethod(HL.Any) << function(arg)
     local unpackNodeId, cb = unpack(arg)
@@ -599,8 +995,8 @@ FacCultivateCtrl._OnOpenCrop = HL.StaticMethod(HL.Any) << function(arg)
         return
     end
 
-    if UIManager:IsOpen(PanelId.FacFertilization) then
-        UIManager:Close(PanelId.FacFertilization)
+    if PhaseManager:IsOpen(PhaseId.FacFertilization) then
+        PhaseManager:ExitPhaseFast(PhaseId.FacFertilization)
     end
 
     Notify(MessageConst.FAC_OPEN_BUILDING_PANEL, {
@@ -611,47 +1007,6 @@ end
 
 
 
-
-FacCultivateCtrl.m_naviToItemBindingId = HL.Field(HL.Number) << -1
-
-FacCultivateCtrl.m_cancelNaviItemBindingId = HL.Field(HL.Number) << -1
-
-FacCultivateCtrl._InitController = HL.Method() << function(self)
-    self.view.closeContentInfoBtn.onClick:AddListener(function()
-        AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close") 
-        self:_SetInfoVisible(false)
-    end)
-    self.view.doubleClickCloseBtn.onClick:AddListener(function()
-        AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close") 
-        self:_SetInfoVisible(false)
-    end)
-    self.m_naviToItemBindingId = UIUtils.bindInputPlayerAction("fac_cultivate_item", function()
-        self:_SetInNaviState(true)
-    end, self.view.inputGroup.groupId)
-    self.m_cancelNaviItemBindingId = UIUtils.bindInputPlayerAction("common_cancel", function()
-        self:_SetInNaviState(false)
-    end, self.view.inputGroup.groupId)
-    self.view.buildingCommon.view.controllerSideMenuBtn:InitControllerSideMenuBtn({
-        preOpenMenu = function()
-            self:_SetInNaviState(false)
-        end,
-    })
-    self:_SetInNaviState(false)
-end
-
-FacCultivateCtrl._SetInNaviState = HL.Method(HL.Boolean) << function(self, navi)
-    self.m_inNaviState = navi
-    self.view.buildingCommon.view.closeButton.enabled = not navi
-    InputManagerInst:ToggleBinding(self.m_naviToItemBindingId, not navi)
-    InputManagerInst:ToggleBinding(self.m_cancelNaviItemBindingId, navi)
-    InputManagerInst:ToggleGroup(self.view.buttonNodeGroup.groupId, not navi)
-    if navi then
-        self:SetNaviTarget(self.view.item.view.button)
-    else
-        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.buildingCommon.view.buttonsNaviGroup)
-        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.itemPlantNode)
-    end
-end
 
 
 

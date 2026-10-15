@@ -26,7 +26,7 @@ end
 
 FriendBusinessRecordTipsCtrl._UpdateContingencyContract = HL.Method(HL.Any).Return(HL.Boolean) << function(self, playerInfo)
     local ccRecord = playerInfo.contingencyContractBestRecord
-    if ccRecord.Item1 ~= nil and ccRecord.Item2 > 1 then
+    if ccRecord.Item1 ~= nil and ccRecord.Item2 > 0 then
         local activityData = GameInstance.player.activitySystem:GetActivity(ccRecord.Item1)
         if activityData ~= nil and activityData.gameplayEndTime - DateTimeUtils.GetCurrentTimestampBySeconds() > 0 then
             local cfg = Tables.activityTable:GetValue(ccRecord.Item1)
@@ -36,11 +36,11 @@ FriendBusinessRecordTipsCtrl._UpdateContingencyContract = HL.Method(HL.Any).Retu
             self.view.contingencyContractTagNumTxt.text = string.format(Language.LUA_FRIEND_BUSINESS_CARD_CC_SCORE, ccRecord.Item2)
 
             local rangeArray = Tables.activityContingencyContractTable:GetValue(ccRecord.Item1).rangeArray
-            self.view.levelTagNode:SetState(tostring(1))
+            self.view.levelTagNode:SetState(FriendUtils.LEVEL_TAG_STATE_NAME_LIST[1])
             for i = 1, #rangeArray do
                 local range = rangeArray[CSIndex(i)]
                 if ccRecord.Item2 >= range then
-                    self.view.levelTagNode:SetState(tostring(i + 1))
+                    self.view.levelTagNode:SetState(FriendUtils.LEVEL_TAG_STATE_NAME_LIST[i + 1])
                 end
             end
             return true

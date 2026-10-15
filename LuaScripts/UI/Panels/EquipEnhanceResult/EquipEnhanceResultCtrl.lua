@@ -15,7 +15,12 @@ EquipEnhanceResultCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 EquipEnhanceResultCtrl.m_returnedIngredientInstIds = HL.Field(HL.Table)
 
+EquipEnhanceResultCtrl.m_returnedItemEntries = HL.Field(HL.Table)
+
 EquipEnhanceResultCtrl.m_getReturnEquipItemCell = HL.Field(HL.Function)
+
+EquipEnhanceResultCtrl.m_enhanceMode = HL.Field(HL.String) << "own" 
+
 
 
 
@@ -40,6 +45,8 @@ EquipEnhanceResultCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             args.closeCallback()
         end
     end)
+
+    self.m_enhanceMode = args and args.enhanceMode or "own"
 
 
     self.view.stateCtrl:SetState(args.isSuccessful and "success" or "fail")
@@ -66,16 +73,17 @@ EquipEnhanceResultCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.view.failNumberTxt.text = string.format("+%d", delta)
         end
     end
-    self:_RefreshReturnedIngredientList(args.returnedIngredientInstIds)
+    self:_RefreshReturnedIngredientList(args.returnedIngredientInstIds, args.returnedItemEntries)
     self:_StartTimer(self.view.config.REWARD_AUDIO_DELAY_TIME, function()
         AudioAdapter.PostEvent("Au_UI_Popup_RewardsItem_Open")
     end)
 end
 
-EquipEnhanceResultCtrl._RefreshReturnedIngredientList = HL.Method(HL.Opt(HL.Table)) << function(self, returnedInstIds)
+EquipEnhanceResultCtrl._RefreshReturnedIngredientList = HL.Method(HL.Opt(HL.Table, HL.Table)) << function(self, returnedInstIds, returnedItemEntries)
     self.m_returnedIngredientInstIds = returnedInstIds or {}
+    self.m_returnedItemEntries = returnedItemEntries or {}
     local node = self.view.returnEquipNode
-    local count = #self.m_returnedIngredientInstIds
+    local count = #self.m_returnedIngredientInstIds + #self.m_returnedItemEntries
     if count == 0 then
         node.gameObject:SetActive(false)
         return
@@ -94,10 +102,24 @@ EquipEnhanceResultCtrl._RefreshReturnedIngredientList = HL.Method(HL.Opt(HL.Tabl
         pos.x = node.rewardsScrollList:Get(0).transform.anchoredPosition.x
         node.keyHint.anchoredPosition = pos
     end
+    node.titleText.text = self.m_enhanceMode == "own" and Language.LUA_EQUIP_ENHANCE_EQUIP_MODE_RETURN or Language.LUA_EQUIP_ENHANCE_WAITING_MODE_RETURN
 end
 
 EquipEnhanceResultCtrl._OnUpdateReturnEquipItemCell = HL.Method(HL.Forward("Item"), HL.Number) << function(self, cell, index)
-    local instId = self.m_returnedIngredientInstIds[index]
+    
+    local itemEntryCount = #self.m_returnedItemEntries
+    if itemEntryCount > 0 and index <= itemEntryCount then
+        local entry = self.m_returnedItemEntries[index]
+        cell.gameObject.name = tostring(entry.id)
+        cell:InitItem({ id = entry.id, count = entry.count }, true)
+        cell:SetExtraInfo({
+            isSideTips = DeviceInfo.usingController,
+        })
+        return
+    end
+    
+    local instIdx = index - itemEntryCount
+    local instId = self.m_returnedIngredientInstIds[instIdx]
     local equipInst = CharInfoUtils.getEquipByInstId(instId)
     if not equipInst then
         return

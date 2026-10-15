@@ -60,6 +60,7 @@ WalletBarCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.contentNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
         if not isFocused then
             Notify(MessageConst.HIDE_ITEM_TIPS)
+            Notify(MessageConst.ON_WALLET_BAR_LOSE_FOCUS)
         end
     end)
     self.view.contentNaviGroup.getDefaultSelectableFunc = function()
@@ -133,6 +134,7 @@ WalletBarCtrl.OnHide = HL.Override() << function(self)
     end
     self.view.contentNaviGroup:ManuallyRefreshRelatedBindingGroups()
     Notify(MessageConst.HIDE_ITEM_TIPS)
+    Notify(MessageConst.ON_WALLET_BAR_LOSE_FOCUS)
 
     self.view.resetMoneyTimeTxt:StopCountDown()
 end
@@ -220,20 +222,24 @@ WalletBarCtrl._RefreshContent = HL.Method() << function(self)
             local moneyInfo = moneyInfos[index]
             local itemId = moneyInfo.moneyId
             local cellPreferredWidth = cellPreferredWidths[itemId]
-            cell:InitMoneyCell(itemId, self.m_curArgs.useMoneyCellAction, self.m_curArgs.useItemIcon, moneyInfo.showLimit, moneyInfo.limitNumber, cellPreferredWidth)
-            if cell:IsStamina() then
-                cell:SetStaminaCloseFun(self.m_staminaCloseFunc)
-                cell:SetStaminaClickFun(self.m_staminaClickFunc)
-                
-                
-                cell:SetStaminaShowItemTips(#moneyInfos > 1 and DeviceInfo.usingController)
-            end
-            if moneyInfo.clearRuleType ~= GEnums.MoneyClearRuleType.None then
+            cell:InitMoneyCell(itemId, self.m_curArgs.useMoneyCellAction,
+                self.m_curArgs.useItemIcon, moneyInfo.showLimit, moneyInfo.limitNumber,
+                cellPreferredWidth, moneyInfo.customConfig)
+
+            cell:SetContext({
+                closeFun = self.m_staminaCloseFunc,
+                clickFun = self.m_staminaClickFunc,
+                showItemTips = #moneyInfos > 1 and DeviceInfo.usingController,
+            })
+
+            if moneyInfo.clearRuleType and moneyInfo.clearRuleType ~= GEnums.MoneyClearRuleType.None then
                 self.m_countDownMoneyIndex = index
             end
-			
-            if cell:IsOriginium() then
-                cell:SetAddBtnKeyHintText(Language.key_hint_cashshop_originium_buy)
+
+            local cfg = cell.m_cellConfig
+            if cfg and cfg.addBtnKeyHintText then
+                local text = cfg.addBtnKeyHintText
+                cell:SetAddBtnKeyHintText(type(text) == "function" and text() or text)
             else
                 cell:SetAddBtnKeyHintText(Language.key_hint_money_cell_add)
             end

@@ -17,5 +17,19 @@ function GameMechanicsUtils.isCurGameCanSwitchLanguage()
 end
 
 
+function GameMechanicsUtils.tryGetGameMechanicCfg(gameMechanicId)
+    return Tables.gameMechanicTable:TryGetValue(gameMechanicId)
+end
+
+function GameMechanicsUtils.tryGetGameMechanicCategoryCfg(gameMechanicId)
+    local succ, gameMechanicCfg = GameMechanicsUtils.tryGetGameMechanicCfg(gameMechanicId)
+    if not succ then
+        return false, nil
+    end
+    return Tables.gameMechanicCategoryTable:TryGetValue(gameMechanicCfg.gameCategory)
+end
+
+
+
 _G.GameMechanicsUtils = GameMechanicsUtils
 return GameMechanicsUtils

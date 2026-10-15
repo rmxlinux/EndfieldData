@@ -103,20 +103,20 @@ function(self, sortOptions, onSortChanged, curCSOptionIndex, curIsIncremental, n
     self.m_onSortChanged = onSortChanged
     self.m_sortOptions = sortOptions
     self.m_onToggleOptList = nil
-    self.m_curCSOptionIndex = curCSOptionIndex or 0
+    if curCSOptionIndex == nil or curCSOptionIndex < 0 then
+        curCSOptionIndex = 0
+    end
+    self.m_curCSOptionIndex = curCSOptionIndex
     self:RefreshIncremental()
     self.m_tmpNoCallback = noCallback == true
     self.m_filterBtn = filterBtn
     if sortOptions ~= nil and next(sortOptions) ~= nil then
-        if curCSOptionIndex then
-            self.view.mobilePCNode.dropDown:Refresh(#self.m_sortOptions, curCSOptionIndex)
-        else
-            self.view.mobilePCNode.dropDown:Refresh(#self.m_sortOptions)
-        end
+        self.view.mobilePCNode.dropDown:Refresh(#self.m_sortOptions, curCSOptionIndex)
+        self.m_tmpNoCallback = false
+        self.view.mobilePCNode.dropDown:SetSelected(curCSOptionIndex, true, false)
+    else
+        self.m_tmpNoCallback = false
     end
-
-    self.m_tmpNoCallback = false
-    self.view.mobilePCNode.dropDown:SetSelected(curCSOptionIndex, true, false)
     self.view.controllerNode.filterBtn.onClick:AddListener(function()
         if not self.m_enableFilterBtn then
             return

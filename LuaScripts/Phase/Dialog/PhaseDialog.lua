@@ -13,7 +13,9 @@ local clearPhases = {
 
 PhaseDialog.s_messages = HL.StaticField(HL.Table) << {
     
-    [MessageConst.ON_DIALOG_START] = { 'OnDirectDialogStart', false },
+    
+    
+    [MessageConst.ON_OPEN_DIALOG_UI] = { 'OnOpenDialogUI', false },
     [MessageConst.IS_DIALOG_PHASE_OPENED] = { 'IsDialogPhaseOpened', false },
 
     [MessageConst.ON_EXIT_DIALOG] = { 'OnExitDialog', true },
@@ -24,7 +26,6 @@ PhaseDialog.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.DIALOG_PANEL_SHOW_LEFT_SUBTITLE] = { 'OnShowDialogLeftSubtitle', true },
     [MessageConst.DIALOG_PANEL_EXIT_LEFT_SUBTITLE] = { 'OnExitDialogLeftSubtitle', true },
     [MessageConst.DIALOG_PANEL_HIDE_TOP_SUBTITLE] = { 'OnHideTopSubtitle', true },
-    [MessageConst.ON_DIALOG_ENV_TALK_CHANGED] = { 'OnDialogEnvTalkChanged', true },
     [MessageConst.ON_COMMON_BACK_CLICKED] = { 'OnCommonBackClicked', true },
     [MessageConst.DIALOG_OPEN_UI] = { "OpenUI", true },
     [MessageConst.ON_DIALOG_PHASE_BACK_TO_TOP] = { "OnDialogPhaseTransitionBackToTop", true },
@@ -79,8 +80,26 @@ PhaseDialog.GetOpenedPhaseId = HL.Method().Return(HL.Number) << function(self)
 end
 
 PhaseDialog.ChangeNextIndex = HL.Method(HL.Table) << function(self, args)
-    if args.phaseId == self.m_openedPhaseId then
-        self.m_tempNextIndex = args.nextIndex
+    if args.phaseId ~= self.m_openedPhaseId then
+        return
+    end
+
+    self.m_tempNextIndex = args.nextIndex
+    if not args.immediateNext or self.doingOut then
+        return
+    end
+
+    local phaseId = self.m_openedPhaseId
+    local nextIndex = self.m_tempNextIndex
+    
+    self.m_openedPhaseId = -1
+    self.m_tempNextIndex = -1
+    GameWorld.dialogManager:TryPauseVoiceManager()
+    local continued = self:Next(nextIndex)
+    if not continued and not self.m_destroyed and self.m_openedPhaseId == -1 then
+        
+        self.m_openedPhaseId = phaseId
+        self.m_tempNextIndex = nextIndex
     end
 end
 
@@ -123,23 +142,38 @@ PhaseDialog.OnDialogStart = HL.StaticMethod(HL.Table) << function(arg)
     end
 end
 
-PhaseDialog.OnDirectDialogStart = HL.StaticMethod(HL.Opt(HL.Table)) << function(data)
-    local arg = {
+
+
+
+
+
+
+PhaseDialog.OnOpenDialogUI = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg)
+    local is2DUI = false
+    if arg ~= nil then
+        is2DUI = unpack(arg)
+    end
+    if is2DUI == true then
+        return
+    end
+
+    local openArg = {
         direct = true,
         fast = true,
     }
 
-    local inWaitingQueue =  PhaseManager:IsInWaitingQueue(PhaseId.Dialog)
+    local inWaitingQueue = PhaseManager:IsInWaitingQueue(PhaseId.Dialog)
     if inWaitingQueue then
         return
     end
 
     local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
     if not isOpen then
-        local res = PhaseDialog.AutoOpen(PHASE_ID, arg)
-        if not res then
-            logger.warn("PhaseDialog Open Failed!!!!")
-        end
+        
+        
+        
+        
+        PhaseManager:OpenPhaseFast(PHASE_ID, openArg)
     else
         if phase.doingOut then
             local nextDialog = GameWorld.dialogManager.dialogId
@@ -150,12 +184,20 @@ PhaseDialog.OnDirectDialogStart = HL.StaticMethod(HL.Opt(HL.Table)) << function(
 end
 
 PhaseDialog.IsDialogPhaseOpened = HL.StaticMethod(HL.Table) << function(arg)
+    
+    
+    
     local isOpenedContext = unpack(arg)
     local isOpen, phase = PhaseManager:IsOpenAndValid(PHASE_ID)
     if isOpen and not phase.doingOut then
         isOpenedContext.isPhaseOpen = true
-    else
-        isOpenedContext.isPhaseOpen = false
+        return
+    end
+    
+    
+    
+    if PhaseManager:IsInWaitingQueue(PHASE_ID) or PhaseManager:IsOpen(PHASE_ID) then
+        isOpenedContext.isPhasePending = true
     end
 end
 
@@ -180,12 +222,9 @@ PhaseDialog.OnExitDialogLeftSubtitle = HL.Method() << function(self)
     self:_DoExitLeftSubtitle()
 end
 
+
 PhaseDialog.OnHideTopSubtitle = HL.Method() << function(self)
     self.m_panelItem.uiCtrl:ClearTopTrunk()
-end
-
-PhaseDialog.OnDialogEnvTalkChanged = HL.Method(HL.Table) << function(self, arg)
-    self:_GetPanelPhaseItem(PanelId.HeadLabelInDialog).uiCtrl:RefreshEnvTalk(arg)
 end
 
 
@@ -283,7 +322,8 @@ end
 PhaseDialog._TryStartNextDialog = HL.StaticMethod() << function()
     if not string.isEmpty(PhaseDialog.s_nextDialog) then
         PhaseDialog.s_nextDialog = ""
-        PhaseDialog.OnDirectDialogStart()
+        
+        PhaseDialog.OnOpenDialogUI()
     end
 end
 
@@ -557,9 +597,9 @@ PhaseDialog.OnSendPresentEnd = HL.Method(HL.Table) << function(self, data)
 end
 
 
-PhaseDialog.Next = HL.Method(HL.Opt(HL.Number)) << function(self, num)
+PhaseDialog.Next = HL.Method(HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, num)
     num = num or -1
-    GameWorld.dialogManager:Next(num)
+    return GameWorld.dialogManager:Next(num)
 end
 
 

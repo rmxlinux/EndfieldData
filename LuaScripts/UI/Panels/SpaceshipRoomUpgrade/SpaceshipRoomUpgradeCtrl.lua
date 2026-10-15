@@ -345,7 +345,7 @@ SpaceshipRoomUpgradeCtrl._InitBuildInfo = HL.Method() << function(self)
         local roomType = Tables.SpaceshipBuildTypeTable[self.m_allowBuildType].typeList[i].type
         local roomCount, maxCount = SpaceshipUtils.getSpaceshipNowAndMaxRoom(roomType)
         table.insert(self.m_buildTypeData, Tables.spaceshipRoomTypeTable[roomType])
-        if roomCount ~= maxCount and self.m_buildTypeIndex ~= -1 then
+        if roomCount < maxCount and self.m_buildTypeIndex == -1 then
             self.m_buildTypeIndex = LuaIndex(i)
         end
     end
@@ -409,8 +409,18 @@ SpaceshipRoomUpgradeCtrl._RefreshBuildInfo = HL.Method(GEnums.SpaceshipRoomType)
     self:_UpdateCommonItemList(self.view.buildNode.previewItemNode, self.m_roomTypeData.previewProductItemIds)
     self:_UpdateCostItemList()
     self:_SetViewByRoomTypeData()
-    self.view.buildNode.leftBtn.gameObject:SetActive(#self.m_buildTypeData > 1)
-    self.view.buildNode.rightBtn.gameObject:SetActive(#self.m_buildTypeData > 1)
+    local hasOtherBuildType = false
+    for _, buildTypeData in ipairs(self.m_buildTypeData) do
+        if buildTypeData.type ~= roomType then
+            local roomCount, maxCount = SpaceshipUtils.getSpaceshipNowAndMaxRoom(buildTypeData.type)
+            if roomCount < maxCount then
+                hasOtherBuildType = true
+                break
+            end
+        end
+    end
+    self.view.buildNode.leftBtn.gameObject:SetActive(hasOtherBuildType)
+    self.view.buildNode.rightBtn.gameObject:SetActive(hasOtherBuildType)
     self.view.buildNode.leftBtn.interactable = self.m_buildTypeIndex > 1
     self.view.buildNode.leftBtnStateController:SetState(self.m_buildTypeIndex > 1 and "Nrl" or "Dis")
     self.view.buildNode.rightBtn.interactable = self.m_buildTypeIndex < #self.m_buildTypeData

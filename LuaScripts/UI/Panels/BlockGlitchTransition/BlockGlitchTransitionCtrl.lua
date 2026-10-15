@@ -1,6 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BlockGlitchTransition
+local INPUT_BLOCK_KEY = "BlockGlitchTransition"
 BlockGlitchTransitionCtrl = HL.Class('BlockGlitchTransitionCtrl', uiCtrl.UICtrl)
 
 
@@ -15,6 +16,7 @@ BlockGlitchTransitionCtrl.s_renderTextureHandle = HL.StaticField(HL.Userdata)
 
 
 BlockGlitchTransitionCtrl.PrepareBlockGlitchTransition = HL.StaticMethod() << function()
+    Notify(MessageConst.BLOCK_LUA_UI_INPUT, { true, INPUT_BLOCK_KEY })
     BlockGlitchTransitionCtrl._ReleaseRT()
     BlockGlitchTransitionCtrl.s_renderTextureHandle = ScreenCaptureUtils.GetScreenCapture(math.floor(Screen.width), math.floor(Screen.height))
 end
@@ -29,10 +31,12 @@ end
 BlockGlitchTransitionCtrl.ShowBlockGlitchTransition = HL.StaticMethod() << function()
     if not BlockGlitchTransitionCtrl.s_renderTextureHandle then
         logger.error("No BlockGlitchTransitionCtrl.s_renderTextureHandle")
+        Notify(MessageConst.BLOCK_LUA_UI_INPUT, { false, INPUT_BLOCK_KEY })
         return
     end
 
     local ctrl = BlockGlitchTransitionCtrl.AutoOpen(PANEL_ID)
+    Notify(MessageConst.BLOCK_LUA_UI_INPUT, { false, INPUT_BLOCK_KEY })
     AudioAdapter.PostEvent("Au_UI_Event_SquareMosaic_Glitch")
 
     ctrl:Play()
@@ -44,6 +48,13 @@ end
 
 BlockGlitchTransitionCtrl.OnShow = HL.Override() << function(self)
     UIUtils.changeAlpha(self.view.rawImage, 0)
+end
+
+BlockGlitchTransitionCtrl.OnClose = HL.Override() << function(self)
+    Notify(MessageConst.BLOCK_LUA_UI_INPUT, { false, INPUT_BLOCK_KEY })
+    self.animationWrapper:ClearTween(false)
+    self.view.rawImage.texture = nil
+    BlockGlitchTransitionCtrl._ReleaseRT()
 end
 
 BlockGlitchTransitionCtrl.Play = HL.Method() << function(self)

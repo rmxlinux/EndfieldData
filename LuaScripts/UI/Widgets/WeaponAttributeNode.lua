@@ -46,6 +46,9 @@ WeaponAttributeNode.InitWeaponAttributeNode = HL.Method(HL.Number, HL.Opt(HL.Num
         local attributeInfo = mainAttributeList[index]
         self:_RefreshAttributeCell(cell, attributeInfo)
     end)
+    if self.view.titleNodeStateCtrl then
+        self.view.titleNodeStateCtrl:SetState("WeaponState")
+    end
 end
 
 WeaponAttributeNode.InitWeaponAttributeNodeByTemplateId = HL.Method(HL.String, HL.Opt(HL.Boolean)) << function(self, weaponTemplateId, isMaxLevel)
@@ -62,6 +65,9 @@ WeaponAttributeNode.InitWeaponAttributeNodeByTemplateId = HL.Method(HL.String, H
         local attributeInfo = mainAttributeList[index]
         self:_RefreshAttributeCell(cell, attributeInfo)
     end)
+    if self.view.titleNodeStateCtrl then
+        self.view.titleNodeStateCtrl:SetState("WeaponState")
+    end
 end
 
 WeaponAttributeNode.InitCharAttributeNode = HL.Method(HL.Number, HL.Number, HL.Number, HL.Opt(HL.Table)) << function(self, charInstId, targetLevel, targetStage, extraArg)
@@ -129,6 +135,9 @@ WeaponAttributeNode.InitEquipAttributeNode = HL.Method(HL.Number, HL.Opt(HL.Stri
 
     local defShowInfo, mainAttrShowInfoList, extraAttrShowInfoList = CharInfoUtils.getEquipShowAttributes(equipInstId)
     self:_Init(mainAttrShowInfoList, extraAttrShowInfoList, defShowInfo, charTemplateId, equipInstId)
+    if self.view.titleNodeStateCtrl then
+        self.view.titleNodeStateCtrl:SetState("EquipState")
+    end
 end
 
 WeaponAttributeNode.InitEquipAttributeNodeByTemplateId = HL.Method(HL.String, HL.Opt(HL.String)) << function(self, equipTemplateId, charTemplateId)
@@ -136,6 +145,9 @@ WeaponAttributeNode.InitEquipAttributeNodeByTemplateId = HL.Method(HL.String, HL
 
     local defShowInfo, mainAttrShowInfoList, extraAttrShowInfoList = CharInfoUtils.getEquipTemplateShowAttributes(equipTemplateId)
     self:_Init(mainAttrShowInfoList, extraAttrShowInfoList, defShowInfo, charTemplateId)
+    if self.view.titleNodeStateCtrl then
+        self.view.titleNodeStateCtrl:SetState("EquipState")
+    end
 end
 
 WeaponAttributeNode._Init = HL.Method(HL.Table, HL.Table, HL.Table, HL.Opt(HL.String, HL.Number)) << function(

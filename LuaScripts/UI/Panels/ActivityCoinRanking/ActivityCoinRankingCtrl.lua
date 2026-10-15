@@ -31,6 +31,8 @@ ActivityCoinRankingCtrl = HL.Class('ActivityCoinRankingCtrl', uiCtrl.UICtrl)
 
 ActivityCoinRankingCtrl.m_activityId = HL.Field(HL.String) << ""
 
+ActivityCoinRankingCtrl.m_stateName = HL.Field(HL.String) << ""
+
 ActivityCoinRankingCtrl.m_rankRelatedId = HL.Field(HL.String) << ""
 
 ActivityCoinRankingCtrl.m_genRankListCellFunc = HL.Field(HL.Function)
@@ -94,6 +96,14 @@ ActivityCoinRankingCtrl.OnFriendInfoSync = HL.Method() << function(self)
 end
 
 ActivityCoinRankingCtrl._InitUI = HL.Method() << function(self)
+    if self.m_stateName == "GambleBattle" then
+        self.view.mainStateController:SetState("GambleBattleBg")
+        self.view.taskScrollStateController:SetState("GambleBattleCell")
+    else
+        self.view.mainStateController:SetState("WonderlandBg")
+        self.view.taskScrollStateController:SetState("WonderlandCell")
+    end
+
     self.view.btnClose.onClick:AddListener(function()
         self:_OnClickBtnClose()
     end)

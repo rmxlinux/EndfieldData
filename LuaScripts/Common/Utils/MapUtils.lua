@@ -222,6 +222,7 @@ function MapUtils.switchFromRegionMapToLevelMap(instId, levelId)
             needTransit = true,
         }
     end
+    CameraManager:RemoveMainCamCullingMaskConfig("RegionMap")   
     PhaseManager:OpenPhaseFast(PhaseId.Map, args)
     PhaseManager:ExitPhaseFast(PhaseId.RegionMap)
 end

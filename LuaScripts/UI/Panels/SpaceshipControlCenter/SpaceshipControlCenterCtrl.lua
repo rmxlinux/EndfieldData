@@ -231,7 +231,9 @@ SpaceshipControlCenterCtrl.OnSpaceshipGuestRoomClueRewardItem = HL.Method(HL.Any
         return
     end
     local items, sources = unpack(args)
-    SpaceshipUtils.ShowClueOutcomePopup(items, sources, self.view.moneyCell, nil)
+    
+    local forceShowReward = sources == CS.Beyond.GEnums.RewardSourceType.PresentClueReward
+    SpaceshipUtils.ShowClueOutcomePopup(items, sources, self.view.moneyCell, nil, forceShowReward)
 end
 
 SpaceshipControlCenterCtrl.OnSpaceshipOneKeyHarvestFinish = HL.Method(HL.Any) << function(self, args)
@@ -244,14 +246,23 @@ end
 
 SpaceshipControlCenterCtrl._ShowOutcomePopupForOneKeyHarvest = HL.Method(HL.String, HL.Any) << function(self, title, csItems)
     local items = {}
+    local creditItem
     for i = 0, csItems.Count - 1 do
         local item = csItems[i]
-        local needShowHelp = Tables.spaceshipGrowCabinOutCome2MaterialTable:ContainsKey(item.id)
-        table.insert(items, {
-            id = item.id,
-            count = (item.Count or 0) + (item.count or 0),
-            needShowHelp = needShowHelp,
-        })
+        local count = (item.Count or 0) + (item.count or 0)
+        if item.id == Tables.spaceshipConst.creditItemId and creditItem then
+            creditItem.count = creditItem.count + count
+        else
+            local rewardItem = {
+                id = item.id,
+                count = count,
+                needShowHelp = Tables.spaceshipGrowCabinOutCome2MaterialTable:ContainsKey(item.id),
+            }
+            table.insert(items, rewardItem)
+            if item.id == Tables.spaceshipConst.creditItemId then
+                creditItem = rewardItem
+            end
+        end
     end
     if #items == 0 then
         return
@@ -370,7 +381,9 @@ SpaceshipControlCenterCtrl._UpdateRoomCell = HL.Method(HL.Table, HL.String) << f
     cell.ownerButton.onClick:RemoveAllListeners()
     cell.ownerButton.onClick:AddListener(function()
         if roomInfo.type == GEnums.SpaceshipRoomType.ControlCenter then
-            PhaseManager:OpenPhase(PhaseId.SpaceshipStation, { roomId = roomId })
+            local phaseId = SpaceshipUtils.isSingleTeamMode(roomId) and PhaseId.SpaceshipStation
+                or PhaseId.SpaceshipSchedule
+            PhaseManager:OpenPhase(phaseId, { roomId = roomId })
         else
             local phaseId = PhaseId[SpaceshipConst.ROOM_PHASE_ID_NAME_MAP_BY_TYPE[roomInfo.type]]
             PhaseManager:OpenPhase(phaseId, {

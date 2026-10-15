@@ -35,6 +35,8 @@ DialogSignCtrl.m_signTimer = HL.Field(HL.Number) << -1
 
 DialogSignCtrl.m_typeWriterCor = HL.Field(HL.Thread)
 
+DialogSignCtrl.m_deferredExitCoroutine = HL.Field(HL.Thread)
+
 DialogSignCtrl.m_textPlayCompleted = HL.Field(HL.Boolean) << false
 
 DialogSignCtrl.m_lastMaxVisibleCharacters = HL.Field(HL.Number) << -1
@@ -349,14 +351,61 @@ DialogSignCtrl.StartSign = HL.Method() << function(self)
 end
 
 DialogSignCtrl.OnHideDialogSignOption = HL.Method() << function(self)
-    PhaseManager:PopPhase(PHASE_ID)
+    self:_RequestExit(false)
 end
 
 DialogSignCtrl.OnDialogTimelineFinish = HL.Method() << function(self)
-    PhaseManager:ExitPhaseFast(PHASE_ID)
+    self:_RequestExit(true)
+end
+
+DialogSignCtrl._RequestExit = HL.Method(HL.Boolean) << function(self, fastMode)
+    if self.m_isClosed or self.m_deferredExitCoroutine then
+        return
+    end
+
+    local isOpen, phase = PhaseManager:IsOpenAndValid(PHASE_ID)
+    if not isOpen or phase ~= self.m_phase then
+        return
+    end
+
+    if not PhaseManager:IsInPhaseTransition()
+        and (fastMode or PhaseManager:GetTopPhaseId() == PHASE_ID) then
+        if fastMode then
+            PhaseManager:ExitPhaseFast(PHASE_ID)
+        else
+            PhaseManager:PopPhase(PHASE_ID)
+        end
+        return
+    end
+
+    
+    self.m_deferredExitCoroutine = self:_StartCoroutine(function()
+        coroutine.waitCondition(function()
+            if self.m_isClosed then
+                return true
+            end
+            local isOpen, currentPhase = PhaseManager:IsOpenAndValid(PHASE_ID)
+            return not isOpen or currentPhase ~= phase or not PhaseManager:IsInPhaseTransition()
+        end)
+
+        self.m_deferredExitCoroutine = nil
+        if self.m_isClosed then
+            return
+        end
+        local isOpen, currentPhase = PhaseManager:IsOpenAndValid(PHASE_ID)
+        if not isOpen or currentPhase ~= phase then
+            return
+        end
+
+        PhaseManager:ExitPhaseFast(PHASE_ID)
+    end)
 end
 
 DialogSignCtrl.OnClose = HL.Override() << function(self)
+    if self.m_deferredExitCoroutine ~= nil then
+        self.m_deferredExitCoroutine = self:_ClearCoroutine(self.m_deferredExitCoroutine)
+    end
+
     if self.m_typeWriterCor ~= nil then
         self.m_typeWriterCor = self:_ClearCoroutine(self.m_typeWriterCor)
     end

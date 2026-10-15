@@ -25,6 +25,8 @@ BottomNodeWaterMarkUI.InitBottomNodeWaterMarkUI = HL.Method(HL.Table) << functio
             local node = self.view.settlementNode
             node.timeTxt.text = arg.timeStamp
             node.codeTxt.text = arg.showCodeId
+        elseif arg.type == "ActivityGambleBattle" then
+            self.view.settlementNode.timeTxt.text = arg.timeStamp or ""
         elseif arg.type == "EchoesOfWar" then
             
             local node = self.view.settlementNode

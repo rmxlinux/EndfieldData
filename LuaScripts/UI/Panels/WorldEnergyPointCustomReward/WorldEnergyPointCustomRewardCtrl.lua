@@ -205,6 +205,11 @@ WorldEnergyPointCustomRewardCtrl._InitView = HL.Method() << function(self)
 end
 
 WorldEnergyPointCustomRewardCtrl._OnClickBtnAward = HL.Method() << function(self)
+    
+    if PhaseManager:IsInPhaseTransition() then
+        return
+    end
+
     local costStamina = self.m_curSelectRadio * Tables.worldEnergyPointTable[self.m_awardGameId].costStamina
     local realCost = ActivityUtils.getRealStaminaCost(costStamina)
     if GameInstance.player.inventory.curStamina >= realCost then

@@ -341,6 +341,14 @@ PhaseBalloon.DisableComponentsInteractable = HL.Method(HL.Opt(CS.UnityEngine.Eve
         activeDragItem = eventData.pointerDrag:GetComponent(typeof(CS.Beyond.UI.UIDragItem))
     end
 
+    if activeDragItem then
+        self:_ForEachDragItem(function(dragItem)
+            if dragItem ~= activeDragItem then
+                dragItem.canStartDrag = false
+            end
+        end)
+    end
+
     local mainPanel = self.m_balloonMainPanel
     if mainPanel and not mainPanel.m_isClosed then
         mainPanel.view.btnClose.enabled = false
@@ -380,6 +388,10 @@ end
 
 
 PhaseBalloon.RecoverComponentsInteractable = HL.Method() << function(self)
+    self:_ForEachDragItem(function(dragItem)
+        dragItem.canStartDrag = true
+    end)
+
     local mainPanel = self.m_balloonMainPanel
     if mainPanel and not mainPanel.m_isClosed then
         mainPanel.view.btnClose.enabled = true
@@ -440,6 +452,9 @@ PhaseBalloon.OnBeginDragCell = HL.Method(HL.Opt(CS.UnityEngine.EventSystems.Poin
 end
 
 PhaseBalloon.OnDraggingCell = HL.Method(HL.Opt(CS.UnityEngine.EventSystems.PointerEventData)) << function(self, eventData)
+    if not self.isDragIngCell then
+        return
+    end
     
     self:OnDraggingStart()
     if (not eventData or not eventData.pointerEnter) and self.dragEnterDropItem then

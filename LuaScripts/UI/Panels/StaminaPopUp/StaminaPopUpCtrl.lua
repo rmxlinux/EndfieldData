@@ -96,6 +96,9 @@ StaminaPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.confirmBtn.onClick:AddListener(function()
         self:_OnConfirm()
     end)
+    self.view.timeLimitAutoUseNode.tipsButton.onClick:AddListener(function()
+        UIManager:Open(PanelId.InstructionBook, "stamina_potion_auto_use_rule")
+    end)
     
     self.m_genItemCells = UIUtils.genCellCache(self.view.exchangeNode.costItemCell)
     self:_InitBasicUI()
@@ -108,7 +111,7 @@ StaminaPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     self:_RefreshTickRecoverTxt()
     self:_TryStartTickRecover()
-
+    
     
     self.view.exchangeNode.costItemScrollRect.horizontalNormalizedPosition = 0;
 
@@ -406,6 +409,7 @@ StaminaPopUpCtrl._InitQuickExchange = HL.Method(HL.Any) << function(self, arg)
         itemId = arg.itemId,
         instId = arg.instId,
     }
+    self:_SetAllCostItemCellItemTipsEnabled(false)
     self.m_exchangeState = ExchangeStateEnum.QuickExchange
     self.view.exchangeState:SetState("QuickExchangeState")
     self.view.buttonOperateState:SetState("OnlyConfirmState")
@@ -536,7 +540,13 @@ StaminaPopUpCtrl._UpdateItemData = HL.Method() << function(self)
     
     
     
+    
     table.sort(self.m_invItemInfoList, function(a, b)
+        local aIsPurple = (a.itemTableData.rarity == 4)
+        local bIsPurple = (b.itemTableData.rarity == 4)
+        if aIsPurple ~= bIsPurple then
+            return aIsPurple
+        end
         if a.isLTItem ~= b.isLTItem then
             return a.isLTItem
         end
@@ -607,6 +617,24 @@ StaminaPopUpCtrl._HasItemForExchange = HL.Method().Return(HL.Boolean) << functio
     return true
 end
 
+StaminaPopUpCtrl._SetCostItemCellItemTipsEnabled = HL.Method(HL.Any, HL.Boolean) << function(self, cell, enabled)
+    if not DeviceInfo.usingController then return end
+    local btn = cell.view.item.view.button
+    if btn.onClick.bindingId and btn.onClick.bindingId > 0 then
+        InputManagerInst:ToggleBinding(btn.onClick.bindingId, enabled)
+    end
+end
+
+StaminaPopUpCtrl._SetAllCostItemCellItemTipsEnabled = HL.Method(HL.Boolean) << function(self, enabled)
+    if not DeviceInfo.usingController or not self.m_genItemCells or not self.m_invItemInfoList then return end
+    for i = 1, #self.m_invItemInfoList do
+        local cell = self.m_genItemCells:Get(i)
+        if cell then
+            self:_SetCostItemCellItemTipsEnabled(cell, enabled)
+        end
+    end
+end
+
 StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
     self.view.exchangeNode.keyHintDown.gameObject:SetActive(true)
     self.view.exchangeNode.keyHintUp.gameObject:SetActive(false)
@@ -618,6 +646,7 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
         self.view.exchangeNode.contentState:SetState("ItemInsufficientState")
         self.view.buttonOperateState:SetState("NotSelectItemState")
         self.m_totalExchangeStamina = 0
+        self:_SetAllCostItemCellItemTipsEnabled(false)
         self:_RefreshUICurrentAndTargetStamina()
         return 
     end
@@ -650,15 +679,28 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
         }
         cell:InitItemCellForSelect(args)
 
-        if luaIndex == self.m_curSelItemIndex then
-            self:SetNaviTarget(cell.view.item.view.button)
-        end
+        local item = cell.view.item
+        item:SetExtraInfo({
+            isSideTips = false,
+            tipsPosType = UIConst.UI_TIPS_POS_TYPE.RightDown,
+        })
         
-        local btn = cell.view.item.view.button
+        local btn = item.view.button
+        btn.onClick:RemoveAllListeners()
+        btn.onClick:AddListener(function()
+            if not item.showingTips then
+                item:ShowTips()
+            end
+        end)
+        self:_SetCostItemCellItemTipsEnabled(cell, luaIndex == self.m_curSelItemIndex)
         btn.onIsNaviTargetChanged = function(isTarget)
+            self:_SetCostItemCellItemTipsEnabled(cell, isTarget)
             if isTarget then
                 self.m_curSelItemIndex = luaIndex
             end
+        end
+        if luaIndex == self.m_curSelItemIndex then
+            self:SetNaviTarget(btn)
         end
     end)
     local scrollRect = self.view.exchangeNode.costItemScrollRect
@@ -687,6 +729,8 @@ end
 StaminaPopUpCtrl._RefreshUIExchangeCostOriginium = HL.Method() << function(self)
     self.view.exchangeNode.keyHintDown.gameObject:SetActive(false)
     self.view.exchangeNode.keyHintUp.gameObject:SetActive(true)
+    self:_SetAllCostItemCellItemTipsEnabled(false)
+    Notify(MessageConst.HIDE_ITEM_TIPS)
     
     self.m_exchangeState = ExchangeStateEnum.ExchangeOfOriginium
     self.view.exchangeNode.contentState:SetState("OriginiumState")

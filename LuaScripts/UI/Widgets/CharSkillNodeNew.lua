@@ -49,6 +49,9 @@ CharSkillNodeNew._RefreshUI = HL.Method() << function(self)
     self.m_skillCells:Refresh(#UIConst.CHAR_INFO_SKILL_SHOW_ORDER, function(cell, luaIndex)
         local skillGroupType = UIConst.CHAR_INFO_SKILL_SHOW_ORDER[luaIndex]
         cell:InitCharInfoSkillButtonNew(charInst, skillGroupType, function()
+            if not cell.view.gameObject.activeInHierarchy then
+                return
+            end
             Notify(MessageConst.SHOW_CHAR_SKILL_TIP, {
                 skillGroupType = skillGroupType,
                 charInstId = charInstId,

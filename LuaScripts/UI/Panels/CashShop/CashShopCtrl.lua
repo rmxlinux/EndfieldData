@@ -197,6 +197,13 @@ CashShopCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
         else
             categoryId = self.m_tabCategoryData[1]
         end
+        
+        
+        
+        if arg then
+            arg.goodsId = nil
+            arg.cashShopId = nil
+        end
     else
         categoryId = hopeCategoryId
     end

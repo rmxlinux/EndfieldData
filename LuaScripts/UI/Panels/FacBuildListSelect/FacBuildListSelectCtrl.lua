@@ -2,6 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacBuildListSelect
 local QuickBarItemType = FacConst.QuickBarItemType
+local LuaProtoUtil = CS.Beyond.Network.LuaProtoUtil
 
 local MainState = {
     Fac = "Fac", 
@@ -9,6 +10,11 @@ local MainState = {
     Blackbox = "Blackbox", 
 }
 local MAXIMUM_MAKE_COUNT = 999
+
+local function sendDefaultMsgAndDispose(msg)
+    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+    msg:Dispose()
+end
 
 FacBuildListSelectCtrl = HL.Class('FacBuildListSelectCtrl', uiCtrl.UICtrl)
 
@@ -60,10 +66,14 @@ FacBuildListSelectCtrl.m_bluePrintData = HL.Field(HL.Table)
 FacBuildListSelectCtrl.m_waitingForCraftData = HL.Field(HL.Table)
 
 
+FacBuildListSelectCtrl.m_noCraftSystem = HL.Field(HL.Boolean) << false
+
+
 FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_waitingForCraftData = {}
     self.m_bluePrintData = {}
     self.m_bluePrintMode = false
+    self.m_noCraftSystem = Utils.isInBlackbox() or not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub)
     if arg then
         if arg.onlyCraftNode then
             self.m_onlyCraftNode = true
@@ -81,7 +91,7 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                 FacBuildListSelectCtrl.s_lastSelectInfo = { "all", arg.selectedId }
                 
                 
-                self.m_curCraftModeState = not Utils.isInBlackbox() and Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub)
+                self.m_curCraftModeState = not self.m_noCraftSystem
             end
         end
     end
@@ -110,7 +120,7 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self:_OnChangeModeToggle(isOn)
         end, not self.m_curCraftModeState, true)
         self.view.commonToggle:SetCustomAnimation("common_toggle_to_left02", "common_toggle_to_right02")
-        if isInBlackbox or not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub) then
+        if self.m_noCraftSystem then
             self.view.commonToggle:ToggleInteractable(false)
             self.view.canCraftImg.gameObject:SetActiveIfNecessary(false)
             self.view.disCraftImg.gameObject:SetActiveIfNecessary(true)
@@ -164,8 +174,6 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.commonToggle.gameObject:SetActiveIfNecessary(not self.m_onlyCraftNode)
 
     self.view.topNode.gameObject:SetActiveIfNecessary(self.m_bluePrintMode)
-    local depotKey = self.m_bluePrintMode and "ui_common_item_tips_own" or "ui_fac_common_storage_have_local"
-    self.view.craftNode.depotCountTitle.text = Language[depotKey]
     if self.m_bluePrintMode then
         self.view.toppingToggle.onValueChanged:RemoveAllListeners()
         if recoverState ~= nil and recoverState.toppingToggleIsOn ~= nil then
@@ -224,10 +232,10 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     if UNITY_EDITOR or DEVELOPMENT_BUILD then
         self:BindInputEvent(CS.Beyond.Input.KeyboardKeyCode.A, function()
-            local msg = CS.Proto.CS_GM_COMMAND()
+            local msg = LuaProtoUtil.AllocateCSGMCommand()
             local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
             msg.Command = "AddItemToItemBagSystem " .. item.itemId ..  " 50"
-            CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+            sendDefaultMsgAndDispose(msg)
             Notify(MessageConst.SHOW_TOAST, "DEBUG: 已添加道具50个")
         end)
     end
@@ -502,6 +510,8 @@ end
 
 FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
     local typeInfos = {}
+    
+    
     local isInMainRegion = Utils.isInFacMainRegion()
 
     local allItems = {}
@@ -526,7 +536,8 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
             items = {},
             redDot = "FacBuildModeMenuLogisticTab",
         }
-        if isInMainRegion then 
+        
+        if FactoryUtils.canShowBelt() then
             for id, data in pairs(Tables.factoryGridBeltTable) do
                 if FactoryUtils.isLogisticUnlocked(id, domainId) then
                     local item = {
@@ -848,10 +859,13 @@ end
 FacBuildListSelectCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][index]
     local itemId = item.itemId
-    local count
+    local count, materialEnough
     local isBuilding = item.type == QuickBarItemType.Building
     if isBuilding then
-        count = Utils.getItemCount(itemId)
+        count = Utils.getItemCount(itemId, true, true)
+        if count == 0 then
+            materialEnough = FactoryUtils.checkBuildingMaterialEnough(itemId)
+        end
     end 
     cell:InitItemSlot({
         id = itemId,
@@ -859,6 +873,9 @@ FacBuildListSelectCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(
     }, function()
         self.view.scrollList:SetSelectedIndex(CSIndex(index))
     end)
+    if materialEnough then
+        cell.item:SetIconTransparent(UIConst.ITEM_EXIST_TRANSPARENCY)
+    end
     local disNodeShow = (self.m_curCraftModeState and item.type ~= QuickBarItemType.Building)
         or (not self.m_curCraftModeState and item.domainSortGroup < FacConst.DOMAIN_SORT_GROUP.Unsuitable)
     cell.view.disNode.gameObject:SetActiveIfNecessary(disNodeShow)
@@ -980,9 +997,10 @@ FacBuildListSelectCtrl._RefreshSelectedPlaceNode = HL.Method(HL.Opt(HL.Boolean))
     self.view.placeNode.powerNode.gameObject:SetActiveIfNecessary(isBuilding)
     self.view.placeNode.confirmBtn.gameObject:SetActiveIfNecessary(true)
     self.view.placeNode.emptyBtn.gameObject:SetActiveIfNecessary(false)
+    self.view.placeNode.lackMaterialCtrl.gameObject:SetActiveIfNecessary(false)
     if isBuilding then
         local bagCount = Utils.getBagItemCount(id)
-        local depotCount = Utils.getDepotItemCount(id, Utils.getCurrentScope(), Utils.getCurDomainId())
+        local depotCount = Utils.getItemCount(id, true, true)
         self.view.placeNode.bagCountTxt.text = tostring(bagCount)
         self.view.placeNode.depotCountTxt.text = tostring(depotCount)
         self.view.placeNode.bagCountTxt.color = bagCount == 0 and self.view.config.COUNT_EMPTY_COLOR or self.view.config.COUNT_ENOUGH_COLOR
@@ -991,16 +1009,18 @@ FacBuildListSelectCtrl._RefreshSelectedPlaceNode = HL.Method(HL.Opt(HL.Boolean))
         local buildingData = FactoryUtils.getItemBuildingData(id)
         self.view.placeNode.powerTxt.text = GameInstance.remoteFactoryManager.system.core.progressStatus:IsBuildingPowerCostNoNeed(item.id) and 0 or buildingData.powerConsume
 
-        local lack
-        if Utils.isInFacMainRegion() then
-            lack = bagCount == 0 and depotCount == 0
-        else
-            lack = bagCount == 0
-        end
+        
+        local lack = bagCount == 0 and depotCount == 0
         if lack then
-            self.view.placeNode.confirmBtn.gameObject:SetActiveIfNecessary(false)
-            if not Utils.isInBlackbox() and Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub) then
-                self.view.placeNode.emptyBtn.gameObject:SetActiveIfNecessary(true)
+            if self.m_noCraftSystem then
+                
+                self.view.placeNode.confirmBtn.gameObject:SetActiveIfNecessary(false)
+            else
+                local materialEnough = FactoryUtils.checkBuildingMaterialEnough(id)
+                self.view.placeNode.confirmBtn.gameObject:SetActiveIfNecessary(materialEnough)
+                self.view.placeNode.emptyBtn.gameObject:SetActiveIfNecessary(not materialEnough)
+                self.view.placeNode.lackMaterialCtrl.gameObject:SetActiveIfNecessary(true)
+                self.view.placeNode.lackMaterialCtrl:SetState(materialEnough and "Enough" or "Lack")
             end
         end
     end
@@ -1036,17 +1056,14 @@ FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean))
     if isBuilding then
         local bagCount = Utils.getBagItemCount(id)
         local depotCount
-        if self.m_bluePrintMode then
-            depotCount = Utils.getItemCount(id, true, true)
-        else
-            depotCount = Utils.getDepotItemCount(id, Utils.getCurrentScope(), Utils.getCurDomainId())
-        end
+        depotCount = Utils.getItemCount(id, true, true)
         self.view.craftNode.bagCountTxt.text = tostring(bagCount)
         self.view.craftNode.depotCountTxt.text = tostring(depotCount)
         self.view.craftNode.bagCountTxt.color = bagCount == 0 and self.view.config.COUNT_EMPTY_COLOR or self.view.config.COUNT_ENOUGH_COLOR
         self.view.craftNode.depotCountTxt.color = depotCount == 0 and self.view.config.COUNT_EMPTY_COLOR or self.view.config.COUNT_ENOUGH_COLOR
 
-        local craftData = Tables.factoryHubCraftTable:GetValue(item.id)
+        local craftId = FactoryUtils.getBuildingHubCraftList(id) or item.id
+        local craftData = Tables.factoryHubCraftTable:GetValue(craftId)
         local maxMakeCount = MAXIMUM_MAKE_COUNT
         for index = 1, FacConst.FAC_HUB_CRAFT_MAX_INCOME_NUM do
             if craftData.ingredients.length >= index then
@@ -1101,7 +1118,8 @@ FacBuildListSelectCtrl._OnCurCountChange = HL.Method() << function(self)
         return
     end
     local id = item.itemId
-    local craftData = Tables.factoryHubCraftTable:GetValue(item.id)
+    local craftId = FactoryUtils.getBuildingHubCraftList(id) or item.id
+    local craftData = Tables.factoryHubCraftTable:GetValue(craftId)
     for index = 1, FacConst.FAC_HUB_CRAFT_MAX_INCOME_NUM do
         if craftData.ingredients.length >= index then
             local itemBundle = craftData.ingredients[CSIndex(index)]
@@ -1135,11 +1153,11 @@ FacBuildListSelectCtrl._OnClickConfirm = HL.Method() << function(self)
 
     if item.type == QuickBarItemType.Building then
         local itemId = item.itemId
-        local count, backpackCount = Utils.getItemCount(itemId)
-        if count == 0 then
-            Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_NO_JUMP)
-            return
-        end
+        
+        
+        
+        
+        
         Notify(MessageConst.FAC_ENTER_BUILDING_MODE, {
             itemId = itemId,
             fastEnter = true,

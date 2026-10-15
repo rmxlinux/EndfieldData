@@ -441,6 +441,16 @@ FacSaveBlueprintCtrl._GetTimeLimitedFormulas = HL.Method().Return(HL.Table, HL.T
                 end
             end
         end
+        
+        for _, entryInfo in pairs(entry.info) do
+            local infoTypeName = entryInfo:GetType().Name
+            if infoTypeName == "BlueprintEntryInfo_BoxValve" or infoTypeName == "BlueprintEntryInfo_FluidValve" then
+                local itemId = entryInfo.selectItemId
+                if not string.isEmpty(itemId) and FactoryUtils.isTimeLimitedItem(itemId) then
+                    activityItems[itemId] = true
+                end
+            end
+        end
     end
     local formulaIntIds = {}
     for craftId, _ in pairs(timeLimitedFormulas) do

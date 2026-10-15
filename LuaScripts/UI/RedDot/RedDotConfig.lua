@@ -1,6 +1,67 @@
 
 
 local Config = {
+    InnPrivateChefNew = {
+        readLike = true,
+        needArg = false,
+        Check = function()
+            local openTimeId = (Tables.innManagementConst and Tables.innManagementConst.privateChefOpenTime) or ""
+            if not Utils.isCurTimeInTimeIdRange(openTimeId, true) then
+                return false
+            end
+            local globalVar = GameInstance.player and GameInstance.player.globalVar
+            if not globalVar then
+                return false
+            end
+            local _, value = globalVar:TryGetClientVar("inn_private_chef_new")
+            value = value or 0
+            local innSystem = GameInstance.player and GameInstance.player.innSystem
+            local innLevel = (innSystem and innSystem.innLevel) or 0
+            local unlockLevel = (Tables.innManagementConst and Tables.innManagementConst.privateChefUnlockLevel) or 0
+            local readValue = innLevel < unlockLevel and 1 or 2
+            if value < readValue then
+                return true, UIConst.RED_DOT_TYPE.New
+            end
+            return false
+        end,
+    },
+    InnNoTopicNew = {
+        msgs = {
+            MessageConst.ON_INN_LEVEL_UP,
+        },
+        readLike = true,
+        needArg = false,
+        Check = function()
+            local innSystem = GameInstance.player and GameInstance.player.innSystem
+            local innLevel = (innSystem and innSystem.innLevel) or 0
+            local fashionUnlockLevel = (Tables.innManagementConst and Tables.innManagementConst.fashionUnlockLevel) or 0
+            if innLevel < fashionUnlockLevel then
+                return false
+            end
+            local globalVar = GameInstance.player and GameInstance.player.globalVar
+            if not globalVar then
+                return false
+            end
+            local _, value = globalVar:TryGetClientVar("inn_no_topic_new")
+            if (value or 0) < 1 then
+                return true, UIConst.RED_DOT_TYPE.New
+            end
+            return false
+        end,
+    },
+    EquipPresetGroupNew = {
+        msgs = {
+            MessageConst.ON_SYSTEM_UNLOCK_CHANGED,
+        },
+        readLike = true,
+        needArg = false,
+        Check = function()
+            if RedDotUtils.isEquipPresetGroupNewUnread() then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            return false
+        end,
+    },
     NormalItem = {
         msgs = {
             MessageConst.ON_READ_NEW_ITEM,
@@ -1247,7 +1308,7 @@ local Config = {
         readLike = false,
         needArg = false,
         Check = function()
-            return RedDotUtils.hasSurveyRedDot()
+            return CS.Beyond.SDK.SDKAccountUtils.surveyRedDot
         end,
     },
     InventoryBtn = {
@@ -1409,6 +1470,7 @@ local Config = {
     ManualCraftRewardEntry = {
         msgs = {
             MessageConst.ON_SYSTEM_UNLOCK_CHANGED,
+            MessageConst.ON_GAME_LEVEL_LOADING_FINISH,
         },
         readLike = false,
         needArg = false,
@@ -1481,7 +1543,7 @@ local Config = {
         readLike = false,
         needArg = false,
         Check = function()
-            if not Utils.isInFacMainRegion() then
+            if Utils.isInBlackbox() or not Utils.isInFacMainRegion() then
                 return false
             end
             
@@ -1504,6 +1566,10 @@ local Config = {
         end,
     },
     FacBuildModeDecorate = {
+        msgs = {
+            MessageConst.ON_DECORATE_OBTAIN_MODIFY,
+            MessageConst.ON_COMPLETE_MISSION,
+        },
         sons = {
             DecoBuilding = false
         },
@@ -1584,6 +1650,9 @@ local Config = {
             end
             local remoteFactoryCore = GameInstance.player.remoteFactory.core
             local buildingId = Tables.factoryDecoBuildingTable[id].buildingId
+            if RedDotManager:GetRedDotState("DecoBuildingAllObtainWay", id) then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
             local result, gotCnt, placedCnt = remoteFactoryCore:GetDecoBuildingCount(buildingId)
             local totalNum = gotCnt + placedCnt
             if totalNum > 0 then
@@ -2643,13 +2712,13 @@ local Config = {
 
             for index, roleId in pairs(GameInstance.player.friendChatSystem.luaShowValidRoleIds) do
                 if GameInstance.player.friendChatSystem.luaShowRoleId ~= roleId or not chatPanelShow then
-                    local chatInfo = GameInstance.player.friendChatSystem:GetChatInfo(roleId)
-                    if chatInfo then
-                        if chatInfo.unReadNum > 0 then
-                            return true, UIConst.RED_DOT_TYPE.Normal
-                        end
+                local chatInfo = GameInstance.player.friendChatSystem:GetChatInfo(roleId)
+                if chatInfo then
+                    if chatInfo.unReadNum > 0 then
+                        return true, UIConst.RED_DOT_TYPE.Normal
                     end
                 end
+            end
             end
             return false
         end,
@@ -3165,7 +3234,7 @@ local Config = {
                 if status == GEnums.ActivityConditionalTaskState.Completed then
                     return true,UIConst.RED_DOT_TYPE.Normal
                 elseif status == GEnums.ActivityConditionalTaskState.Unlocked and ActivityUtils.isNewTask(activityId, taskData.Id) then
-                    return true,UIConst.RED_DOT_TYPE.New
+                    return true,UIConst.RED_DOT_TYPE.Normal
                 end
             end
             return false
@@ -3961,10 +4030,22 @@ local Config = {
     },
     ActivityConditionalMultiStage = {
         msgs = {
-            MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE,
-            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
             MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
             MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(id)
+            return ActivityUtils.checkActivityRedDot(id)
+        end,
+        sons = {
+            ActivityConditionalMultiStageDetail = true, 
+        },
+    },
+    ActivityConditionalMultiStageDetail = {
+        msgs = {
+            MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
         },
         readLike = false,
         needArg = true,
@@ -3989,7 +4070,7 @@ local Config = {
                     end
                 end
             end
-            return ActivityUtils.checkActivityRedDot(id)
+            return false
         end
     },
     ActivityCharacterGiftSingleTask = {
@@ -4112,11 +4193,6 @@ local Config = {
         needArg = true,
         penetrateLevel = UIConst.RED_DOT_TYPE.Normal,
         Check = function(id)
-            local webPortalRedDot = false
-            local webSuc, webInfo = Tables.activityWebTable:TryGetValue(id)
-            if webSuc and webInfo then
-                webPortalRedDot = RedDotUtils.hasActivityWebPortalRedDot(webInfo.jumpId)
-            end
             if ActivityUtils.isWebActivityFirstVisitUnread(id) then
                 return true, UIConst.RED_DOT_TYPE.Normal
             end
@@ -4124,8 +4200,11 @@ local Config = {
             if suc then
                 return suc, type
             end
-            if webPortalRedDot then
-                return true, UIConst.RED_DOT_TYPE.Normal
+            local webSuc, webInfo = Tables.activityWebTable:TryGetValue(id)
+            if webSuc and webInfo then
+                if CS.Beyond.SDK.SDKAccountUtils.GetActivityWebPortalRedDot(webInfo.jumpId) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
             end
             return false
         end
@@ -4585,7 +4664,8 @@ local Config = {
     },
     ActivityContingencyContractDetail = {
         msgs = {
-            MessageConst.ON_CC_FIRST_ENTER_SELECT_AFTER_UPDATE
+            MessageConst.ON_CC_FIRST_ENTER_SELECT_AFTER_UPDATE,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
         },
         readLike = false,
         needArg = true,
@@ -4895,11 +4975,40 @@ local Config = {
             return false
         end
     },
+    ActivityCoinRewardSingleTask = {
+        msgs = {
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_NEW_TASK_READ,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            local activityId = args.activityId
+            local taskId = args.taskId
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            local taskData = activity:GetTaskData(taskId)
+            if taskData then
+                local status = GEnums.ActivityConditionalTaskState.__CastFrom(taskData.Status)
+                if status == GEnums.ActivityConditionalTaskState.Completed then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                elseif status == GEnums.ActivityConditionalTaskState.Unlocked
+                    and ActivityUtils.isNewTask(activityId, taskId) then
+                    return true, UIConst.RED_DOT_TYPE.New
+                end
+            end
+            return false
+        end
+    },
     ActivityRacingDungeonMilestoneDetail = {
         msgs = {
             MessageConst.ON_RACING_DUNGEON_GET_MILESTONE_REWARD,
             MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
             MessageConst.ON_RACING_DUNGEON_MILESTONE_NODE_READ,
+            MessageConst.ON_ACTIVITY_MILESTONE_REWARD_RECEIVED,
+            MessageConst.ON_ACTIVITY_UPDATED,
         },
         readLike = false,
         needArg = true,
@@ -4914,7 +5023,8 @@ local Config = {
             end
             local haveCfg, milestoneCfg = Tables.activityRacingDungeonMilestoneTable:TryGetValue(activityId)
             if not haveCfg then
-                return false
+                
+                return ActivityUtils.CheckCommonUIMilestoneRedDot(activityId)
             end
             local milestoneScore = activity.milestoneScore
             local receivedNodes = activity.receivedMilestoneNodes
@@ -4945,6 +5055,8 @@ local Config = {
             MessageConst.ON_RACING_DUNGEON_GET_MILESTONE_REWARD,
             MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
             MessageConst.ON_ACTIVITY_RACING_DUNGEON_MILESTONE_CHANGED,  
+            MessageConst.ON_ACTIVITY_MILESTONE_REWARD_RECEIVED,
+            MessageConst.ON_ACTIVITY_UPDATED,
         },
         readLike = false,
         needArg = true,
@@ -4957,7 +5069,8 @@ local Config = {
             end
             local haveCfg, milestoneCfg = Tables.activityRacingDungeonMilestoneTable:TryGetValue(activityId)
             if not haveCfg then
-                return false
+                
+                return ActivityUtils.CheckCommonUIMilestoneNodeRedDot(activityId, args.milestoneId)
             end
             if not nodeId then
                 return false
@@ -5431,7 +5544,136 @@ local Config = {
         end
     },
 
+    ActivityInn = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            
+
+            
+            return ActivityUtils.checkActivityRedDot(activityId)
+        end,
+        sons = {
+            ActivityCommonTaskEntry = true, 
+        }
+    },
     
+
+
+    
+    ActivityGambleBattleTab = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            return ActivityUtils.checkActivityRedDot(activityId)
+        end,
+        sons = {
+            ActivityGambleBattleMilestone = true,
+            ActivityGambleBattleTask = true,
+            ActivityGambleBattleRanking = true,
+            ActivityGambleBattleStartChallenge = true,
+            ActivityGambleBattleContinueChallenge = true,
+        },
+    },
+
+    
+    ActivityGambleBattleMilestone = {
+        msgs = { MessageConst.ON_QUEST_STATE_CHANGE, MessageConst.ON_ACTIVITY_UPDATED },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            if not ActivityUtils.isGambleBattleEntryUnlocked(activityId) then
+                return false
+            end
+            return RedDotManager:GetRedDotState("ActivityRacingDungeonMilestoneDetail", activityId)
+        end,
+        sons = {
+            ActivityRacingDungeonMilestoneDetail = false, 
+        },
+    },
+    
+    ActivityGambleBattleTask = {
+        msgs = {
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_NEW_TASK_READ,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_QUEST_STATE_CHANGE,
+        },
+        sons = {
+            ActivityRacingDungeonSingleTask = false,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            if not ActivityUtils.isGambleBattleEntryUnlocked(activityId) then
+                return false
+            end
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            local taskDataDict = activity.taskDataDict
+            if not taskDataDict then
+                return false
+            end
+            for _, taskData in pairs(taskDataDict) do
+                local status = GEnums.ActivityConditionalTaskState.__CastFrom(taskData.Status)
+                if status == GEnums.ActivityConditionalTaskState.Completed then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                elseif status == GEnums.ActivityConditionalTaskState.Unlocked
+                    and ActivityUtils.RacingDungeonIsStageTwoTask(activityId, taskData.Id)
+                    and ActivityUtils.isNewTask(activityId, taskData.Id) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            return false
+        end
+    },
+    
+    ActivityGambleBattleRanking = {
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            return false
+        end,
+    },
+    
+    ActivityGambleBattleStartChallenge = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            if not ActivityUtils.isActivityUnlocked(activityId) then
+                return false
+            end
+            local _, clicked = ClientDataManagerInst:GetBool(activityId .. "_gamble_battle_start_challenge_clicked", false)
+            if not clicked then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            return false
+        end,
+    },
+    
+    ActivityGambleBattleContinueChallenge = {
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            return false
+        end,
+    },
 
 
     ActivityDungeonState = {
@@ -5648,6 +5890,7 @@ local Config = {
         msgs = {
             MessageConst.ON_PACK_ITEM_END,
             MessageConst.ON_SELECT_BUYER_END,
+            MessageConst.ON_DOMAIN_DEPOT_QUICK_TRANSFER_SUCCESS,
         },
         Check = function(depotId)
             return DomainDepotUtils.IsDomainDepotDeliverInTradingState(depotId)
@@ -6281,13 +6524,156 @@ local Config = {
     
 
     
+    InnMilestone = {
+        sons = {
+            InnMilestoneLevel = false,
+            InnMilestoneTask = false,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            local innSystem = GameInstance.player.innSystem
+            local currentLevel = innSystem.milestoneLv
+            local totalExp = tonumber(innSystem.milestoneExp) or 0
+            local hasCur, curData = Tables.innMilestoneLevelTable:TryGetValue(currentLevel)
+            if hasCur and totalExp >= curData.progress then
+                return true
+            end
+            local TaskStatus = CS.Proto.INN_MANAGEMENT_MILESTONE_TASK_STATUS
+            for id, _ in pairs(Tables.innMilestoneTable) do
+                local hasTask, task = innSystem.milestoneTasks:TryGetValue(id)
+                if hasTask and task.status == TaskStatus.MilestoneTaskStatusCompleted then
+                    return true
+                end
+            end
+            return false
+        end
+    },
+    InnMilestoneLevel = {
+        msgs = {
+            MessageConst.ON_INN_GET_MILESTONE_REWARD,
+            MessageConst.ON_INN_GET_MILESTONE_TASK_REWARD,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            local innSystem = GameInstance.player.innSystem
+            local currentLevel = innSystem.milestoneLv
+            local totalExp = tonumber(innSystem.milestoneExp) or 0
+            local hasCur, curData = Tables.innMilestoneLevelTable:TryGetValue(currentLevel)
+            if not hasCur then
+                return false
+            end
+            return totalExp >= curData.progress
+        end
+    },
+    InnMilestoneTask = {
+        msgs = {
+            MessageConst.ON_INN_GET_MILESTONE_TASK_REWARD,
+            MessageConst.ON_INN_MILESTONE_TASK_UPDATE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(taskId)
+            local innSystem = GameInstance.player.innSystem
+            local hasTask, task = innSystem.milestoneTasks:TryGetValue(taskId)
+            if not hasTask then
+                return false
+            end
+            return task.status == CS.Proto.INN_MANAGEMENT_MILESTONE_TASK_STATUS.MilestoneTaskStatusCompleted
+        end
+    },
+    InnRecipe = {
+        sons = {
+            InnRecipeSingle = false,
+        },
+        msgs = {
+            MessageConst.ON_INN_DISH_UNLOCKED,
+            MessageConst.ON_INN_RECIPE_READ,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            local innSystem = GameInstance.player.innSystem
+            for dishId, _ in pairs(Tables.innDishTable) do
+                if innSystem:IsDishUnlocked(dishId) and not RedDotUtils.isInnRecipeRead(dishId) then
+                    return true, UIConst.RED_DOT_TYPE.New
+                end
+            end
+            return false
+        end
+    },
+    InnRecipeSingle = {
+        msgs = {
+            MessageConst.ON_INN_DISH_UNLOCKED,
+            MessageConst.ON_INN_RECIPE_READ,
+        },
+        readLike = true,
+        needArg = true,
+        Check = function(dishId)
+            local innSystem = GameInstance.player.innSystem
+            if not innSystem:IsDishUnlocked(dishId) then
+                return false
+            end
+            if RedDotUtils.isInnRecipeRead(dishId) then
+                return false
+            end
+            return true, UIConst.RED_DOT_TYPE.New
+        end
+    },
+    InnTopic = {
+        sons = {
+            InnTopicSingle = false,
+        },
+        msgs = {
+            MessageConst.ON_INN_LEVEL_UP,
+            MessageConst.ON_COMMON_BIT_SET_ADDED,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            local innSystem = GameInstance.player.innSystem
+            local innLevel = innSystem.innLevel
+            for topicId, topicData in pairs(Tables.innTopicTable) do
+                if innLevel >= (topicData.unlockLevel or 0) and not RedDotUtils.isInnTopicRead(topicId) then
+                    return true
+                end
+            end
+            return false
+        end
+    },
+    InnTopicSingle = {
+        msgs = {
+            MessageConst.ON_INN_LEVEL_UP,
+            MessageConst.ON_COMMON_BIT_SET_ADDED,
+        },
+        readLike = true,
+        needArg = true,
+        Check = function(topicId)
+            local innSystem = GameInstance.player.innSystem
+            local hasTopic, topicData = Tables.innTopicTable:TryGetValue(topicId)
+            if not hasTopic then
+                return false
+            end
+            if innSystem.innLevel < (topicData.unlockLevel or 0) then
+                return false
+            end
+            if RedDotUtils.isInnTopicRead(topicId) then
+                return false
+            end
+            return true, UIConst.RED_DOT_TYPE.New
+        end
+    },
+    
+
+    
     
     SnapshotActionItem = {
         msgs = {
             MessageConst.ON_READ_NEW_ITEM,
-            MessageConst.ON_FIRST_GOT_ITEM,
+            MessageConst.ON_ADD_NEW_ITEM,
         },
-        readLike = true,
+        readLike = false,
         needArg = true,
         Check = function(itemId)
             if string.isEmpty(itemId) then return false end
@@ -6298,7 +6684,7 @@ local Config = {
     SnapshotActionChar = {
         msgs = {
             MessageConst.ON_READ_NEW_ITEM,
-            MessageConst.ON_FIRST_GOT_ITEM,
+            MessageConst.ON_ADD_NEW_ITEM,
         },
         readLike = false,
         needArg = true,
@@ -6333,7 +6719,7 @@ local Config = {
     SnapshotActionTab = {
         msgs = {
             MessageConst.ON_READ_NEW_ITEM,
-            MessageConst.ON_FIRST_GOT_ITEM,
+            MessageConst.ON_ADD_NEW_ITEM,
             MessageConst.ON_BATTLE_SQUAD_CHANGED,
         },
         readLike = false,
@@ -6368,6 +6754,41 @@ local Config = {
         end,
         sons = {
             SnapshotActionChar = false,
+        },
+    },
+    
+    SnapshotStickerItem = {
+        msgs = {
+            MessageConst.ON_READ_NEW_ITEM,
+            MessageConst.ON_FIRST_GOT_ITEM,
+        },
+        readLike = true,
+        needArg = true,
+        Check = function(itemId)
+            if string.isEmpty(itemId) then return false end
+            return GameInstance.player.inventory:IsNewItem(itemId), UIConst.RED_DOT_TYPE.New
+        end,
+    },
+    
+    SnapshotStickerTab = {
+        msgs = {
+            MessageConst.ON_READ_NEW_ITEM,
+            MessageConst.ON_FIRST_GOT_ITEM,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            local inventory = GameInstance.player.inventory
+            for _, stickerCfg in pairs(Tables.snapshotStickerTable) do
+                local itemId = stickerCfg.itemId
+                if not string.isEmpty(itemId) and inventory:IsNewItem(itemId) then
+                    return true, UIConst.RED_DOT_TYPE.New
+                end
+            end
+            return false
+        end,
+        sons = {
+            SnapshotStickerItem = false,
         },
     },
     

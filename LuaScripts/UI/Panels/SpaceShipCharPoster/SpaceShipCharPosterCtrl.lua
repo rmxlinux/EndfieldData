@@ -10,9 +10,6 @@ SpaceShipCharPosterCtrl.m_charPosterView = HL.Field(HL.Table)
 
 SpaceShipCharPosterCtrl.m_slot2charId = HL.Field(HL.Table)
 
-SpaceShipCharPosterCtrl.m_charId2slot = HL.Field(HL.Table)
-
-
 
 
 
@@ -22,7 +19,6 @@ SpaceShipCharPosterCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHAR_FRIENDSHIP_CHANGED] = 'FriendshipSlotRefresh',
     [MessageConst.ON_CHAR_FRIENDSHIP_SEND_CHAR_GIFT_SUCCESS] = 'FriendshipSlotRefresh',
 
-    [MessageConst.ON_CHAR_POTENTIAL_UNLOCK] = 'OnCharPotentialUnlock',
     [MessageConst.SET_SPACESHIP_CHAR_POSTER_SERIAL_NUMBER] = 'SetSerialNumberNode',
     [MessageConst.ON_CONFIRM_GENDER] = 'ResetCharPoster',
     [MessageConst.ON_CHAR_POTENTIAL_UNLOCK] = 'ResetCharPosterUI',
@@ -59,6 +55,7 @@ SpaceShipCharPosterCtrl._InitCharPoster = HL.Method() << function(self)
         return
     end
     charPosterGo.transform:SetParent(level.spaceShipGameLevelRoot.transform, false)
+    level:RegisterCharPosterRoot(charPosterGo)
     local success, rootDisplay = GameInstance.dataManager.levelMountPointTable:TryGetData(GameWorld.worldInfo.curLevelId)
     if success then
         local _, node = rootDisplay.subRootByType:TryGetValue(CS.Beyond.Gameplay.LevelMountPointType.CharacterWall)
@@ -70,7 +67,6 @@ SpaceShipCharPosterCtrl._InitCharPoster = HL.Method() << function(self)
 
     self.m_charPosterView = Utils.wrapLuaNode(charPosterGo)
     self.m_slot2charId = {}
-    self.m_charId2slot = {}
     for i = 1, MAX_SLOT do
         local info = {index = i}
         self:SetSingleCharPoster(info)
@@ -104,29 +100,26 @@ SpaceShipCharPosterCtrl.ResetCharPosterUI = HL.Method(HL.Opt(HL.Any)) << functio
 end
 
 SpaceShipCharPosterCtrl.ResetCharPoster = HL.Method(HL.Opt(HL.Any)) << function(self, args)
-    local idInfos = {}
     local charTemplateIds = GameInstance.player.spaceship:GetCharWallCharTemplateIds()
     if charTemplateIds then
+        local isViewingFriend = GameInstance.player.spaceship.isViewingFriend
+        local charIds = {}
         for i = 1, charTemplateIds.Count do
-            local serverCharInfo = CharInfoUtils.getPlayerCharInfoByTemplateId(charTemplateIds[CSIndex(i)], GEnums.CharType.Default)
-            local info = CharInfoUtils.getSingleCharInfoList(serverCharInfo.instId)
-            table.insert(idInfos, info[1])
+            local charId = charTemplateIds[CSIndex(i)]
+            if not isViewingFriend then
+                local serverCharInfo = CharInfoUtils.getPlayerCharInfoByTemplateId(charId, GEnums.CharType.Default)
+                local info = CharInfoUtils.getSingleCharInfoList(serverCharInfo.instId)
+                charId = info[1].templateId
+            end
+            table.insert(charIds, charId)
         end
         for index = 1, Tables.spaceshipConst.charExhibitionMaxCount do
-            local info = {}
-            info.index = index
-            if idInfos[index] then
-                info.charId = idInfos[index].templateId
-            end
+            local info = { index = index, charId = charIds[index] }
             self:SetSingleCharPoster(info)
         end
         
-        if not GameInstance.player.spaceship.isViewingFriend then
-            local ids = {}
-            for i, info in ipairs(idInfos) do
-                table.insert(ids, info.templateId)
-            end
-            GameInstance.player.spaceship:ChangeGuestRoomCharWallChars(ids)
+        if not isViewingFriend then
+            GameInstance.player.spaceship:ChangeGuestRoomCharWallChars(charIds)
         end
     end
 end
@@ -171,16 +164,12 @@ SpaceShipCharPosterCtrl._EnqueueSingleCharPoster = HL.Method(HL.Number, HL.Strin
     local slotNode = self.m_charPosterView["slot".. CSIndex(slotIndex)]
     if charId ~= EMPTY_CHAR_ID then
         self.m_slot2charId[slotIndex] = charId
-        self.m_charId2slot[charId] = slotIndex
         slotNode.animationWrapper:ClearTween()
         slotNode.gameObject:SetActive(true)
         slotNode.animationWrapper:PlayInAnimation()
 
         self:SetSingleSlotUI(slotIndex, charId)
     else
-        if self.m_slot2charId[slotIndex] then
-            self.m_charId2slot[self.m_slot2charId[slotIndex]] = slotIndex
-        end
         self.m_slot2charId[slotIndex] = nil
         slotNode.animationWrapper:ClearTween()
         slotNode.animationWrapper:PlayOutAnimation(function()
@@ -259,24 +248,11 @@ SpaceShipCharPosterCtrl.FriendshipSlotRefresh = HL.Method(HL.Opt(HL.Any)) << fun
     end
 end
 
-SpaceShipCharPosterCtrl.OnCharPotentialUnlock = HL.Method(HL.Table) << function(self, args)
-    local charInstId, level = unpack(args)
-    local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
-    local slotIndex
-    if charInfo then
-        slotIndex = self.m_charId2slot[charInfo.charId]
-    end
-    if slotIndex then
-        local slot = self.m_charPosterView["slot".. CSIndex(slotIndex)]
-        slot.potentialStar:InitCharPotentialStar(charInstId)
-        for i = 0, UIConst.CHAR_MAX_POTENTIAL do
-            local index = i + 1
-            local potentialCellName = 'cell' .. index
-            slot[potentialCellName].gameObject:SetActive(i <= charInfo.potentialLevel)
-        end
-    end
-end
 SpaceShipCharPosterCtrl.OnClose = HL.Override() << function(self)
+    local succ, level = GameUtil.SpaceshipUtils.TryGetSpaceshipLevel()
+    if succ then
+        level:UnregisterCharPosterRoot(self.m_charPosterView.gameObject)
+    end
     CSUtils.ClearUIComponents(self.m_charPosterView.gameObject) 
     GameObject.DestroyImmediate(self.m_charPosterView.gameObject)
     self.m_charPosterView = nil

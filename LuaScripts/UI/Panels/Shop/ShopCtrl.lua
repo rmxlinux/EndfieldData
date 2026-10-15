@@ -36,11 +36,48 @@ ShopCtrl.realUnlockedShops = HL.Field(HL.Table)
 
 ShopCtrl.index2TabCell = HL.Field(HL.Table)
 
+ShopCtrl.m_curTabIndex = HL.Field(HL.Number) << 0
+
 ShopCtrl.m_tabCells = HL.Field(HL.Forward("UIListCache"))
 
 ShopCtrl.m_moneyInfo = HL.Field(HL.Table)
 
 ShopCtrl.m_unlockToastFunc = HL.Field(HL.Any)
+
+
+local customDefaultSortFunc = {
+    [InnConst.INN_SHOP_GROUP_ID] = function(shopId, goods, soldout)
+        InnUtils.sortShopGoods(shopId, goods, soldout)
+    end,
+}
+
+
+
+
+local manualRefreshProvider = {
+    [InnConst.INN_SHOP_GROUP_ID] = {
+        isVisible = function(shopId)
+            return shopId == InnConst.INN_MANUAL_REFRESH_SHOP
+        end,
+        instructionId = "inn_shop",
+    },
+}
+
+
+local storageWayProvider = {
+    [InnConst.INN_SHOP_GROUP_ID] = function(shopId)
+        return InnUtils.GetShopStorageWayToggleInfo(shopId)
+    end
+}
+
+
+local customUnlockToast = {
+    [InnConst.INN_SHOP_GROUP_ID] = function(shopId)
+        local toast = InnUtils.GetShopLockToast(shopId)
+        toast = toast or Language.LUA_SHOP_COMMON_LOCK_TOAST
+        Notify(MessageConst.SHOW_TOAST, toast)
+    end
+}
 
 
 
@@ -58,6 +95,7 @@ ShopCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_SHOP_GOODS_CONDITION_SYNC] = 'OnGoodsConditionSync',
     [MessageConst.ON_SHOP_GOODS_MANUAL_REFRESH] = '_OnShopGoodsManualRefresh',
+    [MessageConst.ON_INN_SHOP_DEPOT_STORAGE_WAY_CHANGED] = "_OnInnShopDepotStorageWayChanged",
 }
 
 ShopCtrl._OnShopRefresh = HL.Virtual() << function(self)
@@ -169,8 +207,13 @@ ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.view.topMoneyTitle.helpNode.gameObject:SetActive(false)
         end
         self:_RefreshTopMoneyTitle(self.m_activityShopInfo.activityMoneyId)
-        self.view.bgBanner:LoadSprite(UIConst.UI_SPRITE_SHOP_COMMON, self.m_activityShopInfo.banner)
+        self.view.bgBanner:LoadSprite(UIConst.UI_SPRITE_SHOP_COMMON, self.m_activityShopInfo.banner) 
+    elseif self.m_shopGroupId == InnConst.INN_SHOP_GROUP_ID then
+        
+        self.view.topMoneyTitle.gameObject:SetActive(false)
+        self.view.domainTopMoneyTitle.gameObject:SetActive(true)
 
+        self:_RefreshInnTopMoneyTitle()
     else
         self.view.topMoneyTitle.gameObject:SetActive(false)
         self:_RefreshDomainTopMoneyTitle()
@@ -290,13 +333,15 @@ ShopCtrl.InitShopTabs = HL.Method(HL.String, HL.String) << function(self, shopGr
         cell.toggle.onValueChanged:RemoveAllListeners()
         cell.toggle.onValueChanged:AddListener(function(isOn)
             
-            if self.m_unlockToastFunc ~= nil then
-                local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
-                if not isUnlocked then
-                    self.m_unlockToastFunc(shopId)
-                    self:SelectTab(1)
-                    return
+            local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
+            if not isUnlocked then
+                
+                local prevIndex = self.m_curTabIndex
+                if prevIndex ~= index and self.index2TabCell[prevIndex] then
+                    self:SelectTab(prevIndex)
                 end
+                self:TryShowUnlockToast(shopId)
+                return
             end
             if isOn and curShopId ~= shopId then
                 AudioAdapter.PostEvent("Au_UI_Toggle_Tab_On")
@@ -306,6 +351,9 @@ ShopCtrl.InitShopTabs = HL.Method(HL.String, HL.String) << function(self, shopGr
         end)
         self.index2TabCell[index] = cell
         cell.toggle.isOn = shopId == curShopId
+        if shopId == curShopId then
+            self.m_curTabIndex = index
+        end
         local shopData = Tables.shopTable[shopId]
         cell.tabNameText.text = shopData.shopName
         cell.tabNameDecoText.text = shopData.shopEnName
@@ -314,15 +362,30 @@ ShopCtrl.InitShopTabs = HL.Method(HL.String, HL.String) << function(self, shopGr
         cell.button.onClick:RemoveAllListeners()
         cell.button.onClick:AddListener(function()
             local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
-            if not isUnlocked and self.m_unlockToastFunc ~= nil then
-                self.m_unlockToastFunc(shopId)
+            if not isUnlocked then
+                self:TryShowUnlockToast(shopId)
                 return
             end
             self:SelectTab(index)
         end)
+        cell.gameObject.name = shopId
     end)
 end
 
+ShopCtrl.TryShowUnlockToast = HL.Method(HL.Any) << function(self, shopId)
+    if self.m_unlockToastFunc then
+        self.m_unlockToastFunc(shopId)
+        return
+    end
+
+    local customToast = customUnlockToast[self.m_shopGroupId]
+    if customToast then
+        customToast(shopId)
+        return
+    end
+
+    Notify(MessageConst.SHOW_TOAST, Language.LUA_SHOP_COMMON_LOCK_TOAST)
+end
 
 ShopCtrl.SelectTab = HL.Method(HL.Number) << function(self, index)
     for searchIndex, cell in ipairs(self.index2TabCell) do
@@ -352,6 +415,22 @@ ShopCtrl._RefreshTopMoneyTitle = HL.Method(HL.String) << function(self, moneyId)
     })
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.topMoneyTitle.topBar)
     self.view.topMoneyTitle.walletBarPlaceholder:InitWalletBarPlaceholderDetailed(moneyInfos)
+
+    local moneyItemCfg = Utils.tryGetTableCfg(Tables.itemTable, moneyId)
+    self.m_moneyInfo = {
+        moneyId = moneyId,
+        moneyIcon = moneyItemCfg and moneyItemCfg.iconId or "",
+    }
+end
+
+ShopCtrl._RefreshInnTopMoneyTitle = HL.Method() << function(self)
+    local moneyId = Tables.innManagementConst.gamePlayToken
+    
+    local shopGroupTableData = Tables.shopGroupTable[self.m_shopGroupId]
+    self.view.domainTopMoneyTitle:SetTitleText(shopGroupTableData.shopGroupName)
+
+    self.view.domainTopMoneyTitle.gameObject:SetActive(true)
+    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle("", {moneyId})
 
     local moneyItemCfg = Utils.tryGetTableCfg(Tables.itemTable, moneyId)
     self.m_moneyInfo = {
@@ -426,15 +505,116 @@ ShopCtrl._RefreshSheetTabs = HL.Virtual(HL.String) << function(self, curShopId)
     end
 
     self:_ApplySortOption()
+    self:_RefreshDepotStorageToggle()
+    self:_UpdateRefreshNode()
+    self:_SetShopBanner()
+    shopSystem:SetPhaseShopId(self.m_shopId)
+end
+
+ShopCtrl._RefreshDepotStorageToggle = HL.Method() << function(self)
+    self.view.storageWayToggle.gameObject:SetActive(false)
+    local infoFunc = storageWayProvider[self.m_shopGroupId]
+    if not infoFunc or type(infoFunc) ~= "function" then
+        return
+    end
+    local shopDepotFirst, onChangeFunc = infoFunc(self.m_shopId)
+    
+    if shopDepotFirst == nil then
+        return
+    end
+
+    self.view.storageWayToggle.gameObject:SetActive(true)
+    self.view.storageWayToggle:SetIsOnWithoutNotify(shopDepotFirst)
+    self.view.storageWayToggle.onValueChanged:RemoveAllListeners()
+    self.view.storageWayToggle.onValueChanged:AddListener(function(isOn)
+        if onChangeFunc then
+            onChangeFunc(isOn)
+        end
+    end)
+end
+
+ShopCtrl._UpdateRefreshNode = HL.Method() << function(self)
+    self.view.manualRefreshNode.gameObject:SetActive(false)
+    if not Tables.ShopManualRefreshTable:ContainsKey(self.m_shopGroupId) then
+        return
+    end
+    local provider = manualRefreshProvider[self.m_shopGroupId]
+    local visible = not provider or not provider.isVisible or provider.isVisible(self.m_shopId)
+    if not visible then
+        return
+    end
+    self.view.manualRefreshNode.gameObject:SetActive(true)
+
+    self.view.refreshBtn.onClick:RemoveAllListeners()
+    self.view.refreshBtn.onClick:AddListener(function()
+        local remainCount = self:_GetRemainRefreshCount()
+
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = Language.LUA_COMMON_SHOP_MANUAL_REFRESH_ITEM_TEXT,
+            subContent = string.format(Language.LUA_COMMON_SHOP_MANUAL_REFRESH_ITEM_SUB_TEXT, remainCount),
+            onConfirm = function()
+                shopSystem:SendShopManualRefresh(self.m_shopId)
+            end,
+            onCancel = function()
+                
+            end,
+        })
+    end)
+
+    self.view.refreshTipsButton.onClick:RemoveAllListeners()
+    self.view.refreshTipsButton.onClick:AddListener(function()
+        local instructionId = provider and provider.instructionId
+        if instructionId then
+            UIManager:Open(PanelId.InstructionBook, {
+                id = instructionId,
+                hideBgImg = true,
+            })
+        end
+    end)
+
+    self:_RefreshManualRefreshNode()
+end
+
+ShopCtrl._SetShopBanner = HL.Method() << function(self)
+    local hasCfg, shopCfg = Tables.shopTable:TryGetValue(self.m_shopId)
+    if hasCfg then
+        local bgBannerId = shopCfg.bgBannerId
+        if not string.isEmpty(bgBannerId) then  
+            self.view.bgBanner:LoadSprite(UIConst.UI_SPRITE_SHOP_COMMON, bgBannerId)
+        end
+    end
+end
+
+ShopCtrl._RefreshManualRefreshNode = HL.Method() << function(self)
+    local remainCount = self:_GetRemainRefreshCount()
+    self.view.refreshNumTxt.text = tostring(remainCount)
+    self.view.manualRefreshNode:SetState(remainCount > 0 and "CanRefresh" or "ForbidRefresh")
+end
+
+ShopCtrl._GetRemainRefreshCount = HL.Method().Return(HL.Number) << function(self)
+    local hasManualRefresh, manualRefreshTable = Tables.ShopManualRefreshTable:TryGetValue(self.m_shopGroupId)
+    if not hasManualRefresh then
+        return 0
+    end
+    local limit = manualRefreshTable.list.Count
+
+    local useCount = shopSystem:GetManualRefreshCountByShopGroupId(self.m_shopGroupId)
+    local bonusRemain = shopSystem:GetManualRefreshBonusRemainByShopGroupId(self.m_shopGroupId)
+    return math.max(0, limit - useCount + bonusRemain)
 end
 
 ShopCtrl._ApplySortOption = HL.Method(HL.Opt(HL.Table, HL.Boolean)) << function(self, sortData, isIncremental)
-    sortData = sortData or self.view.sortNode:GetCurSortData()
-    if isIncremental == nil then
-        isIncremental = self.view.sortNode.isIncremental
-    end
+    local customDefaultSortFunc = customDefaultSortFunc[self.m_shopGroupId]
+    if not customDefaultSortFunc then
+        sortData = sortData or self.view.sortNode:GetCurSortData()
+        if isIncremental == nil then
+            isIncremental = self.view.sortNode.isIncremental
+        end
 
-    table.sort(self.m_goods, Utils.genSortFunction(sortData.keys, isIncremental))
+        table.sort(self.m_goods, Utils.genSortFunction(sortData.keys, isIncremental))
+    else
+        customDefaultSortFunc(self.m_shopId, self.m_goods, self.m_soldOut)
+    end
 
     self.m_goodsInfos = {}
     for i, v in ipairs(self.m_goods) do
@@ -449,7 +629,16 @@ end
 ShopCtrl._RefreshContent = HL.Method() << function(self)
     self.m_haveControllerTarget = false
     self.view.sortNode:SetEnableFilterBtn(false)
-    self.view.scrollList:UpdateCount(#self.m_goodsInfos)
+    self.view.scrollList:UpdateCount(#self.m_goodsInfos, true)
+end
+
+ShopCtrl._IsSortNodeShow = HL.Method().Return(HL.Boolean) << function(self)
+    local customSortFunc = customDefaultSortFunc[self.m_shopGroupId]
+    if customSortFunc then
+        return false
+    end
+
+    return self.m_activityShopInfo == nil or self.m_activityShopInfo.hasSortComponent
 end
 
 ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << function(self, cell, luaIndex, refreshTag)
@@ -464,7 +653,7 @@ ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << funct
     if luaIndex == 1 and not self.m_haveControllerTarget then
         local firstCell = self.m_getCellFunc(1)
         if firstCell then
-            local hasSortNode = self.m_activityShopInfo==nil or self.m_activityShopInfo.hasSortComponent
+            local hasSortNode = self:_IsSortNodeShow()
             self.view.sortNode.gameObject:SetActive(hasSortNode)
             self:SetNaviTarget(firstCell.view.selectBtn)
             self.m_haveControllerTarget = true
@@ -508,6 +697,7 @@ ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << funct
         refreshTag = refreshTag,
     }
     cell:InitCommonShopGoodsCellCommonMode(goodsInfo)
+    cell.gameObject.name = goodsId
 end
 
 ShopCtrl.CheckGoodsUnlocked = HL.Virtual(HL.String).Return(HL.Boolean) << function(self, goodsId)
@@ -724,7 +914,12 @@ ShopCtrl._RestorePopupByResumeState = HL.Method(HL.Table) << function(self, pane
 end
 
 ShopCtrl._OnShopGoodsManualRefresh = HL.Virtual() << function(self)
+    self:_OnShopRefresh()
+    self:_RefreshManualRefreshNode()
+end
 
+ShopCtrl._OnInnShopDepotStorageWayChanged = HL.Method(HL.Any) << function(self, arg)
+    self:_RefreshDepotStorageToggle()
 end
 
 ShopCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
@@ -740,6 +935,7 @@ end
 ShopCtrl.OnClose = HL.Override() << function(self)
     UIManager:ToggleBlockObtainWaysJump("common_shop", false)
     shopSystem:SetGoodsIdSee()
+    shopSystem:ClearPhaseShopId()
 end
 
 

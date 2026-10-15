@@ -236,12 +236,20 @@ DungeonDoubleAssaultEntryCtrl._OpenDoubleAssaultCharFormation = HL.Method(HL.Str
 
     LuaSystemManager.uiRestoreSystem:AddRequest(dungeonId)
     if selectedTeamIndex == 1 then
+        local comboSkillOrder = activity.comboSkillOrder
+        local activityId = self.m_activityId
         PhaseManager:GoToPhase(PhaseId.CharFormation, {
             dungeonId = self.m_curSelectedDungeonId,
             presetTeamId = teamId,
             initCharInstIdList = activity.charTeam,
             customSetTeamCallback = function(charInstIdList)
-                GameInstance.player.activitySystem:SendActivitySetTeam(self.m_activityId, charInstIdList)
+                GameInstance.player.activitySystem:SendActivitySetTeam(activityId, charInstIdList)
+            end,
+            getComboSkill = function()
+                return comboSkillOrder
+            end,
+            comboSkillSaveCallback = function(comboSkillCharList)
+                GameInstance.player.activitySystem:SendSetComboSkillOrder(activityId, comboSkillCharList)
             end,
         })
         return

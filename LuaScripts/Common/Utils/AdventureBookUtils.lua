@@ -241,7 +241,7 @@ function AdventureBookUtils.HaveDungeon()
         local canShow = false
         if GameInstance.player.subGameSys:IsGameMapMarkUnlock(groupId, GEnums.MarkType.EnemySpawner) and
             GameInstance.player.subGameSys:IsGameUnlocked(id) and
-            self:_CheckCanOpenMap(groupId) then
+            AdventureBookUtils.CheckEnemySpawnerCanOpenMap(groupId) then
             return true
         end
     end

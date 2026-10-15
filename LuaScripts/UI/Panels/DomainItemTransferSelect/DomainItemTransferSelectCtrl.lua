@@ -466,10 +466,11 @@ DomainItemTransferSelectCtrl._RefreshBtnAndText = HL.Method() << function(self)
 end
 
 DomainItemTransferSelectCtrl._Close = HL.Method() << function(self)
+    
+    self:Notify(MessageConst.HIDE_COMMON_HOVER_TIP, {noAnimation = true})
     self:PlayAnimationOutAndClose()
 
     if DeviceInfo.usingController then
-        self:Notify(MessageConst.HIDE_COMMON_HOVER_TIP, {noAnimation = true})
         self:Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.leftNode.groupId)
         InputManagerInst:ToggleGroup(self.view.leftNode.groupId, false)
         InputManagerInst:ToggleBinding(self.m_unFocusLeftBindId, false)
@@ -1151,7 +1152,10 @@ DomainItemTransferSelectCtrl._InitDepotItemFocus = HL.Method() << function(self)
         self:SetNaviTarget(itemSlot.view.item.view.button)
         self.m_focusItemId = itemList[focusLuaIndexIndex].id
     else
-        self:ClearNaviTarget()
+        
+        local emptyTarget = self.view.depot.view.depotContent.view.emptyTarget
+        emptyTarget.hideNaviHint = true
+        self:SetNaviTarget(emptyTarget)
         self.m_focusItemId = ""
     end
 

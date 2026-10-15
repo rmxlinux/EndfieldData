@@ -1,9 +1,4 @@
 {
-  "centerBattleNumRange": {
-    "x": 2,
-    "y": 9
-  },
-  "characterBattleNumRange": 1,
   "characterAttackRandomDelay": [
     {
       "time": 0.0,
@@ -228,12 +223,43 @@
     "y": 5
   },
   "playerStopAtkTime": 10.0,
-  "enemyHateProbability": {
-    "UltraLow": 0.015,
-    "Low": 0.056,
-    "Middle": 0.12,
-    "High": 0.2,
-    "UltraHigh": 0.3
+  "battlePlayCategoryGroupAIConfigs": {
+    "Default": {
+      "centerBattleNumRange": {
+        "x": 2,
+        "y": 9
+      },
+      "characterBattleNumRange": 1,
+      "enableDynamicHate": true,
+      "targetMainGroupAIConfigPath": "Data/Json/AIConfig/GroupAIConfig/Default_GroupAITargetMain.json",
+      "targetNotMainGroupAIConfigPath": "Data/Json/AIConfig/GroupAIConfig/Default_GroupAITargetNotMain.json"
+    },
+    "ContingencyContract": {
+      "centerBattleNumRange": {
+        "x": 99,
+        "y": 999
+      },
+      "characterBattleNumRange": 1,
+      "enableDynamicHate": true,
+      "targetMainGroupAIConfigPath": "Data/Json/AIConfig/GroupAIConfig/ContingencyContract_Main.json",
+      "targetNotMainGroupAIConfigPath": "Data/Json/AIConfig/GroupAIConfig/ContingencyContract_Guard.json"
+    }
+  },
+  "battlePlayCategoryEnemyHateProb": {
+    "Default": {
+      "UltraLow": 0.015,
+      "Low": 0.056,
+      "Middle": 0.12,
+      "High": 0.2,
+      "UltraHigh": 0.3
+    },
+    "ContingencyContract": {
+      "UltraLow": 0.0038,
+      "Low": 0.015,
+      "Middle": 0.056,
+      "High": 0.056,
+      "UltraHigh": 0.056
+    }
   },
   "enemyIgnoreMainCD": 6.0,
   "enemyAttackerUpdateTargetPeriod": 6.0,

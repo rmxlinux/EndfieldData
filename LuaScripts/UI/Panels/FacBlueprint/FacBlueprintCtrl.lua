@@ -1,9 +1,15 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacBlueprint
 local PHASE_ID = PhaseId.FacBlueprint
+local LuaProtoUtil = CS.Beyond.Network.LuaProtoUtil
 
 local lastTabIndexSaveKey = "FAC_BP_LAST_TAB_INDEX"
 local FAC_BLUEPRINT_INSTRUCTION_BOOK_ID = "fac_blueprint_statement"
+
+local function sendDefaultMsgAndDispose(msg)
+    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+    msg:Dispose()
+end
 
 FacBlueprintCtrl = HL.Class('FacBlueprintCtrl', uiCtrl.UICtrl)
 
@@ -23,6 +29,7 @@ FacBlueprintCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_SHARE_BLUEPRINT] = 'FacOnShareBlueprint',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemCountChanged',
     [MessageConst.FAC_ON_REFRESH_TECH_TREE_UI] = 'OnRefreshTechTree',
+    [MessageConst.FAC_ON_DEL_TIME_LIMITED_FORMULA] = '_OnFormulaDelete',
     [MessageConst.FAC_QUERY_BLUEPRINT_TIME_OUT] = 'OnQueryFailed',
     [MessageConst.FAC_ON_UPDATE_FRIEND_CHAT_STATE] = 'OnUpdateFriendChatState',
     [MessageConst.FAC_RESET_BLUEPRINT_FILTER] = 'ResetFilter',
@@ -186,9 +193,9 @@ FacBlueprintCtrl._InitDebug = HL.Method() << function(self)
         end, nil, nil, self.view.inputGroup.groupId)
         UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.S, function()
             local inst = self.m_showingInsts[self.m_selectedIndex]
-            local msg = CS.Proto.CS_GM_COMMAND()
+            local msg = LuaProtoUtil.AllocateCSGMCommand()
             msg.Command = "FactorySetBluePrintReviewStatus " .. tostring(inst.id) .. " 2"
-            CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+            sendDefaultMsgAndDispose(msg)
             Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 使用GM使蓝图通过审核", tostring(inst.id)))
         end, nil, nil, self.view.inputGroup.groupId)
     end
@@ -811,6 +818,10 @@ FacBlueprintCtrl._RefreshList = HL.Method(HL.Opt(HL.Table)) << function(self, in
             end
         end
     end
+end
+
+FacBlueprintCtrl._OnFormulaDelete = HL.Method(HL.Opt(HL.Any)) << function(self, _)
+    self:_RefreshList()
 end
 
 FacBlueprintCtrl._OnUpdateCell = HL.Method(HL.Forward('BlueprintCell'), HL.Number, HL.Opt(HL.Table)) << function(self, cell, index, initArg)

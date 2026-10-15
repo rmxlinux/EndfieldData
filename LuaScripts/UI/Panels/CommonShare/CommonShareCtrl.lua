@@ -413,6 +413,7 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
                     local sklKey = info.id == OverseaSKLandId and ("Oversea" .. self.m_arg.type) or self.m_arg.type
                     local success, sklData = Tables.sKLandShareTable:TryGetValue(sklKey)
                     if success then
+                        data.launchSource = self.m_arg.type
                         data.extraData = {}
                         data.extraData.boardId = sklData.boardId
                         data.extraData.tagList = {}

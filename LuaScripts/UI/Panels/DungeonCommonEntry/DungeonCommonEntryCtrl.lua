@@ -411,6 +411,40 @@ DungeonCommonEntryCtrl._InitController = HL.Method() << function(self)
     self:_UpdateNaviTarget()
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    self.view.selectableNaviGroup.onDefaultNaviFailed:AddListener(function(dir)
+        self:_OnDifficultyListNaviFailed(dir)
+    end)
+end
+
+DungeonCommonEntryCtrl._OnDifficultyListNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
+    if not DeviceInfo.usingController then
+        return
+    end
+    if dir ~= CS.UnityEngine.UI.NaviDirection.Up and dir ~= CS.UnityEngine.UI.NaviDirection.Down then
+        return
+    end
+
+    
+    local firstTarget
+    local lastTarget
+    for index = 1, self.m_dungeonTabCellCache:GetCount() do
+        local cell = self.m_dungeonTabCellCache:Get(index)
+        local target = cell and cell.view.clickBtn
+        if target and target.enableControllerNavi and target:IsActive() and target:IsInteractable() then
+            firstTarget = firstTarget or target
+            lastTarget = target
+        end
+    end
+    if not firstTarget or firstTarget == lastTarget then
+        return
+    end
+
+    local currentTarget = InputManagerInst.controllerNaviManager.curTarget
+    if dir == CS.UnityEngine.UI.NaviDirection.Up and currentTarget == firstTarget then
+        self:SetNaviTarget(lastTarget)
+    elseif dir == CS.UnityEngine.UI.NaviDirection.Down and currentTarget == lastTarget then
+        self:SetNaviTarget(firstTarget)
+    end
 end
 
 DungeonCommonEntryCtrl._UpdateNaviTarget = HL.Method() << function(self)

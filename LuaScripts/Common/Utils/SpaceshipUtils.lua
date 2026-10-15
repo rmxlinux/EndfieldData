@@ -388,6 +388,16 @@ function SpaceshipUtils.getUpgradeEffectInfos(roomId, newLv)
             })
         end
     end
+
+    
+    if roomType == GEnums.SpaceshipRoomType.ControlCenter
+        and newLv == Tables.spaceshipConst.unlockSwitchStationControlCenterLv then
+        table.insert(effectInfos, {
+            icon = "icon_spaceship_room_rotation",
+            name = Language.LUA_SPACESHIP_CABIN_SWITCH_STATION,
+            newText = Language.LUA_SPACESHIP_UPGRADE_EFFECT_NEW
+        })
+    end
     return effectInfos
 end
 
@@ -445,6 +455,13 @@ function SpaceshipUtils.getMaxUpgradeEffectInfos(roomId)
                 icon = typeData.icon,
                 name = string.format(Language.LUA_SPACESHIP_UPGRADE_EFFECT_ROOM_MAX_LV, typeData.name),
                 value = info.helperData.level,
+            })
+        end
+        if maxLv >= Tables.spaceshipConst.unlockSwitchStationControlCenterLv then
+            table.insert(effectInfos, {
+                icon = "icon_spaceship_room_rotation",
+                name = Language.LUA_SPACESHIP_CABIN_SWITCH_STATION,
+                value = Language.LUA_SPACESHIP_CABIN_SWITCH_STATION_ENABLED,
             })
         end
     elseif roomType == GEnums.SpaceshipRoomType.ManufacturingStation then
@@ -508,6 +525,17 @@ function SpaceshipUtils.getRoomColor(roomId)
     return UIUtils.getColorByString(roomTypeData.color)
 end
 
+function SpaceshipUtils.getRoomDescColor(roomId)
+    local type = SpaceshipUtils.getRoomTypeByRoomId(roomId)
+    local roomTypeData = Tables.spaceshipRoomTypeTable[type]
+    return UIUtils.getColorByString(roomTypeData.descColor)
+end
+
+function SpaceshipUtils.getRoomShadowColor(roomId)
+    local type = SpaceshipUtils.getRoomTypeByRoomId(roomId)
+    local roomTypeData = Tables.spaceshipRoomTypeTable[type]
+    return UIUtils.getColorByString(roomTypeData.shadowColor)
+end
 
 local Room2AttrMap = {
     [GEnums.SpaceshipRoomType.ControlCenter] = {
@@ -531,6 +559,20 @@ local Room2AttrMap = {
         GEnums.SpaceshipRoomAttrType.GuestRoomClueProbabilityIncreaseShow,
     }
 }
+
+function SpaceshipUtils.isRoomAttrTypeDisplayed(roomType, attrType)
+    local displayAttrTypes = Room2AttrMap[roomType]
+    if not displayAttrTypes then
+        return false
+    end
+    for _, displayAttrType in ipairs(displayAttrTypes) do
+        if displayAttrType == attrType then
+            return true
+        end
+    end
+    return false
+end
+
 local AttrBaseValue = { 
     [GEnums.SpaceshipRoomAttrType.PSRecoveryRate] = Tables.spaceshipConst.basePhysicalStrengthRecoveryRate,
     [GEnums.SpaceshipRoomAttrType.RoomPSCostRate] = Tables.spaceshipConst.basePhysicalStrengthCostRate,
@@ -774,6 +816,23 @@ function SpaceshipUtils.getFormatCabinSerialNumByName(roomName, number)
     return string.format(Language.LUA_SPACESHIP_CABIN_SERIAL_NUMBER, roomName, SpaceshipUtils.getRoomSerialNum(number))
 end
 
+function SpaceshipUtils.getScheduleTeamTextByIsTeamA(isTeamA)
+    return isTeamA and Language.ui_spaceship_schedule_workhourallocation_spaceshipscheduleslidera_text
+        or Language.ui_spaceship_schedule_workhourallocation_spaceshipschedulesliderb_text
+end
+
+function SpaceshipUtils.getScheduleTeamText(teamType)
+    return SpaceshipUtils.getScheduleTeamTextByIsTeamA(teamType == CS.Proto.SpaceshipCharTeamType.A)
+end
+
+function SpaceshipUtils.getFormatScheduleRoomTeamName(roomName, teamType)
+    local format = Language.LUA_SPACESHIP_SCHEDULE_ROOM_TEAM_FORMAT
+    if string.find(format, "LUA_SPACESHIP_SCHEDULE_ROOM_TEAM_FORMAT", 1, true) then
+        format = "%1$s - 班组%2$s"
+    end
+    return string.format(format, roomName, SpaceshipUtils.getScheduleTeamText(teamType))
+end
+
 function SpaceshipUtils.getFriendMissionTable()
     local spaceship = GameInstance.player.spaceship
     local missionTable = {
@@ -870,6 +929,109 @@ function SpaceshipUtils.ShowClueOutcomePopup(csItems, source, creditCell, infoTo
             items = items,
         })
     end
+end
+
+SpaceshipUtils.SCHEDULE_EXCLUDED_ROOM_TYPES = {
+    [GEnums.SpaceshipRoomType.CommandCenter] = true,
+    [GEnums.SpaceshipRoomType.GuestRoom] = true,
+}
+
+function SpaceshipUtils.isRoomScheduleSupported(roomId)
+    local roomType = SpaceshipUtils.getRoomTypeByRoomId(roomId)
+    return roomType and not SpaceshipUtils.SCHEDULE_EXCLUDED_ROOM_TYPES[roomType]
+end
+
+function SpaceshipUtils.isScheduleUnlocked()
+    local spaceship = GameInstance.player.spaceship
+    local ccLv = spaceship:GetRoomLv(Tables.spaceshipConst.controlCenterRoomId)
+    return ccLv >= Tables.spaceshipConst.unlockSwitchStationControlCenterLv
+end
+
+function SpaceshipUtils.isSingleTeamMode(roomId)
+    local success, room = GameInstance.player.spaceship:TryGetRoom(roomId)
+    if not success or not room.schedule then
+        return true
+    end
+    return room.schedule.TeamCount == 1
+end
+
+function SpaceshipUtils.getScheduleTeamEstimatedWorkSeconds(room, charIdList)
+    if #charIdList == 0 then
+        return 0
+    end
+    local skillReduceRate = 0
+    local spaceship = GameInstance.player.spaceship
+    for _, charId in ipairs(charIdList) do
+        local char = spaceship.characters:get_Item(charId)
+        for _, skillId in pairs(char.skills) do
+            local skillData = Tables.spaceshipSkillTable[skillId]
+            if skillData.roomType == room.type
+                    and skillData.effectType == GEnums.SpaceshipStationEffectType.RoomPSCostRateReduceByPercent then
+                skillReduceRate = skillReduceRate + skillData.parameters[0].valueFloatList[0]
+            end
+        end
+    end
+    local costRatePerMinute = Tables.spaceshipConst.basePhysicalStrengthCostRate * (1 - skillReduceRate)
+    local costRatePerSecond = costRatePerMinute / Const.SEC_PER_MIN
+    if costRatePerSecond <= 0 then
+        return 0
+    end
+    return Tables.spaceshipConst.maxPhysicalStrength / costRatePerSecond
+end
+
+function SpaceshipUtils.cloneScheduleList(sourceList)
+    local result = {}
+    if sourceList then
+        for _, charId in pairs(sourceList) do
+            table.insert(result, charId)
+        end
+    end
+    return result
+end
+
+function SpaceshipUtils.isCharListSameAsServer(newList, serverList)
+    if not serverList then
+        return #newList == 0
+    end
+    local isLuaTable = type(serverList) == "table"
+    local serverCount = isLuaTable and #serverList or serverList.Count
+    if #newList ~= serverCount then
+        return false
+    end
+    if isLuaTable then
+        for index, id in ipairs(serverList) do
+            if newList[index] ~= id then
+                return false
+            end
+        end
+        return true
+    end
+    for k, id in pairs(serverList) do
+        local idx = type(k) == "number" and LuaIndex(k) or 0
+        if newList[idx] ~= id then
+            return false
+        end
+    end
+    return true
+end
+
+function SpaceshipUtils.isScheduleListEmpty(serverList)
+    return SpaceshipUtils.isCharListSameAsServer({}, serverList)
+end
+
+function SpaceshipUtils.formatScheduleOffsetTime(offsetSeconds)
+    local daySeconds = Const.SEC_PER_DAY
+    offsetSeconds = offsetSeconds % daySeconds
+    local hour = math.floor(offsetSeconds / Const.SEC_PER_HOUR)
+    local minute = math.floor((offsetSeconds % Const.SEC_PER_HOUR) / Const.SEC_PER_MIN)
+    return string.format("%02d:%02d", hour, minute)
+end
+
+function SpaceshipUtils.formatScheduleTimeRange(startTsOffset, endTsOffset)
+    local timeRangeText = string.format("%s - %s",
+        SpaceshipUtils.formatScheduleOffsetTime(startTsOffset),
+        SpaceshipUtils.formatScheduleOffsetTime(endTsOffset))
+    return string.gsub(Utils.appendUTC(timeRangeText), " %(", "(")
 end
 
 

@@ -37,24 +37,42 @@ WeaponExhibitPotentialCtrl.m_selectMaterialsInputBindingId = HL.Field(HL.Number)
 
 WeaponExhibitPotentialCtrl.m_materialsDecreaseCountInputBindingId = HL.Field(HL.Number) << -1
 
+WeaponExhibitPotentialCtrl.m_unlockAndSelectInputBindingId = HL.Field(HL.Number) << -1
+
+WeaponExhibitPotentialCtrl.m_pendingUnlockAndSelectInstIds = HL.Field(HL.Table)
+
 WeaponExhibitPotentialCtrl.m_naviMaterialCell = HL.Field(HL.Any)
 
 WeaponExhibitPotentialCtrl.m_naviMaterialItemInfo = HL.Field(HL.Table)
 
+WeaponExhibitPotentialCtrl.m_isExpandNodeOnShow = HL.Field(HL.Boolean) << false
+
 WeaponExhibitPotentialCtrl.OnItemLockedStateChanged = HL.Method(HL.Table) << function(self, arg)
     local itemId, instId, isLock = unpack(arg)
-    if not isLock then
-        return
-    end
-
     if not instId or instId <= 0 then
         return
     end
 
-    local costItemInfoDict = self.m_costItemInfoDict
-    if costItemInfoDict[instId] ~= nil then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_WEAPON_EXHIBIT_ITEM_LOCK_TOAST)
-        self:_RemoveFromCostItemDict(costItemInfoDict[instId])
+    if isLock then
+        local costItemInfoDict = self.m_costItemInfoDict
+        if costItemInfoDict[instId] ~= nil then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_WEAPON_EXHIBIT_ITEM_LOCK_TOAST)
+            self:_RemoveFromCostItemDict(costItemInfoDict[instId])
+        end
+    else
+        if self.m_pendingUnlockAndSelectInstIds[instId] then
+            self.m_pendingUnlockAndSelectInstIds[instId] = nil
+            local itemInfo = self.view.commonWeaponList:GetItemInfoByIndexId(instId)
+            if itemInfo then
+                self:_AddIntoCostItemDict(itemInfo, 1)
+                self.view.commonWeaponList:RefreshCellById(itemInfo.indexId)
+            end
+        end
+    end
+
+    
+    if self.m_naviMaterialItemInfo and self.m_naviMaterialItemInfo.itemInst and self.m_naviMaterialItemInfo.itemInst.instId == instId then
+        self:_RefreshUnlockAndSelectBinding(self.m_naviMaterialItemInfo)
     end
 end
 
@@ -158,6 +176,13 @@ WeaponExhibitPotentialCtrl._InitActionEvent = HL.Method() << function(self)
         local weaponInst = CharInfoUtils.getWeaponByInstId(self.m_weaponInfo.weaponInstId)
         GameInstance.player.charBag:WeaponRefine(self.m_weaponInfo.weaponInstId, weaponInst.refineLv + addRefineLv, costItem2Count, costWeapons)
     end)
+    self.view.btnSelect.onClick:AddListener(function()
+        if self.m_isExpandNodeOnShow then
+            return
+        end
+
+        self:_ToggleExpandNode(true)
+    end)
     self.m_selectMaterialsInputBindingId = self:BindInputPlayerAction("char_info_weapon_select_materials", function()
         self:_ToggleExpandNode(true)
     end, self.view.leftNodeInputGroup.groupId)
@@ -165,12 +190,17 @@ WeaponExhibitPotentialCtrl._InitActionEvent = HL.Method() << function(self)
         self:_OnItemBtnMinusClicked(self.m_naviMaterialCell, self.m_naviMaterialItemInfo)
     end)
     InputManagerInst:ToggleBinding(self.m_materialsDecreaseCountInputBindingId, false)
+    self.m_unlockAndSelectInputBindingId = self:BindInputPlayerAction("char_info_weapon_unlock_and_select", function()
+        self:_OnUnlockAndSelectLongPress(self.m_naviMaterialItemInfo)
+    end)
+    InputManagerInst:ToggleBinding(self.m_unlockAndSelectInputBindingId, false)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     UIUtils.bindHyperlinkPopup(self, "WeaponSkill", self.view.leftNodeInputGroup.groupId)
 end
 
 WeaponExhibitPotentialCtrl.OnShow =  HL.Override() << function(self)
     local weaponInfo = self.m_weaponInfo
+    self.m_pendingUnlockAndSelectInstIds = (self.m_arg.stateArg and self.m_arg.stateArg.pendingUnlockAndSelectInstIds) or {}
     local weaponExhibitInfo = CharInfoUtils.getWeaponExhibitBasicInfo(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
 
     local costItemInfoDict
@@ -221,10 +251,24 @@ WeaponExhibitPotentialCtrl._RefreshButtonNode = HL.Method(HL.Table) << function(
     local isMaxPotential = weaponExhibitInfo.weaponInst.refineLv >= UIConst.CHAR_MAX_POTENTIAL
     if isMaxPotential then
         self.view.btnLevelUp.gameObject:SetActive(false)
+        self.view.btnSelect.gameObject:SetActive(false)
         self.view.upgradeNode.gameObject:SetActive(false)
         InputManagerInst:ToggleBinding(self.m_selectMaterialsInputBindingId, false)
         return
     end
+
+    self:_RefreshBtnLevelUpState()
+end
+
+WeaponExhibitPotentialCtrl._RefreshBtnLevelUpState = HL.Method() << function(self)
+    local noMaterials = not self.m_costItemInfoDict or lume.count(self.m_costItemInfoDict) == 0
+    local forceHide = false
+    if DeviceInfo.usingController then      
+        forceHide = self.m_isExpandNodeOnShow
+    end
+
+    self.view.btnSelect.gameObject:SetActive(noMaterials and not forceHide)
+    self.view.btnLevelUp.gameObject:SetActive(not noMaterials and not forceHide)
 end
 
 
@@ -288,6 +332,7 @@ WeaponExhibitPotentialCtrl._RefreshWeaponCellAddOn = HL.Method(HL.Any, HL.Opt(HL
 
     if cell == self.m_naviMaterialCell then
         InputManagerInst:ToggleBinding(self.m_materialsDecreaseCountInputBindingId, itemInfo.count and itemInfo.count > 0)
+        self:_RefreshUnlockAndSelectBinding(itemInfo)
     end
 end
 
@@ -304,6 +349,7 @@ WeaponExhibitPotentialCtrl._OnItemIsNaviTargetChanged = HL.Method(HL.Any, HL.Tab
         InputManagerInst:ToggleBinding(self.m_materialsDecreaseCountInputBindingId, itemInfo.count and itemInfo.count > 0)
         self.m_naviMaterialCell = cell
         self.m_naviMaterialItemInfo = itemInfo
+        self:_RefreshUnlockAndSelectBinding(itemInfo)
         local instId
         if itemInfo.itemInst then
             instId = itemInfo.itemInst.instId
@@ -317,7 +363,30 @@ WeaponExhibitPotentialCtrl._OnItemIsNaviTargetChanged = HL.Method(HL.Any, HL.Tab
             isSideTips = true,
             posType = UIConst.UI_TIPS_POS_TYPE.RightMid,
         })
+    elseif cell == self.m_naviMaterialCell then
+        self:_RefreshUnlockAndSelectBinding(nil)
     end
+end
+
+WeaponExhibitPotentialCtrl._RefreshUnlockAndSelectBinding = HL.Method(HL.Opt(HL.Table)) << function(self, itemInfo)
+    local enable = false
+    if itemInfo and itemInfo.isWeapon and itemInfo.itemInst then
+        enable = GameInstance.player.inventory:IsItemLocked(Utils.getCurrentScope(), itemInfo.itemInst.templateId, itemInfo.itemInst.instId)
+    end
+    InputManagerInst:ToggleBinding(self.m_unlockAndSelectInputBindingId, enable)
+end
+
+WeaponExhibitPotentialCtrl._OnUnlockAndSelectLongPress = HL.Method(HL.Opt(HL.Table)) << function(self, itemInfo)
+    if not itemInfo or not itemInfo.isWeapon or not itemInfo.itemInst then
+        return
+    end
+    local templateId = itemInfo.itemInst.templateId
+    local instId = itemInfo.itemInst.instId
+    if not GameInstance.player.inventory:IsItemLocked(Utils.getCurrentScope(), templateId, instId) then
+        return
+    end
+    GameInstance.player.inventory:LockItem(Utils.getCurrentScope(), templateId, instId, false)
+    self.m_pendingUnlockAndSelectInstIds[instId] = true
 end
 
 WeaponExhibitPotentialCtrl._OnClickExpandCostItemCell = HL.Method(HL.Table, HL.Boolean) << function(self, costItemInfo, realClick)
@@ -351,6 +420,7 @@ WeaponExhibitPotentialCtrl._AddIntoCostItemDict = HL.Method(HL.Table, HL.Number)
     self:_RefreshBottomCostItem(true)
     self:_RefreshSkillNode(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
     self:_RefreshWeaponPotentialStar(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
+    self:_RefreshBtnLevelUpState()
 end
 
 WeaponExhibitPotentialCtrl._RemoveFromCostItemDict = HL.Method(HL.Table, HL.Opt(HL.Number)) << function(self, itemInfo, count)
@@ -368,6 +438,7 @@ WeaponExhibitPotentialCtrl._RemoveFromCostItemDict = HL.Method(HL.Table, HL.Opt(
     self:_RefreshBottomCostItem(true)
     self:_RefreshSkillNode(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
     self:_RefreshWeaponPotentialStar(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
+    self:_RefreshBtnLevelUpState()
     self.view.commonWeaponList:RefreshCellById(itemInfo.indexId)
 end
 
@@ -500,6 +571,8 @@ WeaponExhibitPotentialCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.B
     if isOn then
         UIUtils.PlayAnimationAndToggleActive(self.view.commonWeaponList.view.animationWrapper, true)
         self.view.expandNode.gameObject:SetActive(true)
+        self.m_isExpandNodeOnShow = true
+        self:_RefreshBtnLevelUpState()
         if DeviceInfo.usingController then
             self.view.commonWeaponList:PlayGraduallyShow(1, false)
         else
@@ -508,16 +581,17 @@ WeaponExhibitPotentialCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.B
     else
         UIUtils.PlayAnimationAndToggleActive(self.view.commonWeaponList.view.animationWrapper, false, function()
             self.view.expandNode.gameObject:SetActive(false)
+            self.m_isExpandNodeOnShow = false
+            self:_RefreshBtnLevelUpState()
         end)
         InputManagerInst:ToggleBinding(self.m_materialsDecreaseCountInputBindingId, false)
+        InputManagerInst:ToggleBinding(self.m_unlockAndSelectInputBindingId, false)
     end
 
     InputManagerInst:ToggleGroup(self.view.leftNodeInputGroup.groupId, not isOn)
     if DeviceInfo.usingController then
-        InputManagerInst:ToggleGroup(self.view.btnLevelUp.groupId, not isOn)
         InputManagerInst:ToggleGroup(self.view.btnFullSkill.groupId, not isOn)
     else
-        InputManagerInst:ToggleGroup(self.view.btnLevelUp.groupId, true)
         InputManagerInst:ToggleGroup(self.view.btnFullSkill.groupId, true)
     end
 end
@@ -585,7 +659,8 @@ WeaponExhibitPotentialCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << func
         costItemInfoDict = self.m_costItemInfoDict,
         isExpand = self.view.expandNode.gameObject.activeSelf,
         curSelectedIndex = self.view.commonWeaponList:IsAnyItemSelecting() and self.view.commonWeaponList:GetCurSelectIndex(),
-        isShow = self:IsShow()
+        isShow = self:IsShow(),
+        pendingUnlockAndSelectInstIds = self.m_pendingUnlockAndSelectInstIds,
     }
     return arg
 end

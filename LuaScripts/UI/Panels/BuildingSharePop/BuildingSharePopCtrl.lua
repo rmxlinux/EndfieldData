@@ -116,31 +116,45 @@ BuildingSharePopCtrl._OnUpdateBuildingCell = HL.Method(HL.Table, HL.Number) << f
 end
 
 BuildingSharePopCtrl._UpdatePlayerName = HL.Method(HL.Table, HL.Userdata) << function(self, cell, buildingInfo)
-    self:_UpdatePlayerName_Internal(buildingInfo.ownerId, cell.ownerNameText,
+    self:_UpdatePlayerName_Internal(buildingInfo.ownerId, cell.ownerNameNode,
         Language.LUA_FRIEND_NAME, Language.LUA_FRIEND_REMAKE_NAME)
     if buildingInfo.ownerId == buildingInfo.sharedRoleId then
-        cell.sharedNameText.text = "" 
+        cell.sharedNameNode.stateCtrl:SetState("None")
+        cell.sharedNameNode.nameText.text = "" 
     else
-        self:_UpdatePlayerName_Internal(buildingInfo.sharedRoleId, cell.sharedNameText,
+        self:_UpdatePlayerName_Internal(buildingInfo.sharedRoleId, cell.sharedNameNode,
             Language.LUA_FRIEND_SOCIAL_BUILDING_SHARED_NAME, Language.LUA_FRIEND_SOCIAL_BUILDING_SHARED_REMAKE_NAME)
     end
 end
 
-BuildingSharePopCtrl._UpdatePlayerName_Internal = HL.Method(HL.Number, HL.Userdata, HL.String, HL.String)
-    << function(self, roleId, nameText, nameFormat, remakeNameFormat)
+BuildingSharePopCtrl._UpdatePlayerName_Internal = HL.Method(HL.Number, HL.Table, HL.String, HL.String)
+    << function(self, roleId, nameNode, nameFormat, remakeNameFormat)
     local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(roleId)
     if not success or not playerInfo.init then
-        nameText.text = "" 
+        nameNode.stateCtrl:SetState("None")
+        nameNode.nameText.text = "" 
         return
     end
 
-    local playerName
-    if string.isEmpty(playerInfo.remakeName) then
-        playerName = string.format(nameFormat, playerInfo.name, playerInfo.shortId)
-    else
-        playerName = string.format(remakeNameFormat, playerInfo.remakeName, playerInfo.name, playerInfo.shortId)
+    local stateName = "None"
+    local playerName = ""
+    local playerPSName = playerInfo.psName
+    if FriendUtils.isPsnPlatform() then
+        if string.isEmpty(playerPSName) then
+            stateName = "PC"
+            playerName = "<space=2px><image=\"Friend/icon_friend_share_pc\" width=30 height=30><space=2px>"
+        else
+            stateName = "PS"
+        end
     end
-    nameText.text = playerName
+    if string.isEmpty(playerInfo.remakeName) then
+        playerName = string.format(nameFormat, playerName .. playerInfo.name, playerInfo.shortId)
+    else
+        playerName = string.format(remakeNameFormat, playerName .. playerInfo.remakeName, playerInfo.name, playerInfo.shortId)
+    end
+    nameNode.stateCtrl:SetState(stateName)
+    nameNode.nameText.text = playerName
+    nameNode.psNameText.text = playerPSName
 end
 
 

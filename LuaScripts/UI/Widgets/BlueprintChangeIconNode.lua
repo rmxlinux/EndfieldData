@@ -573,6 +573,10 @@ BlueprintChangeIconNode.RefreshController = HL.Method() << function(self)
         return
     end
 
+    
+    if not self.m_icon2PosInfo[targetIconId] then
+        targetIconId = FacConst.FAC_BLUEPRINT_DEFAULT_ICON
+    end
     self:ScrollToIcon(targetIconId)
 
     local targetCell = self:_GetCellAndInfoOfIcon(targetIconId)

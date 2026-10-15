@@ -553,30 +553,14 @@ AchievementDepotCtrl._RenderAchievement = HL.Method(HL.Table, HL.Number) << func
     cell.button.onClick:AddListener(function()
         self:_OnAchievementSelect(achievementId)
     end)
-    local totalCellCount = self.view.achievementList.totalCellCount
     local countPerLine = self.view.achievementList.countPerLine
     local groupCellCount = #flatGroup.groupInfo.filteredInfos
-    local groupStartGlobalLuaIndex = globalLuaIndex - result.localIndex + 1
-    local groupEndGlobalLuaIndex = groupStartGlobalLuaIndex + groupCellCount - 1
-    local isFirstRow = groupStartGlobalLuaIndex == 1 and result.localIndex <= countPerLine
-    local lastRowStartLocalIndex = math.floor((groupCellCount - 1) / countPerLine) * countPerLine + 1
-    local isLastRow = groupEndGlobalLuaIndex == totalCellCount and result.localIndex >= lastRowStartLocalIndex
-    
     
     local shouldNaviRightToNextRow = result.localIndex % countPerLine == 0 and result.localIndex < groupCellCount
-    if isFirstRow or isLastRow or shouldNaviRightToNextRow then
+    if shouldNaviRightToNextRow then
         cell.button.customNaviTargetInDirFunc = function(dir)
-            if isFirstRow and dir == CS.UnityEngine.UI.NaviDirection.Up then
-                return self:_GetCircleNaviTarget(totalCellCount - 1, true)
-            end
-            if isLastRow and dir == CS.UnityEngine.UI.NaviDirection.Down then
-                return self:_GetCircleNaviTarget(0, true)
-            end
-            if shouldNaviRightToNextRow and dir == CS.UnityEngine.UI.NaviDirection.Right then
+            if dir == CS.UnityEngine.UI.NaviDirection.Right then
                 return self:_GetCircleNaviTarget(globalLuaIndex, false)
-            end
-            if globalLuaIndex == totalCellCount and dir == CS.UnityEngine.UI.NaviDirection.Right then
-                return self:_GetCircleNaviTarget(0, false)
             end
             return nil
         end
@@ -863,7 +847,9 @@ end
 AchievementDepotCtrl._UpdateCategorySelection = HL.Method(HL.Number) << function(self, prevCategoryIndex)
     local filteredDataCount = #self.m_categoryFilteredData
     
-    if DeviceInfo.usingController or prevCategoryIndex == self.m_selectCategoryIndex then
+    local canRefreshShowingCells = DeviceInfo.usingController
+        or (prevCategoryIndex == self.m_selectCategoryIndex and not self.m_isFold)
+    if canRefreshShowingCells then
         local csIndex = CSIndex(self.m_selectCategoryIndex)
         local catObj = self.view.categoryList:Get(csIndex)
         if not catObj then
@@ -874,6 +860,7 @@ AchievementDepotCtrl._UpdateCategorySelection = HL.Method(HL.Number) << function
         end)
         self:_ScrollCategoryToSubGroup()
     else
+        self.m_isFold = false
         self.view.categoryList:UpdateCount(filteredDataCount, false, true)
         if filteredDataCount ~= 0 then
             self.view.categoryList:FoldAll(false)

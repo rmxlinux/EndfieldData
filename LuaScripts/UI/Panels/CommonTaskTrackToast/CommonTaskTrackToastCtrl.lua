@@ -23,6 +23,10 @@ CommonTaskTrackToastCtrl.m_countDownTickId = HL.Field(HL.Number) << -1
 
 CommonTaskTrackToastCtrl.m_showingToastCor = HL.Field(HL.Thread)
 
+CommonTaskTrackToastCtrl.m_directToastNode = HL.Field(HL.Any)
+CommonTaskTrackToastCtrl.m_directToastEndFunc = HL.Field(HL.Function)
+CommonTaskTrackToastCtrl.m_directToastClosing = HL.Field(HL.Boolean) << false
+
 
 
 
@@ -78,6 +82,23 @@ CommonTaskTrackToastCtrl.OnShowCommonTaskFinishToast = HL.StaticMethod(HL.Any) <
     end, function()
         UIManager:Close(PANEL_ID)
     end)
+end
+
+CommonTaskTrackToastCtrl.OnShowCommonTaskFinishToastDirect = HL.StaticMethod() << function()
+    local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
+    if ctrl == nil then
+        return
+    end
+
+    ctrl:ShowTaskFinishToastWithoutId({ DEFAULT_ICON, Language.LUA_COMMON_TASK_TRACK_TOAST_SUCC_DESC, "" }, nil, true)
+end
+
+CommonTaskTrackToastCtrl.OnCloseCommonTaskToastDirect = HL.StaticMethod() << function()
+    local isOpen, ctrl = UIManager:IsOpen(PANEL_ID)
+    if not isOpen or ctrl == nil then
+        return
+    end
+    ctrl:CloseDirectTaskToast()
 end
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskFailToast = HL.StaticMethod(HL.Any) << function(args)
@@ -153,6 +174,9 @@ CommonTaskTrackToastCtrl.OnClose = HL.Override() << function(self)
     if self.m_showingToastCor then
         self.m_showingToastCor = self:_ClearCoroutine(self.m_showingToastCor)
     end
+    self.m_directToastNode = nil
+    self.m_directToastEndFunc = nil
+    self.m_directToastClosing = false
 end
 
 CommonTaskTrackToastCtrl._IsWorldFreeze = HL.Method().Return(HL.Boolean) << function(self)
@@ -240,6 +264,37 @@ CommonTaskTrackToastCtrl.ShowTaskFinishToast = HL.Method(HL.Any, HL.Opt(HL.Funct
     AudioAdapter.PostEvent("Au_UI_Toast_TaskTrack_TaskFinishToast_Open")
 end
 
+CommonTaskTrackToastCtrl.CloseDirectTaskToast = HL.Method() << function(self)
+    if self.m_directToastClosing then
+        return
+    end
+    self.m_directToastClosing = true
+    if self.m_showingToastCor then
+        self.m_showingToastCor = self:_ClearCoroutine(self.m_showingToastCor)
+    end
+
+    local toastNode = self.m_directToastNode
+    local endFunc = self.m_directToastEndFunc
+    self.m_directToastNode = nil
+    self.m_directToastEndFunc = nil
+    if toastNode == nil or toastNode.gameObject == nil or IsNull(toastNode.gameObject) then
+        self:Close()
+        self:Notify(MessageConst.ON_HUD_BTN_VISIBLE_CHANGE, {true})
+        if endFunc then
+            endFunc()
+        end
+        return
+    end
+
+    toastNode.animationWrapper:PlayOutAnimation(function()
+        self:Close()
+        self:Notify(MessageConst.ON_HUD_BTN_VISIBLE_CHANGE, {true})
+        if endFunc then
+            endFunc()
+        end
+    end)
+end
+
 CommonTaskTrackToastCtrl.ShowTaskFailToast = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, args, endFunc)
     self:_RefreshToast(ToastType.Fail, args, endFunc)
     self:_TryPostSubGameVo(args, CS.Beyond.Gameplay.Core.ESubGameVoType.Fail)
@@ -267,9 +322,9 @@ CommonTaskTrackToastCtrl.ShowTaskStartToastWithoutId = HL.Method(HL.Any, HL.Opt(
     AudioAdapter.PostEvent("Au_UI_Toast_TaskTrack_TaskStartToast_Open")
 end
 
-CommonTaskTrackToastCtrl.ShowTaskFinishToastWithoutId = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, args, endFunc)
+CommonTaskTrackToastCtrl.ShowTaskFinishToastWithoutId = HL.Method(HL.Any, HL.Opt(HL.Function, HL.Boolean)) << function(self, args, endFunc, waitForCloseEvent)
     local iconName, title, desc = unpack(args)
-    self:_RefreshToastWithoutId(ToastType.Finish, iconName, title, desc, endFunc)
+    self:_RefreshToastWithoutId(ToastType.Finish, iconName, title, desc, endFunc, nil, nil, waitForCloseEvent)
     AudioAdapter.PostEvent("Au_UI_Toast_TaskTrack_TaskFinishToast_Open")
 end
 
@@ -283,8 +338,8 @@ CommonTaskTrackToastCtrl.OnSubGameReset = HL.Method() << function(self)
     self:Close()
 end
 
-CommonTaskTrackToastCtrl._RefreshToast = HL.Method(HL.String, HL.Any, HL.Opt(HL.Function))
-        << function(self, toastType, args, endFunc)
+CommonTaskTrackToastCtrl._RefreshToast = HL.Method(HL.String, HL.Any, HL.Opt(HL.Function, HL.Boolean))
+        << function(self, toastType, args, endFunc, waitForCloseEvent)
     local instId, passTime, isNewRecord = unpack(args)
     local taskTitle = ""
     local taskDesc = ""
@@ -342,12 +397,19 @@ CommonTaskTrackToastCtrl._RefreshToast = HL.Method(HL.String, HL.Any, HL.Opt(HL.
     end
     
 
-    self:_RefreshToastWithoutId(toastGOName, toastIcon, taskTitle, taskDesc, endFunc, isNewRecord, passTime)
+    self:_RefreshToastWithoutId(toastGOName, toastIcon, taskTitle, taskDesc, endFunc, isNewRecord, passTime, waitForCloseEvent)
 end
 
-CommonTaskTrackToastCtrl._RefreshToastWithoutId = HL.Method(HL.String, HL.String, HL.String, HL.String, HL.Opt(HL.Function, HL.Boolean, HL.Number))
-        << function(self, toastGOName, iconName, title, desc, endFunc, isNewRecord, passTime)
+CommonTaskTrackToastCtrl._RefreshToastWithoutId = HL.Method(HL.String, HL.String, HL.String, HL.String, HL.Opt(HL.Function, HL.Boolean, HL.Number, HL.Boolean))
+        << function(self, toastGOName, iconName, title, desc, endFunc, isNewRecord, passTime, waitForCloseEvent)
     self:Notify(MessageConst.ON_HUD_BTN_VISIBLE_CHANGE, {false})
+    if self.m_showingToastCor then
+        self.m_showingToastCor = self:_ClearCoroutine(self.m_showingToastCor)
+    end
+    self.m_directToastNode = nil
+    self.m_directToastEndFunc = nil
+    self.m_directToastClosing = false
+
     local toastGO = self:_CreateToastGO(toastGOName)
     local toastNode = Utils.wrapLuaNode(toastGO)
     toastNode.middleIcon:LoadSprite(UIConst.UI_SPRITE_COMMON_TASK_TRACK, iconName)
@@ -361,6 +423,18 @@ CommonTaskTrackToastCtrl._RefreshToastWithoutId = HL.Method(HL.String, HL.String
     if toastNode.passTimeTxtNode then
         toastNode.passTimeTxtNode.gameObject:SetActiveIfNecessary(passTime ~= nil)
         toastNode.passTimeTxt.text = UIUtils.getLeftTimeToSecond(math.floor((passTime or 0) / 1000))
+    end
+
+    if waitForCloseEvent then
+        self.m_directToastNode = toastNode
+        self.m_directToastEndFunc = endFunc
+        self.m_showingToastCor = self:_StartCoroutine(function()
+            local inAnimLength = toastNode.animationWrapper:GetInClipLength()
+            toastNode.animationWrapper:PlayInAnimation()
+            coroutine.wait(inAnimLength)
+            self.m_showingToastCor = nil
+        end)
+        return
     end
 
     self.m_showingToastCor = self:_StartCoroutine(function()

@@ -799,15 +799,22 @@ end
 
 
 ItemBagContent.UpdateColoredItemSlotColorBG = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Any)) << function(self, cell, csIndex, dragHelper)
+    local itemBag = self.m_itemBag
+    if not itemBag then
+        return
+    end
     local itemId
     if dragHelper then
         
         itemId = dragHelper:GetId()
-    else
+    elseif csIndex >= 0 and csIndex < itemBag.slots.Count then
         
-        itemId = self.m_itemBag.slots[csIndex].id
+        itemId = itemBag.slots[csIndex].id
+    else
+        cell:UpdateSlotColorBGByItemId(itemBag, csIndex, "", false)
+        return
     end
-    cell:UpdateSlotColorBGByItemId(self.m_itemBag, csIndex, itemId, self.m_curDraggingDragHelper ~= nil and Utils.isPortableDevice(self.m_curDraggingDragHelper:GetId()))
+    cell:UpdateSlotColorBGByItemId(itemBag, csIndex, itemId, self.m_curDraggingDragHelper ~= nil and Utils.isPortableDevice(self.m_curDraggingDragHelper:GetId()))
 end
 
 

@@ -75,7 +75,7 @@ ContingencyContractSettlementCtrl.OnCreate = HL.Override(HL.Any) << function(sel
         self:_StartPlayUIInAni()
     end
     
-    AudioManager.PostEvent("au_music_indie_ccdg01_cc_v1d3_b0_ingame_phase4_complete")
+    AudioManager.PostEvent("au_music_indie_ccdg002_ending")
     
     AudioAdapter.PostEvent(self.m_resultData.isPass and "Au_UI_Popup_CCReignite_Completed" or "Au_UI_Popup_CCReignite_Failed")
 end
@@ -536,7 +536,7 @@ ContingencyContractSettlementCtrl._OnAgainBtnClick = HL.Method() << function(sel
                 
                 self:_GetRewardItemList()
                 self:Close()
-                GameInstance.dungeonManager.curDungeonLikeSubGame:SendReStart()
+                GameInstance.dungeonManager.curDungeonLikeSubGame:SendReStart(true)
             end,
             onCancel = function()
             end,
@@ -717,6 +717,10 @@ ContingencyContractSettlementCtrl.ShowSettlement = HL.StaticMethod(HL.Any) << fu
             
             
             logger.error(ELogChannel.Dungeon, "error, try to open ContingencyContractSettlement out of dungeon")
+            return
+        end
+
+        if GameWorld.worldInfo.subGame == nil then
             return
         end
 

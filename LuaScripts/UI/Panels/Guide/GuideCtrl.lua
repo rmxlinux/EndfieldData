@@ -956,9 +956,11 @@ GuideCtrl._SyncUIHighlightTargetRect = HL.Method(HL.Table, Unity.Rect, HL.Boolea
 
     local rectTrans = cell.rectTransform
     rectTrans.anchoredPosition = Vector2(targetRect.center.x, -targetRect.center.y)
+    local maskHeight = targetRect.height
     if isCircle then
         local size = math.max(targetRect.size.x, targetRect.size.y)
         rectTrans.sizeDelta = Vector2(size, size)
+        maskHeight = size
     else
         rectTrans.sizeDelta = targetRect.size
     end
@@ -984,8 +986,8 @@ GuideCtrl._SyncUIHighlightTargetRect = HL.Method(HL.Table, Unity.Rect, HL.Boolea
     cell.down.anchoredPosition = Vector2(xOffset, 0)
     cell.up.sizeDelta = Vector2(width, targetRect.y)
     cell.down.sizeDelta = Vector2(width, height - targetRect.yMax)
-    cell.left.sizeDelta = Vector2(targetRect.x, targetRect.height)
-    cell.right.sizeDelta = Vector2(width - targetRect.xMax, targetRect.height)
+    cell.left.sizeDelta = Vector2(targetRect.x, maskHeight)
+    cell.right.sizeDelta = Vector2(width - targetRect.xMax, maskHeight)
 
     local otherCell = self.m_firstHighlightUICell
     if otherCell and otherCell ~= cell then

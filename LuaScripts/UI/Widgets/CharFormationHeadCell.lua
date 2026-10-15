@@ -253,6 +253,12 @@ CharFormationHeadCell.SetUnavailable = HL.Method(HL.Boolean) << function(self, u
     end
 end
 
+CharFormationHeadCell.SetMaxPotentialGlow = HL.Method(HL.Number, HL.Number) << function(self, potentialLevel, rarity)
+    local currentPotentialLevel = self.charInfo and self.charInfo.potentialLevel or potentialLevel
+    local shouldShowGlow = currentPotentialLevel >= UIConst.CHAR_MAX_POTENTIAL and rarity == UIConst.CHAR_POTENTIAL_EFFECT_RARITY
+    self.view.glowAll.gameObject:SetActive(shouldShowGlow)
+end
+
 CharFormationHeadCell.RefreshCharInfo = HL.Method() << function(self)
     if self.charInfo then
         self.view.textLv.text = string.format("%02d", self.charInfo.level)

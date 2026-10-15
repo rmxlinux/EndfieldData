@@ -172,6 +172,10 @@ PhaseCharFormation.m_hideCamCor = HL.Field(HL.Thread)
 
 
 
+
+
+
+
 PhaseCharFormation._OnInit = HL.Override() << function(self)
     self:_ProcessArgs()
     self.m_curTeam = {}
@@ -189,8 +193,6 @@ PhaseCharFormation._OnInit = HL.Override() << function(self)
     end)
 
     PhaseCharFormation.Super._OnInit(self)
-    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
-    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
 
 PhaseCharFormation._OnRefresh = HL.Override() << function(self)
@@ -316,6 +318,7 @@ PhaseCharFormation.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << func
     arg.teamIndex = self.m_curTeamIndex
     arg.charListState = nil
     arg.commonPopUpArg = nil
+    arg.priorityPopupState = nil
     if self.m_charFormation then
         local uiCtrl = self.m_charFormation.uiCtrl
         if uiCtrl.state == UIConst.UI_CHAR_FORMATION_STATE.SingleChar then
@@ -347,6 +350,10 @@ PhaseCharFormation.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << func
             arg.commonPopUpArg = commonPopUpArg
         end
     end
+    local priorityIsOpen, priorityCtrl = UIManager:IsOpen(PanelId.CharFormationPriorityPopup)
+    if priorityIsOpen and UIManager:IsShow(PanelId.CharFormationPriorityPopup) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        arg.priorityPopupState = priorityCtrl:GetRecoverStateArg()
+    end
     return arg
 end
 
@@ -370,8 +377,16 @@ PhaseCharFormation._ProcessArgs = HL.Method() << function(self)
     end
 
     
+    if self.arg.customSetTeamCallback ~= nil and (self.arg.getComboSkill == nil or self.arg.comboSkillSaveCallback == nil) then
+        logger.error(string.format(
+            "[CharFormation] customSetTeamCallback 已自定义成员保存，但 getComboSkill/comboSkillSaveCallback 未成对传入，可能会与成员数据错位。dungeonId=%s",
+            tostring(self.arg.dungeonId)))
+    end
+
+    
+    
     local specialTeamType = DungeonUtils.getSpecialTeamType(self.arg.dungeonId)
-    if specialTeamType then
+    if specialTeamType and self.arg.customSetTeamCallback == nil then
         local TeamInfo = GameInstance.player.charBag:GetSpecialTeamByType(specialTeamType)
         self.arg.initCharInstIdList = {}
 
@@ -440,6 +455,13 @@ PhaseCharFormation._InitPhaseItems = HL.Method() << function(self)
                 uiCtrl:_TryRecoverCommonPopUp(self.arg.commonPopUpArg)
             end
             self.arg.commonPopUpArg = nil
+        end
+        if self.arg and self.arg.priorityPopupState then
+            local uiCtrl = self.m_charFormation and self.m_charFormation.uiCtrl
+            if uiCtrl then
+                uiCtrl:_TryRecoverPriorityPopup(self.arg.priorityPopupState)
+            end
+            self.arg.priorityPopupState = nil
         end
     end
     self.m_inited = true
@@ -579,7 +601,7 @@ PhaseCharFormation.OnCharListSingleSelect = HL.Method(HL.Any) << function(self, 
 
     self:UpdateChar(self.m_singleCharIndex, info)
     self:_RefreshEmpty()
-    Utils.triggerVoice("chrbark_squad", info.charId)
+    self:_TriggerSquadVoice(info.charId)
 
     local cameraData = {
         cameraIndex = CameraIndex.Single,
@@ -708,7 +730,7 @@ PhaseCharFormation.OnEnterSingleChar = HL.Method(HL.Number) << function(self, in
     local charInstId
     if curIndexInfo then
         charInstId = curIndexInfo.charInstId
-        Utils.triggerVoice("chrbark_squad", curIndexInfo.charId)
+        self:_TriggerSquadVoice(curIndexInfo.charId)
     end
 
     self.m_charFormation.uiCtrl:SetSingleCharIndex(index)
@@ -1995,6 +2017,13 @@ end
 
 
 
+PhaseCharFormation._TriggerSquadVoice = HL.Method(HL.Opt(HL.String)) << function(self, charId)
+    if PhaseManager.isRecovering or PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    Utils.triggerVoice("chrbark_squad", charId)
+end
+
 
 PhaseCharFormation._PlayTeamVoice = HL.Method() << function(self)
     if not self.m_curTeam or self.m_charFormation.uiCtrl.state == UIConst.UI_CHAR_FORMATION_STATE.SingleChar then
@@ -2006,7 +2035,7 @@ PhaseCharFormation._PlayTeamVoice = HL.Method() << function(self)
     end
     local index = math.random(1, memberCount)
     local charId = self.m_curTeam[index].charId
-    Utils.triggerVoice("chrbark_squad", charId)
+    self:_TriggerSquadVoice(charId)
 end
 
 

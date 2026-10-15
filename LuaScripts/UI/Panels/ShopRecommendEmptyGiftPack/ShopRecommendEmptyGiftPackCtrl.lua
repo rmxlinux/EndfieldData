@@ -19,6 +19,7 @@ ShopRecommendEmptyGiftPackCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 ShopRecommendEmptyGiftPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_tabData = arg
+    self.m_go = nil
 
     local cashGoodsId = self.m_tabData.cashGoodsIds[1]
     if cashGoodsId == nil then
@@ -27,8 +28,12 @@ ShopRecommendEmptyGiftPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
     end
 
     
-    if not string.isEmpty(self.m_tabData.prefabName) then
-        self.m_go = self:_CreateGO(self.m_tabData.prefabName)
+    if string.isEmpty(self.m_tabData.prefabName) then
+        return
+    end
+    self.m_go = self:_CreateGO(self.m_tabData.prefabName)
+    if IsNull(self.m_go) then
+        return
     end
 
     
@@ -38,6 +43,9 @@ ShopRecommendEmptyGiftPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
 end
 
 ShopRecommendEmptyGiftPackCtrl.OnShow = HL.Override() << function(self)
+    if IsNull(self.m_go) then
+        return
+    end
     GameInstance.player.cashShopSystem:ReadCashGoods(self.m_tabData.cashGoodsIds[1])
 end
 
@@ -48,7 +56,14 @@ end
 
 ShopRecommendEmptyGiftPackCtrl._CreateGO = HL.Method(HL.String).Return(GameObject) << function(self, prefabName)
     local path = string.format(UIConst.UI_CASH_SHOP_CUSTOM_GIFT_PANEL_WIDGETS_PATH, prefabName)
+    
+    if not self.loader:CheckExists(path) then
+        return nil
+    end
     local goAsset = self:LoadGameObject(path)
+    if IsNull(goAsset) then
+        return nil
+    end
     local go = CSUtils.CreateObject(goAsset, self.view.widgetRoot.transform)
     return go
 end

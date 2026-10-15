@@ -65,15 +65,43 @@ PhasePresetTeamSwitch.ShowEnterPresetTeamDungeonConfirm = HL.StaticMethod(HL.Tab
         return
     end
 
-    if useCharFormation then
-        PhaseManager:GoToPhase(PhaseId.CharFormation, {
-            dungeonId = dungeonId,
+    if GameInstance.dungeonManager:CouldDungeonUsePersistentSave(id) then
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = Language.LUA_DUNGEON_STORY_USE_SAVE_CONFIRM_DESC,
+            subContent = Language.LUA_DUNGEON_STORY_USE_SAVE_CONFIRM_WARNING_DESC,
+            onRestartClick = function()
+                if useCharFormation then
+                    PhaseManager:GoToPhase(PhaseId.CharFormation, {
+                        dungeonId = dungeonId,
+                        useSaveData = false,
+                    })
+                else
+                    PhaseManager:GoToPhase(PHASE_ID, {
+                        dungeonId = dungeonId,
+                        presetTeamDungeon = true,
+                        useSaveData = false,
+                    })
+                end
+            end,
+            onConfirm = function()
+                
+                local useSaveData = true
+                if GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, {}, "", useSaveData) then
+                    Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.DungeonBattleFirst)
+                end
+            end
         })
     else
-        PhaseManager:GoToPhase(PHASE_ID, {
-            dungeonId = dungeonId,
-            presetTeamDungeon = true,
-        })
+        if useCharFormation then
+            PhaseManager:GoToPhase(PhaseId.CharFormation, {
+                dungeonId = dungeonId,
+            })
+        else
+            PhaseManager:GoToPhase(PHASE_ID, {
+                dungeonId = dungeonId,
+                presetTeamDungeon = true,
+            })
+        end
     end
 end
 
@@ -143,7 +171,7 @@ PhasePresetTeamSwitch._CreatePresetTeamDungeonArg = HL.Method().Return(HL.Table)
 
     local teamId = subGameData.teamConfigId
     local charInfo = CharInfoUtils.getLockedFormationData(teamId, true)
-
+    local useSaveData = self.arg.useSaveData
     local arg = {
         title = Language.LUA_DUNGEON_CHAR_ENTER_DIALOG_TITLE,
         subTitle = Language.LUA_DUNGEON_CHAR_ENTER_DIALOG_SUBTITLE,
@@ -155,7 +183,7 @@ PhasePresetTeamSwitch._CreatePresetTeamDungeonArg = HL.Method().Return(HL.Table)
                 local presetCharInfo = CharInfoUtils.getPlayerCharInfoByInstId(char.charInstId)
                 table.insert(charInfos, presetCharInfo)
             end
-            if GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, charInfos) then
+            if GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, charInfos, "", useSaveData) then
                 Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.DungeonBattleFirst)
             end
             GameInstance.player.charBag:ClearAllClientCharAndItemData()

@@ -6,6 +6,7 @@
 FACTORY_BUILDING_UI_MAP = {
     [GEnums.FacBuildingType.Hub] = { "FacHUB", false },
     [GEnums.FacBuildingType.SubHub] = { "FacHUB", false },
+    [GEnums.FacBuildingType.SubHubOnlyPower] = { "FacHUB", false },
     [GEnums.FacBuildingType.PowerStation] = { "FacPowerStation", false },
     [GEnums.FacBuildingType.PowerPole] = { "FacPowerPole", false },
     [GEnums.FacBuildingType.MachineCrafter] = { "FacMachineCrafter", false },
@@ -99,12 +100,83 @@ FactoryLogisticDeviceType = {
     Connector = 2,
 }
 
+FAC_INTERACT_TARGET_PURPOSE = {
+    Preview = 1,
+    Click = 2,
+    Rect = 3,
+}
+
+FAC_INTERACT_TARGET_VIEW_MODE = {
+    RPG = 1,
+    TopView = 2,
+}
+
+FAC_INTERACT_MODE = {
+    Disabled = 0,
+    Normal = 1,
+    DestroySingle = 2,
+    BatchSelect = 3,
+}
+
+FAC_INTERACT_TARGET_TYPE = {
+    Building = 1,
+    Logistic = 2,
+    Pipe = 3,
+    Belt = 4,
+}
+
+FAC_INTERACT_SUB_KIND = {
+    Hub = 1,
+    Loader = 2,
+}
+
+FAC_INTERACT_DRAG_FRAME_OP = {
+    Begin = 1,
+    Update = 2,
+    End = 3,
+    Cancel = 4,
+}
+
+FAC_INTERACT_PRESS_HINT_OP = {
+    Start = 1,
+    Stop = 2,
+}
+
+FAC_INTERACT_OPTION_SOURCE_ID = {
+    MainBuilding = "MainBuilding",
+    SubBuilding = "SubBuilding",
+    Belt = "LogisticBelt",
+    DeleteAllBelt = "DeleteAllBelt",
+    Pipe = "LogisticPipe",
+    DeleteAllPipe = "DeleteAllLogisticPipe",
+}
+
+FAC_INTERACT_ICON = {
+    Common = "btn_common_exchange_icon",
+    Delete = "btn_del_building_icon",
+    DeleteSocial = "btn_del_social_building_icon",
+    DeleteAll = "btn_del_all_building_icon",
+    HubPort = "btn_fac_hub_port",
+}
+
+FAC_PIPE_HIGHLIGHT_SOURCE = {
+    InteractHover = "hover",
+    MultiTargetMenu = "menu",
+}
+
 FAC_BUILD_MODE = {
     Normal = 1,
     Building = 2,
     Logistic = 3,
     Belt = 4,
     Blueprint = 5,
+}
+
+
+FAC_BUILD_EXIT_REASON = {
+    CancelInput = 1, 
+    ExitIcon = 2, 
+    System = 3, 
 }
 
 
@@ -309,6 +381,7 @@ NOT_SHOW_IN_POWER_POLE_FC_NODE_TYPES = {
     [GEnums.FCNodeType.Invalid:GetHashCode()] = true,
     [GEnums.FCNodeType.Hub:GetHashCode()] = true,
     [GEnums.FCNodeType.SubHub:GetHashCode()] = true,
+    [GEnums.FCNodeType.SubHubOnlyPower:GetHashCode()] = true,
     [GEnums.FCNodeType.PowerPole:GetHashCode()] = true,
     [GEnums.FCNodeType.PowerDiffuser:GetHashCode()] = true,
     [GEnums.FCNodeType.PowerGate:GetHashCode()] = true,
@@ -343,9 +416,9 @@ FAC_FORMULA_MODE_MAP = {
     LIQUID = "liquid",
     GAS = "gas",
     GASLIQUID = "gasliquid",
-    GASTRANS = "gastrans";
-    LIQUIDTRANS = "liquidtrans";
-    SOLIDTRANS = "solidtrans";
+    GASTRANS = "gastrans",
+    LIQUIDTRANS = "liquidtrans",
+    SOLIDTRANS = "solidtrans",
 }
 
 FAC_FORMULA_MODE_TOGGLE_AUDIO = {
@@ -368,6 +441,10 @@ FAC_TOP_VIEW_BASIC_ACTION_IDS_FOR_CONTROLLER = {
 }
 
 FAC_TOP_VIEW_MOVE_PADDING = -17
+
+
+
+FAC_REMOTE_TOP_VIEW_NODE_POS = Vector3(0, 1000, 0)
 
 FAC_LOGISTIC_SPEED_OVERRIDE = 0.001
 FAC_PIPE_LOGISTIC_SPEED_OVERRIDE = 0.001
@@ -398,7 +475,7 @@ FLUID_LOGISTIC_ITEMS = {
     ["item_log_pipe_conditioner"] = true,
 }
 
-SMARTALERT_TRASNFORM_OFFSET = {
+SMARTALERT_TRANSFORM_OFFSET = {
     [GEnums.FacSmartAlertType.NormalInputSingleBlocked] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.NormalInputMultiBlocked] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.FluidInputSingleBlocked] = { x = 0, y = 0 },
@@ -548,12 +625,20 @@ FAC_TOP_VIEW_IGNORE_STATE_BUILDING_IDS = {
 
 FAC_TOP_VIEW_IGNORE_STATE_BUILDING_TYPES = {
     [GEnums.FacBuildingType.Decorate] = true,
+    [GEnums.FacBuildingType.Soil] = true,
+}
+
+FAC_TOP_VIEW_IGNORE_ICON_BUILDING_TYPES = {
+    [GEnums.FacBuildingType.Soil] = true,
 }
 
 FAC_VALVE_NODE_INT_TYPES = {
     [GEnums.FCNodeType.BoxValve:GetHashCode()] = true,
     [GEnums.FCNodeType.FluidValve:GetHashCode()] = true,
 }
+
+FAC_REGION_CONST = CS.Beyond.Gameplay.RemoteFactory.FactoryRegionConst
+FAC_REGION_TYPES = CS.Beyond.Gameplay.RemoteFactory.FactoryRegionTypes
 
 FAC_VALVE_NODE_IDS = {
     ["log_conditioner"] = true,
@@ -699,3 +784,29 @@ NEED_AUTO_CONNECT_EXTRA_HINT_BUILDING = {
     ["power_diffuser_2"] = true,
     ["power_pole_3"] = true,
 }
+
+
+
+
+TOP_VIEW_KIND = {
+    Local = "Local",
+    Remote = "Remote",
+}
+
+
+TOP_VIEW_ACTION = {
+    EnterLocal = "EnterLocal",
+    EnterRemote = "EnterRemote",
+    ExitManual = "ExitManual",
+}
+
+
+TOP_VIEW_TRANSITION = {
+    None = "None",
+    EnterFromEmpty = "EnterFromEmpty",
+    PushLayer = "PushLayer",
+    SwapTop = "SwapTop",
+    ExitToEmpty = "ExitToEmpty",
+    PopToLocal = "PopToLocal",
+}
+

@@ -77,6 +77,9 @@ DomainDepotGoodsPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ApplyResumeState(self.m_resumeState)
     
 
+    if self.m_currSelectedItemIndex <= 0 then
+        self:_NaviToFirstCell()
+    end
 end
 
 
@@ -102,11 +105,13 @@ end
 
 DomainDepotGoodsPackCtrl.OnHide = HL.Override() << function(self)
     self:_ClearFillTween()
+    Notify(MessageConst.HIDE_COMMON_HOVER_TIP, { noAnimation = true })
     GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), true, {1})
 end
 
 DomainDepotGoodsPackCtrl.OnClose = HL.Override() << function(self)
     self:_ClearFillTween()
+    Notify(MessageConst.HIDE_COMMON_HOVER_TIP, { noAnimation = true })
     GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), true, {1})
 end
 
@@ -140,6 +145,9 @@ DomainDepotGoodsPackCtrl._RefreshNextBtnState = HL.Method() << function(self)
     local enough = currValue >= self.m_minLimitValue
     self.view.nextBtn.interactable = enough
     self.view.nextBtnStateController:SetState(enough and "NormalState" or "DisableState")
+    
+    
+    self.view.nextBtnKeyHint.gameObject:SetActive(true)
     if DeviceInfo.usingController then
         local viewText = enough and self.view.nextBtnText.text or self.view.nextBtnNotEnoughText.text
         self.view.nextBtn.customBindingViewLabelText = viewText
@@ -149,13 +157,12 @@ end
 DomainDepotGoodsPackCtrl._OnPackFailed = HL.Method() << function(self)
     self:_UpdatePackItemDataList()
     self:_UpdateSelectItemListAfterDataChange()
-    if DeviceInfo.usingController then
-        self.view.leftNaviGroup:ManuallyStopFocus()
-    end
     self:_RefreshPackItemList()
     self:_RefreshAllValueState()
     self:_RefreshNextBtnState()
     self.view.nextBtn.enabled = true
+    
+    self:_NaviToFirstCell()
 end
 
 
@@ -222,11 +229,28 @@ DomainDepotGoodsPackCtrl._RestoreControllerNavi = HL.Method(HL.String) << functi
 
     self.view.itemList:ScrollToIndex(CSIndex(targetIndex), true)
     if DeviceInfo.usingController then
-        self.view.leftNaviGroup:ManuallyFocus()
         local cell = self.m_itemCellGetFunc(targetIndex)
         if cell ~= nil then
             self:SetNaviTarget(cell.item.view.button)
         end
+    end
+end
+
+DomainDepotGoodsPackCtrl._NaviToFirstCell = HL.Method() << function(self)
+    if not DeviceInfo.usingController then
+        return
+    end
+    if #self.m_itemInfoList <= 0 then
+        return
+    end
+    self.view.itemList:ScrollToIndex(CSIndex(1), true)
+    if not self.m_itemCellGetFunc then
+        return
+    end
+
+    local cell = self.m_itemCellGetFunc(1)
+    if cell ~= nil then
+        self:SetNaviTarget(cell.item.view.button)
     end
 end
 
@@ -708,20 +732,6 @@ end
 
 
 DomainDepotGoodsPackCtrl._InitPackController = HL.Method() << function(self)
-    self.view.leftNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
-        if not isFocused then
-            if self.m_currSelectedItemIndex > 0 then
-                local currCell = self.m_itemCellGetFunc(self.m_currSelectedItemIndex)
-                if currCell ~= nil then
-                    currCell.item:SetSelected(false)
-                end
-                self.view.numberSelector.view.gameObject:SetActive(false)
-                self.m_currSelectedItemIndex = -1
-            end
-        end
-        
-        self.view.nextBtnKeyHint.gameObject:SetActive(not isFocused)
-    end)
     self.view.leftNaviGroup.getDefaultSelectableFunc = function()
         local firstCellIndex = self.view.itemList:GetShowingCellsIndexRange()
         return self.m_itemCellGetFunc(LuaIndex(firstCellIndex)).item.view.button

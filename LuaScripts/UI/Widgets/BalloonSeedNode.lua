@@ -189,12 +189,14 @@ end
 
 BalloonSeedNode._OnDrag = HL.Method(HL.Any) << function(self, eventData)
     local ctrl = self.m_ctrl
-    if ctrl.m_phase then
-        if not self.m_isSetUnPlace then
-            self.view.stateController:SetState("CanclePlaced")
-        end
-        ctrl.m_phase:OnDraggingCell(eventData)
+    local phase = ctrl.m_phase
+    if not phase or not phase.isDragIngCell then
+        return
     end
+    if not self.m_isSetUnPlace then
+        self.view.stateController:SetState("CanclePlaced")
+    end
+    phase:OnDraggingCell(eventData)
 end
 
 BalloonSeedNode._OnEndDrag = HL.Method(HL.Any) << function(self, eventData)

@@ -38,6 +38,8 @@ LiquidPoolCtrl.m_selectTargetLiquidId = HL.Field(HL.Any)
 
 LiquidPoolCtrl.m_deferExitCor = HL.Field(HL.Thread)
 
+LiquidPoolCtrl.m_ignoreAbility = HL.Field(HL.Boolean) << false 
+
 
 LiquidPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.closeBtn.onClick:AddListener(function()
@@ -69,6 +71,7 @@ LiquidPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local ignoreAbility = arg.ignoreAbility
 
     self.m_nodeId = nodeId
+    self.m_ignoreAbility = ignoreAbility == true
     self.m_selectedItemList = {}
     self.m_selectedItemMap = {}
     self.m_selectedBottleLiquidCapacity = 0
@@ -76,6 +79,8 @@ LiquidPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ToggleBag(false, true)
     self.view.actionTypeToggle:SetIsOnWithoutNotify(tableIndex == 0)
     self:_ToggleContent(tableIndex == 0)
+
+    self:_TryRecoverState(arg.recoverState)
 
     if not ignoreAbility then
         self:_HideLiquidPanelIfForbidden()
@@ -141,6 +146,8 @@ LiquidPoolCtrl._UpdatePoolNode = HL.Method(HL.Table) << function(self, contentNo
     end
 
     node.storageTxt.text = info.isInfinite and Language.LUA_LIQUID_POOL_INFINITE_COUNT or string.format(Language.LUA_LIQUID_STORAGE_FORMAT, info.itemCount, info.maxAmount)
+
+    CS.Beyond.Gameplay.Conditions.OnLiquidPoolLiquidCount.Trigger(info.itemId, info.itemCount, info.isInfinite)
 end
 
 LiquidPoolCtrl._UpdateItemNode = HL.Method(HL.Table, HL.Number) << function(self, contentNode, animType)
@@ -440,6 +447,7 @@ end
 LiquidPoolCtrl._OnSelectNumChanged = HL.Method(HL.Number, HL.Number) << function(self, index, newNum)
     local info = self.m_bagNodeItemInfos[index]
     info.selectedCount = newNum
+    CS.Beyond.Gameplay.Conditions.OnLiquidPoolBagItemSelectedCount.Trigger(info.id, newNum)
     if not self.m_isFilling then
         if newNum == 0 then
             if string.isEmpty(self.m_csInfo.itemId) then 
@@ -671,6 +679,80 @@ LiquidPoolCtrl._OnGeneralAbilityStateChange = HL.Method(HL.Table) << function(se
         return 
     end
     self:_HideLiquidPanelIfForbidden()
+end
+
+
+
+
+
+
+LiquidPoolCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local selectedItemList = {}
+    for k, v in ipairs(self.m_selectedItemList) do
+        selectedItemList[k] = { id = v.id, count = v.count }
+    end
+    local selectedItemMap = {}
+    for id, count in pairs(self.m_selectedItemMap) do
+        selectedItemMap[id] = count
+    end
+    local recoverState = {
+        selectedItemList = selectedItemList,
+        selectedItemMap = selectedItemMap,
+        selectTargetLiquidId = self.m_selectTargetLiquidId,
+        selectedBottleLiquidCapacity = self.m_selectedBottleLiquidCapacity,
+    }
+    if self:_IsBagActive() then
+        local selectedCountMap = {}
+        for _, info in ipairs(self.m_bagNodeItemInfos) do
+            if info.selectedCount > 0 then
+                selectedCountMap[info.id] = info.selectedCount
+            end
+        end
+        recoverState.bagState = {
+            selectedCountMap = selectedCountMap,
+            selectTargetLiquidId = self.m_bagNodeSelectTargetLiquidId,
+            selectedIndex = self.m_bagNodeSelectedIndex,
+        }
+    end
+    return {
+        nodeId = self.m_nodeId,
+        tableIndex = self.m_isFilling and 0 or 1,
+        ignoreAbility = self.m_ignoreAbility,
+        recoverState = recoverState,
+    }
+end
+
+
+LiquidPoolCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Table)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    self.m_selectedItemList = recoverState.selectedItemList or {}
+    self.m_selectedItemMap = recoverState.selectedItemMap or {}
+    self.m_selectTargetLiquidId = recoverState.selectTargetLiquidId
+    self.m_selectedBottleLiquidCapacity = recoverState.selectedBottleLiquidCapacity or 0
+
+    local node = self.m_isFilling and self.view.fillContent or self.view.dumpContent
+    self:_UpdateItemNode(node, ItemAnimType.Init)
+    self:_UpdateBottomNode()
+
+    local bagState = recoverState.bagState
+    if bagState ~= nil then
+        self.m_bagNodeSelectedIndex = bagState.selectedIndex or 1
+        self:_ToggleBag(true)
+        
+        for _, info in ipairs(self.m_bagNodeItemInfos) do
+            local selectedCount = bagState.selectedCountMap[info.id]
+            if selectedCount ~= nil then
+                info.selectedCount = selectedCount
+            end
+        end
+        self.m_bagNodeSelectTargetLiquidId = bagState.selectTargetLiquidId
+        self:_UpdateBagNodeAllItemValidStateOnSelect()
+        local itemScrollList = self.view.bagNode.itemScrollList
+        itemScrollList:UpdateCount(#self.m_bagNodeItemInfos)
+        itemScrollList:ScrollToIndex(CSIndex(self.m_bagNodeSelectedIndex), true)
+    end
 end
 
 

@@ -31,6 +31,8 @@ ActivityRankingCtrl = HL.Class('ActivityRankingCtrl', uiCtrl.UICtrl)
 
 ActivityRankingCtrl.m_activityId = HL.Field(HL.String) << ""
 
+ActivityRankingCtrl.m_stateName = HL.Field(HL.String) << ''
+
 ActivityRankingCtrl.m_rankRelatedId = HL.Field(HL.String) << ""
 
 ActivityRankingCtrl.m_genRankListCellFunc = HL.Field(HL.Function)
@@ -58,6 +60,9 @@ ActivityRankingCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 ActivityRankingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    if arg.stateName~= nil and not string.isEmpty(arg.stateName) then
+        self.m_stateName = arg.stateName
+    end
     self:_InitUI()
     self:_InitData(arg)
     self:_InitView()
@@ -122,7 +127,6 @@ end
 ActivityRankingCtrl._InitView = HL.Method() << function(self)
     
     self.view.main:SetState(PanelState.Loading)
-
     local activityRankInfoCfg = Tables.activityRankInfoTable[self.m_rankRelatedId]
     self.view.main:SetState(activityRankInfoCfg.rankValueStyleType:ToString())
 
@@ -246,12 +250,18 @@ ActivityRankingCtrl._OnUpdateCellRankingCell = HL.Method(GameObject, HL.Number) 
         cell.commonPlayerHead:InitCommonPlayerHead(avatarPath, "", false, 0, npcRankInfoCfg.name)
     end
 
-    cell.timeTxt.text = UIUtils.getLeftTimeToSecond(floorRankValueConverter(rankInfo.rankValue or 0))
+    local showText = ""
+    if rankInfo.style:ToString() == "Value" then
+        showText = rankInfo.rankValue and math.floor(rankInfo.rankValue) or "0"
+    elseif rankInfo.style:ToString() == "Time" then
+        showText = UIUtils.getLeftTimeToSecond(floorRankValueConverter(rankInfo.rankValue or 0))
+    end
+    cell.timeTxt.text = showText
+    cell.valueTxt.text = showText
     cell.rankingTxt.text = luaIndex
     cell.stateController:SetState(identityTypeState)
     cell.stateController:SetState(rankValueState)
     cell.stateController:SetState(rankInfo.style:ToString())
-
     local success, topicCfg = Tables.businessCardTopicTable:TryGetValue(topicId)
     if success then
         cell.themeImg:LoadSprite(UIConst.UI_BUSINESS_CARD_ICON_PATH, topicCfg.id)
@@ -285,8 +295,6 @@ ActivityRankingCtrl._RefreshSelfInfo = HL.Method() << function(self)
 
     local selfRankLuaIndex = self.m_selfRankInfo.rankLuaIndex
     selfNode.rankingTxt.text = selfRankLuaIndex or "-"
-    selfNode.timeTxt.text = self.m_selfRankInfo.rankValue and
-            UIUtils.getLeftTimeToSecond(floorRankValueConverter(self.m_selfRankInfo.rankValue)) or "--:--"
 
     selfNode.stateController:SetState(IdentityTypeState.Self)
     local rankValueState = selfRankLuaIndex and self:_GetRankingStateByRanking(selfRankLuaIndex) or RankingState.RankingNormal
@@ -294,6 +302,15 @@ ActivityRankingCtrl._RefreshSelfInfo = HL.Method() << function(self)
 
     local activityRankInfoCfg = Tables.activityRankInfoTable[self.m_rankRelatedId]
     selfNode.stateController:SetState(activityRankInfoCfg.rankValueStyleType:ToString())
+
+    local showText = ""
+    if activityRankInfoCfg.rankValueStyleType:ToString() == "Value" then
+        showText = self.m_selfRankInfo.rankValue and math.floor(self.m_selfRankInfo.rankValue) or "0"
+    elseif activityRankInfoCfg.rankValueStyleType:ToString() == "Time" then
+        showText = self.m_selfRankInfo.rankValue and UIUtils.getLeftTimeToSecond(floorRankValueConverter(self.m_selfRankInfo.rankValue)) or "--:--"
+    end
+    selfNode.timeTxt.text = showText
+    selfNode.valueTxt.text = showText
 
     local success, topicCfg = Tables.businessCardTopicTable:TryGetValue(selfInfo.businessCardTopicId)
     if success then
@@ -342,6 +359,9 @@ ActivityRankingCtrl._PlayLocateSelfAnim = HL.Method() << function(self)
     if not rankCell then
         logger.error("ActivityRankingCtrl._PlayLocateSelfAnim cant get rankCell, rankIndex:", luaIndex)
         return
+    end
+    if self.m_stateName == "GambleBattle" then
+        AudioAdapter.PostEvent("Au_UI_Event_RankHighLight")
     end
     rankCell.animationWrapper:Play(LocateSelfAnim)
 end

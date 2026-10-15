@@ -127,6 +127,7 @@ GeneralAbilityCtrl.m_mobileHoverCancelFlag = HL.Field(HL.Boolean) << false
 GeneralAbilityCtrl.m_mobileOpenSelector = HL.Field(HL.Boolean) << false
 
 GeneralAbilityCtrl.m_isSelectorShown = HL.Field(HL.Boolean) << false
+GeneralAbilityCtrl.m_ignoreCameraDragUntilFrame = HL.Field(HL.Number) << -1
 
 GeneralAbilityCtrl.m_decoCells = HL.Field(HL.Forward("UIListCache"))
 
@@ -274,6 +275,10 @@ GeneralAbilityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self.view.selectedAbilityNodeDragHandler.onDrag:AddListener(function(eventData)
+        
+        if DeviceInfo.usingKeyboard and Time.frameCount <= self.m_ignoreCameraDragUntilFrame then
+            return
+        end
         Notify(MessageConst.MOVE_LEVEL_CAMERA, eventData.delta)
     end)
 
@@ -1159,6 +1164,10 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
         if isShown then
             self:ChangePanelCfg("realMouseMode", Types.EPanelMouseMode.NeedShow)
             if abilityData ~= nil and abilityData.cell ~= nil then
+                if DeviceInfo.usingKeyboard then
+                    
+                    self.m_ignoreCameraDragUntilFrame = Time.frameCount + 1
+                end
                 InputManagerInst:MoveMouseTo(self.view.mainRect, self.uiCamera)
             end
         else

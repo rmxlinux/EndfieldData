@@ -8,7 +8,12 @@ ActivityPushPopupInfo.m_pushCfg = HL.Field(HL.Any)
 ActivityPushPopupInfo.m_rewardCellCache = HL.Field(HL.Any)
 
 
+
+local PAGE_CLIP_VERTICAL_EXTEND = 1000
+
+
 ActivityPushPopupInfo._OnFirstTimeInit = HL.Override() << function(self)
+
 end
 
 ActivityPushPopupInfo.InitActivityPushPopupInfo = HL.Method(HL.Any) << function(self, arg)
@@ -16,6 +21,16 @@ ActivityPushPopupInfo.InitActivityPushPopupInfo = HL.Method(HL.Any) << function(
     self:_InitData(arg)
     self:_InitUI()
     self:_RefreshAllUIs()
+    self:_RefreshPageClip()
+end
+
+ActivityPushPopupInfo._RefreshPageClip = HL.Method() << function(self)
+    local ctrl = self:GetUICtrl()
+    local screenWidth = ctrl and ctrl.view.rectTransform.rect.width or 0
+    local extraWidth = math.max(0, screenWidth - self.rectTransform.rect.width)
+    local halfExtraWidth = extraWidth / 2
+    self.view.clipMask.padding = Vector4(-halfExtraWidth, -PAGE_CLIP_VERTICAL_EXTEND, -halfExtraWidth,
+        -PAGE_CLIP_VERTICAL_EXTEND)
 end
 
 ActivityPushPopupInfo._InitData = HL.Method(HL.Any) << function(self, arg)
@@ -27,6 +42,7 @@ end
 
 ActivityPushPopupInfo._InitUI = HL.Method() << function(self)
     
+    self.view.safeAreaMask.onClick:RemoveAllListeners()
     self.view.safeAreaMask.onClick:AddListener(function()
         local ctrl = self:GetUICtrl()
         if ctrl and not ctrl:IsPlayingAnimationOut() then
@@ -66,8 +82,14 @@ ActivityPushPopupInfo._InitUI = HL.Method() << function(self)
     local state
     if self.m_pushCfg.isPreview then
         state = "Preview"
-        local _ , activityCfg = Tables.activityTable:TryGetValue(self.m_activityId)
-        local activityStartTime = Utils.getTimeIdOpenTimeStamp(activityCfg.timeId)
+        local openTimeId
+        if not string.isEmpty(self.m_pushCfg.previewCountdownTimeId) then
+            openTimeId = self.m_pushCfg.previewCountdownTimeId
+        else
+            local _ , activityCfg = Tables.activityTable:TryGetValue(self.m_activityId)
+            openTimeId = activityCfg.timeId
+        end
+        local activityStartTime = Utils.getTimeIdOpenTimeStamp(openTimeId)
         gotoNode.countDownText:InitCountDownText(activityStartTime, nil, function(leftSec)
             local leftTime = UIUtils.getLeftTime(leftSec)
             return string.format(Language.LUA_ACTIVITY_RECOMMEND_POPUP_START_COUNTDOWN_TEXT, leftTime)
@@ -94,7 +116,7 @@ ActivityPushPopupInfo._InitUI = HL.Method() << function(self)
     gotoNode.stateController:SetState(state)
 
     
-    self.m_rewardCellCache = UIUtils.genCellCache(gotoNode.rewardItem)
+    self.m_rewardCellCache = self.m_rewardCellCache or UIUtils.genCellCache(gotoNode.rewardItem)
 end
 
 ActivityPushPopupInfo._RefreshAllUIs = HL.Method() << function(self)

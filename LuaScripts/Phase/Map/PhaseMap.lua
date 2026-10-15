@@ -17,6 +17,7 @@ local DETAIL_PANEL_MAP = {
     [MarkType.CampFire] = PanelId.MapMarkDetailCampFire,
     [MarkType.BlackBox] = PanelId.MapMarkDetailBlackBox,
     [MarkType.DoodadGroup] = PanelId.MapMarkDetailDoodadGroup,
+    [MarkType.FoodBox] = PanelId.MapMarkDetailFoodBox,
     [MarkType.EnemySpawner] = PanelId.MapMarkDetailEnemySpawner,
     [MarkType.MinePointTeam] = PanelId.MapMarkDetailMinePointTeam,
     [MarkType.Recycler] = PanelId.MapMarkDetailRecycleBin,
@@ -52,6 +53,9 @@ local DETAIL_PANEL_MAP = {
     [MarkType.GasMinePointTeam] = PanelId.MapMarkDetailGasMinePointTeam,
     [MarkType.SeasonTower] = PanelId.MapMarkDetailSeasonTower,
     [MarkType.TyphoeaArchery] = PanelId.MapMarkDetailTyphoeaArchery,
+    [MarkType.Inn] = PanelId.MapMarkDetailInn,
+    [MarkType.RanchRegion] = PanelId.MapMarkDetailInnRanch,
+    [MarkType.FarmTerminal] = PanelId.MapMarkDetailCropmachine,
 
     
     [MarkType.DungeonPuzzle] = PanelId.MapMarkDetailDungeon,
@@ -64,6 +68,8 @@ local DETAIL_PANEL_MAP = {
     [MarkType.SewageTreatPlant] = PanelId.MapMarkDetailSewageTreatPlant,
     [MarkType.InvalidBuilding] = PanelId.MapMarkDetailInvalidBuilding,
     [MarkType.CommonBuilding] = PanelId.MapMarkDetailCommonBuilding,
+
+    [MarkType.CropRegion] = PanelId.MapMarkDetailCropRegion,
 }
 
 local FILTER_PANEL_ID = PanelId.MapMarkFilter

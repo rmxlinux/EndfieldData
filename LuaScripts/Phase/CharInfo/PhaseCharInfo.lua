@@ -221,8 +221,6 @@ PhaseCharInfo._OnInit = HL.Override() << function(self)
         end
         self.arg.initCharInfo = self.arg.initCharInfoCreator(initCharTemplateId)
     end
-    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
-    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
 
 PhaseCharInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
@@ -556,9 +554,11 @@ PhaseCharInfo._InitCharacter = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)
     self:_RefreshProfileShowCam({
         pageType = pageType,
     })
-    self:_RefreshVoiceTriggerVo(pageType)
-    
-    self:_TriggerCharBarkSwitch(pageType)
+
+    self:_RunAfterCharItemInit(function()
+        self:_RefreshVoiceTriggerVo(pageType)
+        self:_TriggerCharBarkSwitch(pageType)
+    end)
 
     if CharInfoUtils.getPlayerCharInfoByTemplateId(templateId, GEnums.CharType.Default)
         and RedDotManager:GetRedDotState("CharNew", templateId) then
@@ -597,10 +597,8 @@ PhaseCharInfo._GenerateCharInfoList = HL.Method(HL.Table).Return(HL.Table) << fu
         charInfoList = CharInfoUtils.getCharInfoListByInstIdList(initCharInfo.charInstIdList, initCharInfo.isShowPreview)
     else
         self.m_isNormalCharList = true
-        local dungeonId = GameInstance.dungeonManager.curDungeonId
-        local specialTeamType = DungeonUtils.getSpecialTeamType(dungeonId)
         local isFullLockedTeam, formationData = CharInfoUtils.IsFullLockedTeam()
-        if isFullLockedTeam or specialTeamType ~= nil then
+        if isFullLockedTeam then
             charInfoList = {}
             
             local curSquad = GameInstance.player.squadManager.curSquad
@@ -626,17 +624,8 @@ PhaseCharInfo._GenerateCharInfoList = HL.Method(HL.Table).Return(HL.Table) << fu
                 end
             end
         else
-            if Utils.isInMainScope() then
-                local csTeamIndex
-                local dungeonId = GameInstance.dungeonManager.curDungeonId
-                if DungeonUtils.isDungeonContract(dungeonId) then
-                    csTeamIndex = Tables.globalConst.contingencyContractCharTeamIndex
-                end
-                charInfoList = CharInfoUtils.getCharInfoList(csTeamIndex)
-            else
-                charInfoList = CharInfoUtils.getCurScopeCharInfoList()
-            end
             if formationData then
+                charInfoList = CharInfoUtils.getCharInfoListBySquad(GameInstance.player.squadManager.curSquad)
                 for _, charFormationInfo in pairs(formationData.chars) do
                     local isShowFixed, isShowTrail = CharInfoUtils.getLockedFormationCharTipsShow(charFormationInfo)
                     for _, charInfo in pairs(charInfoList) do
@@ -646,6 +635,10 @@ PhaseCharInfo._GenerateCharInfoList = HL.Method(HL.Table).Return(HL.Table) << fu
                         end
                     end
                 end
+            elseif Utils.isInMainScope() then
+                charInfoList = CharInfoUtils.getCharInfoList()
+            else
+                charInfoList = CharInfoUtils.getCurScopeCharInfoList()
             end
         end
     end
@@ -706,6 +699,7 @@ PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL
     local skipIn = forceSkipIn == true or CHARACTER_ANIMATOR_SKIP_IN_TAB[mainControlTab]
 
     self.m_charItemInitComplete = false
+    self.m_actionsAfterCharItemInitCompleted:Clear()
     self:_RefreshCharModelAddon(sceneObject, initCharInfo)
     self:CreatePhaseCharItem(data, sceneObject.view.charContainer, function(phaseItem)
         self.m_charItemInitComplete = true
@@ -759,6 +753,14 @@ PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL
 
         CS.Beyond.Gameplay.Conditions.OnCharInfoModelInitFinish.Trigger()
     end, true, UIConst.UI_MODEL_LAYER)
+end
+
+PhaseCharInfo._RunAfterCharItemInit = HL.Method(HL.Function) << function(self, action)
+    if self.m_charItemInitComplete then
+        action()
+    else
+        self.m_actionsAfterCharItemInitCompleted:Push(action)
+    end
 end
 
 PhaseCharInfo._RefreshCharModelAddon = HL.Method(HL.Userdata, HL.Table) << function(self, sceneObject, initCharInfo)
@@ -900,9 +902,10 @@ PhaseCharInfo.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInf
     self:_RefreshCamGroup(sceneObject, isFastCam, templateId, self.m_curPage)
     self:_RefreshAddonLight(sceneObject, true, templateId, self.m_curPage, self.m_curPage)
 
-    self:_RefreshVoiceTriggerVo(self.m_curPage)
-    
-    self:_TriggerCharBarkSwitch(self.m_curPage)
+    self:_RunAfterCharItemInit(function()
+        self:_RefreshVoiceTriggerVo(self.m_curPage)
+        self:_TriggerCharBarkSwitch(self.m_curPage)
+    end)
 
     self:_RefreshWeaponDeco({
         pageType = self.m_curPage,
@@ -1244,6 +1247,8 @@ end
 
 
 PhaseCharInfo._CloseOrHidePanel = HL.Method(HL.Table).Return(HL.Number) << function(self, neededPanels)
+    Notify(MessageConst.CHAR_INFO_CLOSE_SKILL_TIP)
+    Notify(MessageConst.CHAR_INFO_CLOSE_ATTR_TIP)
     local waitOutDuration = 0.2
     for panelId, panelItem in pairs(self.m_panel2Item) do
         if panelItem.uiCtrl:IsShow() and (not lume.find(neededPanels, panelId)) then
@@ -1270,6 +1275,8 @@ PhaseCharInfo._CloseOrHidePanel = HL.Method(HL.Table).Return(HL.Number) << funct
 end
 
 PhaseCharInfo._CloseOrHidePanelImmediately = HL.Method(HL.Table) << function(self, neededPanels)
+    Notify(MessageConst.CHAR_INFO_CLOSE_SKILL_TIP)
+    Notify(MessageConst.CHAR_INFO_CLOSE_ATTR_TIP)
     for panelId, panelItem in pairs(self.m_panel2Item) do
         if panelItem.uiCtrl:IsShow(true) and (not lume.find(neededPanels, panelId)) then
             if CLOSE_WHEN_ANIMATION_OUT[panelId] then
@@ -2878,14 +2885,14 @@ end
 
 PhaseCharInfo.HideCharExpandList = HL.Method() << function(self)
     local panelItem = self:_GetPanelPhaseItem(PanelId.CharExpandList)
-    if panelItem then
+    if panelItem and panelItem.uiCtrl then
         panelItem.uiCtrl:PlayAnimationOutAndHide()
     end
 end
 
 PhaseCharInfo.RefreshCharExpandList = HL.Method(HL.Table, HL.Table) << function(self, charInfo, charInfoList)
     local panelItem = self:_GetPanelPhaseItem(PanelId.CharExpandList)
-    if panelItem then
+    if panelItem and panelItem.uiCtrl then
         panelItem.uiCtrl:RefreshCharExpandList(charInfo, charInfoList, true)
     end
 end

@@ -140,15 +140,13 @@ DepotContent._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-DepotContent._GetDepot = HL.Method().Return(CS.Beyond.Gameplay.InventorySystem.ItemDepot) << function(self)
+DepotContent._GetDepot = HL.Method().Return(HL.Opt(CS.Beyond.Gameplay.InventorySystem.ItemDepot)) << function(self)
     if self.m_isFactoryDepot then
         local factoryDepot = GameInstance.player.inventory.factoryDepot
         local depotInChapter = factoryDepot:GetOrFallback(Utils.getCurrentScope())
-        local actualDepot = depotInChapter[Utils.getCurrentChapterId()]
-        if self.m_domainId ~= "" then
-            actualDepot = depotInChapter[ScopeUtil.ChapterIdStr2Int(self.m_domainId)]
-        end
-        return actualDepot
+        local chapter = self.m_domainId ~= "" and ScopeUtil.ChapterIdStr2Int(self.m_domainId) or Utils.getCurrentChapterId()
+        local succ, depot = depotInChapter:TryGetValue(chapter)
+        return succ and depot or nil
     else
         return GameInstance.player.inventory.valuableDepots[self.m_valuableDepotType]:GetOrFallback(Utils.getCurrentScope())
     end
@@ -359,6 +357,12 @@ DepotContent.RefreshAll = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(
     local allItemInfoList = {}
 
     local depot = self:_GetDepot()
+    if depot == nil then
+        self.m_allItemInfoList = {}
+        self.m_allItemInfoMap = {}
+        self:ChangeShowingType(self.m_showingTypes, skipGraduallyShow)
+        return
+    end
     local processItem = function(id, count, instId, isInfinite)
         local valid = true
         if self.m_nonValidShowTypes then
@@ -700,6 +704,9 @@ function(self, depotChange, refreshAll)
     end
 
     local depot = self:_GetDepot()
+    if depot == nil then
+        return
+    end
     for _, itemId in pairs(depotChange.normalItemIds) do
         local index = self.m_itemIndexMap[itemId]
         self:_RefreshSingleItemCount(index, depot:GetCount(itemId))

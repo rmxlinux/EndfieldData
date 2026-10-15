@@ -117,7 +117,7 @@ HyperlinkPopupCtrl.OnAnimationInFinished = HL.Override() << function(self)
     for i = 1, originalTextDataCount do
         local cell = self.m_genOriginalTxtCells:Get(i)
         if cell then
-            self.m_originalTextDataList[i].hyperTextData = HyperlinkPopupCtrl._WrapHyperTextData(cell.originalTxt)
+            self.m_originalTextDataList[i].hyperTextData = HyperTextNaviHelper.WrapHyperTextData(cell.originalTxt)
         end
     end
     if DeviceInfo.usingController and #self.m_originalTextDataList > 0 then
@@ -211,70 +211,6 @@ HyperlinkPopupCtrl._InitData = HL.Method(HL.Table) << function(self, args)
             end
         end
     end
-end
-
-HyperlinkPopupCtrl._WrapHyperTextData = HL.StaticMethod(CS.Beyond.UI.UIText).Return(HL.Table) << function(uiText)
-    local textData = {
-        uiText = uiText,
-        
-        linkDataList = {},
-        curFocusIndex = 1,
-        
-        lineLinkDataListMap = {},
-        lineOrderList = {},
-    }
-    local textInfo = uiText.textInfo
-    local linkLength = textInfo.linkCount
-    
-    if linkLength > 0 then
-        for luaIndex = 1, linkLength do
-            local csIndex = CSIndex(luaIndex)
-            local hyperlinkInfo = textInfo.linkInfo[csIndex]
-            local _, linkId = uiText:TryGetLinkId(csIndex)
-            
-            local startCharIndex = hyperlinkInfo.linkTextfirstCharacterIndex
-            local startCharInfo = textInfo.characterInfo[startCharIndex]
-            local startLineNumber = startCharInfo.lineNumber
-            local endCharIndex = startCharIndex + hyperlinkInfo.linkTextLength - 1
-            local endCharInfo = textInfo.characterInfo[endCharIndex]
-            local endLineNumber = endCharInfo.lineNumber
-            
-            local linkData = {
-                index = luaIndex,
-                linkId = linkId,
-                lineOrder = 1,
-                
-                startCharIndex = startCharIndex,
-                startLineNumber = startLineNumber,
-                startXPos = startCharInfo.topLeft.x,
-                
-                endCharIndex = endCharIndex,
-                endLineNumber = endLineNumber,
-                endXPos = endCharInfo.topRight.x,
-            }
-            table.insert(textData.linkDataList, linkData)
-            
-            local lineLinkDataList = textData.lineLinkDataListMap[startLineNumber]
-            if lineLinkDataList == nil then
-                lineLinkDataList = {}
-                textData.lineLinkDataListMap[startLineNumber] = lineLinkDataList
-                table.insert(textData.lineOrderList, startLineNumber)
-            end
-            linkData.lineOrder = #textData.lineOrderList
-            table.insert(lineLinkDataList, linkData)
-            
-            if startLineNumber ~= endLineNumber then
-                lineLinkDataList = textData.lineLinkDataListMap[endLineNumber]
-                if lineLinkDataList == nil then
-                    lineLinkDataList = {}
-                    textData.lineLinkDataListMap[endLineNumber] = lineLinkDataList
-                    table.insert(textData.lineOrderList, endLineNumber)
-                end
-                table.insert(lineLinkDataList, linkData)
-            end
-        end
-    end
-    return textData
 end
 
 HyperlinkPopupCtrl._WrapTermData = HL.StaticMethod(HL.String, HL.Number).Return(HL.Table) << function(linkId, stackIndex)
@@ -554,7 +490,7 @@ HyperlinkPopupCtrl._PushTerm = HL.Method(HL.String) << function(self, linkId)
         
         local termCell = self.m_genTermCells:Get(self.m_genTermCells:GetCount())
         if termCell then
-            data.contentHyperTextData = HyperlinkPopupCtrl._WrapHyperTextData(termCell.contentTxt)
+            data.contentHyperTextData = HyperTextNaviHelper.WrapHyperTextData(termCell.contentTxt)
             self:_AutoRefreshNavi()
         end
     end
@@ -714,7 +650,7 @@ HyperlinkPopupCtrl._OnMoveNaviDown = HL.Method() << function(self)
     if self.m_curFocusLayer == LayerType.OriginalText then
         local curTextIndex = self.m_targetUITextIndex
         local textData = self.m_originalTextDataList[curTextIndex].hyperTextData
-        local nextIndex = HyperlinkPopupCtrl._GetNextLinkIndexDown(textData)
+        local nextIndex = HyperTextNaviHelper.GetNextLinkIndexDown(textData)
         if nextIndex > 0 then
             textData.curFocusIndex = nextIndex
             self:_ForceRefreshBaseLink(textData.linkDataList[nextIndex].linkId)
@@ -734,7 +670,7 @@ HyperlinkPopupCtrl._OnMoveNaviDown = HL.Method() << function(self)
     else
         local termData = self.m_termDataStack:Peek()
         local textData = termData.contentHyperTextData
-        local nextIndex = HyperlinkPopupCtrl._GetNextLinkIndexDown(textData)
+        local nextIndex = HyperTextNaviHelper.GetNextLinkIndexDown(textData)
         if nextIndex > 0 then
             textData.curFocusIndex = nextIndex
             
@@ -752,7 +688,7 @@ HyperlinkPopupCtrl._OnMoveNaviUp = HL.Method() << function(self)
     if self.m_curFocusLayer == LayerType.OriginalText then
         local curTextIndex = self.m_targetUITextIndex
         local textData = self.m_originalTextDataList[curTextIndex].hyperTextData
-        local nextIndex = HyperlinkPopupCtrl._GetNextLinkIndexUp(textData)
+        local nextIndex = HyperTextNaviHelper.GetNextLinkIndexUp(textData)
         if nextIndex > 0 then
             textData.curFocusIndex = nextIndex
             self:_ForceRefreshBaseLink(textData.linkDataList[nextIndex].linkId)
@@ -773,7 +709,7 @@ HyperlinkPopupCtrl._OnMoveNaviUp = HL.Method() << function(self)
     else
         local termData = self.m_termDataStack:Peek()
         local textData = termData.contentHyperTextData
-        local nextIndex = HyperlinkPopupCtrl._GetNextLinkIndexUp(textData)
+        local nextIndex = HyperTextNaviHelper.GetNextLinkIndexUp(textData)
         if nextIndex > 0 then
             textData.curFocusIndex = nextIndex
             
@@ -782,88 +718,6 @@ HyperlinkPopupCtrl._OnMoveNaviUp = HL.Method() << function(self)
             self:_OnMoveNaviLeft()
         end
     end
-end
-
-HyperlinkPopupCtrl._GetNextLinkIndexDown = HL.StaticMethod(HL.Table).Return(HL.Number) << function(textData)
-    local curFocusLinkData = textData.linkDataList[textData.curFocusIndex]
-    if not curFocusLinkData then
-        return -1
-    end
-    local nextLineOrder = curFocusLinkData.lineOrder + 1
-    local nextIndex = -1
-    
-    if nextLineOrder > #textData.lineOrderList then
-        return nextIndex    
-    end
-    
-    for order = nextLineOrder, #textData.lineOrderList do
-        local lineNumber = textData.lineOrderList[order]
-        local lineLinkDataList = textData.lineLinkDataListMap[lineNumber]
-        local cachedPosDelta = 0
-        local curPosDelta = 0
-        for _, linkData in pairs(lineLinkDataList) do
-            
-            if linkData.index ~= curFocusLinkData.index then
-                
-                if lineNumber == linkData.startLineNumber then
-                    curPosDelta = math.abs(linkData.startXPos - curFocusLinkData.startXPos)
-                else
-                    curPosDelta = math.abs(linkData.endXPos - curFocusLinkData.startXPos)
-                end
-                
-                if nextIndex < 1 or curPosDelta < cachedPosDelta then
-                    nextIndex = linkData.index
-                    cachedPosDelta = curPosDelta
-                end
-            end
-        end
-        
-        if nextIndex > 0 then
-            break
-        end
-    end
-    return nextIndex
-end
-
-HyperlinkPopupCtrl._GetNextLinkIndexUp = HL.StaticMethod(HL.Table).Return(HL.Number) << function(textData)
-    local curFocusLinkData = textData.linkDataList[textData.curFocusIndex]
-    if not curFocusLinkData then
-        return -1
-    end
-    local nextLineOrder = curFocusLinkData.lineOrder - 1
-    local nextIndex = -1
-    
-    if nextLineOrder < 1 then
-        return nextIndex    
-    end
-    
-    for order = nextLineOrder, 1, -1 do
-        local lineNumber = textData.lineOrderList[order]
-        local lineLinkDataList = textData.lineLinkDataListMap[lineNumber]
-        local cachedPosDelta = 0
-        local curPosDelta = 0
-        for _, linkData in pairs(lineLinkDataList) do
-            
-            if linkData.index ~= curFocusLinkData.index then
-                
-                if lineNumber == linkData.startLineNumber then
-                    curPosDelta = math.abs(linkData.startXPos - curFocusLinkData.startXPos)
-                else
-                    curPosDelta = math.abs(linkData.endXPos - curFocusLinkData.startXPos)
-                end
-                
-                if nextIndex < 1 or curPosDelta < cachedPosDelta then
-                    nextIndex = linkData.index
-                    cachedPosDelta = curPosDelta
-                end
-            end
-        end
-        
-        if nextIndex > 0 then
-            break
-        end
-    end
-    return nextIndex
 end
 
 HyperlinkPopupCtrl._ChangeNavi = HL.Method(HL.Table) << function(self, textData)

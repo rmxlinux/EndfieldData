@@ -126,12 +126,9 @@ DomainDepotTabCtrl._OnTabChange = HL.Method(HL.Number) << function(self, index)
         return
     end
 
+    self.view['tab'..index].toggle:SetIsOnWithoutNotify(true)
     if self.m_index == index then
         return
-    end
-
-    if self.m_index <= 0 then
-        self.view['tab'..index].toggle:SetIsOnWithoutNotify(true) 
     end
 
     self.m_index = index

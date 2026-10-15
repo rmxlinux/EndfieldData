@@ -48,6 +48,8 @@ UsableItemChestCtrl.m_firstRandomItemId = HL.Field(HL.String) << ""
 
 UsableItemChestCtrl.m_currNaviRandomIndex = HL.Field(HL.Number) << 0
 
+UsableItemChestCtrl.m_rewardType = HL.Field(HL.Any)
+
 
 UsableItemChestCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.btnClose.onClick:AddListener(function()
@@ -55,6 +57,31 @@ UsableItemChestCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end)
 
     args = args or {}
+
+    
+    self.m_selectedRewardId = ""
+    if type(args.selectedRewardIds) == "table" then
+        for _, rewardId in pairs(args.selectedRewardIds) do
+            if not string.isEmpty(rewardId) then
+                self.m_selectedRewardId = rewardId
+                break
+            end
+        end
+    elseif args.selectedRewardId then
+        self.m_selectedRewardId = args.selectedRewardId
+    end
+
+    
+    if args.rewardType ~= nil and args.rewardType ~= GEnums.ItemCaseRewardType.Default then
+        self.m_rewardType = args.rewardType
+        local autoChestId = self:_AutoSelectChest(args.rewardType, self.m_selectedRewardId)
+        if autoChestId == nil then
+            logger.error("根据rewardType未找到合适的物品箱")
+            return
+        end
+        args.itemId = autoChestId
+    end
+
     self.m_itemId = args.itemId
     local getUsableItemChestInfo, usableItemChestData = Tables.usableItemChestTable:TryGetValue(self.m_itemId)
     if not getUsableItemChestInfo then
@@ -66,18 +93,6 @@ UsableItemChestCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_chosenRewardsCount = 0
     self.m_maxChosenRewardCount = 0
     self.m_curSelectCharIndex = 0
-    self.m_selectedRewardId = ""
-    if type(args.selectedRewardIds) == "table" then
-        
-        for _, rewardId in pairs(args.selectedRewardIds) do
-            if not string.isEmpty(rewardId) then
-                self.m_selectedRewardId = rewardId
-                break
-            end
-        end
-    elseif args.selectedRewardId then
-        self.m_selectedRewardId = args.selectedRewardId
-    end
 
     self.m_chosenRewardIds = {}
     self.m_itemSlotConditions = {}
@@ -782,6 +797,49 @@ UsableItemChestCtrl._OnBlockKeyboardEventPanelOrderChanged = HL.Method() << func
     self.view.numberSelector.view.addBtnKeyHint.transform:GetComponent("CustomUIStyle").overrideValidState = state
 end
 
+UsableItemChestCtrl._AutoSelectChest = HL.Method(HL.Any, HL.String).Return(HL.Opt(HL.String)) << function(self, rewardType, selectedRewardId)
+    local candidates = {}
+    if type(rewardType) == "string" then
+        rewardType = GEnums.ItemCaseRewardType[rewardType]
+    end
+    
+    for id, data in pairs(Tables.usableItemChestTable) do
+        
+        if rewardType == GEnums.ItemCaseRewardType.Default or data.rewardType == rewardType then
+            local hasMatchingReward = false
+            
+            for i = 0, data.rewardIdList.Count - 1 do
+                if data.rewardIdList[i] == selectedRewardId then
+                    hasMatchingReward = true
+                    break
+                end
+            end
+            if hasMatchingReward then
+                local _, itemData = Tables.itemTable:TryGetValue(id)
+                local sortId1 = itemData and itemData.sortId1 or 0
+                local sortId2 = itemData and itemData.sortId2 or 0
+                table.insert(candidates, { id = id, sortId1 = sortId1, sortId2 = sortId2 })
+            end
+        end
+    end
+
+    
+    table.sort(candidates, function(a, b)
+        if a.sortId1 ~= b.sortId1 then
+            return a.sortId1 < b.sortId1
+        end
+        return a.sortId2 < b.sortId2
+    end)
+
+    
+    for _, candidate in ipairs(candidates) do
+        if Utils.getItemCount(candidate.id, true, true) > 0 then
+            return candidate.id
+        end
+    end
+    return nil
+end
+
 UsableItemChestCtrl._ProcessExpectedRewardItem = HL.Method(HL.Any, HL.Any, HL.Number) << function(self, itemId, itemCount, chestCount)
     if string.isEmpty(self.m_selectedRewardId) or  string.isEmpty(itemId) or itemCount == nil or itemCount < 0 then
         return
@@ -805,6 +863,7 @@ UsableItemChestCtrl._ProcessExpectedRewardItem = HL.Method(HL.Any, HL.Any, HL.Nu
 end
 
 UsableItemChestCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    
     local arg = {
         itemId = self.m_itemId,
         chestCount = self.view.numberSelector.curNumber,

@@ -542,11 +542,11 @@ local DUNGEON_POPUP_HANDLERS = {
     },
     [GEnums.DungeonPopupType.SeasonTower] = {
         tryAutoShow = function(dungeonId)
-            LuaSystemManager.commonTaskTrackSystem:AddRequest("SeasonTowerDungeonInfoPopup", function()
+            LuaSystemManager.commonTaskTrackSystem:AddRequest("DungeonInfo", function()
                 UIManager:AutoOpen(PanelId.SeasonTowerDungeonInfoPopup, {
                     dungeonId = dungeonId,
                     closeCb = function()
-                        Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "SeasonTowerDungeonInfoPopup")
+                        Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "DungeonInfo")
                     end,
                 })
             end, function()
@@ -607,9 +607,29 @@ local FUNC_ON_CLICK_DUNGEON_INFO_BY_CATEGORY = {
     [DungeonConst.DUNGEON_CATEGORY.CharTutorial] = "onClickDungeonInfoBtnCharTutorial",
     [DungeonConst.DUNGEON_CATEGORY.CharTrial] = "onClickDungeonInfoBtnCharTrial",
     [DungeonConst.DUNGEON_CATEGORY.ContingencyContract] = "onClickDungeonInfoBtnContingencyContract",
+    [DungeonConst.DUNGEON_CATEGORY.GambleBattle] = "onClickDungeonInfoBtnGambleBattle",
 }
 
+function DungeonUtils.isGambleBattlePendingSettlement()
+    local system = GameInstance.player.gambleBattleSystem
+    return system ~= nil and system.isPendingSettlement == true
+end
+
+
+function DungeonUtils.isGambleBattleNeedSettle()
+    if GameWorld.worldInfo.curSubGameId ~= Tables.gambleBattleConst.gambleBattleDungeonId then
+        return false
+    end
+    local system = GameInstance.player.gambleBattleSystem
+    return system ~= nil
+end
+
 function DungeonUtils.onClickDungeonInfoBtn()
+    
+    if DungeonUtils.isGambleBattlePendingSettlement() then
+        return
+    end
+
     local dungeonId = GameInstance.dungeonManager.curDungeonId
     local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
     if not succ then
@@ -641,6 +661,10 @@ end
 function DungeonUtils.onClickDungeonInfoBtnCharTrial(dungeonId)
     local charTrialCfg = Tables.dungeonCharTrialTable[dungeonId]
     GameAction.ManuallyStartGuideGroup(charTrialCfg.guideGroupId)
+end
+
+function DungeonUtils.onClickDungeonInfoBtnGambleBattle(dungeonId)
+    UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = dungeonId, needBindAction = true })
 end
 
 function DungeonUtils.onClickDungeonInfoBtnContingencyContract(dungeonId)
@@ -682,6 +706,10 @@ local FUNC_CHECK_VISIBILITY_DUNGEON_INFO_BTN = {
     end,
     [DungeonConst.DUNGEON_CATEGORY.CharTrial] = function(dungeonId)
         return not string.isEmpty(Tables.dungeonCharTrialTable[dungeonId].guideGroupId)
+    end,
+    [DungeonConst.DUNGEON_CATEGORY.GambleBattle] = function(dungeonId)
+        
+        return true
     end,
 }
 
@@ -725,6 +753,9 @@ function DungeonUtils.checkCanShowDungeonPopup(dungeonId)
         return false
     end
 
+    if dungeonId == Tables.gambleBattleConst.gambleBattleDungeonId then
+        return false
+    end
     return true
 end
 
@@ -732,6 +763,7 @@ end
 
 local FUNC_GET_INFO_POPUP_PARAMS_BY_CATEGORY = {
     [DungeonConst.DUNGEON_CATEGORY.Archery] = "getInfoPopupParamsArchery",
+    [DungeonConst.DUNGEON_CATEGORY.GambleBattle] = "getInfoPopupParamsGambleBattle",
 }
 
 
@@ -776,6 +808,44 @@ function DungeonUtils.getInfoPopupParamsArchery(dungeonId)
 
     return params
 end
+function DungeonUtils.getInfoPopupParamsGambleBattle(dungeonId)
+    local params = DungeonUtils.getDefaultInfoPopupParams(dungeonId)
+
+    local system = GameInstance.player.gambleBattleSystem
+    local featureInfos = {}
+
+    local handType = system.handType
+    local isMatchHandType = system.isMatchHandType
+    if handType == 0 then
+        table.insert(featureInfos, Language.LUA_GAMBLE_BATTLE_INFO_POPUP_NO_MECHANISM)
+    else
+        if system.deBuffMonsterLevel > 0 then
+            table.insert(featureInfos, string.format(Language.LUA_GAMBLE_BATTLE_INFO_POPUP_MONSTER_LEVEL_UP, system.deBuffMonsterLevel))
+        end
+        local succ, handTypeData = Tables.gambleBattleHandTypeTable:TryGetValue(handType)
+        if succ then
+            local buffIds = isMatchHandType and handTypeData.handTypeBuffPlusId or handTypeData.handTypeBuffId
+            local buffDescs = {}
+            for _, buffId in pairs(buffIds) do
+                local buffSucc, buffData = Tables.gambleBattleEnemyBuffTable:TryGetValue(buffId)
+                if buffSucc and not string.isEmpty(buffData.desc) then
+                    table.insert(buffDescs, buffData.desc)
+                end
+            end
+            if #buffDescs > 0 then
+                table.insert(featureInfos, table.concat(buffDescs, ""))
+            end
+        end
+    end
+
+    if #featureInfos == 0 then
+        table.insert(featureInfos, Language.LUA_GAMBLE_BATTLE_INFO_POPUP_NO_MECHANISM)
+    end
+
+    params.featureInfos = featureInfos
+
+    return params
+end
 
 
 
@@ -799,6 +869,11 @@ function DungeonUtils.showExitDungeonBtn()
 end
 
 function DungeonUtils.onClickExitDungeonBtn()
+    
+    if DungeonUtils.isGambleBattlePendingSettlement() then
+        return
+    end
+
     local dungeonId = GameInstance.dungeonManager.curDungeonId
     if string.isEmpty(dungeonId) then
         return
@@ -843,13 +918,34 @@ function DungeonUtils.onClickExitDungeonBtn()
         onConfirm = function()
             GameInstance.dungeonManager:LeaveDungeon()
         end,
-        freezeWorld = true,
-        pauseGame = true,
         showGameSettingBtn = true, 
+        showRestartBtn = true,
         interrupt = {
             interruptMessage = { MessageConst.SHOW_DEATH_INFO },
         },
     }
+
+    if DungeonUtils.isGambleBattleNeedSettle() then
+        
+        if GameInstance.player.gambleBattleSystem.gamblingDungeonRoundIndex == 0 then
+            arg.content = Language.LUA_GAMBLE_BATTLE_EXIT_BATTLE_R1_POPUP_CONTENT
+            arg.warningContent = Language.LUA_GAMBLE_BATTLE_EXIT_BATTLE_R1_POPUP_WARNING
+        else
+            arg.content = Language.LUA_GAMBLE_BATTLE_EXIT_BATTLE_R2_POPUP_CONTENT
+            arg.warningContent = Language.LUA_GAMBLE_BATTLE_EXIT_BATTLE_R2_POPUP_WARNING
+        end
+        arg.onConfirm = function()
+            local system = GameInstance.player.gambleBattleSystem
+            system:RequestDoCompletion(false)
+            
+            
+            
+            
+            
+            
+            
+        end
+    end
 
     if succ and dungeonTypeCfg.dungeonType == "dungeon_weeklyraid" then
         AudioAdapter.PostEvent("Au_UI_Menu_StripMenuPauseTick_Open")
@@ -858,7 +954,7 @@ function DungeonUtils.onClickExitDungeonBtn()
         end
     end
 
-    Notify(MessageConst.SHOW_POP_UP, arg)
+    UIManager:AutoOpen(PanelId.SubGamePopup, arg)
 end
 
 

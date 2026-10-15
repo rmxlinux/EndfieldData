@@ -35,6 +35,10 @@ end
 TransparentBlockInputCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
+TransparentBlockInputCtrl.OnClose = HL.Override() << function(self)
+    Notify(MessageConst.TOGGLE_LEVEL_CAMERA_MOVE, { "TransparentBlockInputPanel", true })
+end
+
 TransparentBlockInputCtrl.SetDuration = HL.Method(HL.Number) << function(self, time)
     if self.m_timerId ~= 0 then
         self.m_timerId = self:_ClearTimer(self.m_timerId)

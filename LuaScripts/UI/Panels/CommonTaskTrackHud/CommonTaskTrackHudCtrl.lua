@@ -132,6 +132,9 @@ end
 
 CommonTaskTrackHudCtrl.OnOpenSubGameTrackings = HL.StaticMethod(HL.Any) << function(args)
     local doAction = function()
+        if string.isEmpty(GameWorld.worldInfo.curSubGameId) then
+            return
+        end
         
         local trackHudCtrl = UIManager:AutoOpen(PanelId.CommonTaskTrackHud)
         trackHudCtrl:InitSubGameTrack(args)
@@ -571,13 +574,14 @@ CommonTaskTrackHudCtrl._RefreshBtnState = HL.Method() << function(self)
     end)
 
     local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_subGameId)
-    self.m_quitBtnVisible = success and subGameData.canQuit
-    self.view.btnStop.gameObject:SetActiveIfNecessary(success and subGameData.canQuit)
+    local showTaskButtons = self.m_subGameId ~= Tables.gambleBattleConst.gambleBattleDungeonId
+    self.m_quitBtnVisible = showTaskButtons and success and subGameData.canQuit
+    self.view.btnStop.gameObject:SetActiveIfNecessary(self.m_quitBtnVisible)
     self.view.btnStopTxt:SetAndResolveTextStyle(success and subGameData.resetBtnName:GetText() or self.m_subGameId)
 
     local getGameDataSucc, gameMechanicData = Tables.gameMechanicTable:TryGetValue(self.m_subGameId)
     local getCategorySucc, gameMechanicCategoryData = Tables.gameMechanicCategoryTable:TryGetValue(getGameDataSucc and gameMechanicData.gameCategory or "")
-    local canReChallenge = getCategorySucc and gameMechanicCategoryData.canReChallenge
+    local canReChallenge = showTaskButtons and getCategorySucc and gameMechanicCategoryData.canReChallenge
     self.m_resetBtnVisible = canReChallenge
     self.view.btnReset.gameObject:SetActiveIfNecessary(canReChallenge)
 
@@ -810,9 +814,19 @@ CommonTaskTrackHudCtrl._ShowEndEffect = HL.Method().Return(HL.Boolean) << functi
 end
 
 CommonTaskTrackHudCtrl._DoFailContentShowing = HL.Method(HL.Number) << function(self, phase)
+    
+    if self.m_isClosed then
+        Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackHudShowEndEffect")
+        return
+    end
+
     self:_ToggleBtnVisible(false)
     self:_ManuSetFailState()
     AudioAdapter.PostEvent("Au_UI_Mission_Step_Fail")
+    
+    if self.m_contentShowingCor then
+        self.m_contentShowingCor = self:_ClearCoroutine(self.m_contentShowingCor)
+    end
     self.m_contentShowingCor = self:_StartCoroutine(function()
         while true do
             
@@ -834,7 +848,17 @@ CommonTaskTrackHudCtrl._DoFailContentShowing = HL.Method(HL.Number) << function(
 end
 
 CommonTaskTrackHudCtrl._DoSuccContentShowing = HL.Method(HL.Number) << function(self, phase)
+    
+    if self.m_isClosed then
+        Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackHudShowEndEffect")
+        return
+    end
+
     self:_ToggleBtnVisible(false)
+    
+    if self.m_contentShowingCor then
+        self.m_contentShowingCor = self:_ClearCoroutine(self.m_contentShowingCor)
+    end
     self.m_contentShowingCor = self:_StartCoroutine( function()
         while true do
             
@@ -868,6 +892,11 @@ end
 
 
 CommonTaskTrackHudCtrl._TrackFinish = HL.Method() << function(self)
+    
+    if self.m_isClosed then
+        return
+    end
+
     CommonTaskTrackHudCtrl.s_trackHudState = TrackingHudState.None
     self:Close()
 end
@@ -1003,13 +1032,11 @@ CommonTaskTrackHudCtrl._ShowConfirmPopup = HL.Method(HL.String, HL.Function) << 
         return
     end
 
-    self:Notify(MessageConst.SHOW_POP_UP, {
+    UIManager:AutoOpen(PanelId.SubGamePopup, {
         content = content,
         onConfirm = function()
             confirmFunc()
         end,
-        freezeWorld = true,
-        pauseGame = true,
         interrupt = {
             interruptMessage = { MessageConst.ON_SUB_GAME_QUIT, MessageConst.SHOW_DEATH_INFO },
         }
@@ -1107,12 +1134,12 @@ end
 CommonTaskTrackHudCtrl.OnTyphoeaArcheryDailyRefreshPopUp = HL.StaticMethod() << function()
     Notify(MessageConst.SHOW_POP_UP, {
         content = Language.LUA_TYPHOEA_ARCHERY_DAILY_RESTART_POP_UP,
+        hideCancel = true,
+        freezeWorld = true,
+        pauseGame = true,
         onConfirm = function()
             GameInstance.dungeonManager:LeaveDungeon()
         end,
-        freezeWorld = true,
-        pauseGame = true,
-        interruptMessage = { MessageConst.ON_SUB_GAME_QUIT, MessageConst.SHOW_DEATH_INFO },
     })
 end
 

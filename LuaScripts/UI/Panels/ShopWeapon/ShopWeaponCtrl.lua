@@ -188,7 +188,8 @@ ShopWeaponCtrl.UpdateUpWeapon = HL.Method() << function(self)
         local _, goodsCfg = Tables.shopGoodsTable:TryGetValue(goodsId);
         local hasGachaCfg, weaponGachaCfg = Tables.gachaWeaponPoolTable:TryGetValue(goodsCfg.weaponGachaPoolId)
         local clientTopTimeId = weaponGachaCfg.clientTopTimeId
-        local isTop = Utils.isCurTimeInTimeIdRange(clientTopTimeId)
+        local isTop = not string.isEmpty(clientTopTimeId)
+            and Utils.isCurTimeInTimeIdRange(clientTopTimeId)
         logger.info(string.format("[Shop]%s, isTop: %s", goodsId, tostring(isTop)))
         local tmpData = {
             goodsData = goodsData,
@@ -846,7 +847,11 @@ end
 ShopWeaponCtrl.OnClickGoods = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     local goodsId = arg.goods
     if goodsId then
-        local goods = Tables.shopGoodsTable[goodsId]
+        local succ, goods = Tables.shopGoodsTable:TryGetValue(goodsId)
+        if not succ then
+            logger.error(ELogChannel.UI, "武器商店商品配置不存在: " .. tostring(goodsId))
+            return
+        end
         local shopId = goods.shopId
         local goodsData = self.m_shopSystem:GetShopGoodsData(shopId, goodsId)
         if goodsData == nil then
@@ -901,7 +906,11 @@ ShopWeaponCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
 
     local goodsId = arg.goodsId
     arg.goodsId = nil 
-    local goods = Tables.shopGoodsTable[goodsId]
+    local succ, goods = Tables.shopGoodsTable:TryGetValue(goodsId)
+    if not succ then
+        logger.info(string.format("[Shop]goodsId 不属于武器商店，跳过: %s", tostring(goodsId)))
+        return
+    end
     local shopId = goods.shopId
     local goodsData = self.m_shopSystem:GetShopGoodsData(shopId, goodsId)
     if goodsData == nil then

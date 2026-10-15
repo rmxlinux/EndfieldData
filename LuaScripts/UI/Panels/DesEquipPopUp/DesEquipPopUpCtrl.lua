@@ -40,8 +40,6 @@ DesEquipPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         self:_OnUpdateItemCell(self.m_getItemCell(obj), LuaIndex(csIndex))
     end)
     self.view.itemScrollList:UpdateCount(#self.m_args.items)
-    local focusKeyHintPos = Vector3(math.max(-135 * #self.m_args.items / 2 -30 , -1080), 80, 0)
-    self.view.focusKeyHint.localPosition = focusKeyHintPos
 
     self.m_getReturnItemCell = UIUtils.genCachedCellFunction(self.view.returnItemScrollList)
     self.view.returnItemScrollList.onUpdateCell:AddListener(function(obj, csIndex)

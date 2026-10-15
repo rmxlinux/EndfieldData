@@ -19,6 +19,8 @@ SSBacklogNode.m_isInit = HL.Field(HL.Boolean) << false
 
 SSBacklogNode.m_nowClickIndex = HL.Field(HL.Number) << 1
 
+SSBacklogNode.m_pendingInitCount = HL.Field(HL.Number) << 0
+
 
 
 SSBacklogNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -42,6 +44,24 @@ SSBacklogNode._OnFirstTimeInit = HL.Override() << function(self)
     end,true)
 
     self:RegisterMessage(MessageConst.ON_SPACESHIP_CLUE_INFO_CHANGE, function()
+        if self.m_pendingInitCount > 0 then
+            self.m_pendingInitCount = self.m_pendingInitCount - 1
+            if self.m_pendingInitCount == 0 then
+                self:RefreshData()
+            end
+            return
+        end
+        self:RefreshData()
+    end, true)
+
+    self:RegisterMessage(MessageConst.ON_FRIEND_INFO_SYNC, function()
+        if self.m_pendingInitCount > 0 then
+            self.m_pendingInitCount = self.m_pendingInitCount - 1
+            if self.m_pendingInitCount == 0 then
+                self:RefreshData()
+            end
+            return
+        end
         self:RefreshData()
     end, true)
 end
@@ -53,7 +73,9 @@ SSBacklogNode.InitSSBacklogNode = HL.Method() << function(self)
         local succ, roomInfo = GameInstance.player.spaceship:TryGetRoom(Tables.spaceshipConst.guestRoomClueExtensionId)
         if succ then
             
+            self.m_pendingInitCount = 2
             GameInstance.player.spaceship:GetClueInfo()
+            GameInstance.player.friendSystem:SyncFriendSimpleInfo()
         else
             self:RefreshData()
         end

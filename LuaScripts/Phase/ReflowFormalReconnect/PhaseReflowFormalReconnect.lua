@@ -56,6 +56,7 @@ PhaseReflowFormalReconnect.OnTabChange = HL.Method(HL.Table) << function(self, a
         if self.m_curPanelItem.uiCtrl.panelId == arg.panelId then
             return
         else
+            self.m_curPanelItem.uiCtrl.view.inputGroup.enabled = false
             self.m_curPanelItem:ClearNaviTarget()
         end
         local curUiAnimationWrapper = self.m_curPanelItem.uiCtrl.view.animationWrapper
@@ -98,6 +99,7 @@ PhaseReflowFormalReconnect._OpenTab = HL.Method(HL.Table) << function(self, arg)
         animationWrapper:PlayInAnimation()
     end
     self.m_curPanelItem = panelItem
+    self.m_curPanelItem.uiCtrl.view.inputGroup.enabled = true
 end
 
 PhaseReflowFormalReconnect._BindControllerHintPlaceHolder = HL.Method() << function(self)

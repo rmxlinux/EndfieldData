@@ -63,7 +63,9 @@ WikiModelShowCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.m_phase:RotateModel(delta.x * self.view.config.ROTATE_SENSITIVITY)
     end)
     self:_StartCoroutine(function()
-        self.m_rotateTickKey = LuaUpdate:Add("LateTick", function(deltaTime)
+        
+        self.m_rotateTickKey = LuaUpdate:Add("RenderDone", function()
+            local deltaTime = Time.deltaTime
             local stickValue = InputManagerInst:GetGamepadStickValue(false)
             if stickValue.x ~= 0 then
                 self.m_phase:RotateModel(stickValue.x * self.view.config.ROTATE_SENSITIVITY_CONTROLLER * deltaTime)

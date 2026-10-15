@@ -74,6 +74,8 @@ WikiCraftingTreeCtrl.m_zoomGestureTickKey = HL.Field(HL.Number) << -1
 
 
 
+
+
 WikiCraftingTreeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     local args = arg
@@ -109,6 +111,18 @@ WikiCraftingTreeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) 
         wikiEntryShowData = self.m_wikiEntryShowData,
         forceShowBackBtn = self.m_forceShowBackBtn,
     }
+end
+
+
+WikiCraftingTreeCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
+    self.m_wikiEntryShowData = args.wikiEntryShowData
+    self.m_jumpCraftId = args.craftId
+    if args.forceShowBackBtn ~= nil then
+        self.m_forceShowBackBtn = args.forceShowBackBtn
+    end
+    self:_ActivateBottom(false, true)
+    self:_RefreshTop()
+    self:_RefreshCraft(self.m_wikiEntryShowData.wikiEntryData.refItemId)
 end
 
 WikiCraftingTreeCtrl.OnShow = HL.Override() << function (self)

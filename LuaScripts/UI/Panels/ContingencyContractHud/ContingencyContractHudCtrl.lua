@@ -44,9 +44,6 @@ ContingencyContractHudCtrl.TryCreateHud = HL.StaticMethod() << function()
 
     
     local ctrl = ContingencyContractHudCtrl.AutoOpen(PANEL_ID)
-
-    
-    AudioManager.SetRtpc("au_music_rtpc_cc_v1d3_ingame_current_stars", ContingencyContractUtils.GetTotalScoreByGamaId(dungeonId));
 end
 
 ContingencyContractHudCtrl.OnDungeonGameInit = HL.StaticMethod(HL.Table) << function(args)
@@ -208,13 +205,11 @@ ContingencyContractHudCtrl._OnClickResetBtn = HL.Method() << function(self)
     local dungeonCfg = Tables.dungeonTable[GameInstance.dungeonManager.curDungeonId]
     local dungeonTypeCfg = Tables.dungeonTypeTable[dungeonCfg.dungeonCategory]
     local curStatus = GameInstance.dungeonManager.curDungeonLikeSubGame:GetCurrentCompletionStatus()
-    self:Notify(MessageConst.SHOW_POP_UP, {
+    UIManager:AutoOpen(PanelId.SubGamePopup, {
         content = dungeonTypeCfg.resetConfirmText,
         onConfirm = function()
             GameInstance.dungeonManager.curDungeonLikeSubGame:UserSendReStartAtStatus(curStatus)
         end,
-        freezeWorld = true,
-        pauseGame = true,
         interrupt = {
             interruptMessage = { MessageConst.ON_SUB_GAME_QUIT,
                                  MessageConst.ON_CONTINGENCY_CONTRACT_SETTLEMENT,

@@ -48,9 +48,9 @@ ContingencyContractDetailsPopupCtrl.OnCreate = HL.Override(HL.Any) << function(s
         arg.recoverState = nil
     end
     if #self.m_tagInfos > 0 then
-        UIUtils.setAsNaviTarget(self.view.tagEffectListNaviDeco)
+        self:SetNaviTarget(self.view.tagEffectListNaviDeco)
     else
-        UIUtils.setAsNaviTarget(self.view.descListNaviDeco)
+        self:SetNaviTarget(self.view.descListNaviDeco)
     end
 end
 
@@ -72,23 +72,15 @@ ContingencyContractDetailsPopupCtrl._InitData = HL.Method(HL.Any) << function(se
 end
 
 ContingencyContractDetailsPopupCtrl._UpdateData = HL.Method() << function(self)
-    self.m_tagInfos = {}
+    self.m_tagInfos = ContingencyContractUtils.CreateTagBasicInfoWithKeyLockInfos(self.m_gameId, self.m_tagIds)
     self.m_totalScore = 0
-    local infosTable = ContingencyContractUtils.GetTagParseInfos(self.m_gameId)
-    local allTagInfosMap = infosTable.allTagInfosMap
     
     local ccSystem = GameInstance.player.contingencyContractSystem
     local ccData = ccSystem:GetCcGameData(self.m_gameId)
-    if ccData then
-        for _, tagId in pairs(ccData.receivedRewardTagList) do
-            allTagInfosMap[tagId].hasFirstPassReward = false
-        end
-    end
-    for i, tagId in pairs(self.m_tagIds) do
-        local info = allTagInfosMap[tagId]
-        if info ~= nil then
-            table.insert(self.m_tagInfos, info)
-            self.m_totalScore = self.m_totalScore + info.level
+    for _, tagInfo in pairs(self.m_tagInfos) do
+        self.m_totalScore = self.m_totalScore + tagInfo.level
+        if ccData then
+            tagInfo.hasFirstPassReward = not ccData.receivedRewardTagSet:Contains(tagInfo.tagId)
         end
     end
 end

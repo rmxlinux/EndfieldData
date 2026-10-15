@@ -29,6 +29,7 @@ InteractOptionCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FAC_DESTROY_MODE_CHANGE] = 'OnFacDestroyModeChange',
 
     [MessageConst.TOGGLE_HIDE_INTERACT_OPTION_LIST] = 'OnToggleHideInteractOptionList',
+    [MessageConst.TOGGLE_INTERACT_OPTION_WHITE_LIST] = 'OnToggleInteractOptionWhiteList',
 
     [MessageConst.FOCUS_ON_INTERACT_OPTION] = 'FocusOnInteractOption',
 }
@@ -81,6 +82,7 @@ InteractOptionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_optionInfoMap = {}
     self.m_curShowingOptInfoList = {}
     self.m_hideListKeys = {}
+    self.m_whiteListKeys = {}
     self.m_sortFunc = Utils.genSortFunction({
         "isItemOrder",
         "typeOrder",
@@ -223,6 +225,8 @@ end
 
 InteractOptionCtrl.m_hideListKeys = HL.Field(HL.Table)
 
+InteractOptionCtrl.m_whiteListKeys = HL.Field(HL.Table) 
+
 InteractOptionCtrl.OnToggleHideInteractOptionList = HL.Method(HL.Table) << function(self, args)
     local key, hide = unpack(args)
     self:ToggleHideInteractOptionList(key, hide)
@@ -249,6 +253,27 @@ InteractOptionCtrl.RefreshActiveState = HL.Method(HL.Opt(HL.Any)) << function(se
             self:_UpdateOptionSelected(info)
         end
     end
+end
+
+InteractOptionCtrl.OnToggleInteractOptionWhiteList = HL.Method(HL.Table) << function(self, args)
+    local key, active, typeList = unpack(args)
+    self:ToggleInteractOptionWhiteList(key, active, typeList)
+end
+
+InteractOptionCtrl.ToggleInteractOptionWhiteList = HL.Method(HL.String, HL.Boolean, HL.Opt(HL.Table)) << function(self, key, active, typeList)
+    if active then
+        local typeSet = {}
+        if typeList then
+            for _, t in pairs(typeList) do
+                typeSet[t] = true
+            end
+        end
+        self.m_whiteListKeys[key] = typeSet
+    else
+        self.m_whiteListKeys[key] = nil
+    end
+
+    self:_UpdateCurShowingList(true)
 end
 
 InteractOptionCtrl.CameraHideHud = HL.Method() << function(self)
@@ -464,7 +489,9 @@ InteractOptionCtrl._ParseOptionData = HL.Method(HL.Any).Return(HL.Table) << func
         parseFunction(optionInfo, optionData)
     end
 
-    optionInfo.isItemOrder = optionInfo.isItem and 0 or 1
+    if optionInfo.isItemOrder == nil then
+        optionInfo.isItemOrder = optionInfo.isItem and 0 or 1
+    end
     optionInfo.sourceId = optionInfo.sourceId or optionInfo.identifier.sourceId
     optionInfo.subIndex = optionInfo.identifier.subIndex
     optionInfo.sortId = optionInfo.sortId or 0
@@ -591,6 +618,7 @@ InteractOptionCtrl._OnUpdateCell = HL.Method(HL.Table) << function(self, info)
     node.simpleNode.gameObject:SetActive(not isItem)
     if isItem then
         if not string.isEmpty(info.itemId) then
+            node.itemNode.numNode.gameObject:SetActive(info.count > 0)
             node.itemNode.numTxt.text = info.count <= MAX_DISPLAY_COUNT and UIUtils.getNumString(info.count) or Language.LUA_INTERACT_OPTION_MAX_TEXT
             local itemData = Tables.itemTable:GetValue(info.itemId)
             if info.useOverrideName then
@@ -600,10 +628,18 @@ InteractOptionCtrl._OnUpdateCell = HL.Method(HL.Table) << function(self, info)
             end
             node.itemNode.iconImg:InitItemIcon(info.itemId)
             
-            local isPickUp, _ = Tables.useItemTable:TryGetValue(info.itemId)
+            local isPickUp = false
+            if not info.hidePickUpNode then
+                isPickUp = Tables.useItemTable:TryGetValue(info.itemId)
+            end
             node.itemNode.pickUpNode.gameObject:SetActive(isPickUp)
             node.itemNode.portableDeviceNode.gameObject:SetActive(Utils.isPortableDevice(info.itemId))
-            UIUtils.setItemRarityImage(node.itemNode.rarityImg, itemData.rarity)
+            
+            if not string.isEmpty(info.rarityColor) then
+                node.itemNode.rarityImg.color = UIUtils.getColorByString(info.rarityColor)
+            else
+                UIUtils.setItemRarityImage(node.itemNode.rarityImg, itemData.rarity)
+            end
         else
             node.nameTxt.text = "ERROR: No ItemId"
             logger.error("InteractOptionCtrl._OnUpdateCell: No itemId")
@@ -616,6 +652,10 @@ InteractOptionCtrl._OnUpdateCell = HL.Method(HL.Table) << function(self, info)
         local iconFolder = info.iconFolder or UIConst.UI_SPRITE_INTERACT_OPTION_ICON
         node.simpleIcon:LoadSprite(iconFolder, icon)
         node.nameTxt.text = info.overrideText or info.text
+    end
+
+    if node.bgSelect then
+        node.bgSelect.color = not string.isEmpty(info.bgColor) and UIUtils.getColorByString(info.bgColor) or Color.white
     end
 
     cell.button.enabled = true
@@ -758,6 +798,11 @@ end
 InteractOptionCtrl.m_optionClickedThisTick = HL.Field(HL.Boolean) << false
 
 InteractOptionCtrl._OnClickOption = HL.Method(HL.String) << function(self, identifier)
+    if PhaseManager:CheckIsInTransition() then
+        
+        return
+    end
+
     if self.m_optionClickedThisTick then
         logger.warn("InteractOptionCtrl._OnClickOption FAIL: self.m_optionClickedThisTick==true")
         return
@@ -888,6 +933,16 @@ InteractOptionCtrl._DeleteCell = HL.Method(HL.Table, HL.Table) << function(self,
     end
 end
 
+InteractOptionCtrl._IsTypePassWhiteList = HL.Method(HL.Any).Return(HL.Boolean) << function(self, optionType)
+    
+    for _, typeSet in pairs(self.m_whiteListKeys) do
+        if not typeSet[optionType] then
+            return false
+        end
+    end
+    return true
+end
+
 InteractOptionCtrl._UpdateCurShowingList = HL.Method(HL.Opt(HL.Boolean)) << function(self, toTop)
     self.m_needUpdateList = false
     
@@ -902,7 +957,9 @@ InteractOptionCtrl._UpdateCurShowingList = HL.Method(HL.Opt(HL.Boolean)) << func
     self.m_curShowingOptInfoList = {}
     self.m_curShowingOptCount = 0
     for _, v in pairs(self.m_optionInfoMap) do
-        if not LuaSystemManager.factory.inDestroyMode or v.isDel then
+        local passDestroyMode = not LuaSystemManager.factory.inDestroyMode or v.isDel
+        local passWhiteList = self:_IsTypePassWhiteList(v.identifier.type)
+        if passDestroyMode and passWhiteList then
             table.insert(self.m_curShowingOptInfoList, v)
             self.m_curShowingOptCount = self.m_curShowingOptCount + 1
         else
@@ -1282,11 +1339,16 @@ InteractOptionCtrl._OnPressOptionStart = HL.Method(HL.Opt(HL.Boolean)) << functi
                 coroutine.step()
             end
         end
-        local pressedInfo = self.m_optionInfoMap[pressedIdentifier]
-        if pressedInfo and pressedInfo.longPressAction ~= nil then
-            pressedInfo.longPressAction()
+        
+        if not PhaseManager:CheckIsInTransition() then
+            local pressedInfo = self.m_optionInfoMap[pressedIdentifier]
+            if pressedInfo and pressedInfo.longPressAction ~= nil then
+                pressedInfo.longPressAction()
+            else
+                self:_OnTriggerPickupAll()
+            end
         else
-            self:_OnTriggerPickupAll()
+            Notify(MessageConst.SHOW_TOAST, "CONNNNNN")
         end
         self:_InterruptPickupAll()
     end)

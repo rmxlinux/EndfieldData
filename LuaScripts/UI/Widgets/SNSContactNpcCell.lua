@@ -24,7 +24,7 @@ SNSContactNpcCell._OnFirstTimeInit = HL.Override() << function(self)
 end
 
 SNSContactNpcCell.InitSNSContactNpcCell = HL.Method(HL.Table, HL.Boolean, HL.Function, HL.Function)
-        << function(self, chatVO, defaultFoldOut, onNpcCellClick, dialogCellRefreshFunc)
+        << function(self, chatVO, isFoldOut, onNpcCellClick, dialogCellRefreshFunc)
     self:_FirstTimeInit()
 
     self.m_chatVO = chatVO
@@ -54,12 +54,11 @@ SNSContactNpcCell.InitSNSContactNpcCell = HL.Method(HL.Table, HL.Boolean, HL.Fun
         dialogCellRefreshFunc(cell, chatId, dialogVO.dialogId, index)
     end)
 
-    self.m_isFoldOut = defaultFoldOut
-    self:_RefreshFoldOutIcon()
+    self:SetFoldOut(isFoldOut)
 end
 
-SNSContactNpcCell.ToggleFoldOut = HL.Method() << function(self)
-    self.m_isFoldOut = not self.m_isFoldOut
+SNSContactNpcCell.SetFoldOut = HL.Method(HL.Boolean) << function(self, isFoldOut)
+    self.m_isFoldOut = isFoldOut
     self:_RefreshFoldOutIcon()
 end
 
@@ -67,8 +66,6 @@ SNSContactNpcCell._OnFoldButtonClick = HL.Method() << function(self)
     if self.m_onNpcCellClick then
         self.m_onNpcCellClick()
     end
-
-    self:ToggleFoldOut()
 end
 
 SNSContactNpcCell._RefreshFoldOutIcon = HL.Method() << function(self)

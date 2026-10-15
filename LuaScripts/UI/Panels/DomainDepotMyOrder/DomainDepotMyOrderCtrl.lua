@@ -11,6 +11,7 @@ DomainDepotMyOrderCtrl.m_getCellFunc = HL.Field(HL.Function)
 
 DomainDepotMyOrderCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_COLLECT_DELEGATE_REWARD] = 'OnSync',
+    [MessageConst.ON_DOMAIN_DEPOT_QUICK_TRANSFER_SUCCESS] = 'OnSync',
     [MessageConst.ON_DOMAIN_DEPOT_DELIVERY_REWARD] = 'OnReward',
 }
 
@@ -49,7 +50,7 @@ DomainDepotMyOrderCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.myDelegateDeliverList.Count)
 end
 
-DomainDepotMyOrderCtrl.OnSync = HL.Method() << function(self)
+DomainDepotMyOrderCtrl.OnSync = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.myDelegateDeliverList.Count)
     self.view.selectableNaviGroup:NaviToThisGroup()
     self.view.emptyNode.gameObject:SetActiveIfNecessary(GameInstance.player.domainDepotSystem.myDelegateDeliverList.Count == 0)
@@ -89,8 +90,8 @@ DomainDepotMyOrderCtrl.OnReward = HL.Method(HL.Any) << function(self, map)
 end
 
 DomainDepotMyOrderCtrl.OnShow = HL.Override() << function(self)
-    self.view.selectableNaviGroup:NaviToThisGroup()
-    self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.myDelegateDeliverList.Count)
+    
+    self:OnSync()
 end
 DomainDepotMyOrderCtrl.OnHide = HL.Override() << function(self)
     self.view.scrollList:UpdateShowingCells(function(csIndex, obj)

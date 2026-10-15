@@ -76,6 +76,7 @@ WalletBarPlaceholder._RefreshWalletBarControllerFocus = HL.Method() << function(
 end
 
 WalletBarPlaceholder.GetArgs = HL.Override().Return(HL.Table) << function(self)
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.transform.parent)
     local trans = DeviceInfo.usingController and self.view.controllerPosition or self.view.transform
     local uiCam = self.luaPanel.uiCamera
     local targetScreenRect = UIUtils.getTransformScreenRect(trans, uiCam) 

@@ -60,6 +60,17 @@ local function getHighestBit(n)
     return bit
 end
 
+local function getMainChapterBitmask(missionSystem, missionList)
+    local chapterBitmask = 0
+    for _, mission in ipairs(missionList) do
+        local missionInfo = missionSystem:GetMissionInfo(mission.id)
+        if missionInfo and missionInfo.viewType == MissionViewType.MissionViewMain then
+            chapterBitmask = math.max(chapterBitmask, missionInfo.missionChapterBitmaskInt)
+        end
+    end
+    return chapterBitmask
+end
+
 local function getMissionBadgePriority(missionInfo, missionId)
     local p = MissionBadgePriorityMap[missionInfo.extraInfoType]
     if p then
@@ -103,6 +114,7 @@ local MissionFilterCellConfig = {
         typeText = Language.ui_mis_panel_tab_other,
     },
 }
+
 
 
 
@@ -698,6 +710,7 @@ MissionCtrl._RefreshMissionList = HL.Method() << function(self)
         end
     end
 
+    self:_RefreshLatestMainChapterTag()
     self:_RefreshEmptyNode()
 
     self.view.missionScrollView.getCellSize = function(index)
@@ -732,6 +745,8 @@ MissionCtrl._RefreshMissionList = HL.Method() << function(self)
             content.missionCell.gameObject:SetActiveIfNecessary(false)
             content.importanceNode.gameObject:SetActiveIfNecessary(false)
             local chapterCell = content.chapterCell
+            chapterCell.newChapterTag.gameObject:SetActiveIfNecessary(
+                viewInfo.showNewChapterTag == true)
             local chapterId = self.m_missionViewInfo[luaIndex].id
             local chapterInfo = self.m_missionSystem:GetChapterInfo(chapterId)
             if chapterInfo then
@@ -821,6 +836,42 @@ MissionCtrl._RefreshMissionList = HL.Method() << function(self)
         LayoutRebuilder.ForceRebuildLayoutImmediate(content.transform)
     end)
     self.view.missionScrollView:UpdateCount(#self.m_missionViewInfo)
+end
+
+
+
+MissionCtrl._RefreshLatestMainChapterTag = HL.Method() << function(self)
+    local mainChapterBitmaskSet = {}
+    local mainChapterCount = 0
+    local latestMainChapterBitmask = 0
+
+    for _, viewInfo in ipairs(self.m_missionViewInfo) do
+        if viewInfo.type == MissionListCellType_Chapter then
+            viewInfo.showNewChapterTag = false
+            
+            viewInfo.mainChapterBitmask = getMainChapterBitmask(self.m_missionSystem, viewInfo.missionList)
+
+            local bitmask = viewInfo.mainChapterBitmask
+            if bitmask > 0 and not mainChapterBitmaskSet[bitmask] then
+                mainChapterBitmaskSet[bitmask] = true
+                mainChapterCount = mainChapterCount + 1
+                latestMainChapterBitmask = math.max(latestMainChapterBitmask, bitmask)
+            end
+        end
+    end
+
+    if mainChapterCount < 2 then
+        return
+    end
+
+    for _, viewInfo in ipairs(self.m_missionViewInfo) do
+        local isLatestMainChapter = viewInfo.type == MissionListCellType_Chapter and
+            viewInfo.mainChapterBitmask == latestMainChapterBitmask
+        if isLatestMainChapter then
+            viewInfo.showNewChapterTag = true
+            return
+        end
+    end
 end
 
 

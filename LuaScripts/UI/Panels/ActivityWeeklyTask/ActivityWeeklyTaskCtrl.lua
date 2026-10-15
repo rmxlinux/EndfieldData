@@ -56,6 +56,38 @@ ActivityWeeklyTaskCtrl._SetNaviTarget = HL.Method(HL.Number) << function(self, i
     end
 end
 
+
+ActivityWeeklyTaskCtrl.OnActivityContentNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, direction)
+    if not DeviceInfo.usingController then
+        return
+    end
+    local naviDirection = CS.UnityEngine.UI.NaviDirection
+    if direction ~= naviDirection.Up and direction ~= naviDirection.Down then
+        return
+    end
+    local firstTarget, lastTarget
+    
+    for _, cell in ipairs(self.m_taskCells:GetItems()) do
+        local target = cell.naviDecorator
+        if target.enableControllerNavi and target:IsActive() and target:IsInteractable() then
+            firstTarget = firstTarget or target
+            lastTarget = target
+        end
+    end
+    if not firstTarget or firstTarget == lastTarget then
+        return
+    end
+    local currentTarget = InputManagerInst.controllerNaviManager.curTarget
+    if not currentTarget then
+        return
+    end
+    if direction == naviDirection.Up and currentTarget.transform:IsChildOf(firstTarget.transform) then
+        self:SetNaviTarget(lastTarget)
+    elseif direction == naviDirection.Down and currentTarget.transform:IsChildOf(lastTarget.transform) then
+        self:SetNaviTarget(firstTarget)
+    end
+end
+
 ActivityWeeklyTaskCtrl._Refresh = HL.Method() << function(self)
     local activityUnlocked = ActivityUtils.isActivityUnlocked(self.m_activityId)
     self.view.unlockedNode.gameObject:SetActive(activityUnlocked)

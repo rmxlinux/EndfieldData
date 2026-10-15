@@ -11,7 +11,7 @@ local CONTROL_TAB_FUNC_DICT = {
         audioEvent = "au_ui_btn_menu_overview",
         isUnlocked = true,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Enable,
-        hintText = Language.LUA_CHAR_INFO_TITLE_OVERVIEW,
+        hintText = "LUA_CHAR_INFO_TITLE_OVERVIEW",
     },
     [UIConst.CHAR_INFO_TAB_TYPE.WEAPON] = {
         pageType = UIConst.CHAR_INFO_PAGE_TYPE.WEAPON,
@@ -23,7 +23,7 @@ local CONTROL_TAB_FUNC_DICT = {
             return Language.LUA_SYSTEM_WEAPON_LOCKED
         end,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Enable,
-        hintText = Language.LUA_CHAR_INFO_TITLE_WEAPON,
+        hintText = "LUA_CHAR_INFO_TITLE_WEAPON",
     },
     [UIConst.CHAR_INFO_TAB_TYPE.EQUIP] = {
         pageType = UIConst.CHAR_INFO_PAGE_TYPE.EQUIP,
@@ -36,7 +36,7 @@ local CONTROL_TAB_FUNC_DICT = {
             return Language.LUA_SYSTEM_EQUIP_LOCKED
         end,
         redDot = "EquipTab",
-        hintText = Language.LUA_CHAR_INFO_TITLE_EQUIP,
+        hintText = "LUA_CHAR_INFO_TITLE_EQUIP",
     },
     [UIConst.CHAR_INFO_TAB_TYPE.POTENTIAL] = {
         pageType = UIConst.CHAR_INFO_PAGE_TYPE.POTENTIAL,
@@ -48,7 +48,7 @@ local CONTROL_TAB_FUNC_DICT = {
             return Language.LUA_SYSTEM_POTENTIAL_LOCKED
         end,
         redDot = "CharInfoPotential",
-        hintText = Language.LUA_CHAR_INFO_TITLE_POTENTIAL,
+        hintText = "LUA_CHAR_INFO_TITLE_POTENTIAL",
     },
 }
 CharInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
@@ -58,6 +58,9 @@ CharInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.TOGGLE_CHAR_INFO_TOGGLE_MENU_AND_TOP_BTN] = "OnToggleMenuListAndTopBtn",
     [MessageConst.GUIDE_CHAR_INFO_CHANGE_CHAR] = "GuideChangeChar",
     [MessageConst.ON_SCREEN_SIZE_CHANGED] = '_UpdateGyroEffectParams',
+    [MessageConst.ON_CONTROLLER_NAVI_TARGET_CHANGED] = '_OnControllerNaviTargetChanged',
+    [MessageConst.ON_CHAR_INFO_ATTR_TIP_CLOSED_BY_CANCEL] = '_OnCharInfoTipClosedByCancel',
+    [MessageConst.ON_CHAR_INFO_SKILL_TIP_CLOSED_BY_CANCEL] = '_OnCharInfoTipClosedByCancel',
 }
 
 do
@@ -89,6 +92,13 @@ do
     CharInfoCtrl.m_isCharListInited = HL.Field(HL.Boolean) << false
 
     CharInfoCtrl.m_arg = HL.Field(HL.Table)
+
+    CharInfoCtrl.m_luaCancelBindingId = HL.Field(HL.Number) << -1
+
+    CharInfoCtrl.m_focusBasicNodeBindingId = HL.Field(HL.Number) << -1
+
+    
+    CharInfoCtrl.m_charSwitchTipSeq = HL.Field(HL.Number) << 0
 end
 
 CharInfoCtrl.OnCreate = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
@@ -103,6 +113,7 @@ CharInfoCtrl.OnCreate = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     self:_InitActionEvent()
     self:_InitCharInfoController(arg.forceSkipIn)
     self:OnPageChange(arg)
+    self:_InitBasicInfoNodeControllerFocusHint()
 
     
     local scrollToIndex = -1
@@ -159,10 +170,14 @@ end
 
 CharInfoCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
     Notify(MessageConst.ON_STOP_HOVER_LINK)
+    Notify(MessageConst.CHAR_INFO_CLOSE_ATTR_TIP)
+    Notify(MessageConst.CHAR_INFO_CLOSE_SKILL_TIP)
     self.m_charInfo = charInfo
     local aimWrapper= self.view.charInfoBasicNodeRight.view.gameObject.activeSelf and
                         self.view.charInfoBasicNodeRight.view.animationWrapper or self.view.gyroscopeRoot
     aimWrapper:ClearTween()
+    self.m_charSwitchTipSeq = self.m_charSwitchTipSeq + 1
+    local tipReopenSeq = self.m_charSwitchTipSeq
     aimWrapper:PlayOutAnimation(function()
         self:_RefreshCharInfo(self.m_charInfo, self.m_charInfoList)
 
@@ -176,6 +191,18 @@ CharInfoCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo
             self:_RefreshCharInfoSideMenu()
         end
         aimWrapper:PlayInAnimation()
+        
+        self:_StartCoroutine(function()
+            coroutine.step()
+            coroutine.step()
+            if self.m_charSwitchTipSeq ~= tipReopenSeq then
+                return
+            end
+            self.view.charInfoBasicNodeLeft:RefreshTipsForCurrentNaviTarget()
+        end)
+        
+        
+        self:_OnControllerNaviTargetChanged()
     end)
 end
 
@@ -245,8 +272,8 @@ CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
             pageType = UIConst.CHAR_INFO_PAGE_TYPE.PROFILE
         })
     end)
-    self.view.closeButton.onClick:AddListener(function()
-        self.m_phase:OnCommonBackClicked()
+    self.view.closeButton.onClick:AddListener(function(eventData)
+        self:_OnCloseButtonCancel(eventData)
     end)
     self.view.foresightGrowthEntryBtn.onClick:AddListener(function()
         self:_OnForesightGrowthEntryClick()
@@ -326,6 +353,13 @@ CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
     self:BindInputPlayerAction("common_open_char_panel", function()
         PhaseManager:PopPhase(PhaseId.CharInfo)
     end)
+    self.m_focusBasicNodeBindingId = self:BindInputPlayerAction("char_info_focus_basic_node", function()
+        self:_OnCharInfoFocusBasicNodeAction()
+    end)
+    self.m_luaCancelBindingId = self:BindInputPlayerAction("common_cancel", function()
+        self:_OnCloseButtonCancel(nil)
+    end)
+    self:_UpdateCloseButtonCancelBinding()
 end
 
 CharInfoCtrl._RefreshCharInfo = HL.Method(HL.Table, HL.Table) << function(self, initCharInfo, charInfoList)
@@ -339,7 +373,7 @@ CharInfoCtrl._RefreshCharInfo = HL.Method(HL.Table, HL.Table) << function(self, 
 end
 
 CharInfoCtrl._RefreshCharInfoBasic = HL.Method(HL.Number) << function(self, charInstId)
-    self.view.charInfoBasicNodeLeft:InitCharInfoBasicNode(charInstId)
+    self.view.charInfoBasicNodeLeft:InitCharInfoBasicNode(charInstId, nil, true)
     self.view.charInfoBasicNodeRight:InitCharInfoBasicNode(charInstId, true)
     self.view.friendshipNode:InitFriendshipNode(charInstId)
 end
@@ -354,6 +388,65 @@ CharInfoCtrl._GetSelectedCharCsIndex = HL.Method().Return(HL.Number) << function
         end
     end
     return -1
+end
+
+CharInfoCtrl._InitBasicInfoNodeControllerFocusHint = HL.Method() << function(self)
+    self:_OnControllerNaviTargetChanged()
+end
+
+CharInfoCtrl._SetControllerFocusHintVisible = HL.Method(HL.Boolean) << function(self, visible)
+    self.view.charInfoBasicNodeLeft:ShowControllerFocusHintNode(visible)
+end
+
+CharInfoCtrl._OnControllerNaviTargetChanged = HL.Method() << function(self)
+    local leftNode = self.view.charInfoBasicNodeLeft
+    self:_SetControllerFocusHintVisible(not (leftNode and leftNode:IsNaviTargetOnSkillOrAttribute()))
+end
+
+CharInfoCtrl._OnCharInfoTipClosedByCancel = HL.Method() << function(self)
+    self:_TryNaviBackToTab()
+end
+
+CharInfoCtrl._TryNaviBackToTab = HL.Method() << function(self)
+    local leftNode = self.view.charInfoBasicNodeLeft
+    if not (leftNode and leftNode:IsNaviTargetOnSkillOrAttribute()) then
+        return
+    end
+    local selectedTab = self.m_tabCellCache:Get(self.m_curPageType)
+    if selectedTab and InputManagerInst.controllerNaviManager.curTarget ~= selectedTab.button then
+        self:SetNaviTarget(selectedTab.button)
+    end
+end
+
+CharInfoCtrl._OnCharInfoFocusBasicNodeAction = HL.Method() << function(self)
+    local leftNode = self.view.charInfoBasicNodeLeft
+    if not leftNode or not leftNode.view.gameObject.activeInHierarchy then
+        return
+    end
+    local firstSelectable = leftNode:GetFirstAttributeSelectable()
+    if firstSelectable then
+        self:SetNaviTarget(firstSelectable)
+    end
+end
+
+CharInfoCtrl._OnCloseButtonCancel = HL.Method(HL.Opt(HL.Userdata)) << function(self, eventData)
+    
+    if DeviceInfo.usingController and eventData == nil and self.m_curPageType ~= UIConst.CHAR_INFO_TAB_TYPE.OVERVIEW then
+        self:_OnClickTab(UIConst.CHAR_INFO_TAB_TYPE.OVERVIEW)
+        local cell = self.m_tabCellCache:GetItem(UIConst.CHAR_INFO_TAB_TYPE.OVERVIEW)
+        if cell and cell.button then
+            self:SetNaviTarget(cell.button)
+        end
+        return
+    end
+    self.m_phase:OnCommonBackClicked()
+end
+
+CharInfoCtrl._UpdateCloseButtonCancelBinding = HL.Method() << function(self)
+    
+    local useLuaCancel = DeviceInfo.usingController and self.m_curPageType ~= UIConst.CHAR_INFO_TAB_TYPE.OVERVIEW
+    InputManagerInst:ToggleBinding(self.view.closeButton.onClick.bindingId, not useLuaCancel)
+    InputManagerInst:ToggleBinding(self.m_luaCancelBindingId, useLuaCancel)
 end
 
 CharInfoCtrl._RefreshCharList = HL.Method(HL.Table, HL.Table) << function(self, initCharInfo, charInfoList)
@@ -637,7 +730,7 @@ CharInfoCtrl._RefreshTabCell = HL.Method(HL.Any, HL.Number, HL.Boolean, HL.Numbe
     cell.button.onClick:AddListener(function()
         self:_OnClickTab(index)
     end)
-    cell.button.customBindingViewLabelText = config.hintText
+    cell.button.customBindingViewLabelText = Language[config.hintText]
 
     if DeviceInfo.usingController then
         cell.button.onIsNaviTargetChanged = function(isTarget)
@@ -696,6 +789,8 @@ CharInfoCtrl.OnPageChange = HL.Method(HL.Any) << function(self, arg)
     local isBeforePageOverview = self.m_curPageType == UIConst.CHAR_INFO_TAB_TYPE.OVERVIEW
     local isPageOverview = pageType == UIConst.CHAR_INFO_TAB_TYPE.OVERVIEW
     self.m_curPageType = pageType
+    self:_UpdateCloseButtonCancelBinding()
+    InputManagerInst:ToggleBinding(self.m_focusBasicNodeBindingId, isPageOverview)
 
     UIUtils.PlayAnimationAndToggleActive(self.view.bottomMenuCover, isPageOverview)
     UIUtils.PlayAnimationAndToggleActive(self.view.gyroscopeRoot, isPageOverview, function()
@@ -725,6 +820,7 @@ CharInfoCtrl.OnPageChange = HL.Method(HL.Any) << function(self, arg)
 
     if isPageOverview then
         self:_RefreshCharInfo(self.m_charInfo, self.m_charInfoList)
+        self:_OnControllerNaviTargetChanged()
         self:_RefreshDetailNode(self.m_charInfo)
         self.view.rightBottomNode.animationWrapper.gameObject:SetActive(true)
         self.view.topNode:Play("charinfo_top_btn_in")
@@ -858,17 +954,30 @@ CharInfoCtrl._InitCharInfoController = HL.Method(HL.Opt(HL.Boolean)) << function
             end
             self:SetNaviTarget(equipPanelItem.uiCtrl.view.equipBody.button)
         end
+        if self.m_curPageType == UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW then
+            if self.view.upgradeBtn then
+                self:SetNaviTarget(self.view.upgradeBtn)
+            end
+        end
     end)
     InputManagerInst:ToggleBinding(self.m_menuTabConfirmBindingId, false)
 
     self.view.charListNode.charList.onSelectedCell:AddListener(function(object, csIndex)
-        local charHeadCell = self.m_getCharHeadCell(object)
-        if charHeadCell == nil then
-            return
+        local charInfo
+        if object then
+            local charHeadCell = self.m_getCharHeadCell(object)
+            if charHeadCell == nil then
+                return
+            end
+            charInfo = charHeadCell.charInfo
+        else
+            
+            charInfo = self.m_charInfoList[LuaIndex(csIndex)]
+            if charInfo == nil then
+                return
+            end
         end
-        self:_OnClickCharHeadCell(charHeadCell.charInfo, true)
-        Notify(MessageConst.CHAR_INFO_CLOSE_ATTR_TIP)
-        Notify(MessageConst.CHAR_INFO_CLOSE_SKILL_TIP)
+        self:_OnClickCharHeadCell(charInfo, true)
         
         AudioAdapter.PostEvent("Au_UI_Button_CharHeadCell")
     end)

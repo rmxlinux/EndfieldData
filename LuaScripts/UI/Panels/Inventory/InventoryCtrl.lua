@@ -204,7 +204,8 @@ InventoryCtrl.ResetOnClose = HL.Method() << function(self)
     if DeviceInfo.usingController then
         local facQuickBarNaviGroup = self.view.facQuickBarPlaceHolder:GetNaviGroup()
         if facQuickBarNaviGroup then
-            self:_ChangeFacQuickBarNaviPartner(facQuickBarNaviGroup, true)
+            self:_ChangeFacQuickBarNaviPartner(facQuickBarNaviGroup, false)
+            InputManagerInst.controllerNaviManager:TryRemoveLayer(facQuickBarNaviGroup)
         end
     end
 
@@ -395,7 +396,9 @@ InventoryCtrl._InitDepot = HL.Method() << function(self)
 
         itemMoveTarget = UIConst.ITEM_MOVE_TARGET.ItemBag,
         onToggleDestroyMode = function(active)
+            self.view.content:SetState(active and "BlackMask" or "NoBlackMask")
             self.m_naviGroupSwitcher:ToggleActive(not active and not self.m_weekRaidConvertRate)
+            self.view.switchDepotBtn.enabled = not active
         end,
         customOnUpdateCell = function(cell, itemBundle, luaIndex)
             if itemBundle.count and itemBundle.count > 0 and cell:IsQuickDropTargetValid() then

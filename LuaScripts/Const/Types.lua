@@ -24,9 +24,9 @@ Types.EPanelOrderTypes = {
 Types.MaxPanelOrderType = Types.EPanelOrderTypes.Debug
 
 Types.EPanelMultiTouchTypes = {
-    Both = 1,
-    Enable = 2,
-    Disable = 3,
+    Both = 1, 
+    Enable = 2, 
+    Disable = 3, 
 }
 
 Types.EInputBindingScope = {
@@ -36,9 +36,9 @@ Types.EInputBindingScope = {
 }
 
 Types.EPanelGyroscopeEffect = {
-    Both = 1,
-    Enable = 2,
-    Disable = 3,
+    Both = 1, 
+    Enable = 2, 
+    Disable = 3, 
 }
 
 Types.EPanelMouseMode = {

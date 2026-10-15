@@ -1,5 +1,6 @@
 
 require_ex("Const/PostConst")
+require_ex("HotfixCSharp/Patch")
 
 UIManager:OpenInitPanels()
 

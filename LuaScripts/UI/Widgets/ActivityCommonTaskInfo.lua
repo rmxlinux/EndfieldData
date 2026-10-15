@@ -51,6 +51,8 @@ ActivityCommonTaskInfo._InitUI = HL.Method() << function(self)
             forcedRewardCellCount = self.m_forcedRewardCellCount,
             redDotScrollRect = self.view.redDotScrollRect,
         })
+         
+        cell:UpdateAllReceiveTaskIds(self.m_waitToReceiveTasks)
         if ActivityUtils.isNewTask(self.m_activityId, taskId) then
             self.m_readTasks[taskId] = true
         end
@@ -78,16 +80,22 @@ ActivityCommonTaskInfo._UpdateData = HL.Method() << function(self)
         return
     end
 
+    local hideTimeLockedTask = self.view.config and self.view.config.HIDE_TIME_LOCKED_TASKS
     local _, taskConfig = Tables.activityConditionalMultiStageTaskConfigTable:TryGetValue(self.m_activityId)
     for id, singleTaskConfig in pairs(taskConfig.TaskConfigMap) do
         local taskStatusData = activityData:GetTaskData(id)
         local status
         if taskStatusData ~= nil then
             
-            if activityData.status == GEnums.ActivityStatus.Locked and #singleTaskConfig.unlockConditionId == 0 then
+            local unlockTimeArrived = string.isEmpty(singleTaskConfig.unlockTimeId) or Utils.isCurTimeInTimeIdRange(singleTaskConfig.unlockTimeId)
+            local noUnlockCondition = #singleTaskConfig.unlockConditionId == 0
+            if activityData.status == GEnums.ActivityStatus.Locked and unlockTimeArrived and noUnlockCondition then
                 status = GEnums.ActivityConditionalTaskState.Unlocked
             else
                 status = GEnums.ActivityConditionalTaskState.__CastFrom(taskStatusData.Status)
+            end
+            if hideTimeLockedTask and not unlockTimeArrived then
+                goto continue
             end
             
             if status == GEnums.ActivityConditionalTaskState.Completed then
@@ -101,6 +109,7 @@ ActivityCommonTaskInfo._UpdateData = HL.Method() << function(self)
                 sortId = singleTaskConfig.sortId
             })
         end
+        ::continue::
     end
     
     table.sort(self.m_taskStatusInfo, Utils.genSortFunction({ "toReceive", "inProgress", "rewarded", "sortId"}, true))

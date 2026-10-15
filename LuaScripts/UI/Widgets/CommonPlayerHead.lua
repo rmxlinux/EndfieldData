@@ -179,7 +179,13 @@ CommonPlayerHead.OnClick = HL.Method() << function(self)
     end
 end
 
-CommonPlayerHead.UpdateContingencyContractActivityState = HL.Method() << function(self)
+
+CommonPlayerHead.UpdateActivityState = HL.Method() << function(self)
+    self:_UpdateContingencyContractActivityState()
+    self:_UpdateSeasonTowerActivityState()
+end
+
+CommonPlayerHead._UpdateContingencyContractActivityState = HL.Method() << function(self)
     if self.m_roleId == 0 then
         self.view.levelTag.gameObject:SetActiveIfNecessary(false)
         return
@@ -199,11 +205,11 @@ CommonPlayerHead.UpdateContingencyContractActivityState = HL.Method() << functio
         local rangeArray = Tables.activityContingencyContractTable:GetValue(playerInfo.contingencyContractBestRecord.Item1).rangeArray
 
         
-        self.view.levelTagNode:SetState(tostring(1))
+        self.view.levelTagNode:SetState(FriendUtils.LEVEL_TAG_STATE_NAME_LIST[1])
         for i = 1, #rangeArray do
             local range = rangeArray[CSIndex(i)]
             if playerInfo.contingencyContractBestRecord.Item2 >= range then
-                self.view.levelTagNode:SetState(tostring(i + 1))
+                self.view.levelTagNode:SetState(FriendUtils.LEVEL_TAG_STATE_NAME_LIST[i + 1])
             end
         end
     else
@@ -211,7 +217,7 @@ CommonPlayerHead.UpdateContingencyContractActivityState = HL.Method() << functio
     end
 end
 
-CommonPlayerHead.UpdateSeasonTowerActivityState = HL.Method() << function(self)
+CommonPlayerHead._UpdateSeasonTowerActivityState = HL.Method() << function(self)
     if self.m_roleId == 0 then
         self.view.seasonTag.gameObject:SetActiveIfNecessary(false)
         return

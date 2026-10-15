@@ -2,6 +2,11 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivitySkipChapter1Confirm
 
+
+
+
+
+
 ActivitySkipChapter1ConfirmCtrl = HL.Class('ActivitySkipChapter1ConfirmCtrl', uiCtrl.UICtrl)
 
 ActivitySkipChapter1ConfirmCtrl.s_messages = HL.StaticField(HL.Table) << {
