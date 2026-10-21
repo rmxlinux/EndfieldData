@@ -505,6 +505,8 @@ CharInfoEquipCtrl.OnPutOnEquip = HL.Method(HL.Table) << function(self, arg)
     if self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail then
         self.view.commonItemList:RefreshAllCells()
         self:OnCompareEquipChange(lastSelectIndexId)
+    else
+        self:_RefreshCommonNode(self.m_charInfo)
     end
 end
 
@@ -528,6 +530,8 @@ CharInfoEquipCtrl.OnPutOffEquip = HL.Method(HL.Table) << function(self, arg)
     if self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail then
         self.view.commonItemList:RefreshAllCells()
         self:OnCompareEquipChange(lastSelectIndexId)
+    else
+        self:_RefreshCommonNode(self.m_charInfo)
     end
 end
 

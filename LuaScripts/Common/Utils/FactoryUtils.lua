@@ -3228,21 +3228,18 @@ function FactoryUtils.SetCreatorName(blueprintContent, isCreating, bpInst)
     end
 
     
-    blueprintContent.view.creatorNode.gameObject:SetActive(false)
-    GameInstance.player.friendSystem:SyncFriendInfoById(bpInst.creatorRoleId, function()
-        local success, friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(bpInst.creatorRoleId)
-        if success and friendInfo.psnData then
-            
-            creatorName = string.format(Language.LUA_FAC_BLUEPRINT_CREATOR_FORMAT_USER, friendInfo.psName)
-            blueprintContent.view.psNameIcon.gameObject:SetActive(true)
-        else
-            
-            creatorName = string.format(Language.LUA_FAC_BLUEPRINT_CREATOR_FORMAT_USER, roleId)
-            blueprintContent.view.psNameIcon.gameObject:SetActive(false)
-        end
-        blueprintContent.view.creatorNameTxt.text = creatorName
-        blueprintContent.view.creatorNode.gameObject:SetActive(true)
-    end)
+    local success, friendInfo = GameInstance.player.friendSystem.friendInfoDic:TryGetValue(bpInst.creatorRoleId)
+    if success and friendInfo.psnData and not string.isEmpty(friendInfo.psnData.AccountId) then
+        
+        creatorName = string.format(Language.LUA_FAC_BLUEPRINT_CREATOR_FORMAT_USER, friendInfo.psName)
+        blueprintContent.view.psNameIcon.gameObject:SetActive(true)
+    else
+        
+        creatorName = string.format(Language.LUA_FAC_BLUEPRINT_CREATOR_FORMAT_USER, roleId)
+        blueprintContent.view.psNameIcon.gameObject:SetActive(false)
+    end
+    blueprintContent.view.creatorNameTxt.text = creatorName
+    blueprintContent.view.creatorNode.gameObject:SetActive(true)
 end
 
 function FactoryUtils.isPlayerBP(bpInst)

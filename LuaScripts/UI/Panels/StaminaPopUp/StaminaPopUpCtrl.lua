@@ -688,7 +688,7 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
         local btn = item.view.button
         btn.onClick:RemoveAllListeners()
         btn.onClick:AddListener(function()
-            if not item.showingTips then
+            if DeviceInfo.usingController and not item.showingTips then
                 item:ShowTips()
             end
         end)

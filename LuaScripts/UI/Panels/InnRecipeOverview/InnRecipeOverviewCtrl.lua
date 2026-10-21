@@ -139,7 +139,7 @@ InnRecipeOverviewCtrl._BuildCategories = HL.Method() << function(self)
     table.insert(cats, 1, {
         id = "",
         name = Language.LUA_INN_RECIPE_OVERVIEW_TAB_ALL,
-        iconId = "",
+        iconId = "inn_recipe_type_all",
         sortId = -1,
     })
     self.m_categories = cats

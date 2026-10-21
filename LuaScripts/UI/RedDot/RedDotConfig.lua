@@ -2853,6 +2853,7 @@ local Config = {
     
     DomainSingleMap = {
         msgs = {
+            MessageConst.ON_DOMAIN_DEPOT_QUICK_TRANSFER_SUCCESS,
             MessageConst.ON_SETTLEMENT_MODIFY,
             MessageConst.ON_PACK_ITEM_END,
             MessageConst.ON_SELECT_BUYER_END,
@@ -2869,6 +2870,7 @@ local Config = {
     
     DomainOtherMap = {
         msgs = {
+            MessageConst.ON_DOMAIN_DEPOT_QUICK_TRANSFER_SUCCESS,
             MessageConst.ON_SETTLEMENT_MODIFY,
             MessageConst.ON_PACK_ITEM_END,
             MessageConst.ON_SELECT_BUYER_END,
@@ -2893,6 +2895,7 @@ local Config = {
     
     DomainEntry = {
         msgs = {
+            MessageConst.ON_DOMAIN_DEPOT_QUICK_TRANSFER_SUCCESS,
             MessageConst.ON_SETTLEMENT_MODIFY,
             MessageConst.ON_PACK_ITEM_END,
             MessageConst.ON_SELECT_BUYER_END,

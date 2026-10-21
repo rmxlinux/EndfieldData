@@ -126,11 +126,12 @@ end
 
 SSCharHeadCell._SetGroupTeamType = HL.Method(HL.Opt(HL.Any)) << function(self, char)
     local TeamType = CS.Proto.SpaceshipCharTeamType
-    local roomId = char.stationedRoomId
-    local scheduleEnabled = SpaceshipUtils.isScheduleUnlocked()
+    local roomId = char and char.stationedRoomId
+    local scheduleEnabled = not string.isEmpty(roomId)
+        and SpaceshipUtils.isScheduleUnlocked()
         and SpaceshipUtils.isRoomScheduleSupported(roomId)
         and not SpaceshipUtils.isSingleTeamMode(roomId)
-    local teamType = char.teamType
+    local teamType = char and char.teamType
     self.m_groupABTxt.color = not string.isEmpty(roomId) and SpaceshipUtils.getRoomColor(roomId) or Color.white
     if not scheduleEnabled then
         teamType = nil

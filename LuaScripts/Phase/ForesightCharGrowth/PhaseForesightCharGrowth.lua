@@ -1560,6 +1560,7 @@ PhaseForesightCharGrowth._BuildPreciousChestList = HL.Method(HL.Table).Return(HL
         end
         s_preciousChestTable = chestTable
     end
+    local chests = {}
     local chestByItemId = {}
     local chestSortFunc = Utils.genSortFunction({ "sortId1", "sortId2", "itemId" }, false)
     for _, entry in ipairs(itemList or {}) do
@@ -1600,8 +1601,9 @@ PhaseForesightCharGrowth._BuildPreciousChestList = HL.Method(HL.Table).Return(HL
                                 if not chestByItemId[chestItemId] then
                                     candidate.needCountByItemId = {}
                                     chestByItemId[chestItemId] = candidate
+                                    table.insert(chests, candidate)
                                 end
-                                if not chestCandidate or chestSortFunc(candidate, chestCandidate) then
+                                if not chestCandidate or chestSortFunc(chestCandidate, candidate) then
                                     chestCandidate = candidate
                                 elseif chestCandidate.itemId == chestItemId then
                                     chestCandidate.needCount = math.min(chestCandidate.needCount, needCount)
@@ -1617,16 +1619,18 @@ PhaseForesightCharGrowth._BuildPreciousChestList = HL.Method(HL.Table).Return(HL
             end
         end
     end
-    local chests = {}
-    for _, chest in pairs(chestByItemId) do
-        chest.needCount = 0
+    table.sort(chests, chestSortFunc)
+    local remainingCount = 0
+    for i = #chests, 1, -1 do
+        local chest = chests[i]
+        chest.needCount = remainingCount
         for _, needCount in pairs(chest.needCountByItemId) do
             chest.needCount = chest.needCount + needCount
         end
         chest.needCountByItemId = nil
-        table.insert(chests, chest)
+        remainingCount = i > 1 and math.max(0, chest.needCount - Utils.getItemCount(chest.itemId, true)) or 0
+        chest.needCount = chest.needCount - remainingCount
     end
-    table.sort(chests, chestSortFunc)
     return #chests > 0 and chests or nil
 end
 
