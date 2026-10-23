@@ -87,6 +87,42 @@ FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
 end
 
 FacLuaSystem.OnInit = HL.Override() << function(self)
+    xlua.private_accessible(CS.Beyond.Gameplay.FarmTerminalSystem)
+    self:RegisterMessage(MessageConst.ON_FARM_TERMINAL_DATA_CHANGED, function(arg)
+        local id = unpack(arg)
+        if string.isEmpty(id) then
+            self:_SyncTeammateAutoSoilData()
+        end
+    end)
+    self:_SyncTeammateAutoSoilData()
+end
+
+FacLuaSystem._SyncTeammateAutoSoilData = HL.Method() << function(self)
+    local dataMap = GameInstance.player.farmTerminalSystem.m_autoSoilDataMap
+    local found, sourceData = dataMap:TryGetValue(Tables.factorySoilConst.SoilMgrDomainId)
+    if not found then
+        
+        return
+    end
+
+    
+    local openAutoSoil = sourceData.openAutoSoil
+    local onlySameSoil = sourceData.onlySameSoil
+    local changed = false
+    local enumerator = dataMap:GetEnumerator()
+    while enumerator:MoveNext() do
+        local data = enumerator.Current.Value
+        if data.openAutoSoil ~= openAutoSoil or data.onlySameSoil ~= onlySameSoil then
+            data.openAutoSoil = openAutoSoil
+            data.onlySameSoil = onlySameSoil
+            changed = true
+        end
+    end
+    enumerator:Dispose()
+
+    if changed then
+        Notify(MessageConst.ON_FAC_FERTILIZATION_MODE_SETTING_CHANGED)
+    end
 end
 
 FacLuaSystem.OnRelease = HL.Override() << function(self)

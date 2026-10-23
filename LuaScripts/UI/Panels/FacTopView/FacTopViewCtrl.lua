@@ -927,25 +927,27 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
             local subIndex = building.subBuildingIndex
 
             local handler = FactoryUtils.getBuildingNodeHandler(nodeId)
-            local targetName
-            if isBuilding then
-                if subIndex and subIndex >= 0 then
-                    
-                    targetName = Language.LUA_FAC_HUB_INPUT .. subIndex
+            if handler then
+                local targetName
+                if isBuilding then
+                    if subIndex and subIndex >= 0 then
+                        
+                        targetName = Language.LUA_FAC_HUB_INPUT .. subIndex
+                    else
+                        targetName = Tables.factoryBuildingTable[handler.templateId].name
+                    end
                 else
-                    targetName = Tables.factoryBuildingTable[handler.templateId].name
+                    targetName = FactoryUtils.getLogisticData(handler.templateId).name
                 end
-            else
-                targetName = FactoryUtils.getLogisticData(handler.templateId).name
+                table.insert(targets, {
+                    type = FacConst.FAC_INTERACT_TARGET_TYPE.Building,
+                    sortBase = 200,
+                    name = targetName,
+                    nodeId = nodeId,
+                    isBuilding = isBuilding,
+                    subBuildingIndex = subIndex,
+                })
             end
-            table.insert(targets, {
-                type = FacConst.FAC_INTERACT_TARGET_TYPE.Building,
-                sortBase = 200,
-                name = targetName,
-                nodeId = nodeId,
-                isBuilding = isBuilding,
-                subBuildingIndex = subIndex,
-            })
         end
     end
     local overlapBuildings = targetSet.overlapBuildings
@@ -1013,16 +1015,20 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
                 else
                     local chapterInfo = FactoryUtils.getCurChapterInfo()
                     local handler = chapterInfo:GetNode(beltNodeId)
-                    beltName = Tables.factoryGridBeltTable:GetValue(handler.templateId).beltData.name
+                    if handler then
+                        beltName = Tables.factoryGridBeltTable:GetValue(handler.templateId).beltData.name
+                    end
                 end
-                table.insert(targets, {
-                    type = FacConst.FAC_INTERACT_TARGET_TYPE.Belt,
-                    sortBase = 300,
-                    name = beltName,
-                    nodeId = beltNodeId,
-                    unitIndex = beltUnitIndex,
-                    logisticPos = logisticPos,
-                })
+                if beltName then
+                    table.insert(targets, {
+                        type = FacConst.FAC_INTERACT_TARGET_TYPE.Belt,
+                        sortBase = 300,
+                        name = beltName,
+                        nodeId = beltNodeId,
+                        unitIndex = beltUnitIndex,
+                        logisticPos = logisticPos,
+                    })
+                end
             end
         end
     end

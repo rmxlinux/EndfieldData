@@ -3786,7 +3786,7 @@ end
 
 
 function FactoryUtils.isEnableTeammateFertilize()
-    local result = CSFactoryUtil.IsEnableTeammateFertilize()
+    local result = CSFactoryUtil.IsEnableTeammateFertilize(Tables.factorySoilConst.SoilMgrDomainId)
     return result
 end
 
@@ -3800,7 +3800,7 @@ end
 
 
 function FactoryUtils.isTeammateFertilizeSameSoil()
-    local result = CSFactoryUtil.IsTeammateFertilizeSameSoil()
+    local result = CSFactoryUtil.IsTeammateFertilizeSameSoil(Tables.factorySoilConst.SoilMgrDomainId)
     return result
 end
 

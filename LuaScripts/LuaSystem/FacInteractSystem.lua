@@ -119,6 +119,13 @@ FacInteractSystem.FacInteractSystem = HL.Constructor() << function(self)
     self:RegisterMessage(MessageConst.FAC_ON_TOGGLE_BATCH_MODE, function(arg)
         self:_ResolveAndApplyMode()
     end)
+    
+    self:RegisterMessage(MessageConst.FAC_ON_NODE_REMOVED, function(arg)
+        self:_ClearCurrentInteractTargetOutputAndPresentation()
+    end)
+    self:RegisterMessage(MessageConst.FAC_ON_PENDING_SLOTS_REMOVED, function(arg)
+        self:_ClearCurrentInteractTargetOutputAndPresentation()
+    end)
     self:RegisterMessage(MessageConst.ON_SCENE_LOAD_START, function(arg)
         self.m_onlyValidHubUnloaderIndex = -1
         self:_ClearCurrentInteractTargetOutputAndPresentation()
