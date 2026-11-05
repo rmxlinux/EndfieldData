@@ -18,6 +18,69 @@
   "skipMissionAcceptAnim": false,
   "skipMissionCompleteAnim": false,
   "questDic": {
+    "sm2l10m2_q#0": {
+      "questId": "sm2l10m2_q#0",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "sm2l10m2_desc_001"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckTalkOptionFinish, Gameplay.Beyond",
+            "uniqueId": "b797f400",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_dialogId": {
+              "constValue": "dlg_sm2l10m2_1"
+            },
+            "_finishId": {
+              "constValue": -1
+            }
+          },
+          "description": {
+            "key": "objective_sm2l10m2_1_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.NpcProxyTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "map02_lv010",
+              "guidingArea": 0.0,
+              "jumpToCampFireGlobalId": 0,
+              "npcProxyId": "tangtang_map02_v1d6d0_004"
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [],
+      "flowIndex": 0
+    },
     "sm2l10m2_q#10": {
       "questId": "sm2l10m2_q#10",
       "questType": 0,
@@ -812,7 +875,9 @@
         }
       ],
       "needItemIds": [],
-      "prevQuestIdList": [],
+      "prevQuestIdList": [
+        "sm2l10m2_q#0"
+      ],
       "flowIndex": 0
     },
     "sm2l10m2_q#20": {
@@ -1702,7 +1767,7 @@
       "actionList": [
         {
           "$type": "Beyond.Gameplay.Actions.PlayRadio, Gameplay.Beyond",
-          "_ID": 36,
+          "_ID": 47,
           "_uid": "3ebd3ba5",
           "_radioId": {
             "constValue": "radio_sm2l10m2_11"
@@ -1722,7 +1787,7 @@
         },
         {
           "$type": "Beyond.Gameplay.Actions.PlayRadio, Gameplay.Beyond",
-          "_ID": 35,
+          "_ID": 46,
           "_uid": "c8bd7ad8",
           "_radioId": {
             "constValue": "radio_sm2l10m2_1"
@@ -1742,7 +1807,7 @@
         },
         {
           "$type": "Beyond.Gameplay.Actions.PlayRadio, Gameplay.Beyond",
-          "_ID": 4,
+          "_ID": 3,
           "_uid": "8a5fcd20",
           "_radioId": {
             "constValue": "radio_sm2l10m2_17"
@@ -1762,7 +1827,7 @@
         },
         {
           "$type": "Beyond.Gameplay.Actions.PlayRadio, Gameplay.Beyond",
-          "_ID": 6,
+          "_ID": 5,
           "_uid": "01cbc3fa",
           "_radioId": {
             "constValue": "radio_sm2l10m2_10"
@@ -1782,7 +1847,7 @@
         },
         {
           "$type": "Beyond.Gameplay.Actions.PlayRadio, Gameplay.Beyond",
-          "_ID": 33,
+          "_ID": 32,
           "_uid": "9696c671",
           "_radioId": {
             "constValue": "radio_sm2l10m2_12"
@@ -1805,6 +1870,7 @@
     }
   },
   "mainPathQuests": [
+    "sm2l10m2_q#0",
     "sm2l10m2_q#2",
     "sm2l10m2_q#3",
     "sm2l10m2_q#4",
@@ -1851,11 +1917,11 @@
     }
   ],
   "clientActionMapValue": [
-    36,
-    35,
-    4,
-    6,
-    33
+    47,
+    46,
+    3,
+    5,
+    32
   ],
   "onMissionAcceptId": -1,
   "onMissionCompletedId": -1,

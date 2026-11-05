@@ -1275,9 +1275,9 @@ FacBuildListSelectCtrl.OnActionScrollToTarget = HL.Method(HL.Any) << function(se
             if cell ~= nil then
                 self:SetNaviTarget(cell.view.inputNaviDecorator)
             end
-        else
-            self.view.scrollList:SetSelectedIndex(CSIndex(targetIndex))
         end
+        
+        self.view.scrollList:SetSelectedIndex(CSIndex(targetIndex))
     end
 end
 

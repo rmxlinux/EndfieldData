@@ -76,6 +76,12 @@
       "dung02_rdg008_custom_0",
       "dung02_rdg008_normal"
     ],
+    "dung02_rdg010": [
+      "dung02_rdg010_normal"
+    ],
+    "dung02_rdg011": [
+      "dung02_rdg011_normal"
+    ],
     "dung02_ssdg002": [
       "dung02_ssdg002_environmental",
       "dung02_ssdg002_normal"
@@ -202,6 +208,7 @@
       "map02_lv002_custom_7",
       "map02_lv002_environmental",
       "map02_lv002_normal",
+      "map02_lv002_c37m1",
       "map02_lv002_custom_1",
       "map02_lv002_custom_10",
       "map02_lv002_custom_11",
@@ -404,6 +411,17 @@
       "dung02_rdg008_custom_0_v1d4d0_001"
     ],
     "dung02_rdg008_normal": [],
+    "dung02_rdg010_normal": [
+      "dung02_rdg010_normal_v1d6d0_001"
+    ],
+    "dung02_rdg011_environmental": [
+      "dung02_rdg011_environmental_v1d6d0_001"
+    ],
+    "dung02_rdg011_normal": [
+      "dung02_rdg011_normal_v1d6d0_001",
+      "dung02_rdg011_normal_v1d6d0_002",
+      "dung02_rdg011_normal_v1d6d0_003"
+    ],
     "dung02_ssdg002_environmental": [
       "dung02_ssdg002_environmental_v1d0d0_001"
     ],
@@ -763,6 +781,9 @@
     "map02_lv001_environmental": [
       "map02_lv001_environmental_001"
     ],
+    "map02_lv002_c37m1": [
+      "map02_lv002_c37m1_v1d6d0_001"
+    ],
     "map02_lv002_custom_0": [
       "map02_lv002_custom_0_001",
       "map02_lv002_custom_0_v1d0d0_005",
@@ -863,7 +884,8 @@
       "map02_lv002_environmental_v1d2d0_001"
     ],
     "map02_lv002_normal": [
-      "map02_lv002_normal_001"
+      "map02_lv002_normal_001",
+      "map02_lv002_normal_v1d6d0_001"
     ],
     "map02_lv003_environmental": [
       "map02_lv003_environmental_001"
@@ -2331,6 +2353,265 @@
         "missionId": "e11m5",
         "compareOperator": 0,
         "compareTarget": 2
+      }
+    },
+    "dung02_rdg010_normal_v1d6d0_001": {
+      "switcherId": "dung02_rdg010_normal",
+      "levelId": "dung02_rdg010",
+      "mapId": "dung02_rdg010",
+      "groupId": "dung02_rdg010_normal_v1d6d0_001",
+      "bindMissionId": "c37m2d5",
+      "switcherType": 0,
+      "condition": {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 0,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                "missionId": "c37m2d5",
+                "compareOperator": 0,
+                "compareTarget": 2
+              },
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionNotPaused, Gameplay.Beyond",
+                "missionId": "c37m2d5"
+              }
+            ]
+          },
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                "missionId": "c37m2d5",
+                "compareOperator": 0,
+                "compareTarget": 2
+              },
+              {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": true,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                    "missionId": "c37m2d5",
+                    "compareOperator": 0,
+                    "compareTarget": 3
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "dung02_rdg011_environmental_v1d6d0_001": {
+      "switcherId": "dung02_rdg011_environmental",
+      "levelId": "dung02_rdg011",
+      "mapId": "dung02_rdg011",
+      "groupId": "dung02_rdg011_environmental_v1d6d0_001",
+      "bindMissionId": "",
+      "switcherType": 1,
+      "condition": {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckGlobalVar, Gameplay.Beyond",
+        "globalVarName": "always_true",
+        "compareOperator": 0,
+        "compareTarget": 1
+      }
+    },
+    "dung02_rdg011_normal_v1d6d0_001": {
+      "switcherId": "dung02_rdg011_normal",
+      "levelId": "dung02_rdg011",
+      "mapId": "dung02_rdg011",
+      "groupId": "dung02_rdg011_normal_v1d6d0_001",
+      "bindMissionId": "c37m3d5",
+      "switcherType": 0,
+      "condition": {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 0,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                "missionId": "c37m3d5",
+                "compareOperator": 0,
+                "compareTarget": 2
+              },
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionNotPaused, Gameplay.Beyond",
+                "missionId": "c37m3d5"
+              }
+            ]
+          },
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 1,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                    "questId": "c37m3d5_q#1",
+                    "compareOperator": 0,
+                    "compareTarget": 2
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                    "questId": "c37m3d5_q#1",
+                    "compareOperator": 0,
+                    "compareTarget": 3
+                  }
+                ]
+              },
+              {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": true,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                    "questId": "c37m3d5_q#17",
+                    "compareOperator": 0,
+                    "compareTarget": 3
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "dung02_rdg011_normal_v1d6d0_002": {
+      "switcherId": "dung02_rdg011_normal",
+      "levelId": "dung02_rdg011",
+      "mapId": "dung02_rdg011",
+      "groupId": "dung02_rdg011_normal_v1d6d0_002",
+      "bindMissionId": "c37m3d5",
+      "switcherType": 0,
+      "condition": {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 0,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                "missionId": "c37m3d5",
+                "compareOperator": 0,
+                "compareTarget": 2
+              },
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionNotPaused, Gameplay.Beyond",
+                "missionId": "c37m3d5"
+              }
+            ]
+          },
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                "questId": "c37m3d5_q#17",
+                "compareOperator": 0,
+                "compareTarget": 3
+              },
+              {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": true,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                    "questId": "c37m3d5_q#22",
+                    "compareOperator": 0,
+                    "compareTarget": 3
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "dung02_rdg011_normal_v1d6d0_003": {
+      "switcherId": "dung02_rdg011_normal",
+      "levelId": "dung02_rdg011",
+      "mapId": "dung02_rdg011",
+      "groupId": "dung02_rdg011_normal_v1d6d0_003",
+      "bindMissionId": "c37m3d5",
+      "switcherType": 0,
+      "condition": {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 0,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                "missionId": "c37m3d5",
+                "compareOperator": 0,
+                "compareTarget": 2
+              },
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionNotPaused, Gameplay.Beyond",
+                "missionId": "c37m3d5"
+              }
+            ]
+          },
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                "questId": "c37m3d5_q#12",
+                "compareOperator": 0,
+                "compareTarget": 3
+              },
+              {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": true,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                    "questId": "c37m3d5_q#17",
+                    "compareOperator": 0,
+                    "compareTarget": 3
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     },
     "dung02_ssdg002_environmental_v1d0d0_001": {
@@ -7600,6 +7881,64 @@
         "compareTarget": 1
       }
     },
+    "map02_lv002_c37m1_v1d6d0_001": {
+      "switcherId": "map02_lv002_c37m1",
+      "levelId": "map02_lv002",
+      "mapId": "map02",
+      "groupId": "map02_lv002_c37m1_v1d6d0_001",
+      "bindMissionId": "c37m1",
+      "switcherType": 0,
+      "condition": {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 0,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                "missionId": "c37m1",
+                "compareOperator": 0,
+                "compareTarget": 2
+              },
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionNotPaused, Gameplay.Beyond",
+                "missionId": "c37m1"
+              }
+            ]
+          },
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                "questId": "c37m1_q#2",
+                "compareOperator": 0,
+                "compareTarget": 3
+              },
+              {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": true,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                    "questId": "c37m1_q#4",
+                    "compareOperator": 0,
+                    "compareTarget": 3
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
     "map02_lv002_custom_0_001": {
       "switcherId": "map02_lv002_custom_0",
       "levelId": "map02_lv002",
@@ -9239,6 +9578,64 @@
             "missionId": "e6m1",
             "compareOperator": 0,
             "compareTarget": 3
+          }
+        ]
+      }
+    },
+    "map02_lv002_normal_v1d6d0_001": {
+      "switcherId": "map02_lv002_normal",
+      "levelId": "map02_lv002",
+      "mapId": "map02",
+      "groupId": "map02_lv002_normal_v1d6d0_001",
+      "bindMissionId": "c37m1",
+      "switcherType": 0,
+      "condition": {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 0,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionState, Gameplay.Beyond",
+                "missionId": "c37m1",
+                "compareOperator": 0,
+                "compareTarget": 2
+              },
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckMissionNotPaused, Gameplay.Beyond",
+                "missionId": "c37m1"
+              }
+            ]
+          },
+          {
+            "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+            "conditionOperator": 0,
+            "reverse": false,
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                "questId": "c37m1_q#2",
+                "compareOperator": 0,
+                "compareTarget": 3
+              },
+              {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": true,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+                    "questId": "c37m1_q#4",
+                    "compareOperator": 0,
+                    "compareTarget": 3
+                  }
+                ]
+              }
+            ]
           }
         ]
       }

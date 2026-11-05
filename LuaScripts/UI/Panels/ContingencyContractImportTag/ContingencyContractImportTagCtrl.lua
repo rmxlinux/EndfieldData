@@ -297,10 +297,10 @@ end
 
 
 ContingencyContractImportTagCtrl._GotoSelectTagAndClose = HL.Method() << function(self)
+    self:Close()
     PhaseManager:OpenPhase(PhaseId.ContingencySelectTag, {
         gameId = self.m_gameId,
     })
-    self:PlayAnimationOutAndClose()
 end
 
 ContingencyContractImportTagCtrl._OnClickImport = HL.Method(HL.Boolean) << function(self, gotoAfter)

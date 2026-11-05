@@ -725,7 +725,8 @@ ContingencySelectTagCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.An
         tagIds = joinedTagIds,
         recoverState = {
             joinedTagIds = joinedTagIds,
-            pausedTagIds = self:_GetPausedTagIds(),
+            
+            pausedTagIds = InputManagerInst.inChangingInputDevice and self:_GetPausedTagIds() or nil,
             sortSelectedIndex = self.view.sortNode:GetCurSelectedIndex(),
             sortIsIncremental = self.view.sortNode.isIncremental,
             popupState = self:GetRecoverPopupStateArg(),
