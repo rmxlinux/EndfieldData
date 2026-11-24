@@ -1445,7 +1445,9 @@ FacBuildModeCtrl._UpdateAutoMoveTopViewCamState = HL.Method(HL.Opt(HL.Any)) << f
     end
     local handler = self.m_currentHandler
     local size = handler and handler:GetAutoMoveCamSize() or Vector2.one
-    LuaSystemManager.factory:ToggleAutoMoveTopViewCam(size, extraPadding)
+    local centerOffset = handler and handler:GetAutoMoveCamCenterOffset() or Vector2.zero
+    local customPadding = handler and handler:GetAutoMoveCamPadding() or nil
+    LuaSystemManager.factory:ToggleAutoMoveTopViewCam(size, extraPadding, centerOffset, customPadding)
 end
 
 

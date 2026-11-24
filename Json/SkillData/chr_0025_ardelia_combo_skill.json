@@ -304,6 +304,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -1099,6 +1100,7 @@
                 "y": 0.0,
                 "z": 0.0
               },
+              "bornPosOffsetDirection": 1,
               "bornRotation": 3,
               "bornRotationContextTarget": null,
               "bornRotationOffset": {
@@ -1121,6 +1123,7 @@
               "forbiddenAreaNames": [],
               "forceSyncInit": false,
               "inheritSourceSkillCastId": true,
+              "inheritSourceTimeScale": false,
               "overrideDuration": false,
               "pauseEffectOnEnd": false,
               "readFullPotentialExtraEffect": false,
@@ -1128,6 +1131,7 @@
               "setAbilityEntitySource": true,
               "setAbilityEntityTarget": false,
               "useAdvancedDirectionSetting": false,
+              "useBornPosOffsetDirection": false,
               "weaponIndex": 0,
               "yRotateFromBoneToCurPos": false
             }
@@ -1485,6 +1489,8 @@
                       "z": 0.0
                     },
                     "hitMountPoint": 0,
+                    "hitWeaponIndex": 0,
+                    "hitWeaponMp": 0,
                     "overrideEmitBone": true,
                     "overrideHitBone": true,
                     "presetPoints": [],
@@ -1582,6 +1588,7 @@
                       "targetGroupKey": "smart_target",
                       "targetSource": 2
                     },
+                    "useWeaponHitMp": false,
                     "useWeaponMp": true,
                     "weaponIndex": 10,
                     "weaponMp": 1
@@ -1660,6 +1667,8 @@
                       "z": 0.0
                     },
                     "hitMountPoint": 0,
+                    "hitWeaponIndex": 0,
+                    "hitWeaponMp": 0,
                     "overrideEmitBone": true,
                     "overrideHitBone": true,
                     "presetPoints": [],
@@ -1757,6 +1766,7 @@
                       "targetGroupKey": "smart_target",
                       "targetSource": 2
                     },
+                    "useWeaponHitMp": false,
                     "useWeaponMp": true,
                     "weaponIndex": 10,
                     "weaponMp": 1
@@ -2972,6 +2982,7 @@
               "priorityLevel": 0,
               "priorityOffset": 0,
               "serverActionIndex": 35,
+              "countAsControlled": false,
               "curveKey": "ComboSkill",
               "duration": {
                 "blackboardKey": null,
@@ -4195,6 +4206,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -4500,6 +4512,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -5077,40 +5090,5 @@
     "predefinedTag": []
   },
   "toggleBuffs": [],
-  "uiRangeHints": [
-    {
-      "selectAll": false,
-      "shapeData": {
-        "angle": 0.0,
-        "angleKey": null,
-        "centerBaseIsEndPoint": false,
-        "centerOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "centerOffsetXKey": null,
-        "centerOffsetZKey": null,
-        "extent": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "extentXKey": null,
-        "extentZKey": null,
-        "fixedExtent": false,
-        "radius": 0.0,
-        "radiusKey": null,
-        "restrictEndPointInRange": false,
-        "shape": 0,
-        "useAngleKey": false,
-        "useCenterOffsetKey": false,
-        "useExtentKey": false,
-        "useRadiusKey": false,
-        "useWidthKey": false,
-        "width": 0.0,
-        "widthKey": null
-      },
-      "targetFaction": 8
-    }
-  ],
   "useAIExclusiveFrame": false
 }

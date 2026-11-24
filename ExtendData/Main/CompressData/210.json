@@ -4,493 +4,393 @@
   "nodes": [
     {
       "_position": {
-        "x": 440.0,
-        "y": -60.0
+        "x": 480.0,
+        "y": 119.1519
       },
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "0"
     },
     {
-      "_action": {
-        "saveTo": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "$type": "Beyond.Gameplay.AI.Action.GetMainCharacter"
-      },
-      "additionalWidth": 220.0,
       "_position": {
-        "x": -360.0,
-        "y": 160.0
+        "x": 477.4084,
+        "y": 237.3027
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.Selector",
       "$id": "1"
     },
     {
       "_condition": {
-        "actorA": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "actorB": {},
-        "_invert": true,
-        "$type": "Beyond.Gameplay.AI.Condition.CheckEntity"
+        "conditions": [
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "checkType": 1,
+            "angle": {
+              "_value": 90.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
+          },
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "checkType": 2,
+            "angle": {
+              "_value": 270.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
+          }
+        ],
+        "$type": "NodeCanvas.Framework.ConditionList"
       },
-      "additionalWidth": 102.0,
+      "additionalWidth": 100.0,
       "_position": {
-        "y": 160.0
+        "x": -515.6458,
+        "y": 426.3724
       },
-      "$type": "NodeCanvas.BehaviourTrees.ConditionNode",
+      "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
       "$id": "2"
     },
     {
-      "dynamic": true,
       "_position": {
-        "x": 1100.0,
-        "y": 80.0
+        "x": -428.8942,
+        "y": 629.9317
       },
       "$type": "NodeCanvas.BehaviourTrees.Selector",
       "$id": "3"
     },
     {
       "_condition": {
-        "$type": "Beyond.Gameplay.AI.Condition.HasAttackerAIIdentity"
+        "conditions": [
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "checkType": 3,
+            "angle": {
+              "_value": 90.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
+          },
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "checkType": 2,
+            "angle": {
+              "_value": 180.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
+          }
+        ],
+        "$type": "NodeCanvas.Framework.ConditionList"
       },
-      "additionalWidth": 92.0,
+      "additionalWidth": 166.0,
       "_position": {
-        "x": 683.0,
-        "y": 401.0
+        "x": -933.941,
+        "y": 785.5422
       },
       "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
       "$id": "4"
     },
     {
-      "failureRemap": 1,
-      "additionalWidth": 48.0,
+      "childWeights": [
+        {
+          "_value": 1.0
+        },
+        {
+          "_value": 2.0
+        }
+      ],
+      "failChance": {},
       "_position": {
-        "x": 700.0,
-        "y": 500.0
+        "x": -905.941,
+        "y": 927.3423
       },
-      "$type": "NodeCanvas.BehaviourTrees.Remapper",
+      "$type": "NodeCanvas.BehaviourTrees.ProbabilitySelector",
       "$id": "5"
     },
     {
-      "_position": {
-        "x": 720.0,
-        "y": 600.0
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagId": 1135958862
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 20.0,
+            "skillID": "eny_0094_hsfly_dash_f",
+            "cancelSkillExclusive": true
+          }
+        },
+        "castSkillResult": {},
+        "seqskillData": [],
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
+      "additionalWidth": 270.0,
+      "_position": {
+        "x": -1282.299,
+        "y": 1075.875
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "6"
     },
     {
-      "childConditions": [
-        {
-          "weight": {
-            "_value": 50.0
-          },
-          "condition": {
-            "targetActor": {
-              "_name": "Target",
-              "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-            },
-            "targetPoint": {},
-            "skillId": {
-              "_value": "eny_0053_hsmob_skill01"
-            },
-            "skillData": {},
-            "skipCheckDistance": {
-              "_value": true
-            },
-            "skipCheckAngle": {
-              "_value": true
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.CheckCanCastSkill"
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagId": 1135958862
           }
         },
-        {
-          "weight": {
-            "_value": 5.0
-          },
-          "condition": {
-            "$type": "Beyond.Gameplay.AI.Condition.IsFreeForAction"
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 20.0,
+            "skillID": "eny_0094_hsfly_dash_l",
+            "cancelSkillExclusive": true
           }
-        }
-      ],
-      "_position": {
-        "x": 720.0,
-        "y": 700.0
+        },
+        "castSkillResult": {},
+        "seqskillData": [],
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "_comment": "决策",
-      "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
+      "additionalWidth": 270.0,
+      "_position": {
+        "x": -900.0001,
+        "y": 1073.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "7"
     },
     {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagId": 1135958862
+      "_condition": {
+        "conditions": [
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "angle": {
+              "_value": 270.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
+          },
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "checkType": 3,
+            "angle": {
+              "_value": 180.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
           }
-        },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "skillData": {
-          "_name": "技能1",
-          "_targetVariableID": "82257199-e423-4ac5-86cb-f6ce5ec9738b"
-        },
-        "castSkillResult": {},
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
+        ],
+        "$type": "NodeCanvas.Framework.ConditionList"
       },
-      "additionalWidth": 266.0,
+      "additionalWidth": 166.0,
       "_position": {
-        "x": 40.0,
-        "y": 1000.0
+        "x": -233.1469,
+        "y": 782.1212
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
       "$id": "8"
     },
     {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagId": -776112348
-          }
+      "childWeights": [
+        {
+          "_value": 1.0
         },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "skillData": {},
-        "castSkillResult": {},
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
-      },
-      "additionalWidth": 252.0,
+        {
+          "_value": 2.0
+        }
+      ],
+      "failChance": {},
       "_position": {
-        "x": 935.816,
-        "y": 1017.05
+        "x": -184.3469,
+        "y": 919.7214
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.ProbabilitySelector",
       "$id": "9"
     },
     {
-      "failureRemap": 1,
-      "additionalWidth": 48.0,
-      "_position": {
-        "x": 1332.8,
-        "y": 178.4
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagId": 1135958862
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 20.0,
+            "skillID": "eny_0094_hsfly_dash_f",
+            "cancelSkillExclusive": true
+          }
+        },
+        "castSkillResult": {},
+        "seqskillData": [],
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "$type": "NodeCanvas.BehaviourTrees.Remapper",
+      "additionalWidth": 270.0,
+      "_position": {
+        "x": -488.4,
+        "y": 1072.4
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "10"
     },
     {
-      "childConditions": [
-        {
-          "weight": {
-            "_value": 10.0
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagId": 1135958862
           }
         },
-        {
-          "weight": {
-            "_value": 10.0
-          },
-          "condition": {
-            "checkMode": 1,
-            "conditions": [
-              {
-                "dataType": 1,
-                "skillId": {},
-                "skillData": {
-                  "_name": "战斗动作1",
-                  "_targetVariableID": "89795f53-aba8-4790-8a87-04deceec1d6c"
-                },
-                "$type": "Beyond.Gameplay.AI.Condition.IsSkillCDReady"
-              },
-              {
-                "dataType": 1,
-                "skillId": {},
-                "skillData": {
-                  "_name": "战斗动作2",
-                  "_targetVariableID": "8ae3fa33-c32e-4f13-8a15-7b45ce31c066"
-                },
-                "$type": "Beyond.Gameplay.AI.Condition.IsSkillCDReady"
-              },
-              {
-                "dataType": 1,
-                "skillId": {},
-                "skillData": {
-                  "_name": "战斗动作3",
-                  "_targetVariableID": "cd052f7d-2228-4b83-91c6-8fa05ca3f57c"
-                },
-                "$type": "Beyond.Gameplay.AI.Condition.IsSkillCDReady"
-              },
-              {
-                "dataType": 1,
-                "skillId": {},
-                "skillData": {
-                  "_name": "战斗动作4",
-                  "_targetVariableID": "29dc0503-3f3c-4be7-abcb-20c69ac136c7"
-                },
-                "$type": "Beyond.Gameplay.AI.Condition.IsSkillCDReady"
-              },
-              {
-                "dataType": 1,
-                "skillId": {},
-                "skillData": {
-                  "_name": "战斗动作5",
-                  "_targetVariableID": "c6f0519a-bb56-4539-97ae-7a7930b2613a"
-                },
-                "$type": "Beyond.Gameplay.AI.Condition.IsSkillCDReady"
-              },
-              {
-                "dataType": 1,
-                "skillId": {},
-                "skillData": {
-                  "_name": "战斗动作6",
-                  "_targetVariableID": "abdfe7d6-904f-4b3b-858b-59323c5e436e"
-                },
-                "$type": "Beyond.Gameplay.AI.Condition.IsSkillCDReady"
-              }
-            ],
-            "$type": "NodeCanvas.Framework.ConditionList"
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 20.0,
+            "skillID": "eny_0094_hsfly_dash_r",
+            "cancelSkillExclusive": true
           }
-        }
-      ],
-      "_position": {
-        "x": 1385.97,
-        "y": 410.2197
+        },
+        "castSkillResult": {},
+        "seqskillData": [],
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
+      "additionalWidth": 270.0,
+      "_position": {
+        "x": -103.6,
+        "y": 1070.8
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "11"
     },
     {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagId": -776112348
-          }
+      "childWeights": [
+        {
+          "_value": 6.0
         },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "skillData": {},
-        "castSkillResult": {},
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
-      },
-      "additionalWidth": 252.0,
+        {
+          "_value": 4.0
+        }
+      ],
+      "failChance": {},
       "_position": {
-        "x": 1070.055,
-        "y": 786.3454
+        "x": 562.8466,
+        "y": 464.1808
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.ProbabilitySelector",
       "$id": "12"
     },
     {
-      "childConditions": [
-        {
-          "weight": {
-            "_value": 30.0
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagId": 1135958862
           }
         },
-        {
-          "weight": {
-            "_value": 10.0
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 20.0,
+            "skillID": "eny_0094_hsfly_dash_b",
+            "cancelSkillExclusive": true
           }
         },
-        {
-          "weight": {
-            "_value": 10.0
-          }
-        },
-        {
-          "weight": {
-            "_value": 10.0
-          },
-          "condition": {
-            "customEntity": {},
-            "direction": 1,
-            "targetEntity": {
-              "_name": "Target",
-              "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-            },
-            "layer": 14,
-            "angle": {
-              "_value": -180.0
-            },
-            "range": {
-              "_value": 3.0
-            },
-            "height": {
-              "_value": 1.5
-            },
-            "radius": {
-              "_value": 0.7
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.CheckCapsuleCollider"
-          }
-        },
-        {
-          "weight": {
-            "_value": 20.0
-          },
-          "condition": {
-            "conditions": [
-              {
-                "targetActor": {
-                  "_name": "Target",
-                  "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-                },
-                "range": {
-                  "_value": 4.0
-                },
-                "useNavDistance": {},
-                "_invert": true,
-                "$type": "Beyond.Gameplay.AI.Condition.IsTargetInRange"
-              },
-              {
-                "customEntity": {},
-                "direction": 1,
-                "targetEntity": {
-                  "_name": "Target",
-                  "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-                },
-                "layer": 14,
-                "angle": {
-                  "_value": 90.0
-                },
-                "range": {
-                  "_value": 4.0
-                },
-                "height": {
-                  "_value": 1.5
-                },
-                "radius": {
-                  "_value": 0.7
-                },
-                "$type": "Beyond.Gameplay.AI.Condition.CheckCapsuleCollider"
-              }
-            ],
-            "$type": "NodeCanvas.Framework.ConditionList"
-          }
-        },
-        {
-          "weight": {
-            "_value": 20.0
-          },
-          "condition": {
-            "conditions": [
-              {
-                "targetActor": {
-                  "_name": "Target",
-                  "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-                },
-                "range": {
-                  "_value": 4.0
-                },
-                "useNavDistance": {},
-                "_invert": true,
-                "$type": "Beyond.Gameplay.AI.Condition.IsTargetInRange"
-              },
-              {
-                "customEntity": {},
-                "direction": 1,
-                "targetEntity": {
-                  "_name": "Target",
-                  "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-                },
-                "layer": 14,
-                "angle": {
-                  "_value": -90.0
-                },
-                "range": {
-                  "_value": 4.0
-                },
-                "height": {
-                  "_value": 1.5
-                },
-                "radius": {
-                  "_value": 0.7
-                },
-                "$type": "Beyond.Gameplay.AI.Condition.CheckCapsuleCollider"
-              }
-            ],
-            "$type": "NodeCanvas.Framework.ConditionList"
-          }
-        }
-      ],
-      "_position": {
-        "x": 2125.317,
-        "y": 803.4783
+        "castSkillResult": {},
+        "seqskillData": [],
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
+      "additionalWidth": 270.0,
+      "_position": {
+        "x": 161.4,
+        "y": 814.6
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "13"
     },
     {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagId": 1135958862
-          }
-        },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "skillData": {
-          "_name": "战斗动作1",
-          "_targetVariableID": "89795f53-aba8-4790-8a87-04deceec1d6c"
-        },
-        "castSkillResult": {},
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
-      },
-      "additionalWidth": 267.0,
       "_position": {
-        "x": 1309.242,
-        "y": 1165.748
+        "x": 816.4272,
+        "y": 747.8992
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.Selector",
       "$id": "14"
     },
     {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagId": 1135958862
+      "_condition": {
+        "conditions": [
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "checkType": 3,
+            "angle": {},
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
+          },
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "angle": {
+              "_value": 90.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
           }
-        },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "skillData": {
-          "_name": "战斗动作2",
-          "_targetVariableID": "8ae3fa33-c32e-4f13-8a15-7b45ce31c066"
-        },
-        "castSkillResult": {},
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
+        ],
+        "$type": "NodeCanvas.Framework.ConditionList"
       },
-      "additionalWidth": 267.0,
+      "additionalWidth": 161.0,
       "_position": {
-        "x": 1710.786,
-        "y": 1170.855
+        "x": 590.8527,
+        "y": 857.5853
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
       "$id": "15"
     },
     {
@@ -503,52 +403,64 @@
         },
         "target": {
           "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+          "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
         },
         "skillData": {
-          "_name": "战斗动作3",
-          "_targetVariableID": "cd052f7d-2228-4b83-91c6-8fa05ca3f57c"
+          "_value": {
+            "skillRange": 20.0,
+            "skillID": "eny_0094_hsfly_dash_l",
+            "cancelSkillExclusive": true
+          }
         },
         "castSkillResult": {},
         "seqskillData": [],
         "targetPos": {},
         "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "additionalWidth": 267.0,
+      "additionalWidth": 270.0,
       "_position": {
-        "x": 2112.412,
-        "y": 1174.874
+        "x": 535.9999,
+        "y": 1062.4
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "16"
     },
     {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagId": 1135958862
+      "_condition": {
+        "conditions": [
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "checkType": 3,
+            "angle": {
+              "_value": 270.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
+          },
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "checkType": 2,
+            "angle": {
+              "_value": 360.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
           }
-        },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "skillData": {
-          "_name": "战斗动作4",
-          "_targetVariableID": "29dc0503-3f3c-4be7-abcb-20c69ac136c7"
-        },
-        "castSkillResult": {},
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
+        ],
+        "$type": "NodeCanvas.Framework.ConditionList"
       },
-      "additionalWidth": 267.0,
+      "additionalWidth": 166.0,
       "_position": {
-        "x": 2505.472,
-        "y": 1179.511
+        "x": 988.9839,
+        "y": 855.6473
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
       "$id": "17"
     },
     {
@@ -561,21 +473,24 @@
         },
         "target": {
           "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+          "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
         },
         "skillData": {
-          "_name": "战斗动作5",
-          "_targetVariableID": "c6f0519a-bb56-4539-97ae-7a7930b2613a"
+          "_value": {
+            "skillRange": 20.0,
+            "skillID": "eny_0094_hsfly_dash_r",
+            "cancelSkillExclusive": true
+          }
         },
         "castSkillResult": {},
         "seqskillData": [],
         "targetPos": {},
         "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "additionalWidth": 267.0,
+      "additionalWidth": 270.0,
       "_position": {
-        "x": 2915.503,
-        "y": 1181.148
+        "x": 939.4001,
+        "y": 1064.6
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "18"
@@ -590,52 +505,27 @@
         },
         "target": {
           "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+          "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
         },
         "skillData": {
-          "_name": "战斗动作6",
-          "_targetVariableID": "abdfe7d6-904f-4b3b-858b-59323c5e436e"
+          "_value": {
+            "skillRange": 20.0,
+            "skillID": "eny_0094_hsfly_dash_f",
+            "cancelSkillExclusive": true
+          }
         },
         "castSkillResult": {},
         "seqskillData": [],
         "targetPos": {},
         "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "additionalWidth": 267.0,
+      "additionalWidth": 270.0,
       "_position": {
-        "x": 3300.252,
-        "y": 1183.573
+        "x": 1383.0,
+        "y": 858.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "19"
-    },
-    {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagId": 1135958862
-          }
-        },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "skillData": {
-          "_name": "技能2",
-          "_targetVariableID": "e469fb62-6a42-46c1-9075-6ba47cabacf0"
-        },
-        "castSkillResult": {},
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
-      },
-      "additionalWidth": 266.0,
-      "_position": {
-        "x": 520.0,
-        "y": 1000.0
-      },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode"
     }
   ],
   "connections": [
@@ -650,7 +540,7 @@
     },
     {
       "_sourceNode": {
-        "$ref": "0"
+        "$ref": "1"
       },
       "_targetNode": {
         "$ref": "2"
@@ -659,88 +549,7 @@
     },
     {
       "_sourceNode": {
-        "$ref": "0"
-      },
-      "_targetNode": {
-        "$ref": "3"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "3"
-      },
-      "_targetNode": {
-        "$ref": "4"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "3"
-      },
-      "_targetNode": {
-        "$ref": "10"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "4"
-      },
-      "_targetNode": {
-        "$ref": "5"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "5"
-      },
-      "_targetNode": {
-        "$ref": "6"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "6"
-      },
-      "_targetNode": {
-        "$ref": "7"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "7"
-      },
-      "_targetNode": {
-        "$ref": "8"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "7"
-      },
-      "_targetNode": {
-        "$ref": "9"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "10"
-      },
-      "_targetNode": {
-        "$ref": "11"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "11"
+        "$ref": "1"
       },
       "_targetNode": {
         "$ref": "12"
@@ -749,7 +558,88 @@
     },
     {
       "_sourceNode": {
+        "$ref": "2"
+      },
+      "_targetNode": {
+        "$ref": "3"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "3"
+      },
+      "_targetNode": {
+        "$ref": "4"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "3"
+      },
+      "_targetNode": {
+        "$ref": "8"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "4"
+      },
+      "_targetNode": {
+        "$ref": "5"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "5"
+      },
+      "_targetNode": {
+        "$ref": "6"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "5"
+      },
+      "_targetNode": {
+        "$ref": "7"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "8"
+      },
+      "_targetNode": {
+        "$ref": "9"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "9"
+      },
+      "_targetNode": {
+        "$ref": "10"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "9"
+      },
+      "_targetNode": {
         "$ref": "11"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "12"
       },
       "_targetNode": {
         "$ref": "13"
@@ -758,7 +648,7 @@
     },
     {
       "_sourceNode": {
-        "$ref": "13"
+        "$ref": "12"
       },
       "_targetNode": {
         "$ref": "14"
@@ -767,7 +657,7 @@
     },
     {
       "_sourceNode": {
-        "$ref": "13"
+        "$ref": "14"
       },
       "_targetNode": {
         "$ref": "15"
@@ -776,16 +666,7 @@
     },
     {
       "_sourceNode": {
-        "$ref": "13"
-      },
-      "_targetNode": {
-        "$ref": "16"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "13"
+        "$ref": "14"
       },
       "_targetNode": {
         "$ref": "17"
@@ -794,19 +675,28 @@
     },
     {
       "_sourceNode": {
-        "$ref": "13"
+        "$ref": "14"
       },
       "_targetNode": {
-        "$ref": "18"
+        "$ref": "19"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
     {
       "_sourceNode": {
-        "$ref": "13"
+        "$ref": "15"
       },
       "_targetNode": {
-        "$ref": "19"
+        "$ref": "16"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "17"
+      },
+      "_targetNode": {
+        "$ref": "18"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     }
@@ -814,20 +704,11 @@
   "canvasGroups": [],
   "localBlackboard": {
     "_variables": {
-      "RandomTime": {
-        "_name": "RandomTime",
-        "_id": "112895a9-b592-481f-83be-424721b8912d",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
       "Target": {
         "_name": "Target",
-        "_id": "35948af8-c5fc-4dec-bb7a-fb20846230ec",
+        "_id": "6b60bf85-2686-427c-9801-58fd1f09dfdc",
+        "_isPublic": true,
         "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
-      },
-      "技能": {
-        "_name": "技能",
-        "_id": "c508f5fd-48e5-4baf-a191-698ac817bbdb",
-        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.Config.EnemyAISkillData, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       }
     }
   },

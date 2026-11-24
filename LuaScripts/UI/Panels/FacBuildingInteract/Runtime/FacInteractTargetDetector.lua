@@ -79,6 +79,7 @@ end
 FacInteractTargetDetector.m_buildingTarget = HL.Field(HL.Table) << function() return {} end
 FacInteractTargetDetector.m_pipeTarget = HL.Field(HL.Table) << function() return {} end
 FacInteractTargetDetector.m_beltTarget = HL.Field(HL.Table) << function() return {} end
+FacInteractTargetDetector.m_formationZoneTarget = HL.Field(HL.Table) << function() return {} end
 FacInteractTargetDetector.m_delayedPipeNodeInfo = HL.Field(HL.Table)
 
 FacInteractTargetDetector.FacInteractTargetDetector = HL.Constructor() << function(self)
@@ -439,6 +440,40 @@ FacInteractTargetDetector._DetectPointBelt = HL.Method(HL.Table, HL.Table)
     end
 end
 
+FacInteractTargetDetector._DetectPointFormationZone = HL.Method(HL.Table, HL.Table)
+        << function(self, ctx, output)
+    if LuaSystemManager.factory.inDestroyMode then
+        return
+    end
+    local formationZoneQuery = GameInstance.remoteFactoryManager.formationZoneQuery
+    if not formationZoneQuery then
+        return
+    end
+
+    local found, formationZoneInfo
+    if ctx.isClickMode then
+        found, formationZoneInfo = formationZoneQuery:TryGetInteractFormationZoneAtWorldPosition(ctx.gridSampleWorldPos)
+    else
+        found, formationZoneInfo = formationZoneQuery:TryGetNearestInteractFormationZone(
+            ctx.playerPos, ctx.playerForward, ctx.maxDist, ctx.maxAngle)
+    end
+    if not found or not formationZoneInfo then
+        return
+    end
+
+    local target = self.m_formationZoneTarget
+    target.type = FacConst.FAC_INTERACT_TARGET_TYPE.FormationZone
+    target.formationZoneInfo = formationZoneInfo
+    local data = formationZoneInfo.data
+    local cube = data.cube
+    target.identity = string.format("%d:%d:%d:%d:%d:%d:%d",
+        formationZoneInfo.revision, cube.x, cube.y, cube.z, cube.width, cube.height, cube.depth)
+    target.logicWorldPos = formationZoneInfo.logicWorldPos
+    target.cube = cube
+    output.formationZone = target
+    table.insert(output.targets, target)
+end
+
 FacInteractTargetDetector.DetectPoint = HL.Method(HL.Table).Return(HL.Table) << function(self, input)
     
     local output = self:_ResetOutput(self.m_pointOutput)
@@ -446,7 +481,8 @@ FacInteractTargetDetector.DetectPoint = HL.Method(HL.Table).Return(HL.Table) << 
     self:_DetectPointBuilding(ctx, output)
     self:_DetectPointPipe(ctx, output)
     self:_DetectPointBelt(ctx, output)
-    output.primaryTarget = output.pipe or output.building or output.belt
+    self:_DetectPointFormationZone(ctx, output)
+    output.primaryTarget = output.pipe or output.building or output.belt or output.formationZone
     return output
 end
 

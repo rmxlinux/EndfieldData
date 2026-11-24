@@ -98,6 +98,5 @@ FacDestroySystemActionConflictName = "FAC_DESTROY"
 InteractOptionSystemActionConflictName = "INTERACT_OPTION"
 TowerDefenseSystemActionConflictName = "TOWER_DEFENSE"
 FacTopViewSystemActionConflictName = "FAC_TOP_VIEW"
-QuickMenuSystemActionConflictName = "QUICK_MENU"
 
 POPULAR_EXPIRE_WARNING_TIME = 3600 * 24 * 7 

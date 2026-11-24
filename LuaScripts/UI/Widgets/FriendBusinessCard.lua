@@ -14,6 +14,8 @@ FriendBusinessCard.m_themeChange = HL.Field(HL.Boolean) << false
 
 FriendBusinessCard.m_bId = HL.Field(HL.Any)
 
+FriendBusinessCard.m_businessCardMoreActionArgs = HL.Field(HL.Table)
+
 
 FriendBusinessCard._OnFirstTimeInit = HL.Override() << function(self)
     self.view.bgCloseBtn.onClick:RemoveAllListeners()
@@ -126,10 +128,11 @@ FriendBusinessCard._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-FriendBusinessCard.InitFriendBusinessCard = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean, HL.String)) << function(self, roleId, preview, forceShare, themeChange, topicId)
+FriendBusinessCard.InitFriendBusinessCard = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean, HL.String, HL.Table)) << function(self, roleId, preview, forceShare, themeChange, topicId, businessCardMoreActionArgs)
     self:_FirstTimeInit()
 
     self.m_roleId = roleId
+    self.m_businessCardMoreActionArgs = businessCardMoreActionArgs
     if preview == nil then
         preview = roleId ~= GameInstance.player.roleId
     end
@@ -194,7 +197,8 @@ FriendBusinessCard._UpdateAllInfo = HL.Method() << function(self)
 
     self.view.businessCardState:SetState(stateName)
 
-    self.view.personalInfoNode:InitBusinessCardPersonalInfoNodeByRoleId(self.m_roleId, self.m_preview or self.m_hideUI)
+    self.view.personalInfoNode:InitBusinessCardPersonalInfoNodeByRoleId(
+        self.m_roleId, self.m_preview or self.m_hideUI, self.m_businessCardMoreActionArgs)
     self.view.processNode:InitBusinessCardProcessNodeByRoleId(self.m_roleId)
     self.view.personalCollectionNode:InitBusinessCardPersonalCollectionNode(self.m_roleId)
     self.view.regionalNode:InitBusinessCardRegionalNodeByRoleId(self.m_roleId)

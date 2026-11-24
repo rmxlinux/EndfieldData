@@ -431,7 +431,7 @@ SimulationTrainingCtrl._HandleNormalDrawCard = HL.Method() << function(self)
     elseif self.m_system.curHandCards.Count == 5 then
         vxName = "simulationtraining_draw5"
     end
-    if DeviceInfo.isMobile and not DeviceInfo.usingController then
+    if DeviceInfo.usingTouch then
         vxName = "mobile" .. vxName
     end
 

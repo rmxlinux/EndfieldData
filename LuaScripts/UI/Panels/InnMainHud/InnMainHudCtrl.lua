@@ -9,6 +9,9 @@ local COMMON_TOAST_DISABLE_KEY = "InnMainHud"
 
 local HIDE_MAIN_HUD_INTERACT_OPTION_KEY = "InnMainHudHidden"
 
+
+local RUSH_TIPS_FREEZE_KEY = "@InnMainHudRushTips"
+
 InnMainHudCtrl = HL.Class('InnMainHudCtrl', uiCtrl.UICtrl)
 
 
@@ -63,8 +66,6 @@ local PAUSE_SOURCE_NONE = 0
 local PAUSE_SOURCE_EXIT_CONFIRM = 1
 local PAUSE_SOURCE_RUSH_TIPS = 2
 InnMainHudCtrl.m_pendingPauseSource = HL.Field(HL.Number) << PAUSE_SOURCE_NONE
-
-InnMainHudCtrl.m_rushTipsFreezeHandle = HL.Field(HL.Number) << 0
 
 InnMainHudCtrl.m_isRushTipsHotSwitching = HL.Field(HL.Boolean) << false
 
@@ -305,7 +306,7 @@ end
 
 InnMainHudCtrl._OnConfirmChangeInputDeviceType = HL.Method(HL.Any) << function(self, args)
     self.view.innFoodTray:OnConfirmChangeInputDeviceType(args)
-    self.m_isRushTipsHotSwitching = self.m_rushTipsFreezeHandle > 0
+    self.m_isRushTipsHotSwitching = UIWorldFreezeManager:HasFreezeHolder(RUSH_TIPS_FREEZE_KEY)
 end
 
 InnMainHudCtrl._OnHideMainHud = HL.Method() << function(self)
@@ -1537,8 +1538,7 @@ InnMainHudCtrl._OnRushModeTipsBtnClick = HL.Method() << function(self)
 end
 
 InnMainHudCtrl._OpenRushInstructionBook = HL.Method() << function(self)
-    Utils.ResumeWorldByUI(self.m_rushTipsFreezeHandle)
-    self.m_rushTipsFreezeHandle = Utils.FreezeWorldByUI()
+    UIWorldFreezeManager:AddFreezeHolder(RUSH_TIPS_FREEZE_KEY)
     self.m_innSystem.isMainHudShowing = false
     UIManager:Open(PanelId.InstructionBook, {
         id = RUSH_INSTRUCTION_BOOK_ID,
@@ -1550,11 +1550,10 @@ InnMainHudCtrl._OpenRushInstructionBook = HL.Method() << function(self)
 end
 
 InnMainHudCtrl._OnRushInstructionBookClosed = HL.Method() << function(self)
-    if self.m_rushTipsFreezeHandle <= 0 then
+    if not UIWorldFreezeManager:HasFreezeHolder(RUSH_TIPS_FREEZE_KEY) then
         return
     end
-    Utils.ResumeWorldByUI(self.m_rushTipsFreezeHandle)
-    self.m_rushTipsFreezeHandle = 0
+    UIWorldFreezeManager:RemoveFreezeHolder(RUSH_TIPS_FREEZE_KEY)
     if self.m_isRushTipsHotSwitching then
         return
     end
@@ -1565,11 +1564,10 @@ InnMainHudCtrl._OnRushInstructionBookClosed = HL.Method() << function(self)
 end
 
 InnMainHudCtrl._CleanupRushInstructionBook = HL.Method() << function(self)
-    if self.m_rushTipsFreezeHandle <= 0 then
+    if not UIWorldFreezeManager:HasFreezeHolder(RUSH_TIPS_FREEZE_KEY) then
         return
     end
-    Utils.ResumeWorldByUI(self.m_rushTipsFreezeHandle)
-    self.m_rushTipsFreezeHandle = 0
+    UIWorldFreezeManager:RemoveFreezeHolder(RUSH_TIPS_FREEZE_KEY)
     self.m_isRushTipsHotSwitching = false
     UIManager:Close(PanelId.InstructionBook)
 end

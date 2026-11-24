@@ -165,11 +165,6 @@ FacQuickBarCustom.m_typeInfos = HL.Field(HL.Table)
 FacQuickBarCustom._InitTypeInfos = HL.Method() << function(self)
     local fcType = GEnums.FCQuickBarType.Inner
     local quickBarItems = FactoryUtils.getQuickBar(fcType)
-    if not quickBarItems then
-        self:_RefreshRightSide(false)
-        return
-    end
-
     local typeInfos = {}
 
     local typeData = Tables.factoryQuickBarTypeTable:GetValue("custom")
@@ -181,27 +176,29 @@ FacQuickBarCustom._InitTypeInfos = HL.Method() << function(self)
         canDrop = true,
     } 
 
-    for _, itemId in pairs(quickBarItems) do
-        local info = {
-            itemId = itemId,
-            isCustomQuickBarItem = true,
-        } 
+    if quickBarItems then
+        for _, itemId in pairs(quickBarItems) do
+            local info = {
+                itemId = itemId,
+                isCustomQuickBarItem = true,
+            } 
 
-        if not string.isEmpty(itemId) then
-            local buildingData = FactoryUtils.getItemBuildingData(itemId)
-            if buildingData then
-                info.type = QuickBarItemType.Building
-                info.onlyShowOnMain = buildingData.onlyShowOnMain
-            else
-                info.type = QuickBarItemType.Logistic
-                if FacConst.FLUID_LOGISTIC_ITEMS[itemId] then
-                    info.onlyShowOnMain = false
+            if not string.isEmpty(itemId) then
+                local buildingData = FactoryUtils.getItemBuildingData(itemId)
+                if buildingData then
+                    info.type = QuickBarItemType.Building
+                    info.onlyShowOnMain = buildingData.onlyShowOnMain
                 else
-                    info.onlyShowOnMain = true
+                    info.type = QuickBarItemType.Logistic
+                    if FacConst.FLUID_LOGISTIC_ITEMS[itemId] then
+                        info.onlyShowOnMain = false
+                    else
+                        info.onlyShowOnMain = true
+                    end
                 end
             end
+            table.insert(typeInfo.items, info)
         end
-        table.insert(typeInfo.items, info)
     end
     table.insert(typeInfos, typeInfo)
 

@@ -172,13 +172,6 @@ DialogCtrlBase.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_optionCells = UIUtils.genCellCache(self.view.panelOptionCell)
 
     
-    self.view.buttonBack.onClick:RemoveAllListeners()
-    self.view.buttonBack.onClick:AddListener(function()
-        self:OnBtnBackClick()
-
-    end)
-
-    
     self.view.buttonNext.onClick:RemoveAllListeners()
     self.view.buttonNext.onClick:AddListener(function()
         self:OnBtnNextClick()
@@ -206,12 +199,6 @@ DialogCtrlBase.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.buttonLog.onClick:RemoveAllListeners()
     self.view.buttonLog.onClick:AddListener(function()
         self:OnBtnLogClick()
-    end)
-
-    
-    self.view.buttonStop.onClick:RemoveAllListeners()
-    self.view.buttonStop.onClick:AddListener(function()
-        self:OnBtnStopClick()
     end)
 
     self.view.textTalk.uiText.onClickLink:RemoveAllListeners()
@@ -757,9 +744,6 @@ end
 
 
 
-DialogCtrlBase.OnBtnBackClick = HL.Virtual() << function(self)
-end
-
 DialogCtrlBase.OnBtnNextClick = HL.Virtual() << function(self)
 end
 
@@ -776,8 +760,6 @@ DialogCtrlBase.OnBtnLogClick = HL.Virtual() << function(self)
     self:Notify(MessageConst.OPEN_DIALOG_RECORD)
 end
 
-DialogCtrlBase.OnBtnStopClick = HL.Virtual() << function(self)
-end
 
 
 
@@ -931,7 +913,6 @@ DialogCtrlBase.OnClose = HL.Override() << function(self)
     self.view.bottomLayout:DOKill()
     self.view.textTalkCenterNode:DOKill()
 
-    self.view.buttonBack.onClick:RemoveAllListeners()
     self.view.buttonNext.onClick:RemoveAllListeners()
     self.view.buttonSkip.onClick:RemoveAllListeners()
     self.view.buttonAuto.onClick:RemoveAllListeners()

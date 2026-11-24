@@ -172,6 +172,9 @@ ContingencyContractImportShareCtrl._RefreshAnalyzeCodeNode = HL.Method() << func
     else
         analyzeCodeNode.stateController:SetState("HasInput")
     end
+    if not UIUtils.supportsSystemCopyBuffer() then
+        analyzeCodeNode.pasteBtn.gameObject:SetActive(false)
+    end
 end
 
 ContingencyContractImportShareCtrl._TryRecoverInputState = HL.Method(HL.Any) << function(self, recoverState)

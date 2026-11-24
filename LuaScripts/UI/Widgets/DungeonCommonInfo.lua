@@ -479,6 +479,7 @@ DungeonCommonInfo._OnBtnRewardDetailsClick = HL.Method() << function(self)
         firstPartRewards = DungeonUtils.genFirstPartRewardsInfo(self.m_dungeonId)
     end
     local args = hasOptionReward and { dungeonId = self.m_dungeonId } or {
+        gameMechanicsId = self.m_dungeonId,
         firstPartRewards = firstPartRewards,
         firstPartRewardsTitle = DungeonUtils.getRewardsDetailFirstRowTitle(self.m_dungeonId),
         secondPartRewards = DungeonUtils.genSecondPartRewardsInfo(self.m_dungeonId),

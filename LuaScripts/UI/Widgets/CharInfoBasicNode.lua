@@ -50,9 +50,8 @@ CharInfoBasicNode._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitCharInfoBasicNodeController()
 end
 
-CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, charInstId, hideWhenOpenDetail, showFocusHintNode)
+CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, charInstId, hideWhenOpenDetail)
     self:_FirstTimeInit()
-    self:ShowControllerFocusHintNode(showFocusHintNode)
 
     if charInstId == nil then
         return

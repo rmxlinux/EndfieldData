@@ -13,6 +13,7 @@ FacSourceDetailsCtrl = HL.Class('FacSourceDetailsCtrl', uiCtrl.UICtrl)
 
 
 FacSourceDetailsCtrl.s_messages = HL.StaticField(HL.Table) << {
+    [MessageConst.ON_FAC_SOCIAL_BUILDING_LIKED] = "_OnSocialBuildingLiked",
     [MessageConst.ON_FRIEND_CELL_INFO_CHANGE] = "_UpdateView",
 }
 
@@ -98,13 +99,16 @@ FacSourceDetailsCtrl._UpdateView = HL.Method(HL.Opt(HL.Boolean)) << function(sel
 end
 
 FacSourceDetailsCtrl._LikeSocialBuilding = HL.Method() << function(self)
-    FactoryUtils.likeSocialBuilding(self.m_nodeId, function()
-        if self.m_isClosed then
-            return
-        end
-        self:_PlayStabilityAnimation()
-        self:_UpdateView(false) 
-    end)
+    FactoryUtils.likeSocialBuilding(self.m_nodeId)
+end
+
+FacSourceDetailsCtrl._OnSocialBuildingLiked = HL.Method(HL.Any) << function(self, args)
+    local chapterId, nodeId = unpack(args)
+    if chapterId ~= Utils.getCurrentChapterId() or nodeId ~= self.m_nodeId then
+        return
+    end
+    self:_PlayStabilityAnimation()
+    self:_UpdateView(false) 
 end
 
 FacSourceDetailsCtrl._PlayStabilityAnimation = HL.Method() << function(self)

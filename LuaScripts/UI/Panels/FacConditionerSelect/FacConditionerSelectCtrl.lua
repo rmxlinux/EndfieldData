@@ -117,7 +117,7 @@ FacConditionerSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                 end
 
                 if self.m_unionArgs.speedLimitEnable then
-                    self.view.speedSituationNode.speedNumTxt.text = self.m_unionArgs.currentSpeedCount * 6
+                    self.view.speedSituationNode.speedNumTxt.text = self.m_unionArgs.currentSpeedCount * FacConst.FAC_RECENT_10S_COUNT_TO_MINUTE_RATE_SCALE
                     local lineCount = self.m_unionArgs.historySpeedCount.Count
                     if lineCount > 0 then
                         local line = {}
@@ -556,7 +556,7 @@ FacConditionerSelectCtrl._RefreshSpeedLimitState = HL.Method() << function(self)
         end
         self.view.speedSituationNode.lineImage.gameObject:SetActiveIfNecessary(true)
         self.view.speedSituationNode.lineImage.transform.anchoredPosition = Vector2(self.view.speedSituationNode.lineImage.transform.anchoredPosition.x, self.m_unionArgs.speedLimitValue * SPEED_LINE_POSY / self.m_speedSliderMax)
-        self.view.speedSituationNode.speedNumTxt.text = self.m_unionArgs.currentSpeedCount * 6
+        self.view.speedSituationNode.speedNumTxt.text = self.m_unionArgs.currentSpeedCount * FacConst.FAC_RECENT_10S_COUNT_TO_MINUTE_RATE_SCALE
     else
         if self.view.speedSituationNode.arrowAnim.curTween == nil then
             self.view.speedSituationNode.arrowAnim:PlayOutAnimation()

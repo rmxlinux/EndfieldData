@@ -122,7 +122,7 @@ end
 
 ForesightCharGrowthDetailGemItemCell._RefreshGemAttriTermNodes = HL.StaticMethod(HL.Table, HL.Table) << function(cell, termEntries)
     local cfgOk,cfg
-    if DeviceInfo.isMobile then
+    if DeviceInfo.isMobileUser then
         cfgOk, cfg = Tables.foresightGrowthConfigTable:TryGetValue("GemLineTextMaxNum_M")
     else
         cfgOk, cfg = Tables.foresightGrowthConfigTable:TryGetValue("GemLineTextMaxNum_PC")

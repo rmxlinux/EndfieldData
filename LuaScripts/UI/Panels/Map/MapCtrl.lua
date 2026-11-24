@@ -145,6 +145,10 @@ MapCtrl.m_tierSwitcherCells = HL.Field(HL.Forward('UIListCache'))
 
 MapCtrl.m_tierSwitchersShowing = HL.Field(HL.Boolean) << false
 
+MapCtrl.m_trackingListExpanded = HL.Field(HL.Boolean) << true
+
+MapCtrl.m_sideListClipSoftness = HL.Field(HL.Number) << 0
+
 MapCtrl.m_waitRecoverTierId = HL.Field(HL.Number) << -1
 
 MapCtrl.m_controllerHoverMark = HL.Field(HL.Boolean) << false
@@ -245,6 +249,7 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 
     self:_InitMapRemindTip()
 
+    self:_InitSideListLayout()
     self:_InitTierSwitcherNode()
 
     
@@ -275,6 +280,11 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     if BEYOND_DEBUG_COMMAND then
         self:_InitDebugTeleport()
     end
+end
+
+MapCtrl.OnShow = HL.Override() << function(self)
+    
+    self:_RefreshSideListLayout()
 end
 
 MapCtrl.OnClose = HL.Override() << function(self)
@@ -488,6 +498,7 @@ end
 
 MapCtrl._OnScreenSizeChanged = HL.Method() << function(self)
     self:_RefreshMapRectMask()
+    self:_RefreshSideListLayout()
 end
 
 MapCtrl._OnFacNodeChanged = HL.Method(HL.Any) << function(self, args)
@@ -646,6 +657,8 @@ MapCtrl._RefreshLevelMapContent = HL.Method() << function(self)
 
     self:_HideNotExpectedNodes()
     self:_RefreshHintTipsNode()
+    
+    self:_RefreshSideListLayout()
 end
 
 MapCtrl._GetTargetRelativeCenterPosition = HL.Method(Unity.RectTransform, HL.Table).Return(Vector2) << function(self, rectTransform, targetInfo)
@@ -1117,6 +1130,7 @@ MapCtrl._OnRemindTipBtnClick = HL.Method(HL.Opt(HL.Number)) << function(self, in
     self.view.mapTrackingInfo.gameObject:SetActiveIfNecessary(false)
     self.view.mapTransactionReminderPopUp.gameObject:SetActiveIfNecessary(true)
     self.m_isRemindTipShowing = true
+    self:_RefreshSideListLayout()
 
     if DeviceInfo.usingController then
         self:_ToggleControllerMoveAndZoom(false)
@@ -1132,22 +1146,31 @@ MapCtrl._OnRemindTipBtnClick = HL.Method(HL.Opt(HL.Number)) << function(self, in
     end
 
     self.view.mapTransactionReminderPopUp:InitMapRemind(self.m_currLevelId, self.m_remindTipInfo, function()
-        if DeviceInfo.usingController then
-            self:_ToggleControllerMoveAndZoom(true)
-            Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.mapTransactionReminderPopUp.view.inputGroup.groupId)
-        end
-
-        self.view.mapTransactionReminderPopUp.view.wrapper:PlayOutAnimation(function()
-            self.view.mapRemindBtn.gameObject:SetActiveIfNecessary(true)
-            self.view.mapTrackingInfo.gameObject:SetActiveIfNecessary(true)
-            self.view.mapTransactionReminderPopUp.gameObject:SetActiveIfNecessary(false)
-            self:_RefreshHintTipsNode()
-        end)
-
-        self.m_isRemindTipShowing = false
+        self:_CloseRemindTip()
     end, initIndex)
 
     self.view.hintTipsNode.gameObject:SetActiveIfNecessary(false)
+end
+
+MapCtrl._CloseRemindTip = HL.Method() << function(self)
+    if not self.m_isRemindTipShowing then
+        return
+    end
+
+    if DeviceInfo.usingController then
+        self:_ToggleControllerMoveAndZoom(true)
+        Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.mapTransactionReminderPopUp.view.inputGroup.groupId)
+    end
+
+    self.view.mapTransactionReminderPopUp.view.wrapper:PlayOutAnimation(function()
+        self.view.mapRemindBtn.gameObject:SetActiveIfNecessary(true)
+        self.view.mapTrackingInfo.gameObject:SetActiveIfNecessary(true)
+        self.view.mapTransactionReminderPopUp.gameObject:SetActiveIfNecessary(false)
+        self:_RefreshHintTipsNode()
+        self:_RefreshSideListLayout()
+    end)
+
+    self.m_isRemindTipShowing = false
 end
 
 MapCtrl.GetRemindTipState = HL.Method().Return(HL.Table) << function(self)
@@ -1858,6 +1881,147 @@ end
 
 
 
+MapCtrl._InitSideListLayout = HL.Method() << function(self)
+    self.m_sideListClipSoftness = self.view.trackingListClipMask.hgSoftness.y
+    self.view.sideListStateController:SetState("Less")
+    self.view.sideListToggleBtn.onClick:AddListener(function()
+        self:_SetTrackingListExpanded(not self.m_trackingListExpanded)
+    end)
+end
+
+MapCtrl._SetTrackingListExpanded = HL.Method(HL.Boolean) << function(self, expanded)
+    self.m_trackingListExpanded = expanded
+    self:_RefreshSideListLayout()
+end
+
+
+MapCtrl._RefreshSideListLayout = HL.Method() << function(self)
+    
+    if self.m_tierSwitcherCells == nil then
+        return
+    end
+    
+    local layoutRebuilder = CS.UnityEngine.UI.LayoutRebuilder
+    layoutRebuilder.ForceRebuildLayoutImmediate(self.view.mapTrackingInfo.view.main)
+    layoutRebuilder.ForceRebuildLayoutImmediate(self.view.tierSwitcherNode.rectTransform)
+
+    local layout = self.view.sideListLayout
+    local trackingRect = self.view.trackingListRect
+    local trackingLayout = self.view.trackingListLayoutGroup
+    local trackingElement = self.view.trackingListLayoutElement
+    local trackingMask = self.view.trackingListClipMask
+    local tierMask = self.view.tierListClipMask
+    local tierRect = tierMask.rectTransform
+    local tierNode = self.view.tierSwitcherNode.rectTransform
+    local storageNode = self.view.sideListToggleNode
+    local cache = self.view.mapTrackingInfo.m_trackingListCache
+    local trackingHeight = math.max(0, trackingLayout.preferredHeight)
+    local tierHeight = tierNode.rect.height
+    local hasBothLists = self.m_tierSwitchersShowing and cache:GetCount() > 0
+        and self.view.mapTrackingInfo.view.main.gameObject.activeInHierarchy
+        and tierNode.gameObject.activeInHierarchy
+        and self.m_tierSwitcherCells:GetCount() == #self.m_currTierIdList
+    local showToggle = false
+    local visibleTrackingHeight = trackingHeight
+    local visibleTierHeight = tierHeight
+    if hasBothLists and trackingHeight > 0 and tierHeight > 0 then
+        local trackingTop = layout:InverseTransformPoint(
+            trackingRect:TransformPoint(Vector3(0, trackingRect.rect.yMax, 0))).y
+        
+        
+        local trackingRoot = self.view.mapTrackingInfo.view.rectTransform
+        trackingTop = trackingTop - layout.rect.height * (trackingRoot.anchorMax.y - 1)
+        local tierBottom = layout:InverseTransformPoint(
+            tierRect:TransformPoint(Vector3(0, tierRect.rect.yMin, 0))).y
+        local availableHeight = trackingTop - tierBottom
+        
+        showToggle = trackingHeight + tierHeight > availableHeight + 0.1
+        if showToggle then
+            local storageGap = storageNode.rect.height
+                + self.view.trackingListParentLayout.spacing
+            
+            local topIndex = trackingLayout.reverseArrangement and cache:GetCount() or 1
+            local firstTrackingCell = cache:GetItem(topIndex).transform
+            local lastTierCell = self.m_tierSwitcherCells:GetItem(#self.m_currTierIdList).transform
+            local minTrackingHeight = math.min(trackingHeight,
+                firstTrackingCell.rect.height + self.m_sideListClipSoftness / 2)
+            local minTierHeight = tierHeight - self.view.tierListContentMask.rectTransform.rect.height
+                + lastTierCell.rect.height + self.m_sideListClipSoftness
+            local maxTrackingHeight = math.max(minTrackingHeight,
+                availableHeight - storageGap - math.min(tierHeight, minTierHeight))
+            local requestedHeight = self.m_trackingListExpanded and trackingHeight
+                or availableHeight - storageGap - tierHeight
+            visibleTrackingHeight = lume.clamp(requestedHeight, minTrackingHeight,
+                math.min(trackingHeight, maxTrackingHeight))
+            visibleTierHeight = math.max(0, math.min(tierHeight,
+                availableHeight - storageGap - visibleTrackingHeight))
+        end
+    end
+
+    local state = showToggle and (self.m_trackingListExpanded and "Close" or "Expand") or "Less"
+    local layoutDirty = storageNode.gameObject.activeSelf ~= showToggle
+    self.view.sideListStateController:SetState(state, false)
+    if math.abs(trackingElement.preferredHeight - visibleTrackingHeight) > 0.1 then
+        trackingElement.minHeight = visibleTrackingHeight
+        trackingElement.preferredHeight = visibleTrackingHeight
+        layoutDirty = true
+    end
+    if math.abs(tierRect.rect.height - visibleTierHeight) > 0.1 then
+        tierRect.sizeDelta = Vector2(tierRect.sizeDelta.x, visibleTierHeight)
+    end
+    if layoutDirty then
+        layoutRebuilder.ForceRebuildLayoutImmediate(self.view.mapTrackingInfo.view.main)
+    end
+
+    local trackingClipped = visibleTrackingHeight < trackingHeight - 0.1
+    local tierClipped = visibleTierHeight < tierHeight - 0.1
+    
+    trackingMask.enabled = trackingClipped
+    local trackingSoftness = trackingClipped and self.m_sideListClipSoftness or 0
+    local tierSoftness = tierClipped and self.m_sideListClipSoftness or 0
+    if trackingMask.hgSoftness.y ~= trackingSoftness then
+        trackingMask.hgSoftness = Vector4(0, trackingSoftness, 0, 0)
+    end
+    if tierMask.hgSoftness.w ~= tierSoftness then
+        tierMask.hgSoftness = Vector4(0, 0, 0, tierSoftness)
+    end
+    self:_RefreshSideListNestedSoftness()
+end
+
+
+MapCtrl._RefreshSideListNestedSoftness = HL.Method() << function(self)
+    local trackingMask = self.view.trackingListClipMask
+    local trackingCut = trackingMask.rectTransform:TransformPoint(Vector3(
+        0, trackingMask.rectTransform.rect.yMin + trackingMask.padding.y, 0))
+    local cache = self.view.mapTrackingInfo.m_trackingListCache
+    for index = 1, cache:GetCount() do
+        local innerMask = cache:GetItem(index).trackingCellClipMask
+        local rect = innerMask.rectTransform
+        local cutY = rect:InverseTransformPoint(trackingCut).y
+        local softness = trackingMask.enabled and cutY >= rect.rect.yMin and cutY < rect.rect.yMax
+            and trackingMask.hgSoftness.y or 0
+        if innerMask.hgSoftness.y ~= softness then
+            innerMask.hgSoftness = Vector4(0, softness, 0, 0)
+        end
+    end
+
+    local tierMask = self.view.tierListClipMask
+    local innerMask = self.view.tierListContentMask
+    local rect = innerMask.rectTransform
+    local tierCut = tierMask.rectTransform:TransformPoint(Vector3(
+        0, tierMask.rectTransform.rect.yMax - tierMask.padding.w, 0))
+    local cutY = rect:InverseTransformPoint(tierCut).y
+    local softness = cutY <= rect.rect.yMax and cutY > rect.rect.yMin and tierMask.hgSoftness.w or 0
+    if innerMask.hgSoftness.w ~= softness then
+        innerMask.hgSoftness = Vector4(0, 0, 0, softness)
+    end
+end
+
+
+
+
+
+
 MapCtrl._InitTierSwitcherNode = HL.Method() << function(self)
     self.m_currTierIdList = {}
     self.m_trySwitchTierOnFocusMark = nil
@@ -1948,6 +2112,7 @@ MapCtrl._RefreshTierInfo = HL.Method() << function(self)
         end
     end
     if #currTierIdSortList <= 1 then
+        self.m_currTierIdList = {}
         self:_RefreshTierSwitcherNode(false)
         return
     end
@@ -1964,6 +2129,9 @@ MapCtrl._RefreshTierInfo = HL.Method() << function(self)
 end
 
 MapCtrl._RefreshTierSwitcherNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, needShow, forceRefresh)
+    
+    self.m_trackingListExpanded = not (DeviceInfo.isMobile and not DeviceInfo.usingController
+        and #self.m_currTierIdList >= 7)
     local isShownStateDirty = self.m_tierSwitchersShowing ~= needShow
     local isPlayAnimationIn = self:IsPlayingAnimationIn()  
 
@@ -1991,6 +2159,7 @@ MapCtrl._OnRefreshTierSwitcherNode = HL.Method(HL.Boolean) << function(self, nee
     InputManagerInst:ToggleGroup(self.m_controllerTierBindingGroup, needShow)
     self.view.tierSwitcherNode.topNode.gameObject:SetActive(needShow)
     self.view.tierSwitcherNode.bottomNode.gameObject:SetActive(needShow)
+    self:_RefreshSideListLayout()
 end
 
 MapCtrl._RefreshTierSwitcherCells = HL.Method() << function(self)
@@ -2043,6 +2212,8 @@ MapCtrl._RefreshTierSwitcherCells = HL.Method() << function(self)
             cell.activeStateController:SetState("Active")
             cell.selectBtn.onClick:RemoveAllListeners()
             cell.selectBtn.onClick:AddListener(function()
+                self:_CloseRemindTip()
+                self:_SetTrackingListExpanded(false)
                 self:_OnSelectTier(index)
             end)
             cell.selectBtn.onHoverChange:RemoveAllListeners()
@@ -2314,6 +2485,7 @@ MapCtrl._PlayAndSetMainNodeVisibleState = HL.Method(HL.Boolean, HL.Opt(HL.Functi
     if isIn then
         
         self.view.walletBarPlaceholder.gameObject:SetActive(not self.m_currNotExpectedPanelNodes[MapPanelNodeType.WalletBar])
+        self:_RefreshSideListLayout()
     else
         self.view.walletBarPlaceholder.gameObject:SetActive(false)
     end
@@ -2484,6 +2656,9 @@ MapCtrl._InitMapController = HL.Method() << function(self)
 
     
     self.view.mapTrackingInfo.view.listNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
+        if isFocused then
+            self:_SetTrackingListExpanded(true)
+        end
         self:_ToggleControllerMoveAndZoom(not isFocused)
     end)
     self.view.mapTrackingInfo.view.listNaviGroup.focusPanelSortingOrder = self:GetSortingOrder() + MAP_BLOCK_ORDER_OFFSET
@@ -2586,6 +2761,7 @@ MapCtrl._RefreshControllerClickBindingState = HL.Method() << function(self)
 end
 
 MapCtrl._OnControllerSelectTier = HL.Method(HL.Boolean) << function(self, next)
+    self:_CloseRemindTip()
     local index = next and self.m_currTierIndex + 1 or self.m_currTierIndex - 1
     index = lume.clamp(index, 1, #self.m_currTierIdList)
     self:_OnSelectTier(index)

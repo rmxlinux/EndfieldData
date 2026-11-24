@@ -35,11 +35,14 @@ FriendUtils.FRIEND_CELL_HEAD_FUNC = {
             end
         }
     end,
-    BUSINESS_CARD_PHASE = function(id)
+    BUSINESS_CARD_PHASE = function(id, businessCardMoreActionArgs)
         return {
             text = Language.LUA_FRIEND_TIP_SHOW_BUSINESS_CARD,
             action = function()
-                Notify(MessageConst.ON_OPEN_BUSINESS_CARD_PREVIEW, { roleId = id })
+                Notify(MessageConst.ON_OPEN_BUSINESS_CARD_PREVIEW, {
+                    roleId = id,
+                    businessCardMoreActionArgs = businessCardMoreActionArgs,
+                })
             end
         }
     end,
@@ -329,18 +332,58 @@ end
 
 
 FriendUtils.FRIEND_CELL_INIT_FUNC = {
-    onFriendPlayerClick = function(rectTransform, id, charInfoCallBack, shipBtnShow, recordTipsTransform)
+    onInviteClick = function(friendInfo, sentInviteTargets)
+        if GameInstance.player.multiplayerMatchSystem:IsPlayerInCurrentMatchRoom(friendInfo.roleId) then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_MATCH_ROOM_ALREADY_IN_ROOM_TOAST)
+            
+            return true
+        end
+        local success = false
+        
+        
+        local isPsnStranger = friendInfo.roleId ~= 0 and friendInfo.psnData ~= nil
+            and friendInfo.roleType == CS.Beyond.Gameplay.RoleType.Stranger
+        if friendInfo.roleId == 0 or isPsnStranger then
+            local accountId = friendInfo.psnData ~= nil and friendInfo.psnData.AccountId or ""
+            success = GameInstance.player.multiplayerMatchSystem:TryInvitePsnFriend(accountId)
+        else
+            success = GameInstance.player.multiplayerMatchSystem:TryInviteFriend(friendInfo.roleId)
+            
+            
+            if success and friendInfo.psnData ~= nil and not string.isEmpty(friendInfo.psnData.AccountId) then
+                local accountId = friendInfo.psnData.AccountId
+                GameInstance.player.multiplayerMatchSystem:TryInvitePsnFriend(accountId)
+            end
+        end
+        if not success then
+            return false
+        end
+
+        if sentInviteTargets then
+            local key = friendInfo.roleId ~= 0 and "role:" .. tostring(friendInfo.roleId)
+                or "psn:" .. (friendInfo.psnData ~= nil and friendInfo.psnData.AccountId or "")
+            sentInviteTargets[key] = true
+        end
+        local displayName = friendInfo.roleId ~= 0
+            and string.format(Language.LUA_FRIEND_NAME, friendInfo.name, friendInfo.shortId)
+            or friendInfo.psName
+        Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_FRIEND_MATCH_ROOM_INVITE_SENT_TOAST, displayName))
+        return true
+    end,
+    onFriendPlayerClick = function(rectTransform, id, charInfoCallBack, shipBtnShow, businessCardMoreActionArgs, recordTipsTransform)
         local args = {
             transform = rectTransform,
             cellHeight = FriendUtils.CELL_HEIGHT,
         }
         if DeviceInfo.inputType == DeviceInfo.InputType.Controller then
             args.actions = {}
-            table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAT(id))
+            if not (businessCardMoreActionArgs and businessCardMoreActionArgs.ignoreFriendCommunication) then
+                table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAT(id))
+            end
             if DeviceInfo.inputType == DeviceInfo.InputType.Controller and GameInstance.player.friendSystem:GetCharInfoByRoleId(id).Count > 0 then
                 table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAR_INFO(charInfoCallBack))
             end
-            table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(id))
+            table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(id, businessCardMoreActionArgs))
             if FriendUtils.hasAnyRecordTagVisible(id) then
                 table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.VIEW_RECORD_TIPS(id, recordTipsTransform or rectTransform))
             end
@@ -354,7 +397,7 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
             end
         else
             args.actions = {
-                [1] = FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(id),
+                [1] = FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(id, businessCardMoreActionArgs),
                 [2] = FriendUtils.FRIEND_CELL_HEAD_FUNC.REMARK_MODIFY(id),
                 [3] = FriendUtils.FRIEND_CELL_HEAD_FUNC.REMOVE_FRIEND(id),
                 [4] = FriendUtils.FRIEND_CELL_HEAD_FUNC.ADD_BLACK_LIST(id),
@@ -372,7 +415,7 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
         end
         Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, args)
     end,
-    onStrangerPlayerClick = function(rectTransform, id, charInfoCallBack, _, recordTipsTransform)
+    onStrangerPlayerClick = function(rectTransform, id, charInfoCallBack, _, _, recordTipsTransform)
         local args = {
             transform = rectTransform,
             cellHeight = 60,
@@ -392,7 +435,7 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
         end
         Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, args)
     end,
-    onBusinessCardFriendPlayerClick = function(rectTransform, id, recordTipsTransform)
+    onBusinessCardFriendPlayerClick = function(rectTransform, id, recordTipsTransform, businessCardMoreActionArgs)
         local args = {
             transform = rectTransform,
             cellHeight = 60,
@@ -407,7 +450,9 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
 
         
         if isFriend then
-            table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAT(id))
+            if not (businessCardMoreActionArgs and businessCardMoreActionArgs.ignoreFriendCommunication) then
+                table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAT(id))
+            end
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.REMARK_MODIFY(id))
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.REMOVE_FRIEND(id))
         end
@@ -592,6 +637,7 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
 FriendUtils.FRIEND_CELL_INIT_CONFIG = {
     Friend = {
         stateName = "Normal",
+        onInviteClick = FriendUtils.FRIEND_CELL_INIT_FUNC.onInviteClick,
         onPlayerClick = FriendUtils.FRIEND_CELL_INIT_FUNC.onFriendPlayerClick,
         onMessageClick = FriendUtils.FRIEND_CELL_INIT_FUNC.onMessageClick,
         onShipClick = FriendUtils.FRIEND_CELL_INIT_FUNC.onShipClick,

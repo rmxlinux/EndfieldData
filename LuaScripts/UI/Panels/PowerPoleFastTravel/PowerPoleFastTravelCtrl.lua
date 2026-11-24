@@ -17,6 +17,7 @@ PowerPoleFastTravelCtrl = HL.Class('PowerPoleFastTravelCtrl', uiCtrl.UICtrl)
 
 
 PowerPoleFastTravelCtrl.s_messages = HL.StaticField(HL.Table) << {
+    [MessageConst.ON_FAC_SOCIAL_BUILDING_LIKED] = "_OnSocialBuildingLiked",
     [MessageConst.TRAVEL_POLE_TRAVEL_ON_ENTER] = 'OnEnterFinish',
     [MessageConst.TRAVEL_POLE_TRAVEL_ON_REACH] = 'OnReach',
     [MessageConst.TRAVEL_POLE_TRAVEL_ON_REACH_REFRESH] = 'OnReachRefresh',
@@ -149,6 +150,14 @@ PowerPoleFastTravelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 PowerPoleFastTravelCtrl.OnShow = HL.Override() << function(self)
+end
+
+
+PowerPoleFastTravelCtrl.OnHide = HL.Override() << function(self)
+    if DeviceInfo.usingController and self.m_controllerTriggerSettingHandlerId >= 0 then
+        GameInstance.audioManager.gamePad.scePad:EndTriggerEffect(self.m_controllerTriggerSettingHandlerId)
+        self.m_controllerTriggerSettingHandlerId = -1
+    end
 end
 
 PowerPoleFastTravelCtrl.OnClose = HL.Override() << function(self)
@@ -640,17 +649,22 @@ PowerPoleFastTravelCtrl._OnTravelPoleIdle = HL.Method() << function(self)
     if nodeId == 0 or not FactoryUtils.isOthersSocialBuilding(nodeId) or not FactoryUtils.canLikeSocialBuilding(nodeId) then
         return
     end
-    FactoryUtils.likeSocialBuilding(nodeId, function()
-        
-        if self.m_isClosed or self.m_isMoving or CSFactoryUtil.GetNodeIdByLogicId(self.m_currentLogicId) ~= nodeId or not FactoryUtils.isOthersSocialBuilding(nodeId) then
-            return
-        end
-        if not FactoryUtils.canLikeSocialBuilding(nodeId) then
-            UIUtils.PlayAnimationAndToggleActive(self.view.autoLikeNode, true, function()
-                self.view.autoLikeNode.gameObject:SetActive(false)
-            end)
-        end
-    end)
+    FactoryUtils.likeSocialBuilding(nodeId)
+end
+
+PowerPoleFastTravelCtrl._OnSocialBuildingLiked = HL.Method(HL.Any) << function(self, args)
+    local chapterId, nodeId = unpack(args)
+    
+    if chapterId ~= Utils.getCurrentChapterId()
+        or CSFactoryUtil.GetNodeIdByLogicId(self.m_currentLogicId) ~= nodeId
+        or not FactoryUtils.isOthersSocialBuilding(nodeId) then
+        return
+    end
+    if not FactoryUtils.canLikeSocialBuilding(nodeId) then
+        UIUtils.PlayAnimationAndToggleActive(self.view.autoLikeNode, true, function()
+            self.view.autoLikeNode.gameObject:SetActive(false)
+        end)
+    end
 end
 
 
@@ -714,7 +728,8 @@ PowerPoleFastTravelCtrl.m_controllerTriggerNeedRelease = HL.Field(HL.Boolean) <<
 PowerPoleFastTravelCtrl._ToggleControllerTriggerSetting = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, useVibration)
     local oldHandlerId = self.m_controllerTriggerSettingHandlerId
     self.m_isControllerTriggerUsingVibration = active and useVibration
-    if active then
+    
+    if active and self:IsShow() then
         local cmd = CS.Plugins.LibScePad.TriggerEffectCommandUnion()
         cmd.mask = CS.Plugins.LibScePad.TriggerMask.ALL
         
@@ -774,7 +789,8 @@ PowerPoleFastTravelCtrl._ControllerMoveTick = HL.Method() << function(self)
                 self:_ToggleControllerTriggerSetting(true, false)
             end
         else
-            if self.m_controllerTriggerSettingHandlerId >= 0 then
+            
+            if self.m_isControllerTriggerUsingVibration or self.m_controllerTriggerSettingHandlerId >= 0 then
                 self:_ToggleControllerTriggerSetting(false, false)
             end
         end

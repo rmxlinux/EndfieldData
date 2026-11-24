@@ -749,7 +749,7 @@ end
 
 GambleBattleMainCtrl._HandleNormalDrawCard = HL.Method() << function(self)
     local vxName = DRAW_CARD_ANIM_NAMES[self.m_system.curCardSuits.Count] or DRAW_CARD_ANIM_NAMES[1]
-    if DeviceInfo.isMobile and not DeviceInfo.usingController then
+    if DeviceInfo.usingTouch then
         vxName = "mobile" .. vxName
     end
 

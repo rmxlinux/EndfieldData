@@ -93,7 +93,7 @@ DialogTimelineCtrl.m_videoBorderHideTween = HL.Field(HL.Userdata)
 DialogTimelineCtrl.OnPreloadDialogTimelinePanel = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg)
     local preloadFinishCallback = arg and unpack(arg)
     
-    UIManager:PreloadPanelAsset(PANEL_ID, PhaseId.Dialog, function()
+    UIManager:PreloadPersistentPanelAsset(PANEL_ID, function()
         if preloadFinishCallback ~= nil then
             preloadFinishCallback()
         end

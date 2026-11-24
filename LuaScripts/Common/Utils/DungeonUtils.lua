@@ -18,21 +18,49 @@ function DungeonUtils.checkCanOpenPhase(args)
         return false, Language.LUA_ACTIVITY_FORBIDDEN
     end
 
-    
+    if Utils.isInDungeon() then
+        return DungeonUtils.checkCanOpenPhaseInDungeon(args)
+    end
+
+    return true
+end
+
+function DungeonUtils.checkCanOpenPhaseInDungeon(args)
     local curDungeonId = GameInstance.dungeonManager.curDungeonId or ""
-    if Utils.isInDungeon() and DungeonUtils.isDungeonHighDifficulty(curDungeonId) then
-        local succ, curDungeonCfg = Tables.dungeonTable:TryGetValue(curDungeonId)
-        if not succ then
+    if not DungeonUtils.isDungeonHighDifficulty(curDungeonId) then
+        return true
+    end
+
+    local succ, curDungeonCfg = Tables.dungeonTable:TryGetValue(curDungeonId)
+    if not succ then
+        return false
+    end
+
+    
+    
+    local curDungeonSeriesId = curDungeonCfg.dungeonSeriesId
+    local highDifficultySystem = GameInstance.player.highDifficultySystem
+    local curIsBossProgression = highDifficultySystem:IsBossProgressionSeries(curDungeonSeriesId)
+    local curHighDifficultyId = highDifficultySystem:GetHighDifficultyId(curDungeonSeriesId)
+
+    local dungeonSeriesId = args.dungeonSeriesId or ""
+    if Tables.dungeonSeriesTable:ContainsKey(dungeonSeriesId) and dungeonSeriesId ~= curDungeonSeriesId then
+        if not curIsBossProgression or string.isEmpty(curHighDifficultyId)
+            or not highDifficultySystem:IsBossProgressionSeries(dungeonSeriesId)
+            or highDifficultySystem:GetHighDifficultyId(dungeonSeriesId) ~= curHighDifficultyId then
             return false
         end
+    end
 
-        local curDungeonSeriesId = curDungeonCfg.dungeonSeriesId
-        if dungeonSeriesIdValid and dungeonSeriesId ~= curDungeonSeriesId then
-            return false
-        end
-
-        if dungeonIdValid and Tables.dungeonTable[dungeonId].dungeonSeriesId ~= curDungeonSeriesId then
-            return false
+    local dungeonId = args.dungeonId or ""
+    if Tables.dungeonTable:ContainsKey(dungeonId) then
+        local targetSeriesId = Tables.dungeonTable[dungeonId].dungeonSeriesId
+        if targetSeriesId ~= curDungeonSeriesId then
+            if not curIsBossProgression or string.isEmpty(curHighDifficultyId)
+                or not highDifficultySystem:IsBossProgressionSeries(targetSeriesId)
+                or highDifficultySystem:GetHighDifficultyId(targetSeriesId) ~= curHighDifficultyId then
+                return false
+            end
         end
     end
 
@@ -959,7 +987,8 @@ end
 
 
 
-function DungeonUtils.onDungeonLeaveToEntryPanel(dungeonId, usePanelDefaultSelect)
+
+function DungeonUtils.onDungeonLeaveToEntryPanel(dungeonId, usePanelDefaultSelect, activityId)
     
     
     GameInstance.player.forbidSystem:SetPhaseForbid("CharFormation", "MainCharInAir", false, nil)
@@ -979,6 +1008,7 @@ function DungeonUtils.onDungeonLeaveToEntryPanel(dungeonId, usePanelDefaultSelec
     else
         openArgs.dungeonId = dungeonId
     end
+    openArgs.activityId = activityId
     PhaseManager:OpenPhaseFast(PhaseId.DungeonEntry, openArgs)
 end
 

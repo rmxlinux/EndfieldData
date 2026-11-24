@@ -75,133 +75,937 @@
         "_sequenceActionData": {
           "actionData": [
             {
-              "$type": "Beyond.Gameplay.Core.SpawnAbilityEntity+Data, Gameplay.Beyond",
+              "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
               "serverActionIndex": 1,
-              "abilityEntityId": "abilityentity_interact_bomb_skill",
-              "abilityEntitySkillId": null,
-              "abilityEntitySource": 0,
-              "abilityEntitySourceContextKey": null,
-              "abilityEntityTarget": {
-                "advancedDirection": {
-                  "clampToXZ": true,
-                  "customSourceAndTarget": false,
-                  "directionType": 0,
-                  "invertDirection": false,
-                  "source": null,
-                  "sourceMountPoint": 0,
-                  "target": null,
-                  "targetMountPoint": 0
-                },
-                "centerContextKey": null,
-                "centerToGround": false,
-                "centerType": 0,
-                "enableAdvancedDirection": false,
-                "ownerContextKey": null,
-                "selectorData": {
-                  "finderData": null,
-                  "postProcessorData": [],
-                  "validatorData": []
-                },
-                "selectorDirection": 0,
-                "selectorOwner": 1,
-                "target": 0,
-                "targetContextKey": null,
-                "targetGroupKey": null,
-                "targetSource": 0
+              "alwaysNext": true,
+              "conditionAction": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.CheckBuffStackNumAdvanced+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 2,
+                    "buffSettings": {
+                      "buffIdList": [
+                        "buff_PortableDeviceBuff_mushroom_1"
+                      ],
+                      "checkType": 0,
+                      "tagQuery": {
+                        "queryType": 0,
+                        "tags": []
+                      }
+                    },
+                    "buffStackNumType": 0,
+                    "checkTarget": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": null,
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": null,
+                      "selectorData": {
+                        "finderData": null,
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 0,
+                      "targetContextKey": null,
+                      "targetGroupKey": null,
+                      "targetSource": 5
+                    },
+                    "compareType": 3,
+                    "limitSkillCastId": false,
+                    "value": {
+                      "blackboardKey": null,
+                      "useBlackboardKey": false,
+                      "value": 1.0
+                    }
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
               },
-              "advancedDirectionSetting": {
-                "clampToXZ": true,
-                "customSourceAndTarget": false,
-                "directionType": 0,
-                "invertDirection": false,
-                "source": null,
-                "sourceMountPoint": 0,
-                "target": null,
-                "targetMountPoint": 0
+              "failActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 6,
+                    "alwaysNext": true,
+                    "conditionAction": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.CheckBuffStackNumAdvanced+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 7,
+                          "buffSettings": {
+                            "buffIdList": [
+                              "buff_PortableDeviceBuff_mushroom_2"
+                            ],
+                            "checkType": 0,
+                            "tagQuery": {
+                              "queryType": 0,
+                              "tags": []
+                            }
+                          },
+                          "buffStackNumType": 0,
+                          "checkTarget": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 5
+                          },
+                          "compareType": 3,
+                          "limitSkillCastId": false,
+                          "value": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 1.0
+                          }
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    },
+                    "failActions": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 11,
+                          "alwaysNext": true,
+                          "conditionAction": {
+                            "actionData": [
+                              {
+                                "$type": "Beyond.Gameplay.Core.CheckBuffStackNumAdvanced+Data, Gameplay.Beyond",
+                                "isEnable": true,
+                                "priorityLevel": 0,
+                                "priorityOffset": 0,
+                                "serverActionIndex": 12,
+                                "buffSettings": {
+                                  "buffIdList": [
+                                    "buff_PortableDeviceBuff_mushroom_3"
+                                  ],
+                                  "checkType": 0,
+                                  "tagQuery": {
+                                    "queryType": 0,
+                                    "tags": []
+                                  }
+                                },
+                                "buffStackNumType": 0,
+                                "checkTarget": {
+                                  "advancedDirection": {
+                                    "clampToXZ": true,
+                                    "customSourceAndTarget": false,
+                                    "directionType": 0,
+                                    "invertDirection": false,
+                                    "source": null,
+                                    "sourceMountPoint": 0,
+                                    "target": null,
+                                    "targetMountPoint": 0
+                                  },
+                                  "centerContextKey": null,
+                                  "centerToGround": false,
+                                  "centerType": 0,
+                                  "enableAdvancedDirection": false,
+                                  "ownerContextKey": null,
+                                  "selectorData": {
+                                    "finderData": null,
+                                    "postProcessorData": [],
+                                    "validatorData": []
+                                  },
+                                  "selectorDirection": 0,
+                                  "selectorOwner": 1,
+                                  "target": 0,
+                                  "targetContextKey": null,
+                                  "targetGroupKey": null,
+                                  "targetSource": 5
+                                },
+                                "compareType": 3,
+                                "limitSkillCastId": false,
+                                "value": {
+                                  "blackboardKey": null,
+                                  "useBlackboardKey": false,
+                                  "value": 1.0
+                                }
+                              }
+                            ],
+                            "onlyExecuteWhenSourceIsGuard": false,
+                            "onlyExecuteWhenSourceIsMainChar": false
+                          },
+                          "failActions": {
+                            "actionData": [
+                              {
+                                "$type": "Beyond.Gameplay.Core.SpawnAbilityEntity+Data, Gameplay.Beyond",
+                                "isEnable": true,
+                                "priorityLevel": 0,
+                                "priorityOffset": 0,
+                                "serverActionIndex": 16,
+                                "abilityEntityId": "abilityentity_interact_bomb_skill",
+                                "abilityEntitySkillId": null,
+                                "abilityEntitySource": 0,
+                                "abilityEntitySourceContextKey": null,
+                                "abilityEntityTarget": {
+                                  "advancedDirection": {
+                                    "clampToXZ": true,
+                                    "customSourceAndTarget": false,
+                                    "directionType": 0,
+                                    "invertDirection": false,
+                                    "source": null,
+                                    "sourceMountPoint": 0,
+                                    "target": null,
+                                    "targetMountPoint": 0
+                                  },
+                                  "centerContextKey": null,
+                                  "centerToGround": false,
+                                  "centerType": 0,
+                                  "enableAdvancedDirection": false,
+                                  "ownerContextKey": null,
+                                  "selectorData": {
+                                    "finderData": null,
+                                    "postProcessorData": [],
+                                    "validatorData": []
+                                  },
+                                  "selectorDirection": 0,
+                                  "selectorOwner": 1,
+                                  "target": 0,
+                                  "targetContextKey": null,
+                                  "targetGroupKey": null,
+                                  "targetSource": 0
+                                },
+                                "advancedDirectionSetting": {
+                                  "clampToXZ": true,
+                                  "customSourceAndTarget": false,
+                                  "directionType": 0,
+                                  "invertDirection": false,
+                                  "source": null,
+                                  "sourceMountPoint": 0,
+                                  "target": null,
+                                  "targetMountPoint": 0
+                                },
+                                "allowMultiInputTarget": false,
+                                "applyBornRotationOffset": false,
+                                "assignBlackboard": true,
+                                "assignEntityBlackboard": false,
+                                "assignPairs": [],
+                                "attachToClosestMeshPoint": false,
+                                "attachWeaponModel": false,
+                                "bornAt": {
+                                  "advancedDirection": {
+                                    "clampToXZ": true,
+                                    "customSourceAndTarget": false,
+                                    "directionType": 0,
+                                    "invertDirection": false,
+                                    "source": null,
+                                    "sourceMountPoint": 0,
+                                    "target": null,
+                                    "targetMountPoint": 0
+                                  },
+                                  "centerContextKey": null,
+                                  "centerToGround": false,
+                                  "centerType": 0,
+                                  "enableAdvancedDirection": false,
+                                  "ownerContextKey": null,
+                                  "selectorData": {
+                                    "finderData": null,
+                                    "postProcessorData": [],
+                                    "validatorData": []
+                                  },
+                                  "selectorDirection": 0,
+                                  "selectorOwner": 1,
+                                  "target": 0,
+                                  "targetContextKey": null,
+                                  "targetGroupKey": null,
+                                  "targetSource": 1
+                                },
+                                "bornMountPoint": 0,
+                                "bornPosOffset": {
+                                  "x": 0.0,
+                                  "y": 0.0,
+                                  "z": 0.0
+                                },
+                                "bornPosOffsetDirection": 1,
+                                "bornRotation": 0,
+                                "bornRotationContextTarget": null,
+                                "bornRotationOffset": {
+                                  "x": 0.0,
+                                  "y": 0.0,
+                                  "z": 0.0,
+                                  "w": 1.0
+                                },
+                                "checkNavmeshAreaName": false,
+                                "clampToXZPlane": false,
+                                "contextKey": "bomb",
+                                "dieOnEnd": false,
+                                "dieWhenSourceDie": false,
+                                "dieWhenTargetDie": false,
+                                "duration": {
+                                  "blackboardKey": null,
+                                  "useBlackboardKey": false,
+                                  "value": 0.0
+                                },
+                                "forbiddenAreaNames": [],
+                                "forceSyncInit": false,
+                                "inheritSourceSkillCastId": true,
+                                "inheritSourceTimeScale": false,
+                                "overrideDuration": false,
+                                "pauseEffectOnEnd": false,
+                                "readFullPotentialExtraEffect": false,
+                                "saveToContext": true,
+                                "setAbilityEntitySource": true,
+                                "setAbilityEntityTarget": false,
+                                "useAdvancedDirectionSetting": false,
+                                "useBornPosOffsetDirection": false,
+                                "weaponIndex": 0,
+                                "yRotateFromBoneToCurPos": false
+                              },
+                              {
+                                "$type": "Beyond.Gameplay.Core.SetAbilityEntityToMainChar+Data, Gameplay.Beyond",
+                                "isEnable": true,
+                                "priorityLevel": 0,
+                                "priorityOffset": 0,
+                                "serverActionIndex": 17,
+                                "contextKey": "bomb"
+                              }
+                            ],
+                            "onlyExecuteWhenSourceIsGuard": false,
+                            "onlyExecuteWhenSourceIsMainChar": false
+                          },
+                          "succeedActions": {
+                            "actionData": [
+                              {
+                                "$type": "Beyond.Gameplay.Core.GetTargetBuffBBAdvanced+Data, Gameplay.Beyond",
+                                "isEnable": true,
+                                "priorityLevel": 0,
+                                "priorityOffset": 0,
+                                "serverActionIndex": 13,
+                                "blackboardKey": "ratio",
+                                "buffSettings": {
+                                  "buffIdList": [
+                                    "buff_PortableDeviceBuff_mushroom_3"
+                                  ],
+                                  "checkType": 0,
+                                  "tagQuery": {
+                                    "queryType": 0,
+                                    "tags": []
+                                  }
+                                },
+                                "desiredKey": "ratio",
+                                "targetSettings": {
+                                  "advancedDirection": {
+                                    "clampToXZ": true,
+                                    "customSourceAndTarget": false,
+                                    "directionType": 0,
+                                    "invertDirection": false,
+                                    "source": null,
+                                    "sourceMountPoint": 0,
+                                    "target": null,
+                                    "targetMountPoint": 0
+                                  },
+                                  "centerContextKey": null,
+                                  "centerToGround": false,
+                                  "centerType": 0,
+                                  "enableAdvancedDirection": false,
+                                  "ownerContextKey": null,
+                                  "selectorData": {
+                                    "finderData": null,
+                                    "postProcessorData": [],
+                                    "validatorData": []
+                                  },
+                                  "selectorDirection": 0,
+                                  "selectorOwner": 1,
+                                  "target": 1,
+                                  "targetContextKey": null,
+                                  "targetGroupKey": null,
+                                  "targetSource": 5
+                                }
+                              },
+                              {
+                                "$type": "Beyond.Gameplay.Core.SpawnAbilityEntity+Data, Gameplay.Beyond",
+                                "isEnable": true,
+                                "priorityLevel": 0,
+                                "priorityOffset": 0,
+                                "serverActionIndex": 14,
+                                "abilityEntityId": "abilityentity_interact_bomb_skill_PortableDevice",
+                                "abilityEntitySkillId": null,
+                                "abilityEntitySource": 0,
+                                "abilityEntitySourceContextKey": null,
+                                "abilityEntityTarget": {
+                                  "advancedDirection": {
+                                    "clampToXZ": true,
+                                    "customSourceAndTarget": false,
+                                    "directionType": 0,
+                                    "invertDirection": false,
+                                    "source": null,
+                                    "sourceMountPoint": 0,
+                                    "target": null,
+                                    "targetMountPoint": 0
+                                  },
+                                  "centerContextKey": null,
+                                  "centerToGround": false,
+                                  "centerType": 0,
+                                  "enableAdvancedDirection": false,
+                                  "ownerContextKey": null,
+                                  "selectorData": {
+                                    "finderData": null,
+                                    "postProcessorData": [],
+                                    "validatorData": []
+                                  },
+                                  "selectorDirection": 0,
+                                  "selectorOwner": 1,
+                                  "target": 0,
+                                  "targetContextKey": null,
+                                  "targetGroupKey": null,
+                                  "targetSource": 0
+                                },
+                                "advancedDirectionSetting": {
+                                  "clampToXZ": true,
+                                  "customSourceAndTarget": false,
+                                  "directionType": 0,
+                                  "invertDirection": false,
+                                  "source": null,
+                                  "sourceMountPoint": 0,
+                                  "target": null,
+                                  "targetMountPoint": 0
+                                },
+                                "allowMultiInputTarget": false,
+                                "applyBornRotationOffset": false,
+                                "assignBlackboard": true,
+                                "assignEntityBlackboard": true,
+                                "assignPairs": [
+                                  {
+                                    "directValueType": 0,
+                                    "inputValueKey": "ratio",
+                                    "numericValue": 0.0,
+                                    "stringValue": null,
+                                    "targetKey": "EntityBB_ratio",
+                                    "useDirectValue": false
+                                  }
+                                ],
+                                "attachToClosestMeshPoint": false,
+                                "attachWeaponModel": false,
+                                "bornAt": {
+                                  "advancedDirection": {
+                                    "clampToXZ": true,
+                                    "customSourceAndTarget": false,
+                                    "directionType": 0,
+                                    "invertDirection": false,
+                                    "source": null,
+                                    "sourceMountPoint": 0,
+                                    "target": null,
+                                    "targetMountPoint": 0
+                                  },
+                                  "centerContextKey": null,
+                                  "centerToGround": false,
+                                  "centerType": 0,
+                                  "enableAdvancedDirection": false,
+                                  "ownerContextKey": null,
+                                  "selectorData": {
+                                    "finderData": null,
+                                    "postProcessorData": [],
+                                    "validatorData": []
+                                  },
+                                  "selectorDirection": 0,
+                                  "selectorOwner": 1,
+                                  "target": 0,
+                                  "targetContextKey": null,
+                                  "targetGroupKey": null,
+                                  "targetSource": 1
+                                },
+                                "bornMountPoint": 0,
+                                "bornPosOffset": {
+                                  "x": 0.0,
+                                  "y": 0.0,
+                                  "z": 0.0
+                                },
+                                "bornPosOffsetDirection": 1,
+                                "bornRotation": 0,
+                                "bornRotationContextTarget": null,
+                                "bornRotationOffset": {
+                                  "x": 0.0,
+                                  "y": 0.0,
+                                  "z": 0.0,
+                                  "w": 1.0
+                                },
+                                "checkNavmeshAreaName": false,
+                                "clampToXZPlane": false,
+                                "contextKey": "bomb",
+                                "dieOnEnd": false,
+                                "dieWhenSourceDie": false,
+                                "dieWhenTargetDie": false,
+                                "duration": {
+                                  "blackboardKey": null,
+                                  "useBlackboardKey": false,
+                                  "value": 0.0
+                                },
+                                "forbiddenAreaNames": [],
+                                "forceSyncInit": false,
+                                "inheritSourceSkillCastId": true,
+                                "inheritSourceTimeScale": false,
+                                "overrideDuration": false,
+                                "pauseEffectOnEnd": false,
+                                "readFullPotentialExtraEffect": false,
+                                "saveToContext": true,
+                                "setAbilityEntitySource": true,
+                                "setAbilityEntityTarget": false,
+                                "useAdvancedDirectionSetting": false,
+                                "useBornPosOffsetDirection": false,
+                                "weaponIndex": 0,
+                                "yRotateFromBoneToCurPos": false
+                              },
+                              {
+                                "$type": "Beyond.Gameplay.Core.SetAbilityEntityToMainChar+Data, Gameplay.Beyond",
+                                "isEnable": true,
+                                "priorityLevel": 0,
+                                "priorityOffset": 0,
+                                "serverActionIndex": 15,
+                                "contextKey": "bomb"
+                              }
+                            ],
+                            "onlyExecuteWhenSourceIsGuard": false,
+                            "onlyExecuteWhenSourceIsMainChar": false
+                          }
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    },
+                    "succeedActions": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.GetTargetBuffBBAdvanced+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 8,
+                          "blackboardKey": "ratio",
+                          "buffSettings": {
+                            "buffIdList": [
+                              "buff_PortableDeviceBuff_mushroom_2"
+                            ],
+                            "checkType": 0,
+                            "tagQuery": {
+                              "queryType": 0,
+                              "tags": []
+                            }
+                          },
+                          "desiredKey": "ratio",
+                          "targetSettings": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 1,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 5
+                          }
+                        },
+                        {
+                          "$type": "Beyond.Gameplay.Core.SpawnAbilityEntity+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 9,
+                          "abilityEntityId": "abilityentity_interact_bomb_skill_PortableDevice",
+                          "abilityEntitySkillId": null,
+                          "abilityEntitySource": 0,
+                          "abilityEntitySourceContextKey": null,
+                          "abilityEntityTarget": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 0
+                          },
+                          "advancedDirectionSetting": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 0,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "allowMultiInputTarget": false,
+                          "applyBornRotationOffset": false,
+                          "assignBlackboard": true,
+                          "assignEntityBlackboard": true,
+                          "assignPairs": [
+                            {
+                              "directValueType": 0,
+                              "inputValueKey": "ratio",
+                              "numericValue": 0.0,
+                              "stringValue": null,
+                              "targetKey": "EntityBB_ratio",
+                              "useDirectValue": false
+                            }
+                          ],
+                          "attachToClosestMeshPoint": false,
+                          "attachWeaponModel": false,
+                          "bornAt": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 1
+                          },
+                          "bornMountPoint": 0,
+                          "bornPosOffset": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                          },
+                          "bornPosOffsetDirection": 1,
+                          "bornRotation": 0,
+                          "bornRotationContextTarget": null,
+                          "bornRotationOffset": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "w": 1.0
+                          },
+                          "checkNavmeshAreaName": false,
+                          "clampToXZPlane": false,
+                          "contextKey": "bomb",
+                          "dieOnEnd": false,
+                          "dieWhenSourceDie": false,
+                          "dieWhenTargetDie": false,
+                          "duration": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          },
+                          "forbiddenAreaNames": [],
+                          "forceSyncInit": false,
+                          "inheritSourceSkillCastId": true,
+                          "inheritSourceTimeScale": false,
+                          "overrideDuration": false,
+                          "pauseEffectOnEnd": false,
+                          "readFullPotentialExtraEffect": false,
+                          "saveToContext": true,
+                          "setAbilityEntitySource": true,
+                          "setAbilityEntityTarget": false,
+                          "useAdvancedDirectionSetting": false,
+                          "useBornPosOffsetDirection": false,
+                          "weaponIndex": 0,
+                          "yRotateFromBoneToCurPos": false
+                        },
+                        {
+                          "$type": "Beyond.Gameplay.Core.SetAbilityEntityToMainChar+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 10,
+                          "contextKey": "bomb"
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    }
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
               },
-              "allowMultiInputTarget": false,
-              "applyBornRotationOffset": false,
-              "assignBlackboard": true,
-              "assignEntityBlackboard": false,
-              "assignPairs": [],
-              "attachToClosestMeshPoint": false,
-              "attachWeaponModel": false,
-              "bornAt": {
-                "advancedDirection": {
-                  "clampToXZ": true,
-                  "customSourceAndTarget": false,
-                  "directionType": 0,
-                  "invertDirection": false,
-                  "source": null,
-                  "sourceMountPoint": 0,
-                  "target": null,
-                  "targetMountPoint": 0
-                },
-                "centerContextKey": null,
-                "centerToGround": false,
-                "centerType": 0,
-                "enableAdvancedDirection": false,
-                "ownerContextKey": null,
-                "selectorData": {
-                  "finderData": null,
-                  "postProcessorData": [],
-                  "validatorData": []
-                },
-                "selectorDirection": 0,
-                "selectorOwner": 1,
-                "target": 0,
-                "targetContextKey": null,
-                "targetGroupKey": null,
-                "targetSource": 1
-              },
-              "bornMountPoint": 0,
-              "bornPosOffset": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
-              },
-              "bornRotation": 0,
-              "bornRotationContextTarget": null,
-              "bornRotationOffset": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
-              },
-              "checkNavmeshAreaName": false,
-              "clampToXZPlane": false,
-              "contextKey": "bomb",
-              "dieOnEnd": false,
-              "dieWhenSourceDie": false,
-              "dieWhenTargetDie": false,
-              "duration": {
-                "blackboardKey": null,
-                "useBlackboardKey": false,
-                "value": 0.0
-              },
-              "forbiddenAreaNames": [],
-              "forceSyncInit": false,
-              "inheritSourceSkillCastId": true,
-              "overrideDuration": false,
-              "pauseEffectOnEnd": false,
-              "readFullPotentialExtraEffect": false,
-              "saveToContext": true,
-              "setAbilityEntitySource": true,
-              "setAbilityEntityTarget": false,
-              "useAdvancedDirectionSetting": false,
-              "weaponIndex": 0,
-              "yRotateFromBoneToCurPos": false
-            },
-            {
-              "$type": "Beyond.Gameplay.Core.SetAbilityEntityToMainChar+Data, Gameplay.Beyond",
-              "isEnable": true,
-              "priorityLevel": 0,
-              "priorityOffset": 0,
-              "serverActionIndex": 2,
-              "contextKey": "bomb"
+              "succeedActions": {
+                "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.GetTargetBuffBBAdvanced+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 3,
+                    "blackboardKey": "ratio",
+                    "buffSettings": {
+                      "buffIdList": [
+                        "buff_PortableDeviceBuff_mushroom_1"
+                      ],
+                      "checkType": 0,
+                      "tagQuery": {
+                        "queryType": 0,
+                        "tags": []
+                      }
+                    },
+                    "desiredKey": "ratio",
+                    "targetSettings": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": null,
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": null,
+                      "selectorData": {
+                        "finderData": null,
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 1,
+                      "targetContextKey": null,
+                      "targetGroupKey": null,
+                      "targetSource": 5
+                    }
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.Core.SpawnAbilityEntity+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 4,
+                    "abilityEntityId": "abilityentity_interact_bomb_skill_PortableDevice",
+                    "abilityEntitySkillId": null,
+                    "abilityEntitySource": 0,
+                    "abilityEntitySourceContextKey": null,
+                    "abilityEntityTarget": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": null,
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": null,
+                      "selectorData": {
+                        "finderData": null,
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 0,
+                      "targetContextKey": null,
+                      "targetGroupKey": null,
+                      "targetSource": 0
+                    },
+                    "advancedDirectionSetting": {
+                      "clampToXZ": true,
+                      "customSourceAndTarget": false,
+                      "directionType": 0,
+                      "invertDirection": false,
+                      "source": null,
+                      "sourceMountPoint": 0,
+                      "target": null,
+                      "targetMountPoint": 0
+                    },
+                    "allowMultiInputTarget": false,
+                    "applyBornRotationOffset": false,
+                    "assignBlackboard": true,
+                    "assignEntityBlackboard": true,
+                    "assignPairs": [
+                      {
+                        "directValueType": 0,
+                        "inputValueKey": "ratio",
+                        "numericValue": 0.0,
+                        "stringValue": null,
+                        "targetKey": "EntityBB_ratio",
+                        "useDirectValue": false
+                      }
+                    ],
+                    "attachToClosestMeshPoint": false,
+                    "attachWeaponModel": false,
+                    "bornAt": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": null,
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": null,
+                      "selectorData": {
+                        "finderData": null,
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 0,
+                      "targetContextKey": null,
+                      "targetGroupKey": null,
+                      "targetSource": 1
+                    },
+                    "bornMountPoint": 0,
+                    "bornPosOffset": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "z": 0.0
+                    },
+                    "bornPosOffsetDirection": 1,
+                    "bornRotation": 0,
+                    "bornRotationContextTarget": null,
+                    "bornRotationOffset": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "z": 0.0,
+                      "w": 1.0
+                    },
+                    "checkNavmeshAreaName": false,
+                    "clampToXZPlane": false,
+                    "contextKey": "bomb",
+                    "dieOnEnd": false,
+                    "dieWhenSourceDie": false,
+                    "dieWhenTargetDie": false,
+                    "duration": {
+                      "blackboardKey": null,
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    },
+                    "forbiddenAreaNames": [],
+                    "forceSyncInit": false,
+                    "inheritSourceSkillCastId": true,
+                    "inheritSourceTimeScale": false,
+                    "overrideDuration": false,
+                    "pauseEffectOnEnd": false,
+                    "readFullPotentialExtraEffect": false,
+                    "saveToContext": true,
+                    "setAbilityEntitySource": true,
+                    "setAbilityEntityTarget": false,
+                    "useAdvancedDirectionSetting": false,
+                    "useBornPosOffsetDirection": false,
+                    "weaponIndex": 0,
+                    "yRotateFromBoneToCurPos": false
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.Core.SetAbilityEntityToMainChar+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 5,
+                    "contextKey": "bomb"
+                  }
+                ],
+                "onlyExecuteWhenSourceIsGuard": false,
+                "onlyExecuteWhenSourceIsMainChar": false
+              }
             }
           ],
           "onlyExecuteWhenSourceIsGuard": false,
@@ -219,7 +1023,14 @@
   },
   "aiExclusiveFrame": 0,
   "attackRangeType": 0,
-  "blackboard": [],
+  "blackboard": [
+    {
+      "isDynamic": true,
+      "key": "ratio",
+      "valueDouble": 0.0,
+      "valueStr": null
+    }
+  ],
   "buffInputBase": null,
   "buffs": [],
   "canCastInAir": false,
@@ -376,6 +1187,5 @@
     "predefinedTag": []
   },
   "toggleBuffs": [],
-  "uiRangeHints": [],
   "useAIExclusiveFrame": false
 }

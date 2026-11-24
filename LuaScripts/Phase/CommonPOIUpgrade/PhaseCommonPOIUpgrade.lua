@@ -40,16 +40,26 @@ PhaseCommonPOIUpgrade._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.T
         domainPOIType = GEnums.DomainPoiType.__CastFrom(domainPOIType)
     end
 
-    if blendCamCfg then
-        GameAction.BlendToRelativeCamera(blendCamCfg)
-    end
-
     self.m_domainPOIType = domainPOIType
     self.m_instId = instId
     self.m_blendCamCfg = blendCamCfg
+
+    
+    if InputManagerInst.inChangingInputDevice then
+        return
+    end
+
+    if blendCamCfg then
+        GameAction.BlendToRelativeCamera(blendCamCfg)
+    end
 end
 
 PhaseCommonPOIUpgrade._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    
+    if InputManagerInst.inChangingInputDevice then
+        return
+    end
+
     if not self.m_blendCamCfg then
         return
     end

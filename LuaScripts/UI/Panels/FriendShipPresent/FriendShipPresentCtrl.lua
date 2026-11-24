@@ -564,9 +564,23 @@ FriendShipPresentCtrl._RestoreGiftListFocus = HL.Method() << function(self)
 
     if self.m_isGiftRecord then
         self.view.sentGiftNaviGroup:NaviToThisGroup(true)
+        return
+    end
+
+    local focusLuaIndex = 0
+    for luaIndex, gift in ipairs(self.m_filteredGifts) do
+        if gift.itemId == self.m_focusItemId then
+            focusLuaIndex = luaIndex
+            break
+        end
+    end
+
+    local cell = self:_GetCellByIndex(focusLuaIndex)
+    local item = cell and cell.listCellFriendshipUpgrade.item
+    if item and item.id == self.m_focusItemId and item.view.button.gameObject.activeInHierarchy then
+        self:SetNaviTarget(item.view.button)
     else
         self.view.normalNaviGroup:NaviToThisGroup(true)
-        self:_RefreshInputKeyHint(self.m_focusItemId, self.m_focusLuaIndex)
     end
 end
 
@@ -619,6 +633,11 @@ FriendShipPresentCtrl._OnGiftListSwitchAnimationFinished = HL.Method(HL.Boolean)
     self:_SetGiftListInteractionEnabled(not showGiftRecord, showGiftRecord)
     self.m_isGiftListSwitching = false
     self:_SetGiftButtonBindingsEnabled(not showGiftRecord)
+
+    if not showGiftRecord then
+        
+        self.view.bottomList.scrollList:SkipGraduallyShow()
+    end
 
     self.m_needRestoreGiftListFocus = DeviceInfo.usingController and not self.view.inputGroup.groupEnabled
     if not self.m_needRestoreGiftListFocus then
@@ -886,17 +905,17 @@ FriendShipPresentCtrl._OnItemFocused = HL.Method(HL.String, HL.Number) << functi
         return
     end
 
-    if self:_IsMax() and not self.m_isMaxOnEnter then
-        self:_RefreshTips(true, itemId)
-        return
-    end
-
     if self.m_focusItemId ~= itemId or self.m_focusLuaIndex ~= luaIndex then
         self:_StopFillTimer()
     end
 
     self.m_focusItemId = itemId
     self.m_focusLuaIndex = luaIndex
+
+    if self:_IsMax() and not self.m_isMaxOnEnter then
+        self:_RefreshTips(true, itemId)
+        return
+    end
 
     self:_RefreshInputKeyHint(itemId, luaIndex)
     self:_RefreshTips(true, itemId)

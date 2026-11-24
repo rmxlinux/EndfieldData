@@ -39,7 +39,8 @@
                 "targetContextKey": null,
                 "targetGroupKey": null,
                 "targetSource": 0
-              }
+              },
+              "treatPartAsOriginalType": false
             },
             {
               "$type": "Beyond.Gameplay.Core.Conditions.CheckHp+Data, Gameplay.Beyond",
@@ -270,85 +271,6 @@
               "priorityLevel": 0,
               "priorityOffset": 0,
               "serverActionIndex": 9,
-              "actionAfterSet": {
-                "actionData": [
-                  {
-                    "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
-                    "isEnable": true,
-                    "priorityLevel": 0,
-                    "priorityOffset": 0,
-                    "serverActionIndex": 10,
-                    "asChildBuff": true,
-                    "autoFinishByAction": false,
-                    "buffIconDurationSource": {
-                      "durationSourceType": 0,
-                      "timedMarkerId": null
-                    },
-                    "buffs": [
-                      {
-                        "assignBlackboard": true,
-                        "assignItems": [
-                          {
-                            "directValueType": 0,
-                            "inputValueKey": "hp_down",
-                            "numericValue": 0.0,
-                            "stringValue": null,
-                            "targetKey": "hp_down",
-                            "useDirectValue": false
-                          }
-                        ],
-                        "buffId": "buff_cc_chr_dmg_reduce_maxhp_instance",
-                        "buffIdKey": null,
-                        "readIdFromBlackboard": false
-                      }
-                    ],
-                    "buffSource": 0,
-                    "contextKey": null,
-                    "count": {
-                      "blackboardKey": null,
-                      "useBlackboardKey": false,
-                      "value": 1.0
-                    },
-                    "finishWithNextSkillIfNotInherited": true,
-                    "inheritSkillIdList": [],
-                    "inheritSourceSkillCastId": false,
-                    "inheritSourceSkillCastInfo": true,
-                    "isExtra": false,
-                    "overrideBuffIconDuration": false,
-                    "passTargetGroupsToBuff": false,
-                    "targetSettings": {
-                      "advancedDirection": {
-                        "clampToXZ": true,
-                        "customSourceAndTarget": false,
-                        "directionType": 0,
-                        "invertDirection": false,
-                        "source": null,
-                        "sourceMountPoint": 0,
-                        "target": null,
-                        "targetMountPoint": 0
-                      },
-                      "centerContextKey": null,
-                      "centerToGround": false,
-                      "centerType": 0,
-                      "enableAdvancedDirection": false,
-                      "ownerContextKey": null,
-                      "selectorData": {
-                        "finderData": null,
-                        "postProcessorData": [],
-                        "validatorData": []
-                      },
-                      "selectorDirection": 0,
-                      "selectorOwner": 1,
-                      "target": 0,
-                      "targetContextKey": null,
-                      "targetGroupKey": null,
-                      "targetSource": 4
-                    }
-                  }
-                ],
-                "onlyExecuteWhenSourceIsGuard": false,
-                "onlyExecuteWhenSourceIsMainChar": false
-              },
               "floorRatio": {
                 "blackboardKey": null,
                 "useBlackboardKey": false,
@@ -374,6 +296,7 @@
     "value": 0.0
   },
   "applyTags": [],
+  "atbGainModifier": [],
   "attributeModifier": {
     "attributeModifiers": [],
     "isConvertedAttribute": false
@@ -449,6 +372,7 @@
     "showProgressInHpBar": false,
     "showProgressInNormalSkillButton": false,
     "showProgressInUltimateSkillButton": false,
+    "showStackCountInMainCharHpBar": false,
     "showWarningBackground": false,
     "useWeakProgressInNormalSkillButton": false
   },

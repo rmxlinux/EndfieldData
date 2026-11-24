@@ -70,12 +70,16 @@ WikiMonsterCtrl._RefreshRight = HL.Override() << function(self)
     end)
     
     local distributionInfos = {}
+    local jumpableDistributionCnt = 0
     if monsterDisplayData.distributionIds then
         for _, distributionId in pairs(monsterDisplayData.distributionIds) do
             local distributionInfo = Tables.DistributionInfoTable[distributionId]
             if distributionInfo then
-                if not distributionInfo.jumpId or string.isEmpty(distributionInfo.jumpId) or Utils.canJumpToSystem(distributionInfo.jumpId) then
+                if not distributionInfo.jumpId or string.isEmpty(distributionInfo.jumpId) then
                     table.insert(distributionInfos, distributionInfo)
+                elseif Utils.canJumpToSystem(distributionInfo.jumpId) then
+                    table.insert(distributionInfos, distributionInfo)
+                    jumpableDistributionCnt = jumpableDistributionCnt + 1
                 end
             end
         end
@@ -141,7 +145,7 @@ WikiMonsterCtrl._RefreshRight = HL.Override() << function(self)
         end
     end)
 
-    local canFocus = dropItemCnt > 0 or distributionCnt > 0
+    local canFocus = dropItemCnt > 0 or jumpableDistributionCnt > 0
     self.view.right.naviGroup.enabled = canFocus
     self.view.right.controllerFocusHintNode.gameObject:SetActive(canFocus)
 end

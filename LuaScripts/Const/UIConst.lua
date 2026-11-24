@@ -13,6 +13,7 @@ UI_WATCH_BUSINESS_CARD_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Common/Widgets/B
 UI_ACTIVITY_CHAR_GUIDE_LINE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/CharacterGuideLine/%s.prefab"
 UI_ACTIVITY_VERSION_GUIDE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/VersionGuide/%s.prefab"
 UI_ACTIVITY_CHECK_IN_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Checkin/%s.prefab"
+UI_ACTIVITY_CHARACTER_GIFT_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/CharacterGift/%s.prefab"
 UI_ACTIVITY_WEB_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Web/%s.prefab"
 UI_ACTIVITY_TASK_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Task/%s.prefab"
 UI_ACTIVITY_HIGH_DIFFICULTY_BG_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/HighDifficultyBg/%s.prefab"
@@ -41,6 +42,7 @@ UI_CASH_SHOP_DYNAMIC_GIFT_PANEL_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/CashSh
 UI_CASH_SHOP_CUSTOM_GIFT_PANEL_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/CashShop/Widgets/UniversalGiftpackNode/%s.prefab"
 UI_TYPHOEA_ARCHERY_CROSSHAIR_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/Battle/Widgets/TyphoeaArchery/%s.prefab"
 UI_TYPHOEA_ARCHERY_LOCKINGFRAME_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/Battle/Widgets/TyphoeaArchery/%s.prefab"
+UI_MULTIPLAYER_WIDGETS_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Multiplayer/Widgets/%s.prefab"
 
 
 CANVAS_DEFAULT_WIDTH = CS.Beyond.UI.CUR_STANDARD_HORIZONTAL_RESOLUTION
@@ -48,6 +50,8 @@ CANVAS_DEFAULT_HEIGHT = CS.Beyond.UI.CUR_STANDARD_VERTICAL_RESOLUTION
 
 UI_SPRITE_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/%s.png"
 UI_SPRITE_DEV_PATH = "Assets/BeyondDev/DynamicAssets/Gameplay/UI/Sprites/%s.png"
+UI_SPRITE_MULTIPLAYER = "Multiplayer"
+UI_SPRITE_MULTIPLAYER_EMOJI = UI_SPRITE_MULTIPLAYER .. "/Emoji"
 UI_SPRITE_DEVELOP_RETURN_TAB_PATH = "Activity/DevelopReturn"
 UI_SPRITE_COMMON = "Common"
 UI_SPRITE_ITEM = "ItemIcon"
@@ -70,6 +74,9 @@ UI_SPRITE_ACTIVITY_BENEFITS = "Activity/RewardShow"
 UI_SPRITE_ACTIVITY_HIGH_DIFFICULTY = "Activity/HighDifficulty"
 UI_SPRITE_ACTIVITY_PUSH_BG = "Activity/PushBg"
 UI_SPRITE_HIGH_DIFFICULTY = "HighDifficulty"
+UI_SPRITE_HIGH_DIFFICULTY_BOSS = "Activity/HighDifficulty"
+UI_DIFFICULTY_SELECT_CELL_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Dungeon/Widgets/DifficaultySelectCell.prefab"
+UI_DIFFICULTY_LEVEL_CELL_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Dungeon/Widgets/DifficaultyLevelCell.prefab"
 UI_CHAR_TALENT_ICON = "CharTalent"
 UI_SPRITE_MINIGAME_BALLOON = "BalloonMinigame"
 
@@ -98,6 +105,7 @@ UI_SPRITE_SKETCH = "Sketch"
 UI_SPRITE_WIKI_MONSTER = "Wiki/MonsterImage"
 UI_SPRITE_CROP = "Factory/Crop"
 UI_SPRITE_FAC_GAS = "Factory/Gas"
+UI_SPRITE_FAC_ENVIRONMENT_ICON = "Factory/EnvironmentIcon"
 UI_SPRITE_SS_SKILL_ICON = "Spaceship/SpaceshipSkillIcon"
 UI_SPRITE_SS_CLUE_ICON = "Spaceship/SpaceshipGuestroom"
 UI_SPRITE_SS_COMMON = "Spaceship/SpaceshipCommon"
@@ -220,6 +228,20 @@ UI_SPRITE_SNAPSHOT_STICKER = "Snapshot/Sticker"
 UI_SPRITE_SNAPSHOT_CHALLENGE = "Snapshot/Challenge"
 UI_SPRITE_SNAPSHOT_ACTION = "Snapshot/Action"
 SNAPSHOT_FILTER_VOLUME_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Snapshot/Filter/Volume/%s.prefab"
+
+
+
+UI_SPRITE_CARD_GAME_RELIC = "CardGame/IconRelic"
+UI_SPRITE_CARD_GAME_RELIC_SMALL = "CardGame/IconRelicSmall"
+UI_SPRITE_CARD_GAME_CARD_PACK = "CardGame/CardBag"
+UI_SPRITE_CARD_GAME_CARD_PACK_SMALL = "CardGame/CardBagSmall"
+UI_SPRITE_CARD_GAME_EFFECT = "CardGame/IconRelic"
+UI_SPRITE_CARD_GAME_SEAT_INDEX_ICON_FMT = "CardGame/IconDeskNum/icon_card_desk_num%d"
+UI_SPRITE_CARD_GAME_SEAT_INDEX_ICON_CONTROLLER_FMT = "CardGame/IconDeskNum/icon_card_desk_controller_num%d"
+UI_SPRITE_CARD_GAME_CARD_CHANGE = "CardGame/IconChange"
+UI_SPRITE_CARD_GAME_CARD_CHANGE_SMALL = "CardGame/IconChangeSmall"
+UI_SPRITE_CARD_GAME_CARD_SUIT = "CardGame/IconSuit"
+UI_SPRITE_CARD_GAME_CARD_RANK = "CardGame/IconRank"
 
 
 POSTER_TEXTURE_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Textures/SpaceShip/ImagePoster/LargeSize/%s.png"
@@ -571,6 +593,7 @@ UI_TIPS_POS_TYPE = {
     RightTopOrLeftTop = 16, 
     LeftAlignBottom = 17, 
     LeftAlignTop = 18, 
+    FacFormationStakeTips = 19, 
 }
 
 UI_TIPS_X_POS_TYPE = {
@@ -588,8 +611,19 @@ UI_TIPS_Y_POS_TYPE = {
 UI_GUIDE_OUT_OF_SCREEN_DISTANCE = 10000
 
 UI_COMMON_MASK_TYPE = CS.Beyond.Gameplay.CommonMaskType
+UI_COMMON_MASK_CUSTOM_TYPE = CS.Beyond.Gameplay.CommonMaskCustomType
 UI_COMMON_MASK_FADE_TYPE = CS.Beyond.Gameplay.CommonMaskFadeType
 UI_COMMON_MASK_LAYER_TYPE = CS.Beyond.Gameplay.CommonMaskLayerType
+
+
+UI_CUSTOM_LOADING_CONFIG = {
+    [UI_COMMON_MASK_CUSTOM_TYPE.SweetPie] = {
+        prefab = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Battle/SweetPieLoadingMask.prefab",
+        init = function(widget, args)
+            widget:InitSweetPieLoadingMask(args)
+        end,
+    },
+}
 
 UI_CHAR_FORMATION_STATE = {
     TeamWaitSet = 1, 
@@ -811,6 +845,7 @@ PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT = {
     PROFILE_SHOW = 6,
     SP_1 = 20,
     SP_2 = 21,
+    SP_3 = 22,
     SP_RELAX = 30,
 }
 
@@ -1215,18 +1250,19 @@ CHAR_FORMATION_LIST_SORT_OPTION = {
         name = Language.LUA_CHAR_SORT_1, 
         
         
-        keys = { "slotIndex", "replaceablePriorityReverse", "level", "rarity", "sortOrder", "templateId" },
-        reverseKeys = { "slotReverseIndex", "replaceablePriority", "level", "rarity", "sortOrder", "templateId" },
+        
+        keys = { "trialPinOrder", "slotIndex", "replaceablePriorityReverse", "level", "rarity", "sortOrder", "templateId" },
+        reverseKeys = { "trialPinPriority", "slotReverseIndex", "replaceablePriority", "level", "rarity", "sortOrder", "templateId" },
     },
     {
         name = Language.LUA_CHAR_SORT_2, 
-        keys = { "slotIndex", "replaceablePriorityReverse", "ownTime", "templateId" },
-        reverseKeys = { "slotReverseIndex", "replaceablePriority", "ownTime", "templateId" },
+        keys = { "trialPinOrder", "slotIndex", "replaceablePriorityReverse", "ownTime", "templateId" },
+        reverseKeys = { "trialPinPriority", "slotReverseIndex", "replaceablePriority", "ownTime", "templateId" },
     },
     {
         name = Language.LUA_CHAR_SORT_3, 
-        keys = { "slotIndex", "replaceablePriorityReverse", "rarity", "level", "sortOrder", "templateId" },
-        reverseKeys = { "slotReverseIndex", "replaceablePriority", "rarity", "level", "sortOrder", "templateId" },
+        keys = { "trialPinOrder", "slotIndex", "replaceablePriorityReverse", "rarity", "level", "sortOrder", "templateId" },
+        reverseKeys = { "trialPinPriority", "slotReverseIndex", "replaceablePriority", "rarity", "level", "sortOrder", "templateId" },
     },
 }
 
@@ -1237,7 +1273,7 @@ CHAR_POSTER_LIST_SORT_OPTION = {
         reverseKeys = { "selectSlotReverse", "level", "rarity", "ownTime", "sortOrder", },
     },
     {
-        name = Language.LUA_CHAR_SORT_2, 
+        name = Language.LUA_CHAR_SORT_3, 
         keys = { "selectSlot","rarity", "level", "ownTime", "sortOrder" },
         reverseKeys = {"selectSlotReverse", "rarity", "level", "ownTime", "sortOrder" },
     },
@@ -1268,7 +1304,7 @@ CHAR_SORT_OPTION = {
         reverseKeys = { "slotReverseIndex", "slotIndex", "level", "rarity", "ownTime", "sortOrder" },
     },
     {
-        name = Language.LUA_CHAR_SORT_2, 
+        name = Language.LUA_CHAR_SORT_3, 
         keys = { "slotIndex", "rarity", "level", "ownTime", "sortOrder" },
         reverseKeys = { "slotReverseIndex", "slotIndex", "rarity", "level", "ownTime", "sortOrder" },
     },
@@ -1493,6 +1529,8 @@ ITEM_RARITY_DEFAULT_LIGHT_IMG = "bg_item_rarity_bar_common"
 ITEM_RARITY_SP_LIGHT_IMG = "bg_item_rarity_bar_sp"
 
 ITEM_NO_RARITY_BG_DEFAULT_COLOR = "444444B4"
+
+ACTIVITY_TAG_DEFAULT_BG_COLOR = "FBF201"
 
 GACHA_CHAR_TIMELINE_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Gacha/%s/Prefab/%s.prefab"
 

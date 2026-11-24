@@ -60,14 +60,22 @@ SeasonTowerEnemyBuffPopupCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << fu
     cell.stateController:SetState(info.isDead and "Lock" or "UnLock")
 
     
-    local enemyInfo = string.isEmpty(info.enemyId) and nil or UIUtils.getEnemyInfoByIdAndLevel(info.enemyId, nil)
-    if enemyInfo then
-        cell.titleTxt.text = enemyInfo.name or ""
-        if not string.isEmpty(enemyInfo.templateId) then
-            cell.monsterIcon:LoadSprite(UIConst.UI_SPRITE_MONSTER_ICON, enemyInfo.templateId)
-        end
+    local enemyInfo
+    if not string.isEmpty(info.enemyId)
+        and (string.isEmpty(info.bountyGroupName) or string.isEmpty(info.bountyGroupIconPath)) then
+        enemyInfo = UIUtils.getEnemyInfoByIdAndLevel(info.enemyId, nil)
+    end
+    if not string.isEmpty(info.bountyGroupName) then
+        cell.titleTxt.text = info.bountyGroupName
     else
-        cell.titleTxt.text = ""
+        cell.titleTxt.text = enemyInfo and enemyInfo.name or ""
+    end
+    if not string.isEmpty(info.bountyGroupIconPath) then
+        cell.monsterIcon:LoadSprite(info.bountyGroupIconPath)
+    elseif enemyInfo and not string.isEmpty(enemyInfo.templateId) then
+        cell.monsterIcon:LoadSprite(UIConst.UI_SPRITE_MONSTER_ICON, enemyInfo.templateId)
+    else
+        cell.monsterIcon.sprite = nil
     end
 
     

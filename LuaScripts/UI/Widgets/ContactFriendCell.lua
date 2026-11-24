@@ -48,6 +48,30 @@ ContactFriendCell.InitContactFriendCell = HL.Method(HL.Number, HL.Any, HL.Number
     end)
 end
 
+
+
+ContactFriendCell.InitContactFriendCellByDisplayInfo = HL.Method(HL.Table) << function(self, displayInfo)
+    self.m_roleId = 0
+    self.m_friendInfo = nil
+
+    self.view.noDataState.gameObject:SetActive(false)
+    self.view.playerHead.gameObject:SetActive(true)
+    self.view.playerHead:UpdateHideSignature(true)
+    self.view.playerHead:InitCommonPlayerHead(displayInfo.avatarIcon, displayInfo.avatarFrameIcon, false,
+            displayInfo.adventureLevel, displayInfo.nickname, displayInfo.signature, displayInfo.psName)
+    self.view.pcIcon.gameObject:SetActive(false)
+    self.view.psIcon.gameObject:SetActive(false)
+    self.view.tileTxt.text = displayInfo.nickname
+    self:UpdateThemeBgByTopicId(displayInfo.cardTopicId)
+
+    self.view.onlineState.gameObject:SetActive(false)
+    self.view.offlineTimeTxt.text = ""
+    self.view.onlineTimeTxt.text = ""
+    self.view.redDotLayout.gameObject:SetActive(false)
+    
+    self.view.button.onClick:RemoveAllListeners()
+end
+
 ContactFriendCell.InitLoadingFriendCell = HL.Method(HL.Number, HL.Number, HL.Function) << function(self, roleId, csIndex, onClickFun)
     self.view.noDataState.gameObject:SetActive(true)
     self.view.noDataBgDecoMask.gameObject:SetActive(true)
@@ -131,17 +155,21 @@ ContactFriendCell.UpdateTileTxt = HL.Method() << function(self)
 end
 
 ContactFriendCell.UpdateThemeBg = HL.Method() << function(self)
-    local friendInfo = self.m_friendInfo
+    self:UpdateThemeBgByTopicId(self.m_friendInfo.businessCardTopicId)
+end
+
+ContactFriendCell.UpdateThemeBgByTopicId = HL.Method(HL.Any) << function(self, businessCardTopicId)
     self.view.themeBgImg.gameObject:SetActive(true)
-    if friendInfo.businessCardTopicId ~= nil then
-        local success, topicCfg = Tables.businessCardTopicTable:TryGetValue(friendInfo.businessCardTopicId)
-        if success then
-            self.view.themeBgImg:LoadSprite(UIConst.UI_BUSINESS_CARD_FRIEND_CHAT_ICON_PATH, topicCfg.id)
-        else
-            logger.error("未找到名片主题配置 " .. friendInfo.businessCardTopicId)
-        end
-    else
+    if string.isEmpty(businessCardTopicId) then
         self.view.themeBgImg:LoadSprite(UIConst.UI_BUSINESS_CARD_FRIEND_CHAT_ICON_PATH, DEFAULT_CHAT_BG_ICON)
+        return
+    end
+
+    local success, topicCfg = Tables.businessCardTopicTable:TryGetValue(businessCardTopicId)
+    if success then
+        self.view.themeBgImg:LoadSprite(UIConst.UI_BUSINESS_CARD_FRIEND_CHAT_ICON_PATH, topicCfg.id)
+    else
+        logger.error("未找到名片主题配置 " .. businessCardTopicId)
     end
 end
 

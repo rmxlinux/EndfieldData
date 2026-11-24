@@ -5,6 +5,7 @@ local TARGET_TYPE_NAME = {
     [FacConst.FAC_INTERACT_TARGET_TYPE.Logistic] = "logistic",
     [FacConst.FAC_INTERACT_TARGET_TYPE.Pipe] = "pipe",
     [FacConst.FAC_INTERACT_TARGET_TYPE.Belt] = "belt",
+    [FacConst.FAC_INTERACT_TARGET_TYPE.FormationZone] = "formationZone",
 }
 FacTopViewCtrl = HL.Class('FacTopViewCtrl', uiCtrl.UICtrl)
 
@@ -590,6 +591,11 @@ local MouseHints = {
         normal = "FAC_TOP_VIEW_MOUSE_HOVER_HINT_LOGISTIC",
         des = "FAC_TOP_VIEW_MOUSE_HOVER_HINT_BELT_DES",
     },
+    formationZone = {
+        
+        normal = "FAC_TOP_VIEW_MOUSE_HOVER_HINT_LOGISTIC",
+        des = "FAC_TOP_VIEW_MOUSE_HOVER_HINT_LOGISTIC",
+    },
     logistic = {
         normal = "FAC_TOP_VIEW_MOUSE_HOVER_HINT_LOGISTIC",
         des = "FAC_TOP_VIEW_MOUSE_HOVER_HINT_BUILDING_DES",
@@ -672,6 +678,10 @@ FacTopViewCtrl._UpdateMouseHintStates = HL.Method() << function(self)
                 content = content or MouseHints.belt
             end
         end
+        if output and output.formationZone then
+            targetCount = targetCount + 1
+            content = content or MouseHints.formationZone
+        end
         if targetCount > 1 and not LuaSystemManager.factory.inDestroyMode then
             content = MouseHints.multiTarget
         end
@@ -744,10 +754,12 @@ FacTopViewCtrl._UpdateControllerMouseHintStates = HL.Method() << function(self)
             end
         else
             
-            local building = output and output.building
-            if building or output and (output.belt or output.pipe) then
-                if building and building.type == FacConst.FAC_INTERACT_TARGET_TYPE.Building
-                        and FactoryUtils.canMoveBuilding(building.nodeId) then
+            local targets = self:_CollectControllerTargets()
+            local target = targets[1]
+            if target then
+                if target.type == FacConst.FAC_INTERACT_TARGET_TYPE.Building
+                        and target.isBuilding
+                        and FactoryUtils.canMoveBuilding(target.nodeId) then
                     actionIds = ControllerMouseHints.normal
                 else
                     actionIds = ControllerMouseHints.normalNoMove
@@ -784,6 +796,7 @@ FacTopViewCtrl._UpdateControllerOpenDetailHint = HL.Method() << function(self)
     if output and output.building then liveCount = liveCount + 1 end
     if output and output.overlapBuildings then liveCount = liveCount + #output.overlapBuildings end
     if output and output.belt then liveCount = liveCount + 1 end
+    if output and output.formationZone then liveCount = liveCount + 1 end
     if liveCount > 1 then
         local targets = self:_CollectControllerTargets()
         if #targets > 1 then
@@ -878,6 +891,7 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
     end
 
     local targets = {}
+    local sortIds = FacConst.FAC_TOP_VIEW_TARGET_SORT_ID
     
     
     local chapterId = Utils.getCurrentChapterId()
@@ -894,7 +908,7 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
             end
             table.insert(targets, {
                 type = FacConst.FAC_INTERACT_TARGET_TYPE.Pipe,
-                sortBase = 100,
+                sortBase = sortIds.Pipe,
                 name = isPendingPipe
                     and FactoryUtils.getPendingSlotName(pipePendingSlotId)
                     or Language.LUA_FAC_PIPE_INTERACT_OPTION,
@@ -914,9 +928,10 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
                 seenPendingSlotIds[buildingPendingSlotId] = true
                 table.insert(targets, {
                     type = FacConst.FAC_INTERACT_TARGET_TYPE.Building,
-                    sortBase = 200,
+                    sortBase = sortIds.Building,
                     name = FactoryUtils.getPendingSlotName(buildingPendingSlotId),
                     nodeId = nodeId,
+                    isPrimary = true,
                     isBuilding = true,
                     subBuildingIndex = -1,
                 })
@@ -929,6 +944,7 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
             local handler = FactoryUtils.getBuildingNodeHandler(nodeId)
             if handler then
                 local targetName
+                local sortBase = sortIds.Building
                 if isBuilding then
                     if subIndex and subIndex >= 0 then
                         
@@ -937,13 +953,16 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
                         targetName = Tables.factoryBuildingTable[handler.templateId].name
                     end
                 else
-                    targetName = FactoryUtils.getLogisticData(handler.templateId).name
+                    local unitData, isPipeLogistic = FactoryUtils.getLogisticData(handler.templateId)
+                    targetName = unitData.name
+                    sortBase = isPipeLogistic and sortIds.PipeLogistic or sortIds.ConveyorLogistic
                 end
                 table.insert(targets, {
                     type = FacConst.FAC_INTERACT_TARGET_TYPE.Building,
-                    sortBase = 200,
+                    sortBase = sortBase,
                     name = targetName,
                     nodeId = nodeId,
+                    isPrimary = true,
                     isBuilding = isBuilding,
                     subBuildingIndex = subIndex,
                 })
@@ -954,8 +973,7 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
     if overlapBuildings then
         
         
-        
-        for i, overlap in ipairs(overlapBuildings) do
+        for _, overlap in ipairs(overlapBuildings) do
             local overlapNodeId = overlap.nodeId
             local overlapPendingSlotId = CSFactoryUtil.GetBlueprintSlotId(chapterId, overlapNodeId)
             local isOverlapPending = overlapPendingSlotId > 0
@@ -964,7 +982,7 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
                     seenPendingSlotIds[overlapPendingSlotId] = true
                     table.insert(targets, {
                         type = FacConst.FAC_INTERACT_TARGET_TYPE.Building,
-                        sortBase = 150 + 10 * i,
+                        sortBase = sortIds.Building,
                         name = FactoryUtils.getPendingSlotName(overlapPendingSlotId),
                         nodeId = overlapNodeId,
                         isBuilding = true,
@@ -977,17 +995,19 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
                     local overlapIsBuilding =
                         overlap.targetType == FacConst.FAC_INTERACT_TARGET_TYPE.Building
                     local overlapName
+                    local sortBase = sortIds.Building
                     if overlapIsBuilding then
                         local _, buildingData = Tables.factoryBuildingTable:TryGetValue(handler.templateId)
                         overlapName = buildingData and buildingData.name
                     else
-                        local unitData = FactoryUtils.getLogisticData(handler.templateId)
+                        local unitData, isPipeLogistic = FactoryUtils.getLogisticData(handler.templateId)
                         overlapName = unitData and unitData.name
+                        sortBase = isPipeLogistic and sortIds.PipeLogistic or sortIds.ConveyorLogistic
                     end
                     if overlapName then
                         table.insert(targets, {
                             type = FacConst.FAC_INTERACT_TARGET_TYPE.Building,
-                            sortBase = 150 + 10 * i,
+                            sortBase = sortBase,
                             name = overlapName,
                             nodeId = overlapNodeId,
                             isBuilding = overlapIsBuilding,
@@ -1022,7 +1042,7 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
                 if beltName then
                     table.insert(targets, {
                         type = FacConst.FAC_INTERACT_TARGET_TYPE.Belt,
-                        sortBase = 300,
+                        sortBase = sortIds.Belt,
                         name = beltName,
                         nodeId = beltNodeId,
                         unitIndex = beltUnitIndex,
@@ -1032,7 +1052,27 @@ FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << funct
             end
         end
     end
-    table.sort(targets, function(a, b) return a.sortBase < b.sortBase end)
+    local formationZone = targetSet.formationZone
+    if formationZone then
+        local info = formationZone.formationZoneInfo
+        local levelCfg = Tables.factoryFormationLevelTable:GetValue(info.formationId).levels[info.data.level]
+        table.insert(targets, {
+            type = FacConst.FAC_INTERACT_TARGET_TYPE.FormationZone,
+            sortBase = sortIds.FormationZone,
+            name = levelCfg.name,
+            formationZoneInfo = info,
+        })
+    end
+    table.sort(targets, function(a, b)
+        if a.sortBase ~= b.sortBase then
+            return a.sortBase < b.sortBase
+        end
+        local aIsPrimary = a.isPrimary == true
+        if aIsPrimary ~= (b.isPrimary == true) then
+            return aIsPrimary
+        end
+        return (a.nodeId or 0) < (b.nodeId or 0)
+    end)
     return targets
 end
 
@@ -1050,7 +1090,15 @@ FacTopViewCtrl._ControllerOpenCurBuildingMenu = HL.Method() << function(self)
     for _, target in ipairs(targets) do
         self:_AddControllerMenuActionsForTarget(actions, target, isMulti)
     end
-    table.sort(actions, function(a, b) return a.priority < b.priority end)
+    for index, action in ipairs(actions) do
+        action.sortIndex = index
+    end
+    table.sort(actions, function(a, b)
+        if a.priority ~= b.priority then
+            return a.priority < b.priority
+        end
+        return a.sortIndex < b.sortIndex
+    end)
 
     local effect = facInteract.m_hoverInteractHighlightEffect
     local posList = {
@@ -1127,6 +1175,10 @@ FacTopViewCtrl._AddControllerMenuActionsForTarget = HL.Method(HL.Table, HL.Table
                     unitIndex = target.unitIndex,
                     logisticPos = target.logisticPos,
                 })
+            elseif target.type == FacConst.FAC_INTERACT_TARGET_TYPE.FormationZone then
+                LuaSystemManager.factoryInteract:ExecuteInteract({
+                    formationZoneInfo = target.formationZoneInfo,
+                })
             end
             LuaSystemManager.factoryInteract:ClearInteractPresentation()
         end,
@@ -1177,13 +1229,15 @@ FacTopViewCtrl._AddControllerMenuActionsForTarget = HL.Method(HL.Table, HL.Table
 end
 
 FacTopViewCtrl._ControllerMoveCurBuilding = HL.Method() << function(self)
-    local output = LuaSystemManager.factoryInteract:GetCurrentTargetOutput()
-    local building = output and output.building
-    if not building or building.type ~= FacConst.FAC_INTERACT_TARGET_TYPE.Building
-            or not FactoryUtils.canMoveBuilding(building.nodeId, true) then
+    local targets = self:_CollectControllerTargets()
+    local target = targets[1]
+    if not target
+            or target.type ~= FacConst.FAC_INTERACT_TARGET_TYPE.Building
+            or not target.isBuilding
+            or not FactoryUtils.canMoveBuilding(target.nodeId, true) then
         return
     end
-    Notify(MessageConst.FAC_ENTER_BUILDING_MODE, { nodeId = building.nodeId })
+    Notify(MessageConst.FAC_ENTER_BUILDING_MODE, { nodeId = target.nodeId })
 end
 
 FacTopViewCtrl.ToggleHideFacTopViewRightSideUi = HL.Method(HL.Boolean) << function(self, isHide)

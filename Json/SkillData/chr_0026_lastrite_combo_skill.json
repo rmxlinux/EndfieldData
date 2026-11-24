@@ -1091,6 +1091,7 @@
                   "reduceDamageForGuard": false,
                   "reduceDamageForGuardRatio": 1.0,
                   "simpleCalculation": true,
+                  "snapshotBlackboardKey": null,
                   "takeAtkSnapshot": false,
                   "updatePositionOnCoalition": true
                 }
@@ -2170,6 +2171,7 @@
                         "reduceDamageForGuard": false,
                         "reduceDamageForGuardRatio": 1.0,
                         "simpleCalculation": false,
+                        "snapshotBlackboardKey": null,
                         "takeAtkSnapshot": false,
                         "updatePositionOnCoalition": true
                       }
@@ -2512,6 +2514,7 @@
                         "reduceDamageForGuard": false,
                         "reduceDamageForGuardRatio": 1.0,
                         "simpleCalculation": false,
+                        "snapshotBlackboardKey": null,
                         "takeAtkSnapshot": false,
                         "updatePositionOnCoalition": true
                       },
@@ -2725,6 +2728,7 @@
                         "reduceDamageForGuard": false,
                         "reduceDamageForGuardRatio": 1.0,
                         "simpleCalculation": true,
+                        "snapshotBlackboardKey": null,
                         "takeAtkSnapshot": false,
                         "updatePositionOnCoalition": true
                       }
@@ -2858,13 +2862,12 @@
                     "conditionAction": {
                       "actionData": [
                         {
-                          "$type": "Beyond.Gameplay.Core.Conditions.CheckHp+Data, Gameplay.Beyond",
+                          "$type": "Beyond.Gameplay.Core.Conditions.CheckEntityNum+Data, Gameplay.Beyond",
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
                           "serverActionIndex": 28,
-                          "compare": 1,
-                          "hpOwner": {
+                          "checkTarget": {
                             "advancedDirection": {
                               "clampToXZ": true,
                               "customSourceAndTarget": false,
@@ -2892,8 +2895,303 @@
                             "targetGroupKey": null,
                             "targetSource": 0
                           },
-                          "isRatio": true,
-                          "value": {
+                          "compareType": 3,
+                          "containsHittableTarget": false,
+                          "excludeDeadEntity": true,
+                          "minNum": 1,
+                          "storeKey": null
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    },
+                    "failActions": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.TriggerFakeBuffConsumeEvent+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 31,
+                          "buffId": "buff_common_energy_shard_attached_cryst",
+                          "buffOwner": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 0
+                          },
+                          "eventSource": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 1
+                          },
+                          "eventType": 0,
+                          "layerCount": {
+                            "blackboardKey": "infliction_num",
+                            "useBlackboardKey": true,
+                            "value": 1
+                          }
+                        }
+                      ],
+                      "onlyExecuteWhenSourceIsGuard": false,
+                      "onlyExecuteWhenSourceIsMainChar": false
+                    },
+                    "succeedActions": {
+                      "actionData": [
+                        {
+                          "$type": "Beyond.Gameplay.Core.FinishBuffByTag+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 29,
+                          "buffOwner": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": "smart_target",
+                            "targetSource": 0
+                          },
+                          "buffSource": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 1
+                          },
+                          "finishAll": true,
+                          "finishLayerCnt": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 1.0
+                          },
+                          "finishSource": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 1
+                          },
+                          "isFinishedEarly": true,
+                          "limitSource": false,
+                          "tagQuery": {
+                            "queryType": 0,
+                            "tags": [
+                              {
+                                "tagId": 1570888476
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "$type": "Beyond.Gameplay.Core.BlowOffAction+Data, Gameplay.Beyond",
+                          "isEnable": true,
+                          "priorityLevel": 0,
+                          "priorityOffset": 0,
+                          "serverActionIndex": 30,
+                          "attackerTargetSettings": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": null,
+                            "targetSource": 4
+                          },
+                          "blowOffDistance": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 3.0
+                          },
+                          "blowOffHeight": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 2.0
+                          },
+                          "deadOption": 0,
+                          "directionAngleOffset": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          },
+                          "directionSettings": {
+                            "clampToXZ": true,
+                            "customSourceAndTarget": false,
+                            "directionType": 2,
+                            "invertDirection": false,
+                            "source": null,
+                            "sourceMountPoint": 0,
+                            "target": null,
+                            "targetMountPoint": 0
+                          },
+                          "distanceRandomRange": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          },
+                          "forceMoveColliderToGround": false,
+                          "modelHeightRecoverTime": {
+                            "blackboardKey": null,
+                            "useBlackboardKey": false,
+                            "value": 0.0
+                          },
+                          "overwriteHeight": false,
+                          "targetSettings": {
+                            "advancedDirection": {
+                              "clampToXZ": true,
+                              "customSourceAndTarget": false,
+                              "directionType": 0,
+                              "invertDirection": false,
+                              "source": null,
+                              "sourceMountPoint": 0,
+                              "target": null,
+                              "targetMountPoint": 0
+                            },
+                            "centerContextKey": null,
+                            "centerToGround": false,
+                            "centerType": 0,
+                            "enableAdvancedDirection": false,
+                            "ownerContextKey": null,
+                            "selectorData": {
+                              "finderData": null,
+                              "postProcessorData": [],
+                              "validatorData": []
+                            },
+                            "selectorDirection": 0,
+                            "selectorOwner": 1,
+                            "target": 0,
+                            "targetContextKey": null,
+                            "targetGroupKey": "tar",
+                            "targetSource": 0
+                          },
+                          "teammateBigStagger": true,
+                          "totalTime": {
                             "blackboardKey": null,
                             "useBlackboardKey": false,
                             "value": 0.0
@@ -2902,349 +3200,6 @@
                       ],
                       "onlyExecuteWhenSourceIsGuard": false,
                       "onlyExecuteWhenSourceIsMainChar": false
-                    },
-                    "failActions": {
-                      "actionData": [],
-                      "onlyExecuteWhenSourceIsGuard": false,
-                      "onlyExecuteWhenSourceIsMainChar": false
-                    },
-                    "succeedActions": {
-                      "actionData": [
-                        {
-                          "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
-                          "isEnable": true,
-                          "priorityLevel": 0,
-                          "priorityOffset": 0,
-                          "serverActionIndex": 29,
-                          "alwaysNext": true,
-                          "conditionAction": {
-                            "actionData": [
-                              {
-                                "$type": "Beyond.Gameplay.Core.CompareFloat+Data, Gameplay.Beyond",
-                                "isEnable": true,
-                                "priorityLevel": 0,
-                                "priorityOffset": 0,
-                                "serverActionIndex": 30,
-                                "compare": 2,
-                                "valueA": {
-                                  "blackboardKey": "infliction_num",
-                                  "useBlackboardKey": true,
-                                  "value": 0.0
-                                },
-                                "valueB": {
-                                  "blackboardKey": null,
-                                  "useBlackboardKey": false,
-                                  "value": 0.0
-                                }
-                              }
-                            ],
-                            "onlyExecuteWhenSourceIsGuard": false,
-                            "onlyExecuteWhenSourceIsMainChar": false
-                          },
-                          "failActions": {
-                            "actionData": [],
-                            "onlyExecuteWhenSourceIsGuard": false,
-                            "onlyExecuteWhenSourceIsMainChar": false
-                          },
-                          "succeedActions": {
-                            "actionData": [
-                              {
-                                "$type": "Beyond.Gameplay.Core.TriggerCustomAbilityEvent+Data, Gameplay.Beyond",
-                                "isEnable": true,
-                                "priorityLevel": 0,
-                                "priorityOffset": 0,
-                                "serverActionIndex": 31,
-                                "eventName": {
-                                  "blackboardKey": null,
-                                  "useBlackboardKey": false,
-                                  "value": "SiComboSkillTrigger"
-                                },
-                                "eventParam": {
-                                  "blackboardKey": "infliction_num",
-                                  "useBlackboardKey": true,
-                                  "value": 0.0
-                                },
-                                "eventSource": {
-                                  "advancedDirection": {
-                                    "clampToXZ": true,
-                                    "customSourceAndTarget": false,
-                                    "directionType": 0,
-                                    "invertDirection": false,
-                                    "source": null,
-                                    "sourceMountPoint": 0,
-                                    "target": null,
-                                    "targetMountPoint": 0
-                                  },
-                                  "centerContextKey": null,
-                                  "centerToGround": false,
-                                  "centerType": 0,
-                                  "enableAdvancedDirection": false,
-                                  "ownerContextKey": null,
-                                  "selectorData": {
-                                    "finderData": null,
-                                    "postProcessorData": [],
-                                    "validatorData": []
-                                  },
-                                  "selectorDirection": 0,
-                                  "selectorOwner": 1,
-                                  "target": 0,
-                                  "targetContextKey": null,
-                                  "targetGroupKey": null,
-                                  "targetSource": 4
-                                },
-                                "targets": {
-                                  "advancedDirection": {
-                                    "clampToXZ": true,
-                                    "customSourceAndTarget": false,
-                                    "directionType": 0,
-                                    "invertDirection": false,
-                                    "source": null,
-                                    "sourceMountPoint": 0,
-                                    "target": null,
-                                    "targetMountPoint": 0
-                                  },
-                                  "centerContextKey": null,
-                                  "centerToGround": false,
-                                  "centerType": 0,
-                                  "enableAdvancedDirection": false,
-                                  "ownerContextKey": null,
-                                  "selectorData": {
-                                    "finderData": {
-                                      "$type": "Beyond.Gameplay.Core.Selector+CharacterTeamFinder+Data, Gameplay.Beyond"
-                                    },
-                                    "postProcessorData": [],
-                                    "validatorData": []
-                                  },
-                                  "selectorDirection": 0,
-                                  "selectorOwner": 1,
-                                  "target": 0,
-                                  "targetContextKey": null,
-                                  "targetGroupKey": null,
-                                  "targetSource": 3
-                                }
-                              }
-                            ],
-                            "onlyExecuteWhenSourceIsGuard": false,
-                            "onlyExecuteWhenSourceIsMainChar": false
-                          }
-                        }
-                      ],
-                      "onlyExecuteWhenSourceIsGuard": false,
-                      "onlyExecuteWhenSourceIsMainChar": false
-                    }
-                  },
-                  {
-                    "$type": "Beyond.Gameplay.Core.FinishBuffByTag+Data, Gameplay.Beyond",
-                    "isEnable": true,
-                    "priorityLevel": 0,
-                    "priorityOffset": 0,
-                    "serverActionIndex": 32,
-                    "buffOwner": {
-                      "advancedDirection": {
-                        "clampToXZ": true,
-                        "customSourceAndTarget": false,
-                        "directionType": 0,
-                        "invertDirection": false,
-                        "source": null,
-                        "sourceMountPoint": 0,
-                        "target": null,
-                        "targetMountPoint": 0
-                      },
-                      "centerContextKey": null,
-                      "centerToGround": false,
-                      "centerType": 0,
-                      "enableAdvancedDirection": false,
-                      "ownerContextKey": null,
-                      "selectorData": {
-                        "finderData": null,
-                        "postProcessorData": [],
-                        "validatorData": []
-                      },
-                      "selectorDirection": 0,
-                      "selectorOwner": 1,
-                      "target": 0,
-                      "targetContextKey": null,
-                      "targetGroupKey": "smart_target",
-                      "targetSource": 0
-                    },
-                    "buffSource": {
-                      "advancedDirection": {
-                        "clampToXZ": true,
-                        "customSourceAndTarget": false,
-                        "directionType": 0,
-                        "invertDirection": false,
-                        "source": null,
-                        "sourceMountPoint": 0,
-                        "target": null,
-                        "targetMountPoint": 0
-                      },
-                      "centerContextKey": null,
-                      "centerToGround": false,
-                      "centerType": 0,
-                      "enableAdvancedDirection": false,
-                      "ownerContextKey": null,
-                      "selectorData": {
-                        "finderData": null,
-                        "postProcessorData": [],
-                        "validatorData": []
-                      },
-                      "selectorDirection": 0,
-                      "selectorOwner": 1,
-                      "target": 0,
-                      "targetContextKey": null,
-                      "targetGroupKey": null,
-                      "targetSource": 1
-                    },
-                    "finishAll": true,
-                    "finishLayerCnt": {
-                      "blackboardKey": null,
-                      "useBlackboardKey": false,
-                      "value": 1.0
-                    },
-                    "finishSource": {
-                      "advancedDirection": {
-                        "clampToXZ": true,
-                        "customSourceAndTarget": false,
-                        "directionType": 0,
-                        "invertDirection": false,
-                        "source": null,
-                        "sourceMountPoint": 0,
-                        "target": null,
-                        "targetMountPoint": 0
-                      },
-                      "centerContextKey": null,
-                      "centerToGround": false,
-                      "centerType": 0,
-                      "enableAdvancedDirection": false,
-                      "ownerContextKey": null,
-                      "selectorData": {
-                        "finderData": null,
-                        "postProcessorData": [],
-                        "validatorData": []
-                      },
-                      "selectorDirection": 0,
-                      "selectorOwner": 1,
-                      "target": 0,
-                      "targetContextKey": null,
-                      "targetGroupKey": null,
-                      "targetSource": 1
-                    },
-                    "isFinishedEarly": true,
-                    "limitSource": false,
-                    "tagQuery": {
-                      "queryType": 0,
-                      "tags": [
-                        {
-                          "tagId": 1570888476
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "$type": "Beyond.Gameplay.Core.BlowOffAction+Data, Gameplay.Beyond",
-                    "isEnable": true,
-                    "priorityLevel": 0,
-                    "priorityOffset": 0,
-                    "serverActionIndex": 33,
-                    "attackerTargetSettings": {
-                      "advancedDirection": {
-                        "clampToXZ": true,
-                        "customSourceAndTarget": false,
-                        "directionType": 0,
-                        "invertDirection": false,
-                        "source": null,
-                        "sourceMountPoint": 0,
-                        "target": null,
-                        "targetMountPoint": 0
-                      },
-                      "centerContextKey": null,
-                      "centerToGround": false,
-                      "centerType": 0,
-                      "enableAdvancedDirection": false,
-                      "ownerContextKey": null,
-                      "selectorData": {
-                        "finderData": null,
-                        "postProcessorData": [],
-                        "validatorData": []
-                      },
-                      "selectorDirection": 0,
-                      "selectorOwner": 1,
-                      "target": 0,
-                      "targetContextKey": null,
-                      "targetGroupKey": null,
-                      "targetSource": 4
-                    },
-                    "blowOffDistance": {
-                      "blackboardKey": null,
-                      "useBlackboardKey": false,
-                      "value": 3.0
-                    },
-                    "blowOffHeight": {
-                      "blackboardKey": null,
-                      "useBlackboardKey": false,
-                      "value": 2.0
-                    },
-                    "deadOption": 0,
-                    "directionAngleOffset": {
-                      "blackboardKey": null,
-                      "useBlackboardKey": false,
-                      "value": 0.0
-                    },
-                    "directionSettings": {
-                      "clampToXZ": true,
-                      "customSourceAndTarget": false,
-                      "directionType": 2,
-                      "invertDirection": false,
-                      "source": null,
-                      "sourceMountPoint": 0,
-                      "target": null,
-                      "targetMountPoint": 0
-                    },
-                    "distanceRandomRange": {
-                      "blackboardKey": null,
-                      "useBlackboardKey": false,
-                      "value": 0.0
-                    },
-                    "forceMoveColliderToGround": false,
-                    "modelHeightRecoverTime": {
-                      "blackboardKey": null,
-                      "useBlackboardKey": false,
-                      "value": 0.0
-                    },
-                    "overwriteHeight": false,
-                    "targetSettings": {
-                      "advancedDirection": {
-                        "clampToXZ": true,
-                        "customSourceAndTarget": false,
-                        "directionType": 0,
-                        "invertDirection": false,
-                        "source": null,
-                        "sourceMountPoint": 0,
-                        "target": null,
-                        "targetMountPoint": 0
-                      },
-                      "centerContextKey": null,
-                      "centerToGround": false,
-                      "centerType": 0,
-                      "enableAdvancedDirection": false,
-                      "ownerContextKey": null,
-                      "selectorData": {
-                        "finderData": null,
-                        "postProcessorData": [],
-                        "validatorData": []
-                      },
-                      "selectorDirection": 0,
-                      "selectorOwner": 1,
-                      "target": 0,
-                      "targetContextKey": null,
-                      "targetGroupKey": "tar",
-                      "targetSource": 0
-                    },
-                    "teammateBigStagger": true,
-                    "totalTime": {
-                      "blackboardKey": null,
-                      "useBlackboardKey": false,
-                      "value": 0.0
                     }
                   }
                 ],
@@ -3301,7 +3256,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 34,
+              "serverActionIndex": 32,
               "alwaysNext": true,
               "conditionAction": {
                 "actionData": [
@@ -3310,7 +3265,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 35,
+                    "serverActionIndex": 33,
                     "checkTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -3361,7 +3316,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 36,
+                    "serverActionIndex": 34,
                     "asChildBuff": false,
                     "autoFinishByAction": false,
                     "buffIconDurationSource": {
@@ -3446,7 +3401,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 37,
+              "serverActionIndex": 35,
               "alwaysNext": true,
               "conditionAction": {
                 "actionData": [
@@ -3455,7 +3410,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 38,
+                    "serverActionIndex": 36,
                     "compare": 4,
                     "valueA": {
                       "blackboardKey": "recover_usp",
@@ -3484,7 +3439,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 39,
+                    "serverActionIndex": 37,
                     "alwaysNext": true,
                     "conditionAction": {
                       "actionData": [
@@ -3493,7 +3448,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 40,
+                          "serverActionIndex": 38,
                           "compare": 3,
                           "valueA": {
                             "blackboardKey": "infliction_num_total",
@@ -3517,7 +3472,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 42,
+                          "serverActionIndex": 40,
                           "atbGainMethod": 0,
                           "atbGainTag": {
                             "tagId": 0
@@ -3612,7 +3567,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 41,
+                          "serverActionIndex": 39,
                           "atbGainMethod": 0,
                           "atbGainTag": {
                             "tagId": 0
@@ -3727,7 +3682,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 43,
+              "serverActionIndex": 41,
               "alwaysNext": true,
               "conditionAction": {
                 "actionData": [
@@ -3736,7 +3691,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 44,
+                    "serverActionIndex": 42,
                     "checkTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -3787,7 +3742,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 45,
+                    "serverActionIndex": 43,
                     "affectType": 2,
                     "attacker": {
                       "advancedDirection": {
@@ -3883,7 +3838,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 46,
+              "serverActionIndex": 44,
               "_boneNode": null,
               "_followTarget": false,
               "_impulseDefinitionData": {
@@ -3960,6 +3915,7 @@
                 "y": 0.0,
                 "z": 0.0
               },
+              "onlyWhenActionSourceIsMainChar": false,
               "realCameraShake2D": true,
               "releaseWhenActionEnds": false,
               "targetSettings": {
@@ -4012,7 +3968,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 47,
+              "serverActionIndex": 45,
               "_boneNode": null,
               "_followTarget": true,
               "_impulseDefinitionData": {
@@ -4089,6 +4045,7 @@
                 "y": 0.0,
                 "z": 0.0
               },
+              "onlyWhenActionSourceIsMainChar": false,
               "realCameraShake2D": false,
               "releaseWhenActionEnds": false,
               "targetSettings": {
@@ -4141,7 +4098,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 48,
+              "serverActionIndex": 46,
               "asChildBuff": false,
               "autoFinishByAction": false,
               "buffIconDurationSource": {
@@ -4221,7 +4178,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 49,
+              "serverActionIndex": 47,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -4475,6 +4432,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -4526,7 +4484,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 50,
+              "serverActionIndex": 48,
               "additionalLookAtOffset": {
                 "x": {
                   "blackboardKey": null,
@@ -4737,7 +4695,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 51,
+              "serverActionIndex": 49,
               "additionalLookAtOffset": {
                 "x": {
                   "blackboardKey": null,
@@ -4948,7 +4906,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 52,
+              "serverActionIndex": 50,
               "additionalLookAtOffset": {
                 "x": {
                   "blackboardKey": null,
@@ -5159,7 +5117,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 53,
+              "serverActionIndex": 51,
               "alwaysNext": true,
               "conditionAction": {
                 "actionData": [
@@ -5168,7 +5126,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 54,
+                    "serverActionIndex": 52,
                     "checkTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -5214,7 +5172,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 55,
+                    "serverActionIndex": 53,
                     "checkTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -5254,7 +5212,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 56,
+                    "serverActionIndex": 54,
                     "alwaysNext": true,
                     "conditionAction": {
                       "actionData": [
@@ -5263,7 +5221,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 57,
+                          "serverActionIndex": 55,
                           "clampToXZ": false,
                           "compareType": 0,
                           "dir1DirectionType": 4,
@@ -5397,7 +5355,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 60,
+                          "serverActionIndex": 58,
                           "allowAimZones": false,
                           "angleThreshold": 180.0,
                           "blendInCustomCurve": {
@@ -5556,7 +5514,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 61,
+                          "serverActionIndex": 59,
                           "additionalLookAtOffset": {
                             "x": {
                               "blackboardKey": null,
@@ -5757,7 +5715,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 58,
+                          "serverActionIndex": 56,
                           "allowAimZones": false,
                           "angleThreshold": 180.0,
                           "blendInCustomCurve": {
@@ -5916,7 +5874,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 59,
+                          "serverActionIndex": 57,
                           "additionalLookAtOffset": {
                             "x": {
                               "blackboardKey": null,
@@ -6116,7 +6074,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 62,
+                    "serverActionIndex": 60,
                     "blendInStyle": 2,
                     "blendInTime": {
                       "blackboardKey": null,
@@ -6222,7 +6180,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 63,
+              "serverActionIndex": 61,
               "animKey": "ComboSkill",
               "blockRadius": {
                 "blackboardKey": null,
@@ -6346,7 +6304,8 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 64,
+              "serverActionIndex": 62,
+              "countAsControlled": false,
               "curveKey": "ComboSkill",
               "duration": {
                 "blackboardKey": null,
@@ -6457,7 +6416,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 65,
+              "serverActionIndex": 63,
               "alwaysNext": true,
               "conditionAction": {
                 "actionData": [
@@ -6466,7 +6425,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 66,
+                    "serverActionIndex": 64,
                     "checkTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -6507,7 +6466,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 67,
+                    "serverActionIndex": 65,
                     "advancedSelectorDirection": {
                       "clampToXZ": true,
                       "customSourceAndTarget": false,
@@ -6547,7 +6506,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 68,
+                    "serverActionIndex": 66,
                     "bbKey": "owner_mainchar_distance",
                     "source": {
                       "advancedDirection": {
@@ -6611,7 +6570,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 69,
+                    "serverActionIndex": 67,
                     "alwaysNext": true,
                     "conditionAction": {
                       "actionData": [
@@ -6620,7 +6579,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 70,
+                          "serverActionIndex": 68,
                           "desiredAlphaSetting": 1
                         }
                       ],
@@ -6634,7 +6593,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 73,
+                          "serverActionIndex": 71,
                           "curveTemplate": "Linear",
                           "customCurve": {
                             "preWrapMode": 8,
@@ -6673,7 +6632,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 74,
+                          "serverActionIndex": 72,
                           "blendInStyle": 1,
                           "blendInTime": {
                             "blackboardKey": null,
@@ -6770,7 +6729,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 71,
+                          "serverActionIndex": 69,
                           "curveTemplate": "Linear",
                           "customCurve": {
                             "preWrapMode": 8,
@@ -6836,7 +6795,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 72,
+                          "serverActionIndex": 70,
                           "blendInStyle": 1,
                           "blendInTime": {
                             "blackboardKey": null,
@@ -6958,7 +6917,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 75,
+              "serverActionIndex": 73,
               "alwaysNext": true,
               "conditionAction": {
                 "actionData": [
@@ -6967,7 +6926,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 76,
+                    "serverActionIndex": 74,
                     "checkTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -7008,7 +6967,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 77,
+                    "serverActionIndex": 75,
                     "blockManualLock": false,
                     "compareTarget": false,
                     "disableLockAimPriority": 30.0,
@@ -7072,7 +7031,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 78,
+              "serverActionIndex": 76,
               "blendInStyle": 1,
               "blendInTime": {
                 "blackboardKey": null,
@@ -7173,7 +7132,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 79,
+              "serverActionIndex": 77,
               "impactResistance": {
                 "blackboardKey": null,
                 "useBlackboardKey": false,
@@ -7236,7 +7195,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 80,
+              "serverActionIndex": 78,
               "mappingDataList": [
                 {
                   "cacheEndByAction": true,
@@ -7273,7 +7232,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 81,
+              "serverActionIndex": 79,
               "allowedSkillIdList": [
                 "chr_0026_lastrite_normal_skill"
               ]
@@ -7299,7 +7258,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 82,
+              "serverActionIndex": 80,
               "tag": {
                 "blackboardKey": null,
                 "useBlackboardKey": false,
@@ -7361,7 +7320,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 83,
+              "serverActionIndex": 81,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -7615,6 +7574,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -7666,7 +7626,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 84,
+              "serverActionIndex": 82,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -7920,6 +7880,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -7990,7 +7951,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 85,
+              "serverActionIndex": 83,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -8244,6 +8205,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -8295,7 +8257,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 86,
+              "serverActionIndex": 84,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -8549,6 +8511,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -8619,7 +8582,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 87,
+              "serverActionIndex": 85,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -8873,6 +8836,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -8924,7 +8888,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 88,
+              "serverActionIndex": 86,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -9178,6 +9142,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9248,7 +9213,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 89,
+              "serverActionIndex": 87,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -9502,6 +9467,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9553,7 +9519,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 90,
+              "serverActionIndex": 88,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -9807,6 +9773,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9858,7 +9825,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 91,
+              "serverActionIndex": 89,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -10112,6 +10079,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -10163,7 +10131,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 92,
+              "serverActionIndex": 90,
               "_canInterruptTimeMs": 100,
               "_intrptFadeDurationMs": 100,
               "_jumpToWhenPlayMs": 0,
@@ -10231,7 +10199,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 93,
+              "serverActionIndex": 91,
               "_canInterruptTimeMs": 0,
               "_intrptFadeDurationMs": 100,
               "_jumpToWhenPlayMs": 0,
@@ -10299,7 +10267,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 94,
+              "serverActionIndex": 92,
               "_canInterruptTimeMs": 100,
               "_intrptFadeDurationMs": 100,
               "_jumpToWhenPlayMs": 0,
@@ -10367,7 +10335,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 95,
+              "serverActionIndex": 93,
               "_canInterruptTimeMs": 0,
               "_intrptFadeDurationMs": 100,
               "_jumpToWhenPlayMs": 0,
@@ -10435,7 +10403,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 96,
+              "serverActionIndex": 94,
               "_canInterruptTimeMs": 0,
               "_jumpToWhenPlayMs": 0,
               "_responseQuestIdKey": null,
@@ -10492,7 +10460,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 97,
+              "serverActionIndex": 95,
               "includeAllWeapons": false,
               "overrideVFX": false,
               "showVFX": false,
@@ -10540,7 +10508,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 98,
+              "serverActionIndex": 96,
               "includeAllWeapons": false,
               "overrideVFX": false,
               "showVFX": false,
@@ -10588,7 +10556,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 99,
+              "serverActionIndex": 97,
               "includeAllWeapons": false,
               "overrideVFX": false,
               "showVFX": false,
@@ -10636,7 +10604,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 100,
+              "serverActionIndex": 98,
               "includeAllWeapons": false,
               "overrideVFX": false,
               "showVFX": false,
@@ -10684,7 +10652,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 101,
+              "serverActionIndex": 99,
               "includeAllWeapons": false,
               "overrideVFX": false,
               "showVFX": false,
@@ -10732,7 +10700,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 102,
+              "serverActionIndex": 100,
               "includeAllWeapons": false,
               "overrideVFX": false,
               "showVFX": false,
@@ -11047,40 +11015,5 @@
     "predefinedTag": []
   },
   "toggleBuffs": [],
-  "uiRangeHints": [
-    {
-      "selectAll": false,
-      "shapeData": {
-        "angle": 0.0,
-        "angleKey": null,
-        "centerBaseIsEndPoint": false,
-        "centerOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "centerOffsetXKey": null,
-        "centerOffsetZKey": null,
-        "extent": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "extentXKey": null,
-        "extentZKey": null,
-        "fixedExtent": false,
-        "radius": 0.0,
-        "radiusKey": null,
-        "restrictEndPointInRange": false,
-        "shape": 0,
-        "useAngleKey": false,
-        "useCenterOffsetKey": false,
-        "useExtentKey": false,
-        "useRadiusKey": false,
-        "useWidthKey": false,
-        "width": 0.0,
-        "widthKey": null
-      },
-      "targetFaction": 8
-    }
-  ],
   "useAIExclusiveFrame": false
 }

@@ -236,7 +236,7 @@ WeaponExhibitUpgradeCtrl.OnHide = HL.Override() << function(self)
     LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
 end
 
-WeaponExhibitUpgradeCtrl.OnClose = HL.Override() << function()
+WeaponExhibitUpgradeCtrl.OnClose = HL.Override() << function(self)
     LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
     CS.Beyond.Lua.UtilsForLua.ToggleWeaponInUpgradePanelOption(false)
 end

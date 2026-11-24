@@ -166,11 +166,11 @@ WikiGroupItemList._Refresh = HL.Method() << function(self)
     if self.m_isRefreshed then
         local selectedEntryShowData = self.m_onGetSelectedEntryShowData and self.m_onGetSelectedEntryShowData()
         if selectedEntryShowData and selectedEntryShowData.wikiEntryData.id ~= self.m_lastSelectedEntryId then
-            local scrollToIndex = self:_GetScrollToIndex()
+            local scrollToIndex, selectedRowIndex = self:_GetScrollToIndex()
             self.view.scrollList:ScrollToIndex(scrollToIndex, true)
             self.m_lastSelectedEntryId = selectedEntryShowData.wikiEntryData.id
             
-            local groupItemsCell = self.m_getGroupItemsCell(self.view.scrollList:Get(scrollToIndex))
+            local groupItemsCell = self.m_getGroupItemsCell(self.view.scrollList:Get(selectedRowIndex))
             local itemCell = groupItemsCell:GetCellByEntryId(selectedEntryShowData.wikiEntryData.id)
             if itemCell then
                 self:_SetItemSelected(itemCell)
@@ -190,7 +190,8 @@ WikiGroupItemList._Refresh = HL.Method() << function(self)
     for _, wikiGroupShowData in pairs(self.m_wikiGroupShowDataList) do
         allCellCount = allCellCount + wikiGroupShowData.uiCellCount
     end
-    self.view.scrollList:UpdateCount(allCellCount, self:_GetScrollToIndex())
+    local scrollToIndex = self:_GetScrollToIndex()
+    self.view.scrollList:UpdateCount(allCellCount, scrollToIndex)
     local selectedEntryShowData = self.m_onGetSelectedEntryShowData and self.m_onGetSelectedEntryShowData()
     if selectedEntryShowData then
         self.m_lastSelectedEntryId = selectedEntryShowData.wikiEntryData.id
@@ -198,20 +199,23 @@ WikiGroupItemList._Refresh = HL.Method() << function(self)
     self.m_isRefreshed = true
 end
 
-WikiGroupItemList._GetScrollToIndex = HL.Method().Return(HL.Number) << function(self)
+WikiGroupItemList._GetScrollToIndex = HL.Method().Return(HL.Number, HL.Number) << function(self)
     local selectedEntryShowData = self.m_onGetSelectedEntryShowData and self.m_onGetSelectedEntryShowData()
     if selectedEntryShowData then
         local cellCount = 0
         for _, groupData in ipairs(self.m_wikiGroupShowDataList) do
             for i, entryData in ipairs(groupData.wikiEntryShowDataList) do
                 if entryData.wikiEntryData.id == selectedEntryShowData.wikiEntryData.id then
-                    return cellCount + math.ceil(i / CELL_COUNT_PER_ROW)
+                    local rowInGroup = math.ceil(i / CELL_COUNT_PER_ROW)
+                    local rowIndex = cellCount + rowInGroup
+                    local scrollToIndex = rowInGroup == 1 and cellCount or rowIndex
+                    return scrollToIndex, rowIndex
                 end
             end
             cellCount = cellCount + groupData.uiCellCount
         end
     end
-    return 0
+    return 0, 0
 end
 
 WikiGroupItemList._ScrollToSelected = HL.Method() << function(self)

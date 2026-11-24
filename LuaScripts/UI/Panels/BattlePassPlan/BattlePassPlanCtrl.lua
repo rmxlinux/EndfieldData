@@ -635,7 +635,7 @@ BattlePassPlanCtrl._OnBannerChange = HL.Method(HL.Number, HL.Number) << function
 end
 
 BattlePassPlanCtrl._OnClickPlanBtn = HL.Method() << function(self)
-    if PhaseManager:CheckIsInTransition() then
+    if PhaseManager:CheckIsInTransition() or self.m_phase:IsChangingTab() then
         return
     end
     if BattlePassUtils.CheckBattlePassPurchaseBlock() then
@@ -649,7 +649,7 @@ BattlePassPlanCtrl._OnClickPlanBtn = HL.Method() << function(self)
 end
 
 BattlePassPlanCtrl._OnClickOrgPlan = HL.Method() << function(self)
-    if PhaseManager:CheckIsInTransition() then
+    if PhaseManager:CheckIsInTransition() or self.m_phase:IsChangingTab() then
         return
     end
     if BattlePassUtils.CheckBattlePassPurchaseBlock() then
@@ -670,7 +670,7 @@ BattlePassPlanCtrl._OnClickPayPlan = HL.Method() << function(self)
 end
 
 BattlePassPlanCtrl._OnOpenBuyPlan = HL.Method() << function(self)
-    if PhaseManager:CheckIsInTransition() then
+    if PhaseManager:CheckIsInTransition() or self.m_phase:IsChangingTab() then
         return
     end
     PhaseManager:GoToPhase(PhaseId.BattlePassAdvancedPlanBuy)

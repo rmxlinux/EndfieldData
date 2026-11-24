@@ -24,6 +24,7 @@ local ShareIds = {
 local SKLandId = 9
 
 local OverseaSKLandId = 19
+local KakaoId = 20
 
 CommonShareCtrl.m_showPlayerInfo = HL.Field(HL.Boolean) << true
 
@@ -50,6 +51,9 @@ CommonShareCtrl.m_lastShareSklandTopicId = HL.Field(HL.String) << ""
 CommonShareCtrl.m_ratio = HL.Field(HL.Number) << 1
 
 
+CommonShareCtrl.m_canShare = HL.Field(HL.Boolean) << false
+
+
 
 
 
@@ -63,6 +67,7 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
         return
     end
 
+    
     
     
     
@@ -139,6 +144,11 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_arg = arg
     self.m_onClose = arg.onClose
     self.m_type = arg.type
+    self.m_canShare = DeviceInfo.isMobile or (CloudGame.enabled and CloudGame.isMobilePlatform and CloudGame.isAppClient)
+    
+    if not self.m_canShare and not arg.isRestoreFromChangeInputDevice and arg.onShareAction then
+        arg.onShareAction()
+    end
     self.m_lastShareChannelId = 0
     self.m_lastShareSklandTopicId = ""
     self.view.copyBtn.onClick:RemoveAllListeners()
@@ -342,9 +352,7 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
 
     local sdkInfo = {}
     self.m_channelIdList = {}
-    local canShare = DeviceInfo.isMobile
-        or (CloudGame.enabled and CloudGame.isMobilePlatform and CloudGame.isAppClient) 
-    if canShare then
+    if self.m_canShare then
         local list = {}
         if CS.Beyond.SDK.SDKConsts.IsOverseaVersion() then
             
@@ -425,6 +433,14 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
                     end
                 end
                 local dataStr = Json.encode(data)
+                
+                if info.id == KakaoId then
+                    UIManager:Open(PanelId.CommonShareWait, {
+                        progress = 0,
+                        title = Language.LUA_FRIEND_SHARE_PANEL_LOADING_NAME,
+                        info = "0/100",
+                    })
+                end
                 CS.U8.SDK.U8SDKInterface.Instance:SetData(CS.Beyond.SDK.SDKDataType.SET_DATA_SHARE, dataStr)
                 if self.m_type == "PhotoShot" then
                     EventLogManagerInst:GameEvent_Snapshot(4)
@@ -464,12 +480,18 @@ CommonShareCtrl.OnShareEnd = HL.Method() << function(self, args)
         EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(self.m_lastShareChannelId), tostring(code), "", "")
         return
     end
+    if self.m_lastShareChannelId == KakaoId then
+        UIManager:Close(PanelId.CommonShareWait)
+    end
     logger.info("CommonShareCtrl.OnShareEnd: Share ended with code " .. tostring(code))
     Notify(MessageConst.SHOW_TOAST, code == 0 and Language.LUA_COMMON_SHARE_SUCCESS or Language.LUA_COMMON_SHARE_FAIL)
     local sklandTopicId = (self.m_lastShareChannelId == SKLandId or self.m_lastShareChannelId == OverseaSKLandId) and code == 0 and self.m_lastShareSklandTopicId or ""
     EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(self.m_lastShareChannelId), tostring(code), "", sklandTopicId)
     self.m_lastShareChannelId = 0
     self.m_lastShareSklandTopicId = ""
+    if self.m_arg.onShareAction then
+        self.m_arg.onShareAction()
+    end
 end
 
 CommonShareCtrl.OnShow = HL.Override() << function(self)
@@ -477,6 +499,10 @@ CommonShareCtrl.OnShow = HL.Override() << function(self)
 end
 
 CommonShareCtrl.OnClose = HL.Override() << function(self)
+    
+    if self.m_lastShareChannelId == KakaoId then
+        UIManager:Close(PanelId.CommonShareWait)
+    end
     UIManager:Show(PanelId.UIDPanel)
     if self.m_arg then
         local skipRelease = InputManagerInst.inChangingInputDevice and self.m_arg.waterRt ~= nil

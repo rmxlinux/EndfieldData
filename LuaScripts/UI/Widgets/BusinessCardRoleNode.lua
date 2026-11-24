@@ -33,7 +33,7 @@ BusinessCardRoleNode.InitBusinessCardRoleNode = HL.Method(HL.Number, HL.Boolean)
     for i = 1, roleCharCount do
         self.view['friendBusinessCardRoleCell' .. i].aniRoot:SetState(CSIndex(i) < list.Count and "Role" or preview and "OtherEmpty" or "SelfEmpty")
         
-        self.view['friendBusinessCardRoleCell' .. i].charHeadCell.view.glowAll.gameObject:SetActive(false)
+        self.view['friendBusinessCardRoleCell' .. i].charHeadCell:ResetMaxPotentialGlow()
         self.view['friendBusinessCardRoleCell' .. i].addBtn.onClick:RemoveAllListeners()
         self.view['friendBusinessCardRoleCell' .. i].addBtn.onClick:AddListener(function()
             if not self.m_isPreview then
@@ -93,7 +93,8 @@ end
 
 BusinessCardRoleNode.NaviToFirstChar = HL.Method() << function(self)
     if self.view.roleLayout.groupEnabled and self.view.naviGroup.IsTopLayer == false then
-        self:SetNaviTarget(self.m_firstCharIsEmpty and self.view['friendBusinessCardRoleCell1'].addBtn or self.view['friendBusinessCardRoleCell1'].charHeadCell.view.button)
+        
+        self:SetNaviTarget(self.view['friendBusinessCardRoleCell1'].naviDecorator)
     end
 end
 

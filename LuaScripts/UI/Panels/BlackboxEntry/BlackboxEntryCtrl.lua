@@ -63,6 +63,7 @@ BlackboxEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.btnRewardDetails.onClick:AddListener(function()
         UIManager:AutoOpen(PanelId.CommonRewardDetailsPopup, {
+            gameMechanicsId = self.m_curSelectedBlackboxId,
             firstPartRewards = DungeonUtils.genFirstPartRewardsInfo(self.m_curSelectedBlackboxId),
             secondPartRewards = DungeonUtils.genSecondPartRewardsInfo(self.m_curSelectedBlackboxId),
             secondPartRewardsTitle = DungeonUtils.getRewardsDetailSecondRowTitle(self.m_curSelectedBlackboxId),
@@ -121,6 +122,7 @@ BlackboxEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     if arg.resumeRewardDetailsPopup then
         UIManager:AutoOpen(PanelId.CommonRewardDetailsPopup, {
+            gameMechanicsId = self.m_curSelectedBlackboxId,
             firstPartRewards = DungeonUtils.genFirstPartRewardsInfo(self.m_curSelectedBlackboxId),
             secondPartRewards = DungeonUtils.genSecondPartRewardsInfo(self.m_curSelectedBlackboxId),
             secondPartRewardsTitle = DungeonUtils.getRewardsDetailSecondRowTitle(self.m_curSelectedBlackboxId),

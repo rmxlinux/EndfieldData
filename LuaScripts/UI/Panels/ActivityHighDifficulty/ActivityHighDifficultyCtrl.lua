@@ -17,12 +17,6 @@ ActivityHighDifficultyCtrl.m_activityId = HL.Field(HL.String) << ''
 
 ActivityHighDifficultyCtrl.m_activity = HL.Field(HL.Any)
 
-ActivityHighDifficultyCtrl.m_curTabIndex = HL.Field(HL.Number) << 0
-
-ActivityHighDifficultyCtrl.m_tabCells = HL.Field(HL.Any)
-
-ActivityHighDifficultyCtrl.m_tabTotalCount = HL.Field(HL.Number) << 0
-
 ActivityHighDifficultyCtrl.m_tasks = HL.Field(HL.Table)
 
 ActivityHighDifficultyCtrl.m_getTaskCell = HL.Field(HL.Function)
@@ -32,6 +26,10 @@ ActivityHighDifficultyCtrl.m_curShowingTasks = HL.Field(HL.Table)
 ActivityHighDifficultyCtrl.m_BgNode = HL.Field(HL.Any)
 
 ActivityHighDifficultyCtrl.m_shownNewTaskIds = HL.Field(HL.Table)
+
+ActivityHighDifficultyCtrl.m_lockTaskCountdownCoroutine = HL.Field(HL.Thread)
+
+local LOCK_TASK_COUNTDOWN_REFRESH_INTERVAL = 1 
 
 
 ActivityHighDifficultyCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -54,33 +52,8 @@ ActivityHighDifficultyCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     end)
 
     
-    self.m_tabCells = UIUtils.genCellCache(self.view.tabCell)
-    self:_ChangeTab(1)
-    if self.m_tabTotalCount == 1 then
-        self.view.topNode.gameObject:SetActive(false)
-    else
-        self.m_tabCells:Refresh(self.m_tabTotalCount, function(cell, tabIndex)
-            cell.numTxt.text = tabIndex
-            cell.clickBtn.onClick:AddListener(function()
-                self:_ChangeTab(tabIndex)
-            end)
-            local tasks = {}
-            for _,task in ipairs(self.m_tasks) do
-                if (task.openTime > self.m_activity.startTime) == (tabIndex > 1) then
-                    table.insert(tasks, task)
-                end
-            end
-            cell.redDot:InitRedDot("ActivityHighDifficultyTaskSeries",{ self.m_activityId, tasks })
-            cell.titleTxt.text = #tasks == 0 and Language.LUA_ACTIVITY_HIGH_DIFFICULTY_SERIES_UNLOCKED or Language["LUA_ACTIVITY_HIGH_DIFFICULTY_SERIES_" .. tabIndex]
-        end)
-        
-        self:BindInputPlayerAction("common_toggle_group_previous_include_pc", function()
-            self:_ChangeTab(self.m_curTabIndex == 1 and self.m_tabTotalCount or self.m_curTabIndex - 1 )
-        end)
-        self:BindInputPlayerAction("common_toggle_group_next_include_pc", function()
-            self:_ChangeTab(self.m_curTabIndex % self.m_tabTotalCount + 1)
-        end)
-    end
+    self.view.topNode.gameObject:SetActive(false)
+    self:_RefreshTaskList(true)
 
     
     local viewBindingId = self:BindInputPlayerAction("common_view_item", function()
@@ -111,8 +84,6 @@ end
 ActivityHighDifficultyCtrl._RefreshInfo = HL.Method() << function(self)
     self.m_activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     self.m_tasks = {}
-    self.m_tabTotalCount = 0
-    local openTimes = {}
 
     
     for stageId, stageInfo in pairs(Tables.activityConditionalMultiStageTable[self.m_activityId].stageList) do
@@ -123,11 +94,10 @@ ActivityHighDifficultyCtrl._RefreshInfo = HL.Method() << function(self)
 
         local _, stageData = self.m_activity.stageDataDict:TryGetValue(stageId)
         local openTime = stageData.OpenTimeTs
-        if not openTimes[openTime] then
-            openTimes[openTime] = true
-            self.m_tabTotalCount = self.m_tabTotalCount + 1
-        end
-        if stageData.Status ~= GEnums.ActivityConditionalStageState.Locked:GetHashCode() then
+        
+        local isServerLocked = stageData.Status == GEnums.ActivityConditionalStageState.Locked:GetHashCode()
+        local isLocked = isServerLocked and openTime > DateTimeUtils.GetCurrentTimestampBySeconds()
+        if not isServerLocked then
             if stageData.Conditions then
                 
                 for _, info in pairs(stageData.Conditions.Values) do
@@ -151,6 +121,7 @@ ActivityHighDifficultyCtrl._RefreshInfo = HL.Method() << function(self)
             sortId = stageInfo.sortId,
             openTime = openTime,
             rewardId = stageInfo.rewardId,
+            isLocked = isLocked,
             isComplete = isComplete,
             isReceived = isReceived,
             curProgress = curProgress,
@@ -159,6 +130,16 @@ ActivityHighDifficultyCtrl._RefreshInfo = HL.Method() << function(self)
         task.statusSortId = task.isReceived and 3 or (task.isComplete and 1 or 2)
         table.insert(self.m_tasks, task)
     end
+end
+
+ActivityHighDifficultyCtrl._RefreshTaskList = HL.Method(HL.Opt(HL.Boolean)) << function(self, scrollToTop)
+    table.sort(self.m_tasks, Utils.genSortFunction({"statusSortId", "sortId"}, true))
+    self.m_curShowingTasks = self.m_tasks
+    self.view.scrollList:UpdateCount(#self.m_curShowingTasks)
+    if scrollToTop and #self.m_curShowingTasks > 0 then
+        self.view.scrollList:ScrollToIndex(1, true)
+    end
+    self:_StartLockTaskCountdown()
 end
 
 ActivityHighDifficultyCtrl.GetAllCanReceiveStageIds = HL.Method().Return(HL.Table) << function(self)
@@ -174,13 +155,14 @@ end
 ActivityHighDifficultyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     
     local task = self.m_curShowingTasks[index]
+    local isLocked = task.isLocked
     local isComplete = task.isComplete
     local isReceived = task.isReceived
     cell.descTxt.text = task.name
     cell.progressTxt.text = task.curProgress .. "/" .. task.total
     cell.fgSlider.fillAmount = task.curProgress / task.total
     cell.redDot:InitRedDot("ActivityHighDifficultyTask", {self.m_activityId, task.stageId}, nil, self.view.redDotScrollRect)
-    if HighDifficultyUtils.isNewHighDifficultyTask(self.m_activityId, task.stageId) then
+    if not isLocked and HighDifficultyUtils.isNewHighDifficultyTask(self.m_activityId, task.stageId) then
         self.m_shownNewTaskIds[task.stageId] = true
     end
     cell.gameObject.name = "Cell" .. index
@@ -207,6 +189,12 @@ ActivityHighDifficultyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fun
     local state = isReceived and "Received" or (isComplete and "Completed" or "Normal")
     cell.nodeState:SetState(state)
     cell.nodeState:SetState( state .. "Topic")
+    cell.nodeState:SetState(isLocked and "Lock" or "UnLock")
+    if isLocked then
+        self:_RefreshLockTaskCountdown(cell, task)
+    else
+        cell.unLockText.text = ""
+    end
     local bgName = Tables.activityHighDifficultySpecialStageTable[task.stageId].bgName
     if not string.isEmpty(bgName) then
         cell.bgImage.gameObject:SetActive(true)
@@ -224,6 +212,47 @@ ActivityHighDifficultyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fun
     end
 end
 
+ActivityHighDifficultyCtrl._RefreshLockTaskCountdown = HL.Method(HL.Table, HL.Table) << function(self, cell, task)
+    local leftTime = math.max(task.openTime - DateTimeUtils.GetCurrentTimestampBySeconds(), 0)
+    cell.unLockText.text = string.format(Language.LUA_ACTIVITY_HIGHDIFFICULTY_BOSS_LOCK_TASK_TIME,
+        UIUtils.getLeftTime(leftTime))
+end
+
+ActivityHighDifficultyCtrl._RefreshVisibleLockTaskCountdowns = HL.Method().Return(HL.Boolean) << function(self)
+    local hasLockedTask = false
+    for index, task in ipairs(self.m_curShowingTasks) do
+        if task.isLocked then
+            hasLockedTask = true
+            local obj = self.view.scrollList:Get(CSIndex(index))
+            if obj then
+                local cell = self.m_getTaskCell(obj)
+                self:_RefreshLockTaskCountdown(cell, task)
+            end
+        end
+    end
+    return hasLockedTask
+end
+
+ActivityHighDifficultyCtrl._StopLockTaskCountdown = HL.Method() << function(self)
+    self.m_lockTaskCountdownCoroutine = self:_ClearCoroutine(self.m_lockTaskCountdownCoroutine)
+end
+
+ActivityHighDifficultyCtrl._StartLockTaskCountdown = HL.Method() << function(self)
+    self:_StopLockTaskCountdown()
+    if not self:_RefreshVisibleLockTaskCountdowns() then
+        return
+    end
+    self.m_lockTaskCountdownCoroutine = self:_StartCoroutine(function()
+        while true do
+            coroutine.wait(LOCK_TASK_COUNTDOWN_REFRESH_INTERVAL)
+            if not self:_RefreshVisibleLockTaskCountdowns() then
+                self.m_lockTaskCountdownCoroutine = nil
+                return
+            end
+        end
+    end)
+end
+
 ActivityHighDifficultyCtrl._SetNaviTarget = HL.Method(HL.Number) << function(self,index)
     if index == 0 or not DeviceInfo.usingController  then
         return
@@ -239,68 +268,13 @@ ActivityHighDifficultyCtrl._SetNaviTarget = HL.Method(HL.Number) << function(sel
     end
 end
 
-ActivityHighDifficultyCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, newIndex, forceRefresh)
-    
-    if self.m_curTabIndex == newIndex and not forceRefresh then
-        return
-    end
-
-    
-    AudioAdapter.PostEvent("Au_UI_Toggle_Tag_On")
-
-    
-    local curTasks = {}
-    for _,task in ipairs(self.m_tasks) do
-        if (task.openTime > self.m_activity.startTime) == (newIndex > 1) then
-            table.insert(curTasks, task)
-        end
-    end
-
-    
-    if #curTasks == 0 then
-        Notify(MessageConst.SHOW_TOAST,Language.LUA_ACTIVITY_HIGH_DIFFICULTY_SERIES_UNLOCKED)
-        return
-    end
-
-    
-    self.m_curTabIndex = newIndex
-    table.sort(curTasks, Utils.genSortFunction({"statusSortId", "sortId"}, true))
-    self.m_curShowingTasks = curTasks
-
-    
-    self.m_tabCells:Refresh(self.m_tabTotalCount, function(cell, tabIndex)
-        if tabIndex == newIndex then
-            cell.stateController:SetState("Selected")
-        else
-            cell.stateController:SetState("UnSelected")
-        end
-    end)
-
-    
-    self.view.scrollList:ScrollToIndex(1, true)
-    self.view.scrollList:UpdateCount(#self.m_curShowingTasks)
-    if DeviceInfo.usingController and self.view.rightNaviGroup.IsTopLayer then
-        self:_SetNaviTarget(1)
-    end
-end
-
 ActivityHighDifficultyCtrl.OnStageChange = HL.Method(HL.Any) << function(self, args)
     local id = unpack(args)
     if id ~= self.m_activityId then
         return
     end
     self:_RefreshInfo()
-    self.m_tabCells:Refresh(self.m_tabTotalCount, function(cell, tabIndex)
-        local notOpen = true
-        for _,task in ipairs(self.m_tasks) do
-            if (task.openTime > self.m_activity.startTime) == (tabIndex > 1) then
-                notOpen = false
-                break
-            end
-        end
-        cell.titleTxt.text = notOpen and Language.LUA_ACTIVITY_HIGH_DIFFICULTY_SERIES_UNLOCKED or Language["LUA_ACTIVITY_HIGH_DIFFICULTY_SERIES_" .. tabIndex]
-    end)
-    self:_ChangeTab(self.m_curTabIndex, true)
+    self:_RefreshTaskList(false)
 end
 
 ActivityHighDifficultyCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
@@ -324,6 +298,7 @@ ActivityHighDifficultyCtrl.OnActivityCenterNaviFailed = HL.Method() << function(
 end
 
 ActivityHighDifficultyCtrl.OnClose = HL.Override() << function(self)
+    self:_StopLockTaskCountdown()
     local taskIds = {}
     for taskId,_ in pairs(self.m_shownNewTaskIds) do
         table.insert(taskIds, taskId)

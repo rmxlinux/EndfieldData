@@ -302,7 +302,10 @@ MissionHudCtrl._StartSwitcherCoroutine = HL.Method() << function(self)
                 break
             end
 
-            while not (self:IsShow() and (panelAnimWrapper.curState ~= CS.Beyond.UI.UIConst.AnimationState.In or
+            
+            
+            while not (self:IsShow() and not UIManager:IsShow(PanelId.Loading) and
+                (panelAnimWrapper.curState ~= CS.Beyond.UI.UIConst.AnimationState.In or
                 (panelAnimWrapper.curState == CS.Beyond.UI.UIConst.AnimationState.In and
                     missionShowData.availableInAnimationIn))) do
                 coroutine.step()

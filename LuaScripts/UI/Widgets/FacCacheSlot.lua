@@ -164,8 +164,8 @@ FacCacheSlot._UpdateContent = HL.Method() << function(self)
             self:_RefreshSlotHoverBindingState()
         end
     end
-    self:_RefreshSlotHoverBindingState()
     if isEmpty then
+        self:_RefreshSlotHoverBindingState()
         return
     end
 
@@ -242,6 +242,7 @@ FacCacheSlot._UpdateContent = HL.Method() << function(self)
         disableDump = self.m_disableDump,
     }
     InputManagerInst:SetBindingText(itemSlot.item.view.button.hoverConfirmBindingId, Language["key_hint_item_open_action_menu"])
+    self:_RefreshSlotHoverBindingState()
 
     local color = info.count < info.maxStackCount and self.config.COLOR_NORMAL or self.config.COLOR_MAX_STACK
     local colorFormatterPrefix = string.format("<color=#%sff>", color)
@@ -251,8 +252,12 @@ end
 FacCacheSlot._RefreshSlotHoverBindingState = HL.Method() << function(self)
     local itemInfo = self.m_itemInfo
     local itemSlot = self:_GetCurrentItemSlot()
+    local bindingId = itemSlot.item.view.button.hoverConfirmBindingId
     if not itemInfo or string.isEmpty(itemInfo.id) or not self.m_isQuickDropEnabled then
-        InputManagerInst:ToggleBinding(itemSlot.item.view.button.hoverConfirmBindingId, false)
+        InputManagerInst:ToggleBinding(bindingId, false)
+    else
+        
+        InputManagerInst:ToggleBinding(bindingId, itemSlot.item.view.button.isNaviTarget)
     end
 end
 

@@ -212,9 +212,17 @@ FriendListCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
         self.view.searchResult.gameObject:SetActiveIfNecessary(not (string.isEmpty(str)))
     end
     initArg.isFilter = true
+    initArg.onFriendListChanged = function()
+        self:_UpdateCache()
+        self:_RefreshListHeader()
+    end
 
     if arg ~= nil and arg.cellStateName ~= nil then
         initArg.stateName = arg.cellStateName
+    end
+    if arg ~= nil then
+        initArg.businessCardMoreActionArgs = arg.businessCardMoreActionArgs
+        initArg.sentInviteTargets = arg.sentInviteTargets
     end
 
     if arg ~= nil and arg.stateName ~= nil then
@@ -223,7 +231,8 @@ FriendListCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
         self.view.uiState:SetState("Normal")
     end
     self.m_isVisit = (arg ~= nil and arg.stateName == "SpaceShip")
-    if (arg == nil or (arg.stateName == nil or arg.stateName == "Normal")) and not self.m_isVisit then
+    if (arg == nil or (arg.stateName == nil or arg.stateName == "Normal" or arg.stateName == "RoomInvite"))
+        and not self.m_isVisit then
         initArg.onSonyTabChange = function(isPsnFriend)
             self:Loading()
             self.m_isPsnFriend = isPsnFriend
@@ -407,7 +416,8 @@ FriendListCtrl._RefreshListHeader = HL.Method() << function(self)
     self:_RefreshVisitCount()
 
     local hasValue, _ = GameInstance.player.spaceship:TryGetRoom(Tables.spaceshipConst.guestRoomId)
-    self.view.shipRoot.gameObject:SetActiveIfNecessary(hasValue)
+    local isInviteList = self.m_phase and self.m_phase.arg and self.m_phase.arg.cellStateName == "Invite"
+    self.view.shipRoot.gameObject:SetActiveIfNecessary(hasValue and not isInviteList)
 end
 
 FriendListCtrl._Refresh = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, loading, stayPos)
@@ -489,7 +499,10 @@ FriendListCtrl.OnFriendAddNotify = HL.Method() << function(self)
 end
 
 FriendListCtrl.OnShow = HL.Override() << function(self)
-    self.view.listFullPrompt.gameObject:SetActiveIfNecessary(self.friendSystem.isReadFullFriendRequestInfo == false and self.friendSystem.currentRequestFriendCount >= Tables.globalConst.friendRequestListLenMax)
+    local isInviteList = self.m_phase and self.m_phase.arg and self.m_phase.arg.cellStateName == "Invite"
+    self.view.listFullPrompt.gameObject:SetActiveIfNecessary(not isInviteList
+        and self.friendSystem.isReadFullFriendRequestInfo == false
+        and self.friendSystem.currentRequestFriendCount >= Tables.globalConst.friendRequestListLenMax)
     local recoverState = self.m_pendingRecoverState
     if self.m_skipClearInputOnShow then
         self.m_skipClearInputOnShow = false

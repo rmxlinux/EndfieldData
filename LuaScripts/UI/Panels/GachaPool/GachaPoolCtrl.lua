@@ -411,7 +411,10 @@ GachaPoolCtrl._InitMoneyNode = HL.Method() << function(self)
             isSideTips = true,
             padding = { top = 100 },
             onClose = function()
-                if IsNull(moneyNode) or IsNull(moneyNode.originiumConvertedDiamond) then
+                if self.m_isClosed then
+                    return
+                end
+                if IsNull(moneyNode.originiumConvertedDiamond.selected) then
                     return
                 end
                 moneyNode.originiumConvertedDiamond.selected.gameObject:SetActive(false)

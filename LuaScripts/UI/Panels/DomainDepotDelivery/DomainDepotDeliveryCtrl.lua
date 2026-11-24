@@ -18,6 +18,8 @@ DomainDepotDeliveryCtrl.m_resumeState = HL.Field(HL.Table)
 
 DomainDepotDeliveryCtrl.m_nextRefreshTimestamp = HL.Field(HL.Number) << 0
 
+DomainDepotDeliveryCtrl.m_restoreNaviIndex = HL.Field(HL.Number) << -1
+
 
 
 
@@ -37,6 +39,8 @@ DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     self.view.refreshBtn.onClick:RemoveAllListeners()
     self.view.refreshBtn.onClick:AddListener(function()
+        
+        self.m_restoreNaviIndex = 0
         self:_OnRefreshBtnClick()
     end)
 
@@ -191,7 +195,17 @@ DomainDepotDeliveryCtrl.OnSync = HL.Method() << function(self)
     self:_RefreshDailyCount()
     self:_RefreshDeliveryList(function()
         self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.remoteDelegateDeliverList.Count)
-        self.view.selectableNaviGroup:NaviToThisGroup()
+        self.view.orderListNaviGroup:NaviToThisGroup()
+        if self.m_restoreNaviIndex >= 0 and self:IsShow() then
+            local index = math.min(self.m_restoreNaviIndex, GameInstance.player.domainDepotSystem.remoteDelegateDeliverList.Count - 1)
+            self.m_restoreNaviIndex = -1
+            if DeviceInfo.usingController and index >= 0 then
+                
+                self.view.scrollList:ScrollToIndex(index, true)
+                local cell = self.m_getCellFunc(self.view.scrollList:Get(index))
+                self:SetNaviTarget(cell.view.inputBindingGroupNaviDecorator)
+            end
+        end
         self.view.emptyNode.gameObject:SetActive(GameInstance.player.domainDepotSystem.remoteDelegateDeliverList.Count == 0)
     end)
 end
@@ -200,12 +214,18 @@ DomainDepotDeliveryCtrl.OnShow = HL.Override() << function(self)
     if GameInstance.player.domainDepotSystem.remoteDelegateDeliverList.Count ~= 0 then
         self:OnSync()
     else
+        self.m_restoreNaviIndex = -1
         self:_RefreshDailyCount()
     end
 end
 
 
 DomainDepotDeliveryCtrl.OnHide = HL.Override() << function(self)
+    
+    self.m_restoreNaviIndex = -1
+    if DeviceInfo.usingController and self.view.orderListNaviGroup.LayerSelectedTarget then
+        self.m_restoreNaviIndex = self.view.scrollList:GetNaviManagerTargetIndex()
+    end
     self.view.scrollList:UpdateShowingCells(function(csIndex, obj)
         local cell = self.m_getCellFunc(obj)
         cell.view.animationWrapper:PlayOutAnimation()

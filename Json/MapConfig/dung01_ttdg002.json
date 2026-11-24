@@ -1,0 +1,53 @@
+{
+  "mapIdStr": "dung01_ttdg002",
+  "mapId": 575,
+  "isSeamless": false,
+  "sideGridNum": 2,
+  "levelIds": [
+    579,
+    579,
+    579,
+    579
+  ],
+  "streamingMapConfigPath": "dung01_ttdg002/dung01_ttdg002_art_streaming.asset",
+  "facSystemSkip": true,
+  "sceneStates": {
+    "Default": 0,
+    "Dusk": 1
+  },
+  "sceneStateConditions": [
+    {
+      "stateName": "Default",
+      "condition": {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckMapVar, Gameplay.Beyond",
+        "belongMapId": "dung01_ttdg002",
+        "mapVarName": "dung01_ttdg002_dusk",
+        "compareOperator": 0,
+        "compareTarget": 0
+      }
+    },
+    {
+      "stateName": "Dusk",
+      "condition": {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckMapVar, Gameplay.Beyond",
+        "belongMapId": "dung01_ttdg002",
+        "mapVarName": "dung01_ttdg002_dusk",
+        "compareOperator": 0,
+        "compareTarget": 1
+      }
+    }
+  ],
+  "levelStrIds": [
+    "dung01_ttdg002"
+  ],
+  "domainName": "domain_1",
+  "mapVarNumId2Name": {
+    "2": "dung01_ttdg002_dusk",
+    "3": "dung01_ttdg002_npc"
+  },
+  "mapVarName2NumId": {
+    "dung01_ttdg002_dusk": 2,
+    "dung01_ttdg002_npc": 3
+  },
+  "mapVarClientDefaultValues": {}
+}

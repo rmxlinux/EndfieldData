@@ -344,10 +344,19 @@ FormulaCtrl._OnUpdateFormulaCell = HL.Method(HL.Table, HL.Number, HL.Table, HL.T
             cell.outcomeCells = UIUtils.genCellCache(formulaCell.outcomeItem)
         end
         local outcomeCells = cell.outcomeCells
-        outcomeCells:Refresh(math.max(#formulaInfo.outcomes, MAX_SHOW_ITEM_COUNT), function(outcomeCell, outcomeIndex)
-            local showItem = outcomeIndex <= #formulaInfo.outcomes
+        
+        local outComeList = formulaInfo.outcomes
+        if formulaInfo.byproduct and not string.isEmpty(formulaInfo.byproduct.id) then
+            outComeList[1].byProductProb = 100 - formulaInfo.byproduct.prob
+            outComeList[2] = { id = formulaInfo.byproduct.id, count = formulaInfo.byproduct.count, byProductProb = formulaInfo.byproduct.prob }
+            formulaCell.byproductSep.gameObject:SetActive(true)
+        else
+            formulaCell.byproductSep.gameObject:SetActive(false)
+        end
+        outcomeCells:Refresh(math.max(#outComeList, MAX_SHOW_ITEM_COUNT), function(outcomeCell, outcomeIndex)
+            local showItem = outcomeIndex <= #outComeList
             if showItem then
-                local bundle = formulaInfo.outcomes[outcomeIndex]
+                local bundle = outComeList[outcomeIndex]
                 outcomeCell.item:InitItem(bundle, true)
                 outcomeCell.item:SetEnableHoverTips(not DeviceInfo.usingController)
                 outcomeCell.item.gameObject.name = "Item_" .. bundle.id
@@ -364,6 +373,9 @@ FormulaCtrl._OnUpdateFormulaCell = HL.Method(HL.Table, HL.Number, HL.Table, HL.T
             outcomeCell.item.gameObject:SetActive(showItem)
             outcomeCell.emptyNode.gameObject:SetActive(not showItem)
             outcomeCell.emptyNode.color = isHighlighted and self.view.config.HIGHLIGHT_CELL_EMPTY_COLOR or self.view.config.NORMAL_CELL_EMPTY_COLOR
+            if outcomeIndex == 1 then
+                outcomeCell.transform:SetAsFirstSibling()
+            end
         end)
         formulaCell.outcomeItems.gameObject:SetActive(true)
     else
@@ -378,10 +390,11 @@ FormulaCtrl._OnUpdateFormulaCell = HL.Method(HL.Table, HL.Number, HL.Table, HL.T
     formulaCell.outcomeFinish.gameObject:SetActive(formulaInfo.useFinish)
 
     
+    formulaCell.pinBtn.view.gameObject:SetActive(not isSpecialFormula)
     if not isSpecialFormula then
+        
         formulaCell.pinBtn:InitPinBtn(formulaInfo.craftId, GEnums.FCPinPosition.Formula:GetHashCode())
     end
-    formulaCell.pinBtn.view.gameObject:SetActive(not isSpecialFormula)
     formulaCell.invalidPinBtn.gameObject:SetActive(isSpecialFormula)
 
     
@@ -420,10 +433,8 @@ FormulaCtrl._OnUpdateFormulaCell = HL.Method(HL.Table, HL.Number, HL.Table, HL.T
     end
     if formulaInfo.consumeRate then
         formulaCell.envTipsNode.gameObject:SetActive(true)
-        formulaCell.middleNode.gameObject:SetActive(false)
         formulaCell.genEnvTimeTxt.text = I18nUtils.CombineStringWithLanguageSpilt(formulaInfo.consumeRate, Language["ui_fac_common_minute_speed"])
     else
-        formulaCell.middleNode.gameObject:SetActive(true)
         formulaCell.envTipsNode.gameObject:SetActive(false)
     end
 

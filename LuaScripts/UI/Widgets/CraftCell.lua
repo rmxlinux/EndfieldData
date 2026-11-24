@@ -120,8 +120,18 @@ CraftCell._RefreshCraftCell = HL.Method() << function(self)
     
     if craftInfo.outcomes then
         self.view.outcomeItems.gameObject:SetActive(true)
-        self.outcomeItemsCache:Refresh(#craftInfo.outcomes, function(cell, index)
-            local bundle = craftInfo.outcomes[index]
+        
+        local outComeList = craftInfo.outcomes
+        if craftInfo.byproduct and not string.isEmpty(craftInfo.byproduct.id) then
+            outComeList[1].byProductProb = 100 - craftInfo.byproduct.prob
+            outComeList[2] = { id = craftInfo.byproduct.id, count = craftInfo.byproduct.count, byProductProb = craftInfo.byproduct.prob }
+            self.view.byproductSep.gameObject:SetActive(true)
+        else
+            self.view.byproductSep.gameObject:SetActive(false)
+        end
+        local outcomeCount = outComeList and #outComeList or 0
+        self.outcomeItemsCache:Refresh(outcomeCount, function(cell, index)
+            local bundle = outComeList[index]
             if self.m_onClickItem then
                 cell:InitItem(bundle, function()
                     self.m_onClickItem(cell)
@@ -133,6 +143,9 @@ CraftCell._RefreshCraftCell = HL.Method() << function(self)
                 cell:SetExtraInfo(self.m_itemTipsPosInfo)
             end
             cell.gameObject.name = "Outcome_" .. bundle.id
+            if index == 1 then
+                cell.transform:SetAsFirstSibling()
+            end
         end)
     else
         self.view.outcomeItems.gameObject:SetActive(false)
@@ -146,7 +159,7 @@ CraftCell._RefreshCraftCell = HL.Method() << function(self)
     self.view.outcomeFinish.gameObject:SetActive(craftInfo.useFinish)
     if self.outAddCache then
         local outcomesCount = craftInfo.outcomes and #craftInfo.outcomes or 0
-        if outcomesCount > 1 then
+        if outcomesCount > 1 and not (craftInfo.byproduct and not string.isEmpty(craftInfo.byproduct.id)) then
             self.outAddCache:Refresh(outcomesCount - 1, function(cell, index)
                 cell.transform:SetSiblingIndex(index * 2 + 2)
             end)

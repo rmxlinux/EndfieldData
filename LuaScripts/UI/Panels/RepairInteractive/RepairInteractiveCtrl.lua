@@ -391,7 +391,13 @@ end
 RepairInteractiveCtrl.OnHide = HL.Override() << function(self)
     self:_StartCoroutine(function()
         Notify(MessageConst.EXIT_LEVEL_HALF_SCREEN_PANEL_MODE)
-        PhaseManager:ExitPhaseFast(PhaseId.RepairInteractive)
+        
+        coroutine.waitCondition(function()
+            return not PhaseManager:IsInPhaseTransition()
+        end)
+        if PhaseManager:IsOpen(PhaseId.RepairInteractive) then
+            PhaseManager:ExitPhaseFast(PhaseId.RepairInteractive)
+        end
     end)
 end
 

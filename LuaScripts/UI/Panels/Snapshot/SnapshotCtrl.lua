@@ -34,8 +34,6 @@ SnapshotCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 local snapshotSystem = GameInstance.player.snapshotSystem
 
-local formationManager = GameWorld.aiManager.characterPhotoSystem
-
 local inventorySystem = GameInstance.player.inventory
 
 local DATA_KEY_MOVE_MODE = "SNAPSHOT_IS_CAMERA_MOVE_MODE"
@@ -1518,7 +1516,7 @@ SnapshotCtrl._InitUI = HL.Method() << function(self)
             elseif csIndex == FORMATION_DROPDOWN_INDEX_CUSTOM then
                 name = Language.LUA_SNAPSHOT_FORMATION_CUSTOM
             else
-                local textId = formationManager.formationUIData[csIndex - FORMATION_DROPDOWN_PRESET_OFFSET].Item2
+                local textId = GameWorld.aiManager.characterPhotoSystem.formationUIData[csIndex - FORMATION_DROPDOWN_PRESET_OFFSET].Item2
                 local _, result = I18nUtils.TryGetText(textId)
                 name = result
             end
@@ -1778,6 +1776,8 @@ SnapshotCtrl._InitUIMenuContentChangeFunc = HL.Method() << function(self)
                 local focusIndex = self.m_curSelectActionIndex
                 if focusIndex > 0 then
                     local actionNode = self.view.menuContentNode.menuActionNode
+                    
+                    actionNode.actionList:ScrollToIndex(CSIndex(focusIndex), true)
                     local obj = actionNode.actionList:Get(CSIndex(focusIndex))
                     local cell = self.m_getActionCellFunc(obj)
                     if cell then
@@ -1802,7 +1802,10 @@ SnapshotCtrl._InitUIMenuContentChangeFunc = HL.Method() << function(self)
                     self.m_resumeMenuControllerFocusType = nil
                     self.m_resumeMenuControllerFocusIndex = 0
                 end
-                local obj = self.view.menuContentNode.menuFilterNode.menuFilterList:Get(CSIndex(focusIndex))
+                local filterList = self.view.menuContentNode.menuFilterNode.menuFilterList
+                
+                filterList:ScrollToIndex(CSIndex(focusIndex), true)
+                local obj = filterList:Get(CSIndex(focusIndex))
                 local cell = self.m_getFilterCellFunc(obj)
                 if cell then
                     self:SetNaviTarget(cell.btn)
@@ -1828,7 +1831,10 @@ SnapshotCtrl._InitUIMenuContentChangeFunc = HL.Method() << function(self)
                     self.m_resumeMenuControllerFocusType = nil
                     self.m_resumeMenuControllerFocusIndex = 0
                 end
-                local obj = self.view.menuContentNode.menuStickerNode.stickerList:Get(CSIndex(focusIndex))
+                local stickerList = self.view.menuContentNode.menuStickerNode.stickerList
+                
+                stickerList:ScrollToIndex(CSIndex(focusIndex), true)
+                local obj = stickerList:Get(CSIndex(focusIndex))
                 local cell = self.m_getStickerCellFunc(obj)
                 if cell then
                     self:SetNaviTarget(cell.btn)
@@ -1882,7 +1888,7 @@ SnapshotCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_OnManualFocusDropDownChanged(LuaIndex(defaultFocusSelectedIndex))
     
     local formationNode = menuContentNode.menuFormationNode
-    formationNode.formationDropDown:Refresh(formationManager.formationUIData.Count + FORMATION_DROPDOWN_PRESET_OFFSET,
+    formationNode.formationDropDown:Refresh(GameWorld.aiManager.characterPhotoSystem.formationUIData.Count + FORMATION_DROPDOWN_PRESET_OFFSET,
         FORMATION_DROPDOWN_INDEX_NONE, false)
     
     local filterNode = menuContentNode.menuFilterNode
@@ -2922,6 +2928,10 @@ end
 
 
 SnapshotCtrl._OpenCharFormation = HL.Method() << function(self)
+    local canOpen = PhaseManager:CheckCanRefreshPhaseAndToast(PhaseId.CharFormation)
+    if not canOpen then
+        return
+    end
     if snapshotSystem.camController then
         
         snapshotSystem.camController:ResetSnapshotDofSettings()
@@ -2969,7 +2979,7 @@ SnapshotCtrl._TeamFormationIndexToDropdownIndex = HL.Method(HL.Number).Return(HL
         return FORMATION_DROPDOWN_INDEX_NONE
     end
     return lume.clamp(teamFormationIndex + FORMATION_DROPDOWN_PRESET_OFFSET,
-        FORMATION_DROPDOWN_INDEX_NONE, formationManager.formationUIData.Count + FORMATION_DROPDOWN_PRESET_OFFSET - 1)
+        FORMATION_DROPDOWN_INDEX_NONE, GameWorld.aiManager.characterPhotoSystem.formationUIData.Count + FORMATION_DROPDOWN_PRESET_OFFSET - 1)
 end
 
 SnapshotCtrl._ResetFormationDropDownNextFrame = HL.Method(HL.Number) << function(self, teamFormationIndex)
@@ -3010,7 +3020,7 @@ end
 SnapshotCtrl._TryEnterCustomTeamFormation = HL.Method(HL.Boolean).Return(HL.Boolean) << function(self, showToast)
     if self.m_curTeamFormationIndex >= 0 then
         
-        formationManager:ExitPhotoFormation()
+        GameWorld.aiManager.characterPhotoSystem:ExitPhotoFormation()
     end
     local ret = snapshotSystem:SetAllTeamDummy(true)
     if ret ~= 0 then
@@ -3045,7 +3055,7 @@ end
 
 SnapshotCtrl._ResetTeamFormationToNone = HL.Method() << function(self)
     self.m_curTeamFormationIndex = TEAM_FORMATION_INDEX_NONE
-    formationManager:ExitPhotoFormation()
+    GameWorld.aiManager.characterPhotoSystem:ExitPhotoFormation()
     self:_ResetFormationDropDownNextFrame(TEAM_FORMATION_INDEX_NONE)
 end
 
@@ -3088,11 +3098,11 @@ SnapshotCtrl._ChangeTeamFormation = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << 
             snapshotSystem:SetAllTeamDummy(false)
         end
         self.m_curTeamFormationIndex = TEAM_FORMATION_INDEX_NONE
-        formationManager:ExitPhotoFormation()
+        GameWorld.aiManager.characterPhotoSystem:ExitPhotoFormation()
         return
     end
 
-    local resultId = formationManager:EnterPhotoFormation(formationManager.formationUIData[csIndex].Item1);
+    local resultId = GameWorld.aiManager.characterPhotoSystem:EnterPhotoFormation(GameWorld.aiManager.characterPhotoSystem.formationUIData[csIndex].Item1);
     if resultId < 0 then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_SNAPSHOT_FORBID_COMMON_TOAST)
         self:_ResetTeamFormationToNone()
@@ -3358,9 +3368,11 @@ SnapshotCtrl._SetMoveSelectUIVisible = HL.Method(HL.Boolean, HL.Boolean) << func
     snapshotSystem:ToggleSelectedCharOutline(visible)
     self:_SetMoveSelectArrowVisible(visible)
     self.view.hintNode.keyboardQuickRotateCharNode.gameObject:SetActive(visible)
-    local showRotateSlider = visible and not self:IsInGamepadMoveRotateMode()
-    if not DeviceInfo.usingController then
-        self:_SetMoveCharRotate3DSliderVisible(showRotateSlider, playAni)
+    
+    if DeviceInfo.usingController then
+        self:_SetMoveCharRotate3DSliderVisible(false, false)
+    else
+        self:_SetMoveCharRotate3DSliderVisible(visible, playAni)
     end
 end
 
@@ -5432,7 +5444,11 @@ SnapshotCtrl._OnBattleSquadChanged = HL.Method(HL.Opt(HL.Any)) << function(self,
     
     snapshotSystem:ResetAllCustomActions()
     
-    self:_DeselectMoveChar()
+    if self:IsInGamepadMoveRotateMode() then
+        self:_ExitGamepadMoveRotateCharMode()
+    else
+        self:_DeselectMoveChar()
+    end
     self:_RefreshAvatarSelectableChanged(true)
     
     self:_ReapplyTeamFormationAfterSquadChanged()

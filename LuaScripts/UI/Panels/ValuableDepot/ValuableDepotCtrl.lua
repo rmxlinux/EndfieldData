@@ -629,6 +629,8 @@ ValuableDepotCtrl._OnClickTab = HL.Method(HL.Number, HL.Opt(HL.String, HL.Any, H
             self.m_curItemIndex = -1  
             self:_RefreshItemInfo(true)  
             self:_SetSelectedIndex(recoverState.itemId, recoverState.instId)  
+            
+            self.m_recoverSelectIndex = self.m_curItemIndex
             recoverScrollIndex = self.m_curItemIndex
         else
             self:_SetSelectedIndex(itemId, instId)

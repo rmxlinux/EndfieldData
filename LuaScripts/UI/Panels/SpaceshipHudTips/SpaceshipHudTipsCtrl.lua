@@ -1,8 +1,18 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipHudTips
+local MAIN_HUD_ACTION_TYPE = "SpaceshipHudTips"
 
 SpaceshipHudTipsCtrl = HL.Class('SpaceshipHudTipsCtrl', uiCtrl.UICtrl)
+
+SpaceshipHudTipsCtrl._TryShowFavToastFromQueue = HL.StaticMethod(HL.Opt(HL.Boolean)) << function(_)
+    local isOpen, ctrl = UIManager:IsOpen(PANEL_ID)
+    if not isOpen then
+        Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, MAIN_HUD_ACTION_TYPE)
+        return
+    end
+    ctrl:_TryShowFavToast()
+end
 
 
 
@@ -42,25 +52,11 @@ SpaceshipHudTipsCtrl.OnLoadingPanelClosed = HL.StaticMethod() << function()
     end
     local self = UIManager:Open(PANEL_ID)
     self.view.main.gameObject:SetActive(false)
-    LuaSystemManager.mainHudActionQueue:AddRequest("SpaceshipHudTips", function()
-        
-        if not UIManager:IsOpen(PANEL_ID) then
-            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "SpaceshipHudTips")
-            return
-        end
-        self:_TryShowFavToast()
-    end)
+    LuaSystemManager.mainHudActionQueue:AddRequest(MAIN_HUD_ACTION_TYPE, SpaceshipHudTipsCtrl._TryShowFavToastFromQueue)
 end
 
 SpaceshipHudTipsCtrl.OnCharFriendshipChanged = HL.Method() << function(self)
-    LuaSystemManager.mainHudActionQueue:AddRequest("SpaceshipHudTips", function()
-        
-        if not UIManager:IsOpen(PANEL_ID) then
-            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "SpaceshipHudTips")
-            return
-        end
-        self:_TryShowFavToast()
-    end)
+    LuaSystemManager.mainHudActionQueue:AddRequest(MAIN_HUD_ACTION_TYPE, SpaceshipHudTipsCtrl._TryShowFavToastFromQueue)
 end
 
 SpaceshipHudTipsCtrl._TryShowFavToast = HL.Method() << function(self)
@@ -117,12 +113,12 @@ end
 
 SpaceshipHudTipsCtrl._Exit = HL.Method() << function(self)
     local mainHudActionQueue = LuaSystemManager.mainHudActionQueue
-    if mainHudActionQueue:GetCurQueueFirstRequestType() == "SpaceshipHudTips" then
+    if mainHudActionQueue:GetCurQueueFirstRequestType() == MAIN_HUD_ACTION_TYPE then
         self.view.friendshipNode.toastList:ClearAllToast()
         self.view.friendshipNode.gameObject:SetActive(false)
         self.view.main.gameObject:SetActive(false)
         if mainHudActionQueue:IsShowing() then
-            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "SpaceshipHudTips")
+            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, MAIN_HUD_ACTION_TYPE)
         end
     end
 end

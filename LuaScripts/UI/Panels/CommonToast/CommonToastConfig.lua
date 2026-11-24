@@ -82,6 +82,8 @@ local cfg = {
     [CS.Proto.CODE.ErrUgcpunishedBanFriendRequest] = processUGCBanned,
     [CS.Proto.CODE.ErrUgcpunishedBanMapMark] = processUGCBanned,
     [CS.Proto.CODE.ErrUgcpunishedBanMapMarkEdit] = processUGCBanned,
+    [CS.Proto.CODE.ErrUgcpunishedBanRoomGame] = processUGCBanned,
+    [CS.Proto.CODE.ErrUgcpunishedBanMatch] = processUGCBanned,
 
     [CS.Proto.CODE.ErrFactoryPlaceLimitNodeAll] = processFacNodeLimit,
     [CS.Proto.CODE.ErrFactoryPlaceBuildingLimit] = processFacNodeLimit,

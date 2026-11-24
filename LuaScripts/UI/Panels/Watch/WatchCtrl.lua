@@ -290,8 +290,13 @@ WatchCtrl.GenClickCallBack = HL.Method(HL.Int).Return(HL.Function) << function(s
     end
 
     return function()
+        if PhaseManager:IsInPhaseTransition() then
+            return
+        end
         if data.needCloseWatch then
-            PhaseManager:ExitPhaseFast(PhaseId.Watch)
+            if not PhaseManager:ExitPhaseFast(PhaseId.Watch) then
+                return
+            end
             if data.afterCloseWatch ~= nil then
                 data.afterCloseWatch()
             end

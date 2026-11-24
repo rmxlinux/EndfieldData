@@ -1,8 +1,80 @@
 local SocialBuildingSource = CS.Beyond.Gameplay.Factory.SocialBuildingSource
 local GeneralAbilityType = GEnums.GeneralAbilityType
 local AbilityState = CS.Beyond.Gameplay.GeneralAbilitySystem.AbilityState
+local FormationZoneTypes = CS.Beyond.Gameplay.Factory.FormationZoneTypes
 
 local FactoryUtils = {}
+
+FactoryUtils.FORMATION_ID_BY_ZONE_TYPE = {
+    [FormationZoneTypes.HENG] = "magic_heng",
+    [FormationZoneTypes.MING] = "magic_ming",
+    [FormationZoneTypes.HUI] = "magic_hui",
+}
+
+FactoryUtils.FORMATION_ID_TO_ENV_STATE = {
+    ["magic_heng"] = "MagicHeng",
+    ["magic_ming"] = "MagicMing",
+    ["magic_hui"] = "MagicHui",
+}
+
+FactoryUtils.FORMATION_WIKI_DEFAULT_LEVEL_KEYS = {
+    ["magic_heng"] = "facFormationWikiDefaultLevelHeng",
+    ["magic_ming"] = "facFormationWikiDefaultLevelMing",
+    ["magic_hui"] = "facFormationWikiDefaultLevelHui",
+}
+
+FactoryUtils.FORMATION_STATE_BY_ZONE_TYPE = {
+    [FormationZoneTypes.HENG] = "Heng",
+    [FormationZoneTypes.MING] = "Ming",
+    [FormationZoneTypes.HUI] = "Hui",
+}
+
+FactoryUtils.FORMATION_STAKE_SLOT_COUNT = 4
+FactoryUtils.FORMATION_STAKE_SLOT_CELL_STATE_SELECT = "Select"
+
+local FORMATION_STAKE_SLOT_CELL_STATE_BY_ZONE_TYPE = {
+    [FormationZoneTypes.MING] = "magic_ming",
+    [FormationZoneTypes.HUI] = "magic_hui",
+}
+local FORMATION_STAKE_SLOT_WORK_SORT_INDEX_BY_ZONE_TYPE = {
+    [FormationZoneTypes.MING] = 1,
+    [FormationZoneTypes.HUI] = 2,
+}
+local FORMATION_STAKE_SLOT_NOT_WORK_SORT_INDEX_BY_ZONE_TYPE = {
+    [FormationZoneTypes.MING] = 3,
+    [FormationZoneTypes.HUI] = 4,
+}
+local FORMATION_STAKE_SLOT_NOT_SELECT_SORT_INDEX = 5
+local FORMATION_STAKE_SLOT_EMPTY_SORT_INDEX = 6
+local FORMATION_STAKE_SLOT_CELL_STATE_NOT_WORK = "NotWork"
+local FORMATION_STAKE_SLOT_CELL_STATE_NOT_SELECT = "NotSelect"
+local FORMATION_STAKE_SLOT_CELL_STATE_EMPTY = "Empty"
+
+function FactoryUtils.getFormationStakeSlotSortIndex(slot)
+    if slot == nil then
+        return FORMATION_STAKE_SLOT_EMPTY_SORT_INDEX
+    end
+    if slot.selectedType == FormationZoneTypes.NONE then
+        return FORMATION_STAKE_SLOT_NOT_SELECT_SORT_INDEX
+    end
+    if not slot.countsForLevel or slot.stakeState ~= GEnums.FacBuildingState.Normal then
+        return FORMATION_STAKE_SLOT_NOT_WORK_SORT_INDEX_BY_ZONE_TYPE[slot.selectedType]
+    end
+    return FORMATION_STAKE_SLOT_WORK_SORT_INDEX_BY_ZONE_TYPE[slot.selectedType]
+end
+
+function FactoryUtils.getFormationStakeSlotCellState(slot)
+    if slot == nil then
+        return FORMATION_STAKE_SLOT_CELL_STATE_EMPTY
+    end
+    if slot.selectedType == FormationZoneTypes.NONE then
+        return FORMATION_STAKE_SLOT_CELL_STATE_NOT_SELECT
+    end
+    if not slot.countsForLevel or slot.stakeState ~= GEnums.FacBuildingState.Normal then
+        return FORMATION_STAKE_SLOT_CELL_STATE_NOT_WORK
+    end
+    return FORMATION_STAKE_SLOT_CELL_STATE_BY_ZONE_TYPE[slot.selectedType]
+end
 
 function FactoryUtils.curPowerIsEnough()
     return not FactoryUtils.getCurRegionPowerInfo().isStopByPower
@@ -456,13 +528,13 @@ function FactoryUtils.isLikedSocialBuilding(nodeId, needToast)
 end
 
 
-function FactoryUtils.likeSocialBuilding(nodeId, callback)
+function FactoryUtils.likeSocialBuilding(nodeId)
     if not FactoryUtils.canLikeSocialBuilding(nodeId, true) then
         return
     end
 
     local chapterId = Utils.getCurrentChapterId()
-    GameInstance.player.remoteFactory.core:Message_SetSocialLike(chapterId, nodeId, callback)
+    GameInstance.player.remoteFactory.core:Message_SetSocialLike(chapterId, nodeId)
 end
 
 
@@ -755,21 +827,24 @@ function FactoryUtils.getItemAsInputRecipeIds(itemId, ignoreUnlock)
         end
     end
 
-    
-    local tempTL = {}
-    local temp = {}
-    for _, info in ipairs(recipeIds) do
-        if info.craftId and FactoryUtils.isTimeLimitedFormula(info.craftId) then
-            table.insert(tempTL, info)
-        else
-            table.insert(temp, info)
+    do
+        
+        for _, formationTransData in pairs(Tables.factoryFormationTransTable) do
+            for _, transData in pairs(formationTransData.list) do
+                if transData.fromItemId == itemId then
+                    local buildingId = FactoryUtils.findFormationStakeBuilding(transData.formationId)
+                    if buildingId then
+                        local craftInfo = FactoryUtils.parseFormationTransCraftData(transData, buildingId)
+                        craftInfo.isUnlock = ignoreUnlock or FactoryUtils.isFormationUnlockTechUnlocked(transData.formationId)
+                        table.insert(recipeIds, craftInfo)
+                        canCraft = true
+                    end
+                end
+            end
         end
     end
-    for _, info in ipairs(temp) do
-        table.insert(tempTL, info)
-    end
 
-    return tempTL, canCraft
+    return recipeIds, canCraft
 end
 
 
@@ -828,6 +903,59 @@ function FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, produc
                     table.insert(crafts, mineId)
                 else
                     table.insert(crafts, FactoryUtils.parseMinerCraftData(buildingId, mineable))
+                end
+            end
+        end
+    elseif bType == GEnums.FacBuildingType.FormationStake then
+        local hasFormationStakeData, formationStakeData = Tables.factoryFormationStakeTable:TryGetValue(buildingId)
+        if hasFormationStakeData then
+            local formationSortMap = {}
+            for index = 0, formationStakeData.selectableFormationIds.Count - 1 do
+                formationSortMap[formationStakeData.selectableFormationIds[index]] = index + 1
+            end
+            for _, combinationData in pairs(Tables.factoryFormationCombinationTable) do
+                if not formationSortMap[combinationData.targetFormationId] then
+                    local canCombine = true
+                    local maxSourceSort = 0
+                    for index = 0, combinationData.sourceFormationIds.Count - 1 do
+                        local sourceFormationId = combinationData.sourceFormationIds[index]
+                        local sourceSort = formationSortMap[sourceFormationId]
+                        if not sourceSort then
+                            canCombine = false
+                            break
+                        end
+                        maxSourceSort = math.max(maxSourceSort, sourceSort)
+                    end
+                    if canCombine then
+                        formationSortMap[combinationData.targetFormationId] = maxSourceSort + 0.5
+                    end
+                end
+            end
+
+            local formationCraftSortList = {}
+            for _, formationTransData in pairs(Tables.factoryFormationTransTable) do
+                for _, transData in pairs(formationTransData.list) do
+                    local formationSort = formationSortMap[transData.formationId]
+                    if formationSort and (ignoreUnlock or FactoryUtils.isFormationUnlockTechUnlocked(transData.formationId)) then
+                        table.insert(formationCraftSortList, {
+                            sort = formationSort,
+                            subSort = transData.level,
+                            transData = transData,
+                        })
+                    end
+                end
+            end
+            table.sort(formationCraftSortList, Utils.genSortFunction({ "sort", "subSort" }, true))
+
+            for _, formationCraftSortData in ipairs(formationCraftSortList) do
+                local transData = formationCraftSortData.transData
+                if justId then
+                    table.insert(crafts, transData.toItemId)
+                else
+                    local craftInfo = FactoryUtils.parseFormationTransCraftData(transData, buildingId)
+                    craftInfo.wikiModeSort = formationCraftSortData.sort
+                    craftInfo.wikiModeSubSort = formationCraftSortData.subSort
+                    table.insert(crafts, craftInfo)
                 end
             end
         end
@@ -1267,7 +1395,7 @@ end
 
 
 
-function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeFluidPumpIn, includeGas)
+function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeFluidPumpIn, includeGas, includeFormation)
     local crafts = {}
     local canCraft = false
 
@@ -1275,6 +1403,24 @@ function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeF
     local inventory = GameInstance.player.inventory
 
     local buildingSortFunc = Utils.genSortFunction({"sortId1", "sortId2"}, true)
+
+    do
+        
+        if includeFormation then
+            local hasFormationTrans, formationTransData = Tables.factoryFormationTransTable:TryGetValue(itemId)
+            if hasFormationTrans then
+                for _, transData in pairs(formationTransData.list) do
+                    local targetBuildingId = FactoryUtils.findFormationStakeBuilding(transData.formationId)
+                    if targetBuildingId then
+                        canCraft = true
+                        if ignoreUnlock or FactoryUtils.isFormationUnlockTechUnlocked(transData.formationId) then
+                            table.insert(crafts, FactoryUtils.parseFormationTransCraftData(transData, targetBuildingId))
+                        end
+                    end
+                end
+            end
+        end
+    end
 
     do
         
@@ -1503,6 +1649,11 @@ end
 
 
 
+
+
+
+
+
 function FactoryUtils.parseMachineCraftData(craftId, formulaGroupId)
     local craftData = Tables.factoryMachineCraftTable:GetValue(craftId)
     if formulaGroupId == nil then
@@ -1531,6 +1682,7 @@ function FactoryUtils.parseMachineCraftData(craftId, formulaGroupId)
         craftId = craftId,
         isUnlock = GameInstance.player.remoteFactory.core:IsFormulaVisible(craftId),
         env = craftData.gasEnv,
+        byproduct = craftData.byproduct,
     }
     for _, itemBundleGroup in pairs(craftData.ingredients) do
         for _, itemBundle in pairs(itemBundleGroup.group) do
@@ -1800,6 +1952,90 @@ function FactoryUtils.parseGasMinerCraftData(buildingId, gasItemId)
         outcomes = { { id = gasItemId, count = 1 } },
         buildingId = buildingId,
         craftId = string.format("%s_%s", gasItemId, buildingId),
+    }
+    return info
+end
+
+
+
+
+function FactoryUtils.findFormationStakeBuilding(formationId)
+    for buildingId, stakeData in pairs(Tables.factoryFormationStakeTable) do
+        local selectableSet = {}
+        for i = 0, stakeData.selectableFormationIds.Count - 1 do
+            local fid = stakeData.selectableFormationIds[i]
+            selectableSet[fid] = true
+            if fid == formationId then
+                return buildingId
+            end
+        end
+        for _, combData in pairs(Tables.factoryFormationCombinationTable) do
+            if combData.targetFormationId == formationId then
+                local canCombine = true
+                for idx = 0, combData.sourceFormationIds.Count - 1 do
+                    if not selectableSet[combData.sourceFormationIds[idx]] then
+                        canCombine = false
+                        break
+                    end
+                end
+                if canCombine then
+                    return buildingId
+                end
+            end
+        end
+    end
+    return nil
+end
+
+function FactoryUtils.isPinAllowedInCurScope()
+    return Utils.isInMainScope() or Utils.isInBlackbox()
+end
+
+
+
+
+function FactoryUtils.composeFormationPinId(formationId, toItemId, level)
+    return string.format("formation_%s_%s_%d", formationId, toItemId, level)
+end
+
+
+
+function FactoryUtils.parseFormationPinId(pinId)
+    if string.isEmpty(pinId) or not string.startWith(pinId, "formation_") then
+        return nil
+    end
+    for _, formationTransData in pairs(Tables.factoryFormationTransTable) do
+        for _, transData in pairs(formationTransData.list) do
+            if pinId == FactoryUtils.composeFormationPinId(transData.formationId, transData.toItemId, transData.level) then
+                return {
+                    formationId = transData.formationId,
+                    toItemId = transData.toItemId,
+                    level = transData.level,
+                }
+            end
+        end
+    end
+    return nil
+end
+
+
+
+
+function FactoryUtils.parseFormationTransCraftData(transData, buildingId)
+    local levelCfg = Tables.factoryFormationLevelTable:GetValue(transData.formationId).levels[transData.level]
+    local effectInterval = Tables.factoryConst.facFormationEffectInterval * 0.001
+    local info = {
+        time = effectInterval,
+        incomes = { { id = transData.fromItemId, count = 1 } },
+        
+        outcomes = { { id = transData.toItemId, count = 1, byProductProb = math.floor(transData.transChance / 100) } },
+        buildingId = buildingId,
+        craftId = FactoryUtils.composeFormationPinId(transData.formationId, transData.toItemId, transData.level),
+        titleIcon = transData.titleIcon,
+        wikiModeTitle = levelCfg.name,
+        formationLevel = transData.level,
+        formationId = transData.formationId,
+        formationEnvState = FactoryUtils.FORMATION_ID_TO_ENV_STATE[transData.formationId],
     }
     return info
 end
@@ -3228,18 +3464,25 @@ function FactoryUtils.SetCreatorName(blueprintContent, isCreating, bpInst)
     end
 
     
-    local success, friendInfo = GameInstance.player.friendSystem.friendInfoDic:TryGetValue(bpInst.creatorRoleId)
-    if success and friendInfo.psnData and not string.isEmpty(friendInfo.psnData.AccountId) then
+    blueprintContent.view.creatorNode.gameObject:SetActive(false)
+    GameInstance.player.friendSystem:SyncBlueprintCreatorInfoById(bpInst.creatorRoleId, function()
         
-        creatorName = string.format(Language.LUA_FAC_BLUEPRINT_CREATOR_FORMAT_USER, friendInfo.psName)
-        blueprintContent.view.psNameIcon.gameObject:SetActive(true)
-    else
-        
-        creatorName = string.format(Language.LUA_FAC_BLUEPRINT_CREATOR_FORMAT_USER, roleId)
-        blueprintContent.view.psNameIcon.gameObject:SetActive(false)
-    end
-    blueprintContent.view.creatorNameTxt.text = creatorName
-    blueprintContent.view.creatorNode.gameObject:SetActive(true)
+        if blueprintContent.m_isDestroyed or blueprintContent.m_csBPInst ~= bpInst then
+            return
+        end
+        local success, friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(bpInst.creatorRoleId)
+        if success and friendInfo.psnData and not string.isEmpty(friendInfo.psnData.AccountId) then
+            
+            creatorName = string.format(Language.LUA_FAC_BLUEPRINT_CREATOR_FORMAT_USER, friendInfo.psName)
+            blueprintContent.view.psNameIcon.gameObject:SetActive(true)
+        else
+            
+            creatorName = string.format(Language.LUA_FAC_BLUEPRINT_CREATOR_FORMAT_USER, roleId)
+            blueprintContent.view.psNameIcon.gameObject:SetActive(false)
+        end
+        blueprintContent.view.creatorNameTxt.text = creatorName
+        blueprintContent.view.creatorNode.gameObject:SetActive(true)
+    end)
 end
 
 function FactoryUtils.isPlayerBP(bpInst)
@@ -3260,7 +3503,8 @@ function FactoryUtils.isOtherPeopleGiftBlueprint(bpInst)
 end
 
 function FactoryUtils.getItemCraft(itemId)
-    local craftInfos, hasCraft = FactoryUtils.getItemCrafts(itemId, false)
+    
+    local craftInfos, hasCraft = FactoryUtils.getItemCrafts(itemId, false, false, false, false, true)
     local defaultCraftId = WikiUtils.getItemDefaultCraftId(itemId)
     if craftInfos ~= nil and #craftInfos > 0 then
         local firstFactoryCraftInfo
@@ -3786,7 +4030,7 @@ end
 
 
 function FactoryUtils.isEnableTeammateFertilize()
-    local result = CSFactoryUtil.IsEnableTeammateFertilize(Tables.factorySoilConst.SoilMgrDomainId)
+    local result = CSFactoryUtil.IsEnableTeammateFertilize()
     return result
 end
 
@@ -3800,7 +4044,7 @@ end
 
 
 function FactoryUtils.isTeammateFertilizeSameSoil()
-    local result = CSFactoryUtil.IsTeammateFertilizeSameSoil(Tables.factorySoilConst.SoilMgrDomainId)
+    local result = CSFactoryUtil.IsTeammateFertilizeSameSoil()
     return result
 end
 
@@ -4495,6 +4739,250 @@ function FactoryUtils.getBuildingModeListCovered(machineId)
     end
 
     return modeList
+end
+
+
+function FactoryUtils.initFormationIcon(image, formationId)
+    if not image then
+        return
+    end
+
+    local _, formationData = Tables.factoryFormationTable:TryGetValue(formationId)
+    if formationData and not string.isEmpty(formationData.icon) then
+        image:LoadSprite(UIConst.UI_SPRITE_ITEM, formationData.icon)
+    end
+end
+
+function FactoryUtils.getFormationTransferChance(formationId, level)
+    for _, transferData in pairs(Tables.factoryFormationTransferTable) do
+        if transferData.formationId == formationId then
+            return transferData.transferChances[level - 1]
+        end
+    end
+end
+
+
+function FactoryUtils.getFormationEffectIntervalText()
+    local seconds = Tables.factoryConst.facFormationEffectInterval * 0.001
+    if seconds == math.floor(seconds) then
+        return tostring(math.floor(seconds))
+    end
+    return tostring(seconds)
+end
+
+
+function FactoryUtils.getFormationChanceText(transChance)
+    return string.format(Language.LUA_ITEM_PROBABILITY_PERCENT_FORMAT, transChance * 0.01)
+end
+
+
+
+
+
+function FactoryUtils.getOutcomeChanceText(craftInfo, outcome)
+    if outcome.byProductProb and outcome.byProductProb > 0 then
+        return string.format(Language.LUA_ITEM_PROBABILITY_PERCENT_FORMAT, outcome.byProductProb)
+    end
+    local bp = craftInfo and craftInfo.byproduct
+    if bp and not string.isEmpty(bp.id) and bp.prob > 0 then
+        if outcome.id == bp.id then
+            return string.format(Language.LUA_ITEM_PROBABILITY_PERCENT_FORMAT, bp.prob)
+        else
+            return string.format(Language.LUA_ITEM_PROBABILITY_PERCENT_FORMAT, 100 - bp.prob)
+        end
+    end
+    return nil
+end
+
+local function _getFormationUnlockTechId(formationId)
+    local techId
+    if formationId == FactoryUtils.FORMATION_ID_BY_ZONE_TYPE[FormationZoneTypes.MING] then
+        techId = Tables.factoryConst.facFormationMingUnlockTechId
+    elseif formationId == FactoryUtils.FORMATION_ID_BY_ZONE_TYPE[FormationZoneTypes.HUI] then
+        techId = Tables.factoryConst.facFormationHuiUnlockTechId
+    elseif formationId == FactoryUtils.FORMATION_ID_BY_ZONE_TYPE[FormationZoneTypes.HENG] then
+        techId = Tables.factoryConst.facFormationHengUnlockTechId
+    end
+    return techId
+end
+
+
+function FactoryUtils.isFormationUnlockTechUnlocked(formationId)
+    local techId = _getFormationUnlockTechId(formationId)
+    if string.isEmpty(techId) then
+        return false
+    end
+    return not GameInstance.player.facTechTreeSystem:NodeIsLocked(techId)
+end
+
+
+
+
+
+function FactoryUtils.isInWonderBuildAccelerateTime()
+    local activitySystem = GameInstance.player.activitySystem
+    local activityIds = activitySystem:GetActivityOfCertainType(GEnums.ActivityType.WonderConstruct)
+    for index = 0, activityIds.Count - 1 do
+        local activity = activitySystem:GetActivity(activityIds[index])
+        if activity.isInAccelerateTime then
+            return true
+        end
+    end
+    return false
+end
+
+
+
+
+function FactoryUtils.getCurWonderBuildStageEstimatedRemainTime(isAccelerating)
+    local wonderProgress = GameInstance.remoteFactoryManager.system.core.progressStatus.wonderProgress
+    local recentSubmitTimes = wonderProgress.submitTimes
+    if recentSubmitTimes <= 0 then
+        return -1
+    end
+
+    local stageData = Tables.wonderStageTable[wonderProgress.stage]
+    local remainExp = stageData.levelExp - wonderProgress.curExp
+    if remainExp <= 0 then
+        return 0
+    end
+
+    local expPerSubmit = stageData.expCostItemsGet
+    if isAccelerating then
+        expPerSubmit = expPerSubmit + stageData.extraExpCostItemsGet
+    end
+    local constData = Tables.wonderBuildConst
+    local normalSubmitTimes = constData.rebuildSubmitHistoryTimes
+    local submitInterval = constData.costItemsInterval
+    local requiredSubmitTimes = math.ceil(remainExp / expPerSubmit)
+    local estimatedCycleCount = math.ceil(requiredSubmitTimes * normalSubmitTimes / recentSubmitTimes)
+    local currentTimestamp = DateTimeUtils.GetCurrentTimestampByMilliseconds() / 1000
+    local nextSubmitRemainTime = math.max(wonderProgress.lastTrySubmitTs + submitInterval - currentTimestamp, 0)
+
+    return math.ceil(nextSubmitRemainTime + (estimatedCycleCount - 1) * submitInterval)
+end
+
+
+
+
+function FactoryUtils.getFormationStakeWikiDetailData(formationStakeData)
+    local result = {
+        formationMap = {},
+        formationIds = {},
+        transGroups = {},
+        superimposeInfos = {},
+    }
+    for index = 0, formationStakeData.selectableFormationIds.Count - 1 do
+        local formationId = formationStakeData.selectableFormationIds[index]
+        if FactoryUtils.isFormationUnlockTechUnlocked(formationId) then
+            result.formationMap[formationId] = index + 1
+            table.insert(result.formationIds, formationId)
+        end
+    end
+
+    local transFormationMap = {}
+    for formationId, sort in pairs(result.formationMap) do
+        transFormationMap[formationId] = sort
+    end
+    for _, combinationData in pairs(Tables.factoryFormationCombinationTable) do
+        local targetId = combinationData.targetFormationId
+        if not transFormationMap[targetId]
+            and FactoryUtils.isFormationUnlockTechUnlocked(targetId) then
+            local canCombine = true
+            local maxSourceSort = 0
+            for index = 0, combinationData.sourceFormationIds.Count - 1 do
+                local sourceFormationId = combinationData.sourceFormationIds[index]
+                local sourceSort = transFormationMap[sourceFormationId]
+                if not sourceSort then
+                    canCombine = false
+                    break
+                end
+                maxSourceSort = math.max(maxSourceSort, sourceSort)
+            end
+            if canCombine then
+                transFormationMap[targetId] = maxSourceSort + 0.5
+            end
+        end
+    end
+
+    local formationLevelCount = {}
+    local seenFormationIds = {}
+    for _, formationTransData in pairs(Tables.factoryFormationTransTable) do
+        local firstTransData
+        local levels = {}
+        for _, transData in pairs(formationTransData.list) do
+            formationLevelCount[transData.formationId] = (formationLevelCount[transData.formationId] or 0) + 1
+            if transFormationMap[transData.formationId] then
+                firstTransData = firstTransData or transData
+                table.insert(levels, transData)
+            end
+        end
+        if firstTransData and not seenFormationIds[firstTransData.formationId] then
+            seenFormationIds[firstTransData.formationId] = true
+            table.sort(levels, function(a, b)
+                return a.level < b.level
+            end)
+            table.insert(result.transGroups, {
+                formationId = firstTransData.formationId,
+                fromItemId = firstTransData.fromItemId,
+                toItemId = firstTransData.toItemId,
+                levels = levels,
+                sort = transFormationMap[firstTransData.formationId],
+            })
+        end
+    end
+    table.sort(result.transGroups, function(a, b)
+        if a.sort ~= b.sort then
+            return a.sort < b.sort
+        end
+        return a.toItemId < b.toItemId
+    end)
+
+    local SECTION_SELECTABLE_LEVELUP = 0
+    local SECTION_COMBINATION = 1000
+    local SECTION_TARGET_LEVELUP = 2000
+    for _, formationId in ipairs(result.formationIds) do
+        if (formationLevelCount[formationId] or 0) > 1 then
+            table.insert(result.superimposeInfos, {
+                isLevelUp = true,
+                formationId = formationId,
+                sort = SECTION_SELECTABLE_LEVELUP + result.formationMap[formationId],
+            })
+        end
+    end
+    for _, combinationData in pairs(Tables.factoryFormationCombinationTable) do
+        local sourceFormationIds = {}
+        local hasMatchedSource = false
+        local sort = 999999
+        for index = 0, combinationData.sourceFormationIds.Count - 1 do
+            local sourceFormationId = combinationData.sourceFormationIds[index]
+            table.insert(sourceFormationIds, sourceFormationId)
+            if result.formationMap[sourceFormationId] then
+                hasMatchedSource = true
+                sort = math.min(sort, result.formationMap[sourceFormationId])
+            end
+        end
+        if hasMatchedSource and FactoryUtils.isFormationUnlockTechUnlocked(combinationData.targetFormationId) then
+            table.insert(result.superimposeInfos, {
+                isLevelUp = false,
+                sourceFormationIds = sourceFormationIds,
+                targetFormationId = combinationData.targetFormationId,
+                sort = SECTION_COMBINATION + sort + 0.5,
+            })
+        end
+    end
+    for targetId, sort in pairs(transFormationMap) do
+        if not result.formationMap[targetId]
+            and (formationLevelCount[targetId] or 0) > 1 then
+            table.insert(result.superimposeInfos, {
+                isLevelUp = true,
+                formationId = targetId,
+                sort = SECTION_TARGET_LEVELUP + sort,
+            })
+        end
+    end
+    table.sort(result.superimposeInfos, Utils.genSortFunction({ "sort" }, true))
+    return result
 end
 
 

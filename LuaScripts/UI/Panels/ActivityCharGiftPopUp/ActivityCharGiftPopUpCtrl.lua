@@ -1,3 +1,4 @@
+
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 
 ActivityCharGiftPopUpCtrl = HL.Class('ActivityCharGiftPopUpCtrl', uiCtrl.UICtrl)

@@ -61,10 +61,6 @@ local CLOSE_WHEN_ANIMATION_OUT = {
     [PanelId.CharInfoProfile] = true,
 }
 
-local PHASE_ITEMS = {
-    "CharInfoChar",
-    "CharInfoCamAttachment",
-}
 
 local CAMERA_FORCE_FADE_TAB = {
     [UIConst.CHAR_INFO_PAGE_TYPE.WEAPON] = true,
@@ -94,7 +90,6 @@ local PANEL_PRELOAD_ORDER = {
     PanelId.WeaponExhibitGem,
 }
 
-local SCENE_POS = Vector3(-300, 300, -300)
 
 
 
@@ -196,8 +191,6 @@ do
 
     PhaseCharInfo.m_preloadCor = HL.Field(HL.Thread)
 
-    PhaseCharInfo.m_hideCamCor = HL.Field(HL.Thread)
-
     PhaseCharInfo.m_camTransitionCache = HL.Field(HL.Table)
 
     PhaseCharInfo.m_curCamPostfix = HL.Field(HL.String) << ""
@@ -224,30 +217,19 @@ PhaseCharInfo._OnInit = HL.Override() << function(self)
 end
 
 PhaseCharInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
-    if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
-        if not PhaseManager:IsPhaseHaveSceneCamera(anotherPhaseId) then
-            CameraManager:EnableUIModelCullingMask(true, "charInfo")
-        end
-    end
-
     if transitionType == PhaseConst.EPhaseState.TransitionIn then
         if not fastMode then
-            
             UIManager:PreloadPanelAsset(PanelId.CharInfo, PHASE_ID)
             UIManager:PreloadPanelAsset(PanelId.CharInfoCursor, PHASE_ID)
             UIManager:PreloadPanelAsset(PanelId.CharInfoEmpty, PHASE_ID)
         end
-        self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
     end
     if not fastMode and (transitionType == PhaseConst.EPhaseState.TransitionIn or transitionType == PhaseConst.EPhaseState.TransitionOut) then
         coroutine.waitCondition(function()
             return true
         end, coroutine.TailTick)
-        
-        
 
         if transitionType == PhaseConst.EPhaseState.TransitionOut then
-            
             for i, phasePanelItem in pairs(self.m_panel2Item) do
                 local wrapper = phasePanelItem.uiCtrl.animationWrapper
                 wrapper:ClearTween()
@@ -257,26 +239,6 @@ PhaseCharInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.N
         Notify(MessageConst.PREPARE_BLOCK_GLITCH_TRANSITION)
         coroutine.waitForRenderDone()
         coroutine.step()
-    end
-
-    if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
-        
-        self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
-        self:_ToggleSceneLight(true)
-
-        local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_GAME_OBJECT]
-        if sceneObject then
-            sceneObject:SetActive(true)
-        end
-        if self.m_charItem then
-            self.m_charItem:SetActive(true)
-        end
-
-        if self.m_templateId2DollyTrackPathGroup and self.m_charInfo then
-            local targetGroup = self.m_templateId2DollyTrackPathGroup[self.m_charInfo.templateId]
-            targetGroup.go:SetActive(true)
-        end
-        self:_PauseCharAnimator(false)
     end
 end
 
@@ -301,7 +263,6 @@ end
 
 PhaseCharInfo._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self:ActiveRenderScaleLock(true)
-    CameraManager:EnableUIModelCullingMask(true, "charInfo")
 end
 
 PhaseCharInfo._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -310,29 +271,7 @@ PhaseCharInfo._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table
     end
 
     self:ActiveRenderScaleLock(false)
-
     self:_ClearAudioCor()
-
-    self:_PauseCharAnimator(true)
-
-    if PhaseManager:IsPhaseHaveSceneCamera(args and args.anotherPhaseId) then
-        CameraManager:EnableUIModelCullingMask(false, "charInfo")
-    end
-
-    self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
-    local isRecovering = PhaseManager.isRecovering
-    self.m_hideCamCor = self:_StartCoroutine(function()
-        if not isRecovering then
-            coroutine.wait(1)
-        end
-        CameraManager:EnableUIModelCullingMask(false, "charInfo")
-        self:_CloseAllCamGroup()
-
-        
-        
-        self:_ToggleSceneLight(false)
-        Utils.disableCameraDOF()
-    end)
 end
 
 PhaseCharInfo._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -343,9 +282,7 @@ PhaseCharInfo._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) 
     end
 end
 
-
 PhaseCharInfo._OnActivated = HL.Override() << function(self)
-    CameraManager:EnableUIModelCullingMask(true, "charInfo")
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 
@@ -437,7 +374,6 @@ PhaseCharInfo._ResetCam = HL.Method() << function(self)
 end
 
 PhaseCharInfo._OnDestroy = HL.Override() << function(self)
-    CameraManager:EnableUIModelCullingMask(false, "charInfo")
     GameInstance.player.charBag:SetPhaseCharInfoInstId(0)
     UIManager:Show(PanelId.Touch) 
     if self.m_skillTip then
@@ -511,9 +447,26 @@ PhaseCharInfo._InitPanels = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)) <
 end
 
 PhaseCharInfo._InitGo = HL.Method(HL.Table, HL.Number) << function(self, charInfo, tabType)
-    for _, name in ipairs(PHASE_ITEMS) do
-        self:CreatePhaseGOItem(name)
-    end
+    self:CreateUIScene(PHASE_CHAR_INFO_GAME_OBJECT, {
+        skipSetActive = true,
+        onDeactivate = function()
+            self:_PauseCharAnimator(true)
+            self:_CloseAllCamGroup()
+            self:_ToggleSceneLight(false)
+            Utils.disableCameraDOF()
+        end,
+        onActivate = function()
+            self:_ToggleSceneLight(true)
+            if self.m_templateId2DollyTrackPathGroup and self.m_charInfo then
+                local targetGroup = self.m_templateId2DollyTrackPathGroup[self.m_charInfo.templateId]
+                if targetGroup then
+                    targetGroup.go:SetActive(true)
+                end
+            end
+            self:_PauseCharAnimator(false)
+        end,
+    })
+    self:CreatePhaseGOItem(PHASE_CHAR_INFO_CAM_ATTACHMENT)
 
     self.m_templateId2DollyTrackPathGroup = {}
     self.m_templateId2LightGroup = {}
@@ -524,7 +477,6 @@ PhaseCharInfo._InitGo = HL.Method(HL.Table, HL.Number) << function(self, charInf
     self.m_curPage = tabType
 
     local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_GAME_OBJECT]
-    sceneObject.view.transform.position = SCENE_POS
     local weaponDecoNode = sceneObject.view.weaponDecoNode
     weaponDecoNode.gameObject:SetActive(false)
     sceneObject.view.charUpgradeEffect.gameObject:SetActive(false)
@@ -598,8 +550,10 @@ PhaseCharInfo._GenerateCharInfoList = HL.Method(HL.Table).Return(HL.Table) << fu
     else
         self.m_isNormalCharList = true
         local isFullLockedTeam, formationData = CharInfoUtils.IsFullLockedTeam()
-        if isFullLockedTeam then
+        local isMultiPresetTeam = CharInfoUtils.IsInMultiPresetTeamDungeon()
+        if isFullLockedTeam or isMultiPresetTeam then
             charInfoList = {}
+            
             
             local curSquad = GameInstance.player.squadManager.curSquad
             for i = 1, curSquad.slots.Count do
@@ -614,11 +568,11 @@ PhaseCharInfo._GenerateCharInfoList = HL.Method(HL.Table).Return(HL.Table) << fu
                         ownTime = charInfo.ownTime,
                         level = charInfo.level,
                         rarity = charCfg.rarity,
-                        slotIndex = Const.BATTLE_SQUAD_MAX_CHAR_NUM + 1,
-                        slotReverseIndex = -1,
+                        slotIndex = i,
+                        slotReverseIndex = Const.BATTLE_SQUAD_MAX_CHAR_NUM - i,
                         sortOrder = charCfg.sortOrder,
-                        isShowFixed = true,
-                        isShowTrail = false,
+                        isShowFixed = isFullLockedTeam,
+                        isShowTrail = isMultiPresetTeam and charInfo.charType == GEnums.CharType.Trial,
                     }
                     table.insert(charInfoList, item)
                 end
@@ -722,6 +676,7 @@ PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL
         end
 
         phaseItem:ReloadWeapon()
+        self:_RefreshWeaponAnimState()
         phaseItem:SwitchWeaponState(weaponState)
         if fromStateIndex and toStateIndex then
             self:_SwitchCharacterControllerState(phaseItem, fromStateIndex, toStateIndex, skipIn)
@@ -767,7 +722,17 @@ PhaseCharInfo._RefreshCharModelAddon = HL.Method(HL.Userdata, HL.Table) << funct
     local templateId = initCharInfo.templateId
     local charDisplayData = CharInfoUtils.getCharDisplayData(templateId)
 
-    if not self.m_templateId2DollyTrackPathGroup[templateId] and not string.isEmpty(charDisplayData.charInfoCameraGroup) then
+    local cachedCameraGroup = self.m_templateId2DollyTrackPathGroup[templateId]
+    if cachedCameraGroup then
+        
+        
+        local overviewCam = cachedCameraGroup.view.cameraGroup.vcam_overview
+        local trackedDolly = overviewCam:GetCinemachineComponent(CS.Cinemachine.CinemachineCore.Stage.Body)
+        if trackedDolly then
+            trackedDolly.m_PathPosition = 1
+        end
+        overviewCam:InternalUpdateCameraState(Vector3.up, -1)
+    elseif not string.isEmpty(charDisplayData.charInfoCameraGroup) then
         local cameraGroup = self:CreatePhaseGOItem(charDisplayData.charInfoCameraGroup)
 
         if cameraGroup ~= nil then
@@ -1143,21 +1108,30 @@ PhaseCharInfo.OnPageChange = HL.Method(HL.Any) << function(self, arg)
                 sceneObject.view.config.POTENTIAL_BLEND_CAM_DELTA_POS, sceneObject.view.config.BLEND_BLACK_SCREEN_TIME)
         end
 
-        self.m_charItem.uiModelMono.jumpWeaponAnimHideToHide = false
-        self.m_charItem.uiModelMono.jumpStaticWeaponAnimHideToHide = false
-        if pageType == UIConst.CHAR_INFO_PAGE_TYPE.UPGRADE or pageType == UIConst.CHAR_INFO_PAGE_TYPE.TALENT then
-            self.m_charItem.uiModelMono.jumpWeaponAnimHideToHide = true
-            self.m_charItem.uiModelMono.jumpStaticWeaponAnimHideToHide = true
-        end
-
-        if beforePage == UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW and pageType == UIConst.CHAR_INFO_PAGE_TYPE.WEAPON then
-            local weaponState = CS.Beyond.Gameplay.View.CharUIModelMono.WeaponState.HIDE
-            self.m_charItem.uiModelMono.jumpWeaponAnimHideToHide = true
-            self.m_charItem.uiModelMono.jumpStaticWeaponAnimHideToHide = true
-            self.m_charItem.uiModelMono:SwitchWeaponState(weaponState, true)
-            self.m_charItem.uiModelMono:SwitchStaticWeaponState(weaponState)
-        end
+        self:_RefreshWeaponAnimState(beforePage)
     end)
+end
+
+PhaseCharInfo._RefreshWeaponAnimState = HL.Method(HL.Opt(HL.Number)) << function(self, beforePage)
+    local uiModelMono = self.m_charItem and self.m_charItem.uiModelMono
+    if not self.m_charItemInitComplete or not uiModelMono then
+        
+        return
+    end
+
+    local pageType = self.m_curPage
+    local overviewToWeapon = beforePage == UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
+        and pageType == UIConst.CHAR_INFO_PAGE_TYPE.WEAPON
+    local jumpHideToHide = overviewToWeapon or pageType == UIConst.CHAR_INFO_PAGE_TYPE.UPGRADE
+        or pageType == UIConst.CHAR_INFO_PAGE_TYPE.TALENT
+    uiModelMono.jumpWeaponAnimHideToHide = jumpHideToHide
+    uiModelMono.jumpStaticWeaponAnimHideToHide = jumpHideToHide
+
+    if overviewToWeapon then
+        local weaponState = CS.Beyond.Gameplay.View.CharUIModelMono.WeaponState.HIDE
+        uiModelMono:SwitchWeaponState(weaponState, true)
+        uiModelMono:SwitchStaticWeaponState(weaponState)
+    end
 end
 
 PhaseCharInfo.BackToForesightCharGrowth = HL.Method() << function(self)
@@ -1396,6 +1370,9 @@ PhaseCharInfo._ToggleChrSPMotionCor = HL.Method(HL.Boolean) << function(self, is
         end
         if charDisplayData.enableSp2Idle then
             spWeight[UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.SP_2] = relaxSpIdleConfig.sp2IdleWeight
+        end
+        if charDisplayData.enableSp3Idle then
+            spWeight[UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.SP_3] = relaxSpIdleConfig.sp3IdleWeight
         end
         
         local hasSpIdle = false

@@ -2,6 +2,10 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 CashShopItemTag = HL.Class('CashShopItemTag', UIWidgetBase)
 
+CashShopItemTag._OnDestroy = HL.Override() << function(self)
+    LuaSystemManager.commonPrefabSystem:Release(self)
+end
+
 
 CashShopItemTag._OnFirstTimeInit = HL.Override() << function(self)
 
@@ -14,6 +18,14 @@ CashShopItemTag.m_arg = HL.Field(HL.Any)
 CashShopItemTag.m_targetTime = HL.Field(HL.Number) << 0
 
 local TAGS = {"newNode", "discountNode", "restrictionNode", "timeNode"}
+
+local TAG_PREFAB_KEYS = {
+    tagHot = "TagHot",
+    tagNewcomer = "TagNewcomer",
+    tagMultiple = "TagMultiple",
+    tagCostPerformance = "TagCostPerformance",
+    tagRecommend = "TagRecommend",
+}
 
 CashShopItemTag.InitCashShopItemTag = HL.Method(HL.Any) << function(self, arg)
     self:_FirstTimeInit()
@@ -210,7 +222,7 @@ CashShopItemTag._ToggleNew = HL.Method(HL.Boolean) << function(self, active)
         if not active then
             return
         end
-        local prefab = LuaSystemManager.cashShopItemPrefabSystem.newNodePrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("NewNode", self)
         if not prefab then
             return
         end
@@ -226,7 +238,7 @@ CashShopItemTag._SetDiscount = HL.Method(HL.Boolean, HL.Opt(HL.String)) << funct
         if not active then
             return
         end
-        local prefab = LuaSystemManager.cashShopItemPrefabSystem.discountPrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("TagDiscount", self)
         if not prefab then
             return
         end
@@ -244,7 +256,7 @@ CashShopItemTag._SetRestriction = HL.Method(HL.Boolean, HL.Opt(HL.String, HL.Str
         if not active then
             return
         end
-        local prefab = LuaSystemManager.cashShopItemPrefabSystem.restrictionPrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("TagRestriction", self)
         if not prefab then
             return
         end
@@ -267,7 +279,7 @@ CashShopItemTag._SetTime = HL.Method(HL.Boolean, HL.Opt(HL.String, HL.String)) <
         if not active then
             return
         end
-        local prefab = LuaSystemManager.cashShopItemPrefabSystem.timePrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("TagTime", self)
         if not prefab then
             return
         end
@@ -285,7 +297,7 @@ end
 CashShopItemTag._SetTag = HL.Method(HL.String, HL.Opt(HL.String)) << function(self, tag, text)
     local tagCell = self.view[tag]
     if tagCell == nil then
-        local prefab = LuaSystemManager.cashShopItemPrefabSystem[tag]
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab(TAG_PREFAB_KEYS[tag], self)
         if not prefab then
             return
         end

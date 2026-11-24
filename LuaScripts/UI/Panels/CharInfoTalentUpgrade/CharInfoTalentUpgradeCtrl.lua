@@ -117,9 +117,6 @@ CharInfoTalentUpgradeCtrl._RefreshNodeCommon = HL.Method(HL.Table, HL.Number, HL
     if node.upgradeItemCellCache == nil then
         node.upgradeItemCellCache = UIUtils.genCellCache(node.itemCell)
     end
-    if not isActive and node.scrollRect then
-        node.scrollRect.horizontalNormalizedPosition = 0
-    end
 
     self.m_refreshCostFunc = function()
         if type(costList) == "table" then
@@ -135,6 +132,7 @@ CharInfoTalentUpgradeCtrl._RefreshNodeCommon = HL.Method(HL.Table, HL.Number, HL
         end
     end
     self.m_refreshCostFunc()
+    self:_ScrollCostListToFirstNotEnough(node, costList)
 
     if node.activationConditions then
         local isShowCondition = conditionShowFunc and conditionShowFunc()
@@ -861,6 +859,42 @@ CharInfoTalentUpgradeCtrl._RefreshItemCell = HL.Method(HL.Userdata, HL.String, H
             expectedRewardItemId = itemId,
             expectedRewardItemCount = needCount - storageCount,
         })
+    end
+end
+
+
+CharInfoTalentUpgradeCtrl._ScrollCostListToFirstNotEnough = HL.Method(HL.Table, HL.Any) << function(self, node, costList)
+    if not node.scrollRect or not costList then
+        return
+    end
+
+    local firstNotEnoughIndex
+    if type(costList) == "table" then
+        for index = 1, #costList do
+            local itemCfg = costList[index]
+            if Utils.getItemCount(itemCfg.id, true) < itemCfg.count then
+                firstNotEnoughIndex = index
+                break
+            end
+        end
+    elseif type(costList) == "userdata" then
+        for index = 1, #costList do
+            local itemCfg = costList[CSIndex(index)]
+            if Utils.getItemCount(itemCfg.id, true) < itemCfg.count then
+                firstNotEnoughIndex = index
+                break
+            end
+        end
+    end
+
+    if firstNotEnoughIndex then
+        local cell = node.upgradeItemCellCache:Get(firstNotEnoughIndex)
+        if cell then
+            LayoutRebuilder.ForceRebuildLayoutImmediate(node.scrollRect.content)
+            node.scrollRect:AutoScrollToRectTransform(cell.transform, true)
+        end
+    else
+        node.scrollRect.horizontalNormalizedPosition = 0
     end
 end
 

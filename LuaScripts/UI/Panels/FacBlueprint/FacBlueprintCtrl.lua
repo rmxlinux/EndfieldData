@@ -944,6 +944,10 @@ FacBlueprintCtrl._OnClickCreate = HL.Method() << function(self)
         return
     end
 
+    if PhaseManager:IsInPhaseTransition() then
+        return
+    end
+
     self:_ExitOtherPhase()
 
     if not Utils.isInFactoryMode() then
@@ -985,6 +989,10 @@ end
 FacBlueprintCtrl._OnClickUseBtn = HL.Method() << function(self)
     if not Utils.isInFacMainRegion() then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BLUEPRINT_USE_WHEN_OUTSIDE)
+        return
+    end
+
+    if PhaseManager:IsInPhaseTransition() then
         return
     end
 

@@ -38,7 +38,7 @@ SeasonTowerDungeonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
 
     if GameInstance.dungeonManager.inDungeon then
         self.m_originalDungeonId = self.m_dungeonId
-        PhaseManager:AddPhaseForbiddenConfig(QUICK_SELECT_FORBIDDEN_TYPE, {
+        PhaseManager:AddPhaseForbiddenOverrideConfig(QUICK_SELECT_FORBIDDEN_TYPE, {
             [PhaseId.CharFormation] = {
                 forbid = false
             },
@@ -132,12 +132,12 @@ SeasonTowerDungeonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
             self:_OnDifficultyListNaviFailed(dir)
         end)
     end
-    
+
     self:_OnSelectGameGroup(defaultTabIndex)
 
     
     self:_TryRecoverPopupState(arg and arg.popupState or nil)
-    
+
     UIUtils.bindHyperlinkPopup(self, "DungeonEntry", self.view.inputGroup.groupId)
 end
 
@@ -172,7 +172,7 @@ SeasonTowerDungeonEntryCtrl._OnDifficultyListNaviFailed = HL.Method(CS.UnityEngi
 end
 
 SeasonTowerDungeonEntryCtrl.OnClose = HL.Override() << function(self)
-    PhaseManager:RemovePhaseForbiddenConfig(QUICK_SELECT_FORBIDDEN_TYPE)
+    PhaseManager:RemovePhaseForbiddenOverrideConfig(QUICK_SELECT_FORBIDDEN_TYPE)
 end
 
 SeasonTowerDungeonEntryCtrl._OnSelectGameGroup = HL.Method(HL.Number) << function(self, index)
@@ -187,7 +187,7 @@ SeasonTowerDungeonEntryCtrl._OnSelectGameGroup = HL.Method(HL.Number) << functio
     self.view.monsterImg:LoadSprite(UIConst.UI_SPRITE_SEASONTOWER, levelCfg.iconBanner)
 
     self.view.nameTxt.text = groupData.gameGroupName
-    
+
     local defaultIndex = 1
     if self.m_dungeonId and not string.isEmpty(self.m_dungeonId) then
         for i, gameId in ipairs(self.m_gameIds) do
@@ -212,7 +212,7 @@ SeasonTowerDungeonEntryCtrl._OnSelectGameGroup = HL.Method(HL.Number) << functio
         levelData.completeTask and "03" or "02", "01")
 
     self:_SelectGame(defaultIndex)
-    
+
     if DeviceInfo.usingController then
         self:SetNaviTarget(self.view[("selectBtn" .. self.m_selectedIndex)])
     end

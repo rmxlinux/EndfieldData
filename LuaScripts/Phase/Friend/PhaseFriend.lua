@@ -34,8 +34,11 @@ PhaseFriend.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Num
 end
 
 PhaseFriend._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    
     if self.arg == nil then
         self.arg = {}
+    else
+        self.arg = lume.deepCopy(self.arg)
     end
 
     self.m_panelItemDic = {}

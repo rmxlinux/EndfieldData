@@ -145,11 +145,15 @@ LevelCameraCtrl._LoadLevelCamera = HL.Method() << function(self)
         return
     end
     local camCtrl = CameraManager:GetMainLevelCameraController()
+    local shouldInitFollow = camCtrl == nil or not InputManagerInst.inChangingInputDevice
     if camCtrl == nil then
         camCtrl = CameraManager:LoadPersistentController("LevelCamera")
     end
-    local mainCharRoot = GameInstance.playerController.mainCharacter.rootCom
-    camCtrl:SetFollow(mainCharRoot.transform)
+    
+    if shouldInitFollow then
+        local mainCharRoot = GameInstance.playerController.mainCharacter.rootCom
+        camCtrl:SetFollow(mainCharRoot.transform)
+    end
     self.m_curFreeLookCamCtrl = camCtrl
 
     local normalCam = camCtrl.levelVirtualCamera

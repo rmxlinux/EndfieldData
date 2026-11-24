@@ -21,8 +21,6 @@ end
 
 ActivityWulingParkourCtrl._InitData = HL.Method(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
-    
-    args.skipReceive = true
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
 end
 
@@ -48,69 +46,6 @@ ActivityWulingParkourCtrl._RefreshAllUIs = HL.Method() << function(self)
         self.view.activityCommonInfo.view.gotoNode.medalNode.gameObject:SetActive(true)
         self:_RefreshStageTip()
     end
-    self:_RefreshActivityCommonInfoRewardState()
-end
-
-
-
-ActivityWulingParkourCtrl._RefreshActivityCommonInfoRewardState = HL.Method() << function(self)
-    local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
-    local receiveAll = false
-    if activity then
-        receiveAll = activity.receiveAllReward and self:_HasReceivedAllMilestoneRewards()
-                and self:_HasClearedAllDungeonsWithThreeStars()
-    end
-
-    receiveAll = receiveAll and not self.view.activityCommonInfo.view.config.HIDE_RECEIVE_ALL
-    local gotoNode = self.view.activityCommonInfo.view.gotoNode
-    gotoNode.receiveAllNode.gameObject:SetActive(receiveAll)
-    gotoNode.notReceiveAllNode.gameObject:SetActive(not receiveAll)
-end
-
-ActivityWulingParkourCtrl._HasReceivedAllMilestoneRewards = HL.Method().Return(HL.Boolean) << function(self)
-    local haveCfg, milestoneCfg = Tables.activityConditionalMultiStageMilestoneTable:TryGetValue(self.m_activityId)
-    if not haveCfg then
-        return false
-    end
-
-    local hasMilestoneReward = false
-    for milestoneId, _ in pairs(milestoneCfg.mileStones) do
-        if not GameInstance.player.activitySystem:IsActivityMilestoneReceived(self.m_activityId, milestoneId) then
-            return false
-        end
-        hasMilestoneReward = true
-    end
-    return hasMilestoneReward
-end
-
-
-ActivityWulingParkourCtrl._HasClearedAllDungeonsWithThreeStars = HL.Method().Return(HL.Boolean) << function(self)
-    local _, activityDungeonData = Tables.ActivityDungeonTable:TryGetValue(self.m_activityId)
-    if not activityDungeonData then
-        return false
-    end
-
-    local hasDungeon = false
-    local parkourSystem = GameInstance.player.parkourSystem
-    for _, gameData in pairs(activityDungeonData.gameMap) do
-        if gameData and not string.isEmpty(gameData.gameId) then
-            hasDungeon = true
-            local gameId = gameData.gameId
-            if not parkourSystem:CheckMainGoalIsCompleted(gameId) then
-                return false
-            end
-
-            local extraTaskCount = 3
-            local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(gameId)
-            if success and subGameData.extraTasks and subGameData.extraTasks.Count > 0 then
-                extraTaskCount = subGameData.extraTasks.Count
-            end
-            if parkourSystem:GetCompletedExtraTaskCountBySubGameId(gameId) < extraTaskCount then
-                return false
-            end
-        end
-    end
-    return hasDungeon
 end
 
 ActivityWulingParkourCtrl._RefreshStageTip = HL.Method() << function(self)
@@ -195,7 +130,6 @@ ActivityWulingParkourCtrl._OnMilestoneRewardReceived = HL.Method(HL.Any) << func
     if activityId ~= self.m_activityId then
         return
     end
-    self:_RefreshActivityCommonInfoRewardState()
 end
 
 ActivityWulingParkourCtrl._OnActivityUpdated = HL.Method(HL.Any) << function(self, arg)

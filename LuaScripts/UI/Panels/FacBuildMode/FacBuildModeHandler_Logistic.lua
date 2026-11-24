@@ -98,9 +98,6 @@ FacBuildModeHandler_Logistic.OnConfirm = HL.Override() << function(self)
 end
 
 FacBuildModeHandler_Logistic.CanRotate = HL.Override().Return(HL.Boolean) << function(self)
-    if FacConst.FAC_VALVE_NODE_IDS[self.m_host.m_buildingId] then
-        return false
-    end
     return true
 end
 

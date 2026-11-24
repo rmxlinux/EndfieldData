@@ -8,6 +8,7 @@ local DomainPOIUtils = {}
 DomainPOIUtils.GetRedDotInfoFunc = {
     [GEnums.DomainPoiType.DomainDepot] = "getRedDotInfoDomainDepot",
     [GEnums.DomainPoiType.KiteStation] = "getKiteStationRedDotInfo",
+    [GEnums.DomainPoiType.WonderBuild] = "getWonderBuildRedDotInfo",
 }
 
 
@@ -27,6 +28,13 @@ function DomainPOIUtils.getKiteStationRedDotInfo(domainId)
     }
 end
 
+function DomainPOIUtils.getWonderBuildRedDotInfo(domainId)
+    return {
+        redDotName = "WonderBuild",
+        redDotArgs = "",
+    }
+end
+
 
 
 
@@ -34,6 +42,7 @@ DomainPOIUtils.CheckCanOpenPOIFunc = {
     [GEnums.DomainPoiType.DomainShop] = "checkCanOpenDomainShop",
     [GEnums.DomainPoiType.DomainDepot] = "checkCanOpenDomainDepot",
     [GEnums.DomainPoiType.KiteStation] = "checkCanOpenKiteStation",
+    [GEnums.DomainPoiType.WonderBuild] = "checkCanOpenWonderBuild",
 }
 
 
@@ -71,6 +80,12 @@ function DomainPOIUtils.checkCanOpenKiteStation(domainId)
         end
     end
     return false
+end
+
+
+
+function DomainPOIUtils.checkCanOpenWonderBuild(domainId)
+    return domainId == Tables.wonderBuildConst.wonderBuildChapterId
 end
 
 

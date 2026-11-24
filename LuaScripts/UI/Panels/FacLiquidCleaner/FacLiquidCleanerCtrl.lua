@@ -58,12 +58,13 @@ FacLiquidCleanerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self:_RefreshNaviGroupSwitcherInfos()
         end,
         hasFluidInCache = true,
+        hasGasInCache = true,
     })
 
     self.view.facCacheRepository:InitFacCacheRepository({
         cache = self.m_buildingInfo.fluidCache,
         isInCache = true,
-        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid,
+        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid,
         cacheIndex = 1,
         slotCount = 1,
         fakeFormulaDataList = FactoryUtils.getBuildingCrafts(self.m_buildingInfo.buildingId)
@@ -326,14 +327,21 @@ FacLiquidCleanerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) 
 
     
     local itemId = itemBundle.id
-    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
-    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid)
     local isBottle = isEmptyBottle or isFullBottle
     local isEmpty = string.isEmpty(itemBundle.id)
     local needMask = not isBottle and not isEmpty
     if isFullBottle then
-        local fullBottleData = Tables.fullBottleTable[itemId]
-        local liquidItemId = fullBottleData.liquidId
+        local liquidItemId = ""
+        if Tables.fullBottleTable:ContainsKey(itemId) then
+            local fullBottleData = Tables.fullBottleTable[itemId]
+            liquidItemId = fullBottleData.liquidId
+        end
+        if Tables.fullGasJarTable:ContainsKey(itemId) then
+            local fullGasJarData = Tables.fullGasJarTable[itemId]
+            liquidItemId = fullGasJarData.gasId
+        end
         needMask = needMask or not self.m_validLiquidIds[liquidItemId]
     end
     

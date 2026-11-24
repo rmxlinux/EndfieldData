@@ -133,7 +133,34 @@ function EquipTechUtils.getEquipEnhanceMaterialsGroups(partType, attrShowInfo, e
     local sortFunc = Utils.genSortFunction(EquipTechConst.EQUIP_ENHANCE_MATERIALS_SORT_OPTION[1].keys, false)
     table.sort(group.itemList, sortFunc)
     table.sort(enhancedGroup.itemList, sortFunc)
+
+    
+    local primeGroup = {
+        title = Language.LUA_EQUIP_ENHANCE_MATERIALS_PRIME_TITLE,
+        itemList = {},
+    }
+    local targetEquipInstData = EquipTechUtils.getEquipInstData(equipInstId)
+    if targetEquipInstData then
+        local _, targetEquipData = Tables.equipTable:TryGetValue(targetEquipInstData.templateId)
+        if targetEquipData then
+            local _, costData = Tables.equipEnhanceCostTable:TryGetValue(targetEquipData.domainId)
+            if costData and costData.allowPrimeItemIdList then
+                for i = 0, #costData.allowPrimeItemIdList - 1 do
+                    local itemId = costData.allowPrimeItemIdList[i]
+                    local got = GameInstance.player.inventory:IsItemGot(itemId)
+                    local primeItemInfo = got and FilterUtils.processItemDefault(itemId) or nil
+                    if primeItemInfo then
+                        table.insert(primeGroup.itemList, primeItemInfo)
+                    end
+                end
+            end
+        end
+    end
+
     local groups = {}
+    if #primeGroup.itemList > 0 then
+        table.insert(groups, primeGroup)
+    end
     if #group.itemList > 0 then
         table.insert(groups, group)
     end

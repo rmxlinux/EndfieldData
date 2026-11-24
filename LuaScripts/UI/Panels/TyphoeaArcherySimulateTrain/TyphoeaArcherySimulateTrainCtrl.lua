@@ -314,6 +314,7 @@ TyphoeaArcherySimulateTrainCtrl._ShowRewardDetail = HL.Method() << function(self
     end
     table.sort(rewardData, Utils.genSortFunction(UIConst.COMMON_ITEM_SORT_KEYS))
     local args = {
+        gameMechanicsId = self.m_curSelectedDungeonId,
         firstPartRewards = rewardData,
     }
     UIManager:AutoOpen(PanelId.CommonRewardDetailsPopup, args)

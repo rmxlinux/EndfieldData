@@ -21,6 +21,7 @@ local SMART_ALERT_FUNCTION_NAME_LIST = {
     "_CheckAlertOutputCacheFullWithoutPipeCondition",
     "_CheckAlertOutputCacheFullWithBeltCondition",
     "_CheckAlertOutputCacheFullWithoutBeltCondition",
+    "_CheckAlertGasReactorOutputBlockedCondition",
     "_CheckAlertInputCacheFullCondition",
     "_CheckAlertFluidOutputMultiBlockedCondition",
     "_CheckAlertNormalOutputMultiBlockedCondition",
@@ -237,6 +238,7 @@ FacMachineCrafterCtrl.OnShow = HL.Override() << function(self)
         self.view.cacheBelt:RefreshBeltCellsState()
         self.view.cachePipe:RefreshPipeCellsState()
     end
+    self:_TriggerDisplayFormulaCondition(false)
 end
 
 FacMachineCrafterCtrl.OnHide = HL.Override() << function(self)
@@ -244,6 +246,7 @@ FacMachineCrafterCtrl.OnHide = HL.Override() << function(self)
 end
 
 FacMachineCrafterCtrl.OnAnimationInFinished = HL.Override() << function(self)
+    self:_TriggerDisplayFormulaCondition(true)
 end
 
 
@@ -292,6 +295,14 @@ end
 
 
 
+
+FacMachineCrafterCtrl._TriggerDisplayFormulaCondition = HL.Method(HL.Boolean) << function(self, isAnimationEnd)
+    local formulaId = self:_GetMachineFormulaId()
+    if string.isEmpty(formulaId) then
+        return
+    end
+    CS.Beyond.Gameplay.Conditions.OnFacMachineCrafterDisplayFormula.Trigger(formulaId, isAnimationEnd)
+end
 
 FacMachineCrafterCtrl._GetMachineFormulaId = HL.Method().Return(HL.String) << function(self)
     local lockFormulaId = FactoryUtils.getMachineCraftLockFormulaId(self.m_uiInfo.nodeId)
@@ -1156,6 +1167,42 @@ FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithPipeCondition = HL.Method(HL
     return false
 end
 
+FacMachineCrafterCtrl._CheckAlertGasReactorOutputBlockedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
+    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Blocked then
+        return false
+    end
+
+    
+    
+    
+    
+    
+    if self.m_uiInfo.nodeHandler.templateId == "gas_reactor_1" then
+        local liquidCache = self.m_uiInfo:GetCache(1, false, true)
+        if liquidCache and liquidCache.items.Count > 0 then
+            for itemId, itemCount in cs_pairs(liquidCache.items) do
+                local facItemSuccess, facItemData = Tables.factoryItemTable:TryGetValue(itemId)
+                if facItemSuccess and itemCount < facItemData.buildingBufferStackLimit then
+                    local _, csIndex = liquidCache.itemOrderMap:TryGetValue(itemId)
+                    local checkOpen = DeviceInfo.usingController and
+                        self.view.cacheArea:CheckRepoNaviTargetTopLayer(false) and
+                        self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
+                    local slotGroup = self.m_smartAlertTargetTransformCache.fluidOutput[1]
+                    local targetTransform = slotGroup and slotGroup[LuaIndex(csIndex)] or self.m_smartAlertTargetTransformCache.state
+                    local alertInfo = {
+                        condition = GEnums.FacSmartAlertType.GasReactorOutputBlocked,
+                        targetTransform = targetTransform,
+                        defaultOpen = checkOpen
+                    }
+                    return true, alertInfo
+                end
+            end
+        end
+    end
+
+    return false
+end
+
 FacMachineCrafterCtrl._CheckAlertInputInvalidFormulaCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Idle then
         return false
@@ -1434,7 +1481,7 @@ FacMachineCrafterCtrl._CheckAlertActivatorCostInsufficientCondition = HL.Method(
     
     
     if self.m_uiInfo.activatorCost ~= nil and self.view.activatorNodes ~= nil then
-        if self.m_uiInfo.activatorCost.currentBufCnt * 6 < self.m_activatorNeedCount then
+        if self.m_uiInfo.activatorCost.currentBufCnt * FacConst.FAC_RECENT_10S_COUNT_TO_MINUTE_RATE_SCALE < self.m_activatorNeedCount then
             local checkOpen = DeviceInfo.usingController and
                 self.view.activatorNodes.naviGroup.IsTopLayer and
                 self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()

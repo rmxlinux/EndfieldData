@@ -41,7 +41,6 @@ CharInfoAttributeHintCtrl.m_args = HL.Field(HL.Table)
 
 CharInfoAttributeHintCtrl.m_isFC = HL.Field(HL.Boolean) << false
 
-
 CharInfoAttributeHintCtrl.m_posTrackCoroutine = HL.Field(HL.Thread)
 
 CharInfoAttributeHintCtrl.CharInfoShowFCAttrHint = HL.StaticMethod(HL.Table) << function(args)
@@ -113,26 +112,13 @@ CharInfoAttributeHintCtrl._TryShowHint = HL.StaticMethod(HL.Table, HL.Boolean) <
     local tipsNode = args.tipsPos or args.transform
     LayoutRebuilder.ForceRebuildLayoutImmediate(hintNode.content.transform)
     self:_UpdateHintNodePosition(hintNode, tipsNode)
-    
     if self.m_posTrackCoroutine then
         self.m_posTrackCoroutine = self:_ClearCoroutine(self.m_posTrackCoroutine)
     end
     self.m_posTrackCoroutine = self:_StartCoroutine(function()
-        local stableCount = 0
-        local lastX, lastY
         while true do
             coroutine.step()
             self:_UpdateHintNodePosition(hintNode, tipsNode)
-            local pos = hintNode.transform.anchoredPosition
-            if lastX ~= nil and math.abs(pos.x - lastX) < 0.01 and math.abs(pos.y - lastY) < 0.01 then
-                stableCount = stableCount + 1
-                if stableCount >= 3 then
-                    return
-                end
-            else
-                stableCount = 0
-            end
-            lastX, lastY = pos.x, pos.y
         end
     end)
     hintNode.autoCloseArea.tmpSafeArea = args.transform

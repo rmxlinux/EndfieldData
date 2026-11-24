@@ -61,150 +61,34 @@ end
 CommonTaskTrackSystem.OnInit = HL.Override() << function(self)
 end
 
+
+
+
 CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
-    self.configs = {
+    
+    local trackConfig = require_ex('LuaSystem/ActionQueueConfig/ActionQueueConfig_GameplayTask')
 
-        
-        DungeonInfo = {
-            needWait = true,
-            order = 1,
-        },
+    self.configs = {}
+    for tierIndex, tier in ipairs(trackConfig.tiers) do
+        for _, name in ipairs(tier) do
+            local cfg = trackConfig.types[name]
+            if cfg == nil then
+                logger.error("CommonTaskTrackSystem._InitConfigs: tiers 里的", name, "在 types 里找不到")
+            elseif self.configs[name] ~= nil then
+                logger.error("CommonTaskTrackSystem._InitConfigs:", name, "在 tiers 里出现了多次")
+            else
+                cfg.name = name
+                
+                cfg.order = tierIndex
+                self.configs[name] = cfg
+            end
+        end
+    end
 
-        
-        SeasonTowerEnemyBuffPopup = {
-            needWait = true,
-            order = 1,
-        },
-
-        
-        TrackCountdown = {
-            needWait = false,
-            order = 4,
-        },
-
-        
-        TrackStartCountdown = {
-            needWait = false,
-            order = 5,
-        },
-
-        
-        
-        
-        ForceClearTrackHud = {
-            needWait = false,
-            order = 5,
-            forceClear = true,
-        },
-
-        
-        TrackHud = {
-            needWait = false,
-            order = 5,
-        },
-
-        CoinActivityIntro = {
-            needWait = true,
-            order = 5,
-        },
-
-        
-        TrackStartToast = {
-            needWait = true,
-            order = 5,
-        },
-
-        
-        TrackStateFinish = {
-            needWait = true,
-            order = 5,
-        },
-
-        
-        TrackStateChange = {
-            needWait = false,
-            order = 5,
-        },
-
-        
-        TrackHudShowEndEffect = {
-            needWait = true,
-            order = 5,
-        },
-
-        
-        TrackEndToast = {
-            needWait = true,
-            order = 5,
-        },
-
-        
-        ContingencyContractHudTimer = {
-            needWait = false,
-            order = 10,
-        },
-
-        
-        
-        SeasonTowerRankUp = {
-            needWait = true,
-            order = 15,
-        },
-
-        
-        DungeonSettlement = {
-            needWait = false,
-            order = 20,
-        },
-
-        
-        TyphoeaArcherySettlementPopup = {
-            needWait = false,
-            order = 20,
-        },
-
-        
-        ContingencyContractSettlement = {
-            needWait = false,
-            order = 20,
-        },
-
-        
-        DeathInfo = {
-            needWait = false,
-            order = 20,
-        },
-        
-
-        
-        
-        BlackboxDiff = {
-            needWait = false,
-            order = 100,
-        },
-
-        
-        ContingencyContractHud = {
-            needWait = false,
-            order = 100,
-        },
-
-        
-        CoinActivityBuffToast = {
-            needWait = false,
-            order = 100,
-        },
-
-        
-        CoinTaskFinishToast = {
-            needWait = false,
-            order = 100,
-        },
-        
-    }
-
-    for k, v in pairs(self.configs) do
-        v.name = k
+    for name, _ in pairs(trackConfig.types) do
+        if self.configs[name] == nil then
+            logger.error("CommonTaskTrackSystem._InitConfigs: types 里的", name, "没有出现在任何一个档位里")
+        end
     end
 end
 
@@ -213,26 +97,16 @@ CommonTaskTrackSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(HL.F
     local requestId = self.m_nextRequestId
     self.m_nextRequestId = self.m_nextRequestId + 1
     local cfg = self.configs[type]
-    if cfg.forceClear then
-        for _, request in ipairs(self.m_pendingRequests) do
-            if request.interruptAction then
-                request.interruptAction()
-            end
-        end
-        self.m_pendingRequests = {}
-        self.m_isShowing = false
-    end
-
     local request = {
         id = requestId,
         type = type,
         action = action,
         order = cfg.order,
-        noRemoveRequests = cfg.noRemoveRequests,
         interruptAction = interruptAction,
     }
     table.insert(self.m_pendingRequests, request)
     table.sort(self.m_pendingRequests, Utils.genSortFunction({ "order", "id" }, true))
+    self:_UpdateMainHudActionQueueBlocker()
     logger.info("CommonTaskTrackSystem.AddRequest type:", type)
     self:_TryAddStartPanelTimer()
 end
@@ -311,8 +185,28 @@ CommonTaskTrackSystem._StartFirstRequest = HL.Method() << function(self)
     end
 end
 
+
+
+
+
+CommonTaskTrackSystem.ClearTrack = HL.Method() << function(self)
+    logger.info("CommonTaskTrackSystem.ClearTrack pending:", #self.m_pendingRequests)
+    for _, request in ipairs(self.m_pendingRequests) do
+        if request.interruptAction then
+            request.interruptAction()
+        end
+    end
+    self.m_pendingRequests = {}
+    self:_UpdateMainHudActionQueueBlocker()
+    self.m_isShowing = false
+    if self.m_tryStartPanelTimerId > 0 then
+        self.m_tryStartPanelTimerId = self:_ClearTimer(self.m_tryStartPanelTimerId)
+    end
+end
+
 CommonTaskTrackSystem._ForceClearRequest = HL.Method() << function(self)
     self.m_pendingRequests = {}
+    self:_UpdateMainHudActionQueueBlocker()
     self.m_isShowing = false
 
     if self.m_tryStartPanelTimerId > 0 then
@@ -332,7 +226,7 @@ CommonTaskTrackSystem.OnOneCommonTaskPanelFinish = HL.Method(HL.String) << funct
         return
     end
     table.remove(self.m_pendingRequests, 1) 
-    Notify(MessageConst.ON_ONE_COMMON_TASK_REQUEST_FINISH)
+    self:_UpdateMainHudActionQueueBlocker()
     if self.m_pendingRequests[1] then
         self:_StartFirstRequest()
     else
@@ -353,9 +247,8 @@ CommonTaskTrackSystem.Interrupt = HL.Method() << function(self)
     if request.interruptAction then
         request.interruptAction()
     end
-    if not request.noRemoveRequests then
-        table.remove(self.m_pendingRequests, 1)
-    end
+    table.remove(self.m_pendingRequests, 1)
+    self:_UpdateMainHudActionQueueBlocker()
 end
 
 CommonTaskTrackSystem.NeedPendingManiHudToast = HL.Method().Return(HL.Boolean) << function(self)
@@ -373,6 +266,16 @@ end
 
 CommonTaskTrackSystem.HasRequest = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_pendingRequests[1] ~= nil and self.configs[self.m_pendingRequests[1].type].needWait == true
+end
+
+
+
+CommonTaskTrackSystem._UpdateMainHudActionQueueBlocker = HL.Method() << function(self)
+    if self:HasRequest() then
+        LuaSystemManager.mainHudActionQueue:AddBlocker("CommonTaskTrack")
+    else
+        LuaSystemManager.mainHudActionQueue:RemoveBlocker("CommonTaskTrack")
+    end
 end
 
 CommonTaskTrackSystem.HasRequestType = HL.Method(HL.String).Return(HL.Boolean) << function(self, actionType)

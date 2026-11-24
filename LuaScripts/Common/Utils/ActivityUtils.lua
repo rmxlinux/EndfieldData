@@ -169,9 +169,53 @@ end
 
 
 
+function ActivityUtils.isActivityReceiveAllRewardShown(activityId)
+    local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+    if not activity then
+        return false
+    end
+    local hasCfg, cfg = false, nil
+    if Tables.activityReceiveAllDisplayConditionTable then
+        hasCfg, cfg = Tables.activityReceiveAllDisplayConditionTable:TryGetValue(activityId)
+    end
+    local conditionListMissing = (not hasCfg)
+        or (not cfg)
+        or (not cfg.conditionList)
+        or (not cfg.conditionList.Count)
+        or (cfg.conditionList.Count <= 0)
+    if conditionListMissing then
+        return activity.isCompleted
+    end
+    local list = cfg.conditionList
+    local context = { activityId = activityId }
+    for i = 1, list.Count do
+        local cond = list[CSIndex(i)]
+        if cond then
+            local ok, value = LuaGameConditionUtils.getConditionValueByParameters(cond.conditionType, cond.parameters, context)
+            if not ok then
+                logger.error(
+                    "Activity receive-all display condition is unsupported or evaluation failed: activityId=%s, conditionId=%s, conditionType=%s",
+                    tostring(activityId),
+                    tostring(cond.conditionId),
+                    tostring(cond.conditionType))
+                return false
+            end
+            if not Utils.compareInt(value, cond.progressToCompare, cond.compareOperator) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+
+
 
 
 function ActivityUtils.isTabPushActivated(pushData, activity, curTs, curWeekday)
+    if not pushData.isEnable then
+        return false
+    end
     local realEndTime = ActivityUtils.getServerPushActivityEndTime(pushData, activity)
     if realEndTime and curTs >= realEndTime then
         return false
@@ -339,8 +383,59 @@ function ActivityUtils.getActivityTaskLifecycleState(activityId)
 end
 
 
+
+
+function ActivityUtils.foreachVisibleShopGroupGoods(shopGroupId, callback)
+    local shopSystem = GameInstance.player.shopSystem
+    local shopGroupData = shopSystem:GetShopGroupData(shopGroupId)
+    if not shopGroupData then
+        return false
+    end
+    for _, shopId in pairs(shopGroupData.shopIdList) do
+        local isShopUnlocked = shopSystem:CheckShopUnlocked(shopId)
+        local shopTableData = Tables.shopTable[shopId]
+        if isShopUnlocked or shopTableData.isShowWhenLock then
+            local shopData = shopSystem:GetShopData(shopId)
+            for goodsId, goodsData in pairs(shopData.goodsDic) do
+                local isGoodsUnlocked = shopSystem:CheckGoodsUnlocked(goodsId)
+                local goodsTableData = Tables.shopGoodsTable[goodsData.goodsTemplateId]
+                if isGoodsUnlocked or goodsTableData.isShowWhenLock then
+                    if callback(shopId, goodsId, goodsData) then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+
+function ActivityUtils.hasShopGroupLimitedGoodsAvailable(shopGroupId)
+    local shopSystem = GameInstance.player.shopSystem
+    return ActivityUtils.foreachVisibleShopGroupGoods(shopGroupId, function(shopId, goodsId)
+        return shopSystem:GetRemainCountByGoodsId(shopId, goodsId) > 0
+    end)
+end
+
+
+function ActivityUtils.isShopGroupAllGoodsSoldOut(shopGroupId)
+    local shopSystem = GameInstance.player.shopSystem
+    local hasVisibleGoods = false
+    local aborted = ActivityUtils.foreachVisibleShopGroupGoods(shopGroupId, function(shopId, goodsId)
+        hasVisibleGoods = true
+        local remainCount = shopSystem:GetRemainCountByGoodsId(shopId, goodsId)
+        return remainCount == -1 or remainCount > 0
+    end)
+    return hasVisibleGoods and not aborted
+end
+
+
 local webActivityVisitText = "web_activity_first_visit_"
 function ActivityUtils.isWebActivityFirstVisitUnread(id)
+    if GameInstance.player.activitySystem:GetActivityStatus(id) == GEnums.ActivityStatus.Completed then
+        return false
+    end
     return not ClientDataManagerInst:GetBool(webActivityVisitText .. id, false)
 end
 function ActivityUtils.setWebActivityFirstVisitRead(id)
@@ -571,6 +666,9 @@ function ActivityUtils.isActivityPushPopupConditionSatisfied(pushID)
         logger.error("Activity push popup config not found: pushID=%s", tostring(pushID))
         return false
     end
+    if not popupData.isEnable then
+        return false
+    end
     local activity = GameInstance.player.activitySystem:GetActivity(popupData.activityId)
     return ActivityUtils.isActivityPushConditionSatisfied(pushID, activity)
 end
@@ -697,8 +795,13 @@ function ActivityUtils.getNaviConfig(panel, type)
         rightNaviGroup = panel.uiCtrl.view.rightNaviGroup
         forbidCommonNavi = panel.uiCtrl.view.activityCommonInfo.view.config.FORBID_COMMON_NAVI
     elseif type == GEnums.ActivityType.CharacterGift then
-        rightNaviGroup = panel.uiCtrl.view.taskListNaviGroup
-        forbidCommonNavi = panel.uiCtrl.view.activityCommonInfo.view.config.FORBID_COMMON_NAVI
+        local contentView = panel.uiCtrl.view
+        
+        if panel.uiCtrl.panelId == PanelId.ActivityCharacterGiftCommon then
+            contentView = panel.uiCtrl.m_characterGiftWidget.view
+        end
+        rightNaviGroup = contentView.taskListNaviGroup
+        forbidCommonNavi = contentView.activityCommonInfo.view.config.FORBID_COMMON_NAVI
     elseif type == GEnums.ActivityType.Checkin then
         rightNaviGroup = panel.uiCtrl.m_checkInWidget.m_scrollNaviGroup
         forbidCommonNavi = panel.uiCtrl.m_checkInWidget.view.activityCommonInfo.view.config.FORBID_COMMON_NAVI

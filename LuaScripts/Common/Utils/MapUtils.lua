@@ -19,6 +19,11 @@ function MapUtils.checkCanOpenMapAndParseArgs(args)
         return false, Language.LUA_MAP_OPEN_FORBID_CONDITION
     end
 
+    
+    if GameInstance.player.mapManager.isOverrideFollowTarget then
+        return false, Language.LUA_MAP_OPEN_FORBID_CONDITION
+    end
+
     if not string.isEmpty(args.templateId) then
         if not string.isEmpty(args.mapId) then
             if GameWorld.worldInfo.curMapIdStr == args.mapId then
@@ -57,7 +62,7 @@ function MapUtils.checkCanOpenMapAndParseArgs(args)
                     args.resourceTemplateId,
                     args.resourceItemId,
                     args.ignoreActive, args.active,
-                    args.preferredMarkList
+                    args.preferredMarkList, args.resourceItemIds
                 )
             else
                 args.instId = GameInstance.player.mapManager:GetFirstValidResourceMarkByTemplateId(
@@ -65,7 +70,7 @@ function MapUtils.checkCanOpenMapAndParseArgs(args)
                     args.resourceItemId,
                     args.mapId,
                     args.ignoreActive, args.active,
-                    args.preferredMarkList
+                    args.preferredMarkList, args.resourceItemIds
                 )
             end
         else
@@ -73,7 +78,7 @@ function MapUtils.checkCanOpenMapAndParseArgs(args)
                 args.resourceTemplateId,
                 args.resourceItemId,
                 args.ignoreActive, args.active,
-                args.preferredMarkList
+                args.preferredMarkList, args.resourceItemIds
             )
             if not string.isEmpty(mostNearbyId) then
                 args.instId = mostNearbyId
@@ -83,7 +88,7 @@ function MapUtils.checkCanOpenMapAndParseArgs(args)
                     args.resourceItemId,
                     nil,
                     args.ignoreActive, args.active,
-                    args.preferredMarkList
+                    args.preferredMarkList, args.resourceItemIds
                 )
             end
         end
@@ -185,7 +190,11 @@ function MapUtils.checkIsValidLevelId(levelId)
 end
 
 function MapUtils.openMapAndSetMarkVisibleIfNecessary(instId)
-    GameInstance.player.mapManager:SetStaticMarkVisibleStateWithCallback(instId, true, function()
+    local requestPhaseId = PhaseManager:GetTopPhaseId()
+    GameInstance.player.mapManager:SetStaticMarkVisibleStateWithCallback(instId, true, function(success)
+        if not success or PhaseManager:GetTopPhaseId() ~= requestPhaseId then
+            return
+        end
         MapUtils.openMap(instId)
     end)
 end
@@ -209,6 +218,11 @@ function MapUtils.switchFromLevelMapToRegionMap(levelId, domainId)
 end
 
 function MapUtils.switchFromRegionMapToLevelMap(instId, levelId)
+    
+    if PhaseManager:IsInPhaseTransition() then
+        return
+    end
+
     
     local topPhase = PhaseManager:GetTopPhaseId()
     if topPhase ~= PhaseId.RegionMap then

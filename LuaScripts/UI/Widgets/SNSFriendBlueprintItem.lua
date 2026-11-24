@@ -21,6 +21,7 @@ local BlueprintShowState = {
 local ICON_PATH = "ItemIcon/"
 
 SNSFriendBlueprintItem.InitSNSFriendBlueprintItem = HL.Method(HL.Any, HL.Any) << function(self, message, dialogContentNaviGroup)
+    self:_FirstTimeInit()
     self.curState = nil
     self.view.normalButton.onClick:RemoveAllListeners()
     self.view.normalButton.onClick:AddListener(function()
@@ -31,22 +32,6 @@ SNSFriendBlueprintItem.InitSNSFriendBlueprintItem = HL.Method(HL.Any, HL.Any) <<
         if self.m_bpSharedCode ~= nil and not string.isEmpty(self.m_bpSharedCode) then
             self.m_isQueryingBP = true
             GameInstance.player.remoteFactory.blueprint:SendQuerySharedBlueprint(self.m_bpSharedCode)
-        end
-    end)
-
-    self:RegisterMessage(MessageConst.FAC_ON_QUERY_SHARED_BLUEPRINT,function(arg)
-        if self.m_isQueryingBP then
-            self.m_isQueryingBP = false
-            Notify(MessageConst.FAC_ON_UPDATE_FRIEND_CHAT_STATE, true)
-            UIManager:Open(PanelId.FacSaveBlueprint, {
-                bpInst = unpack(arg),
-                isSharing = false,
-                isEditing = false,
-                isImporting = true,
-                id = -1,
-                shareCode = self.m_bpSharedCode,
-                fromFriend = true,
-            })
         end
     end)
 
@@ -62,6 +47,24 @@ SNSFriendBlueprintItem.InitSNSFriendBlueprintItem = HL.Method(HL.Any, HL.Any) <<
     self:UpdateBluePrintShow(message)
 end
 
+
+SNSFriendBlueprintItem._OnFirstTimeInit = HL.Override() << function(self)
+    self:RegisterMessage(MessageConst.FAC_ON_QUERY_SHARED_BLUEPRINT,function(arg)
+        if self.m_isQueryingBP then
+            self.m_isQueryingBP = false
+            Notify(MessageConst.FAC_ON_UPDATE_FRIEND_CHAT_STATE, true)
+            UIManager:Open(PanelId.FacSaveBlueprint, {
+                bpInst = unpack(arg),
+                isSharing = false,
+                isEditing = false,
+                isImporting = true,
+                id = -1,
+                shareCode = self.m_bpSharedCode,
+                fromFriend = true,
+            })
+        end
+    end)
+end
 
 SNSFriendBlueprintItem.UpdateBluePrintShow = HL.Method(HL.Any) << function(self, message)
     self.m_message = message
@@ -99,6 +102,7 @@ SNSFriendBlueprintItem.UpdateBluePrintShow = HL.Method(HL.Any) << function(self,
     end
 
     self.m_getTagCellFunc = UIUtils.genCachedCellFunction(self.view.tagScrollList)
+    self.view.tagScrollList.onUpdateCell:RemoveAllListeners()
     self.view.tagScrollList.onUpdateCell:AddListener(function(gameObject, csIndex)
         local cell = self.m_getTagCellFunc(gameObject)
         if self.m_message.bpTags ~= nil then

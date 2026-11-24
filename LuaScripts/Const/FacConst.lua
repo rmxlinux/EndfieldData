@@ -39,6 +39,8 @@ FACTORY_BUILDING_UI_MAP = {
     [GEnums.FacBuildingType.Decorate] = { "FacDecorate", false },
     [GEnums.FacBuildingType.MachineWithActivator] = { "FacMachineActivator", false },
     [GEnums.FacBuildingType.EnvGenWithActivator] = { "FacEnvGenActivator", false },
+    [GEnums.FacBuildingType.WonderSupplyPort] = { "FacRebuildSupplyPort", false },
+    [GEnums.FacBuildingType.FormationStake] = { "FacFormationStake", false },
 }
 
 
@@ -123,6 +125,17 @@ FAC_INTERACT_TARGET_TYPE = {
     Logistic = 2,
     Pipe = 3,
     Belt = 4,
+    FormationZone = 5,
+}
+
+
+FAC_TOP_VIEW_TARGET_SORT_ID = {
+    FormationZone = 50,
+    Pipe = 100,
+    PipeLogistic = 150,
+    Building = 200,
+    ConveyorLogistic = 200,
+    Belt = 300,
 }
 
 FAC_INTERACT_SUB_KIND = {
@@ -149,6 +162,7 @@ FAC_INTERACT_OPTION_SOURCE_ID = {
     DeleteAllBelt = "DeleteAllBelt",
     Pipe = "LogisticPipe",
     DeleteAllPipe = "DeleteAllLogisticPipe",
+    FormationZone = "FormationZone",
 }
 
 FAC_INTERACT_ICON = {
@@ -449,6 +463,9 @@ FAC_REMOTE_TOP_VIEW_NODE_POS = Vector3(0, 1000, 0)
 FAC_LOGISTIC_SPEED_OVERRIDE = 0.001
 FAC_PIPE_LOGISTIC_SPEED_OVERRIDE = 0.001
 
+
+FAC_RECENT_10S_COUNT_TO_MINUTE_RATE_SCALE = 6
+
 BattleBuildingChargingMode = {
     Battery = 1,
     PowerNet = 2,
@@ -505,6 +522,10 @@ SMARTALERT_TRANSFORM_OFFSET = {
     [GEnums.FacSmartAlertType.EnvGenInputGasInsufficient] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.EnvGenNoInputGas] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.FormulaNeedEnv] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.WonderPortInvalidSupply] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.WonderPortUpLimit] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.GasReactorOutputBlocked] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.FormationStakeInputInvalidGas] = { x = 0, y = -14 },
 }
 
 SMARTALERT_ANIMATION_NAME_POSTFIX = {
@@ -578,6 +599,24 @@ BLUEPRINT_PREVIEW_BELT_PORT_IN_UNIT = "Assets/Beyond/DynamicAssets/Gameplay/UI/S
 BLUEPRINT_PREVIEW_BELT_PORT_OUT_UNIT = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/port_out_1.png"
 BLUEPRINT_PREVIEW_PIPE_PORT_IN_UNIT = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/pipe_port_in_1.png"
 BLUEPRINT_PREVIEW_PIPE_PORT_OUT_UNIT = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/pipe_port_out_1.png"
+BLUEPRINT_PREVIEW_FORMATION_STAKE_PORT_EMPTY = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/port_out_formation_empty.png"
+BLUEPRINT_PREVIEW_FORMATION_STAKE_PORT_BY_FORMATION_ID = {
+    magic_ming = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/port_out_formation_ming.png",
+    magic_hui = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/port_out_formation_hui.png",
+}
+BLUEPRINT_PREVIEW_FORMATION_FRAME_BG_BY_FORMATION_ID = {
+    magic_heng = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_formation_magic_heng.png",
+    magic_ming = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_formation_magic_ming.png",
+    magic_hui = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_formation_magic_hui.png",
+}
+BLUEPRINT_PREVIEW_FORMATION_LINK_LINE = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_formation_magic_line.png"
+BLUEPRINT_PREVIEW_FORMATION_LINK_LINE_HEIGHT_RATIO = 372 / 452
+BLUEPRINT_PREVIEW_GET_FORMATION_STAKE_PORT_IMG_PATH = function(formationId)
+    if string.isEmpty(formationId) then
+        return BLUEPRINT_PREVIEW_FORMATION_STAKE_PORT_EMPTY
+    end
+    return BLUEPRINT_PREVIEW_FORMATION_STAKE_PORT_BY_FORMATION_ID[formationId]
+end
 BLUEPRINT_PREVIEW_EDGE_PORT_ALT_SUPPORT = {
     beltIn = {},
     beltOut = {},
@@ -788,6 +827,28 @@ NEED_AUTO_CONNECT_EXTRA_HINT_BUILDING = {
 
 
 
+FAC_TOP_VIEW_BUILDING_CAMERA_DISTANCE = {
+    ["magic_spawner_1"] = { minZoom = -320, maxZoom = -240 }, 
+    ["magic_spawner_2"] = { minZoom = -320, maxZoom = -240 }, 
+}
+
+
+
+
+FAC_TOP_VIEW_BUILDING_AUTO_MOVE_CAM = {
+    ["magic_spawner_1"] = { padding = CSFactoryUtil.Padding(0, 0, 0, 0) }, 
+    ["magic_spawner_2"] = { padding = CSFactoryUtil.Padding(0, 0, 0, 0) }, 
+}
+
+FAC_FORMATION_ZONE_TYPE_TO_ID = {
+    [CS.Beyond.Gameplay.Factory.FormationZoneTypes.MING] = "magic_ming",
+    [CS.Beyond.Gameplay.Factory.FormationZoneTypes.HUI] = "magic_hui",
+    [CS.Beyond.Gameplay.Factory.FormationZoneTypes.HENG] = "magic_heng",
+}
+
+
+
+
 TOP_VIEW_KIND = {
     Local = "Local",
     Remote = "Remote",
@@ -809,4 +870,5 @@ TOP_VIEW_TRANSITION = {
     ExitToEmpty = "ExitToEmpty",
     PopToLocal = "PopToLocal",
 }
+
 

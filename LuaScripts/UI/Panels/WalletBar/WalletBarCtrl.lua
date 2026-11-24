@@ -59,7 +59,6 @@ WalletBarCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.contentNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
         if not isFocused then
-            Notify(MessageConst.HIDE_ITEM_TIPS)
             Notify(MessageConst.ON_WALLET_BAR_LOSE_FOCUS)
         end
     end)
@@ -290,6 +289,13 @@ end
 
 WalletBarCtrl._OnCountDownComplete = HL.Method() << function(self)
     local targetTime = self:_GetTargetTime()
+    
+    if targetTime <= DateTimeUtils.GetCurrentTimestampBySeconds() then
+        logger.error("WalletBar 倒计时目标时间无效", self.m_moneyClearRule, targetTime)
+        self.view.resetMoneyTimeTxt:StopCountDown()
+        self.view.timeNode.gameObject:SetActive(false)
+        return
+    end
     self.view.resetMoneyTimeTxt:InitCountDownText(
         targetTime,
         self.m_resetMoneyCountDownCompleteFunc,

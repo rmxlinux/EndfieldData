@@ -39,7 +39,8 @@
                 "targetContextKey": null,
                 "targetGroupKey": null,
                 "targetSource": 0
-              }
+              },
+              "treatPartAsOriginalType": false
             },
             {
               "$type": "Beyond.Gameplay.Core.SaveDamageContext+Data, Gameplay.Beyond",
@@ -405,6 +406,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -694,6 +696,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -983,6 +986,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -1959,7 +1963,8 @@
                       "ownerContextKey": null,
                       "selectorData": {
                         "finderData": {
-                          "$type": "Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond"
+                          "$type": "Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond",
+                          "includeIndividualParts": false
                         },
                         "postProcessorData": [],
                         "validatorData": []
@@ -2039,6 +2044,7 @@
                       "y": 0.0,
                       "z": 0.0
                     },
+                    "bornPosOffsetDirection": 1,
                     "bornRotation": 0,
                     "bornRotationContextTarget": null,
                     "bornRotationOffset": {
@@ -2061,6 +2067,7 @@
                     "forbiddenAreaNames": [],
                     "forceSyncInit": true,
                     "inheritSourceSkillCastId": true,
+                    "inheritSourceTimeScale": false,
                     "overrideDuration": false,
                     "pauseEffectOnEnd": false,
                     "readFullPotentialExtraEffect": false,
@@ -2068,6 +2075,7 @@
                     "setAbilityEntitySource": true,
                     "setAbilityEntityTarget": true,
                     "useAdvancedDirectionSetting": true,
+                    "useBornPosOffsetDirection": false,
                     "weaponIndex": 0,
                     "yRotateFromBoneToCurPos": false
                   },
@@ -2783,7 +2791,8 @@
                       "targetContextKey": null,
                       "targetGroupKey": null,
                       "targetSource": 0
-                    }
+                    },
+                    "treatPartAsOriginalType": false
                   }
                 ],
                 "onlyExecuteWhenSourceIsGuard": false,
@@ -2904,6 +2913,68 @@
           "onlyExecuteWhenSourceIsMainChar": false
         }
       ]
+    },
+    {
+      "abilityEvent": 1706,
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.ModifyDynamicBlackboard+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 94,
+              "calculateType": 0,
+              "calculationTarget": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": null,
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": null,
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": null,
+                "targetGroupKey": null,
+                "targetSource": 4
+              },
+              "directValue": true,
+              "key": "kill_damage",
+              "operation": 0,
+              "value": {
+                "blackboardKey": null,
+                "useBlackboardKey": false,
+                "value": 0.0
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.Core.RefreshBuffAttrModifierValue+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 95
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ]
     }
   ],
   "addingCooldown": {
@@ -2916,6 +2987,7 @@
       "tagId": -1530986851
     }
   ],
+  "atbGainModifier": [],
   "attributeModifier": {
     "attributeModifiers": [],
     "isConvertedAttribute": false
@@ -3632,6 +3704,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -4020,6 +4093,8 @@
                 "z": 0.0
               },
               "hitMountPoint": 52,
+              "hitWeaponIndex": 0,
+              "hitWeaponMp": 0,
               "overrideEmitBone": false,
               "overrideHitBone": false,
               "presetPoints": [],
@@ -4115,6 +4190,7 @@
                 "targetGroupKey": "pos1",
                 "targetSource": 2
               },
+              "useWeaponHitMp": false,
               "useWeaponMp": false,
               "weaponIndex": 0,
               "weaponMp": 0
@@ -4433,6 +4509,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -4722,6 +4799,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -5554,6 +5632,7 @@
                           "playOnHittableObjects": false,
                           "saveEffectIdToBlackboard": null,
                           "spawnPhaseAlignFrame": 0,
+                          "stopPostProcessWhenHidden": false,
                           "targetSettings": {
                             "advancedDirection": {
                               "clampToXZ": true,
@@ -5899,6 +5978,7 @@
     "showProgressInHpBar": false,
     "showProgressInNormalSkillButton": false,
     "showProgressInUltimateSkillButton": false,
+    "showStackCountInMainCharHpBar": false,
     "showWarningBackground": false,
     "useWeakProgressInNormalSkillButton": false
   },
@@ -5940,7 +6020,7 @@
             "isEnable": false,
             "priorityLevel": 0,
             "priorityOffset": 0,
-            "serverActionIndex": 94,
+            "serverActionIndex": 96,
             "alignSpawnPhaseToTimeline": false,
             "bigEffectName": null,
             "bigEffectTarget": {
@@ -6194,6 +6274,7 @@
             "playOnHittableObjects": false,
             "saveEffectIdToBlackboard": null,
             "spawnPhaseAlignFrame": 0,
+            "stopPostProcessWhenHidden": false,
             "targetSettings": {
               "advancedDirection": {
                 "clampToXZ": true,
@@ -6229,7 +6310,7 @@
             "isEnable": true,
             "priorityLevel": 0,
             "priorityOffset": 0,
-            "serverActionIndex": 95,
+            "serverActionIndex": 97,
             "alignSpawnPhaseToTimeline": false,
             "bigEffectName": null,
             "bigEffectTarget": {
@@ -6483,6 +6564,7 @@
             "playOnHittableObjects": false,
             "saveEffectIdToBlackboard": null,
             "spawnPhaseAlignFrame": 0,
+            "stopPostProcessWhenHidden": false,
             "targetSettings": {
               "advancedDirection": {
                 "clampToXZ": true,
@@ -6518,7 +6600,7 @@
             "isEnable": false,
             "priorityLevel": 0,
             "priorityOffset": 0,
-            "serverActionIndex": 96,
+            "serverActionIndex": 98,
             "alignSpawnPhaseToTimeline": false,
             "bigEffectName": null,
             "bigEffectTarget": {
@@ -6772,6 +6854,7 @@
             "playOnHittableObjects": false,
             "saveEffectIdToBlackboard": null,
             "spawnPhaseAlignFrame": 0,
+            "stopPostProcessWhenHidden": false,
             "targetSettings": {
               "advancedDirection": {
                 "clampToXZ": true,

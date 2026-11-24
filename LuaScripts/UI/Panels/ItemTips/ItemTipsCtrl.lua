@@ -27,6 +27,7 @@ ItemTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.TOGGLE_ITEM_TIPS_AUTO_CLOSE] = 'ToggleItemTipsAutoClose',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemCountChanged',
     [MessageConst.ON_SYSTEM_DISPLAY_SIZE_CHANGED] = 'OnSystemSizeChange',
+    [MessageConst.ON_WONDER_BUILD_ITEM_COUNT_CHANGE] = 'OnWonderBuildItemCountChanged',
 }
 
 ItemTipsCtrl.m_itemId = HL.Field(HL.String) << ""
@@ -186,7 +187,12 @@ end
 
 
 
+
+
+
+
 ItemTipsCtrl.ShowItemTips = HL.StaticMethod(HL.Table) << function(args)
+    args.requestPhaseId = PhaseManager:GetTopPhaseId()
     local isShowing = UIManager:IsShow(PANEL_ID)
     
     local self = UIManager:AutoOpen(PANEL_ID)
@@ -218,10 +224,18 @@ end
 ItemTipsCtrl.m_cachedArgs = HL.Field(HL.Table)
 
 ItemTipsCtrl.HideItemTips = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    local onBeforeJump
+    if args and args.jumpArgs and self.m_args then
+        onBeforeJump = self.m_args.onBeforeJump
+        self.m_args.onBeforeJump = nil
+    end
     local cachedOnClose
     if self.m_cachedArgs then
         cachedOnClose = self.m_cachedArgs.onClose
         self.m_cachedArgs = nil
+    end
+    if onBeforeJump then
+        onBeforeJump(args.jumpArgs.phaseId, args.jumpArgs.phaseArgs)
     end
     local skipAnim = args and args.skipAnim
     self:_CloseTips(skipAnim)
@@ -369,6 +383,11 @@ ItemTipsCtrl.OnHide = HL.Override() << function(self)
 end
 
 ItemTipsCtrl._Update = HL.Method() << function(self)
+    
+    if self.m_autoClose and self.m_args and self:_IsStaleRequest(self.m_args) then
+        self:_CloseTips()
+        return
+    end
     self:_CheckShouldAutoClose()
 end
 
@@ -620,6 +639,21 @@ ItemTipsCtrl._RefreshCountNode = HL.Method(HL.String, HL.Userdata, HL.Boolean) <
         return
     end
 
+    if self.m_args.customOwnCount then
+        self.view.countNode.allOwnCountText.text = self.m_args.customOwnCount
+        self.view.countNode.valuableInfoNode.gameObject:SetActiveIfNecessary(false)
+        self.view.countNode.depotInfoNode.gameObject:SetActiveIfNecessary(false)
+        self.view.countNode.allDepotInfoNode.gameObject:SetActiveIfNecessary(false)
+        self.view.countNode.bagInfoNode.gameObject:SetActiveIfNecessary(false)
+        self.view.countNode.allOwnInfoNode.gameObject:SetActiveIfNecessary(true)
+        return
+    end
+
+    if self.m_args.isWonderBuild then
+        self:_RefreshWonderBuildCount()
+        return
+    end
+
     if Utils.isInBlackbox() and not UIManager:IsShow(PanelId.RewardsPopUpForBlackBox) then
         
         self.view.countNode.gameObject:SetActiveIfNecessary(false)
@@ -666,6 +700,21 @@ ItemTipsCtrl._RefreshCountNode = HL.Method(HL.String, HL.Userdata, HL.Boolean) <
     self.view.countNode.allDepotInfoNode.gameObject:SetActiveIfNecessary(not forceShowOwnCount and isPlaceInBag and showAllDepotCount)
     self.view.countNode.bagInfoNode.gameObject:SetActiveIfNecessary(not forceShowOwnCount and isPlaceInBag)
     self.view.countNode.allOwnInfoNode.gameObject:SetActiveIfNecessary(forceShowOwnCount)
+
+    self.view.countNode.gameObject:SetActiveIfNecessary(true)
+    self.view.countSpace.gameObject:SetActiveIfNecessary(true)
+end
+
+ItemTipsCtrl._RefreshWonderBuildCount = HL.Method() << function(self)
+    local wonderProgress = GameInstance.remoteFactoryManager.system.core.progressStatus.wonderProgress
+    local count = wonderProgress:GetWonderItemCount(self.m_itemId)
+    self.view.countNode.allOwnCountText.text = count
+
+    self.view.countNode.valuableInfoNode.gameObject:SetActiveIfNecessary(false)
+    self.view.countNode.depotInfoNode.gameObject:SetActiveIfNecessary(false)
+    self.view.countNode.allDepotInfoNode.gameObject:SetActiveIfNecessary(false)
+    self.view.countNode.bagInfoNode.gameObject:SetActiveIfNecessary(false)
+    self.view.countNode.allOwnInfoNode.gameObject:SetActiveIfNecessary(true)
 
     self.view.countNode.gameObject:SetActiveIfNecessary(true)
     self.view.countSpace.gameObject:SetActiveIfNecessary(true)
@@ -846,6 +895,15 @@ ItemTipsCtrl._UpdateCount = HL.Method() << function(self)
     self.view.countNode.bagCountText.text = Utils.getBagItemCount(self.m_itemId)
 end
 
+ItemTipsCtrl.OnWonderBuildItemCountChanged = HL.Method() << function(self)
+    if string.isEmpty(self.m_itemId) then
+        return
+    end
+    if self.m_args and self.m_args.isWonderBuild then
+        self:_RefreshWonderBuildCount()
+    end
+end
+
 
 
 
@@ -853,6 +911,10 @@ ItemTipsCtrl._OnClickObtainCell = HL.Method() << function(self)
 end
 
 
+
+ItemTipsCtrl._IsStaleRequest = HL.Method(HL.Table).Return(HL.Boolean) << function(self, args)
+    return args.autoClose ~= false and args.requestPhaseId ~= nil and args.requestPhaseId ~= PhaseManager:GetTopPhaseId()
+end
 
 ItemTipsCtrl._CheckShouldAutoClose = HL.Method() << function(self)
     if self:_IsFullScreen() then
@@ -960,6 +1022,12 @@ ItemTipsCtrl._CloseTips = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAn
         self.m_isTipsClosing = true
         self:PlayAnimationOutWithCallback(function()
             self.m_isTipsClosing = false
+            
+            local staleArgs
+            if self.m_cachedArgs ~= nil and self:_IsStaleRequest(self.m_cachedArgs) then
+                staleArgs = self.m_cachedArgs
+                self.m_cachedArgs = nil
+            end
             if self.m_cachedArgs == nil then
                 self:Hide()
                 if onClose then
@@ -970,6 +1038,9 @@ ItemTipsCtrl._CloseTips = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAn
                     onClose()
                 end
                 self:_ShowTips(self.m_cachedArgs)
+            end
+            if staleArgs and staleArgs.onClose then
+                staleArgs.onClose()
             end
         end)
     end

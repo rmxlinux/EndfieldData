@@ -740,7 +740,7 @@ FacRegionUpgradeCtrl._InitRegionSceneData = HL.Method() << function(self)
     end
 
     local rangeList = CSFactoryUtil.GetSceneCoreZoneRangeList(self.m_levelId, self.m_regionIndex)
-    local height = regionState.data.fenceHeight
+    local height = regionState.data.coreRegionHeight
     self.m_regionSceneDataList = {}
     for level = 1, regionState.data.maxMapLevel do
         local range = rangeList[CSIndex(level)]

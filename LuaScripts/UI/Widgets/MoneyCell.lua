@@ -272,7 +272,7 @@ MoneyCell._OnClickItem2ShowItemTips = HL.Method() << function(self)
     end
     self.m_isItemTipsShowing = true
     local usingSideTips = DeviceInfo.usingController and self.view.button.actionOnSetNaviTarget == AutoTriggerOnClick
-    Notify(MessageConst.SHOW_ITEM_TIPS, {
+    local tipsArgs = {
         transform = self.view.transform,
         safeArea = self.view.transform,
         posType = UIConst.UI_TIPS_POS_TYPE.MidBottom,
@@ -285,7 +285,17 @@ MoneyCell._OnClickItem2ShowItemTips = HL.Method() << function(self)
             self.m_isItemTipsShowing = false
             self:SetSelected(false)
         end
-    })
+    }
+    local cfg = self.m_cellConfig
+    if cfg and cfg.getTipsExtraArgs then
+        local extraArgs = cfg.getTipsExtraArgs()
+        if extraArgs then
+            for k, v in pairs(extraArgs) do
+                tipsArgs[k] = v
+            end
+        end
+    end
+    Notify(MessageConst.SHOW_ITEM_TIPS, tipsArgs)
 end
 
 MoneyCell._OnClickAddItem = HL.Method() << function(self)

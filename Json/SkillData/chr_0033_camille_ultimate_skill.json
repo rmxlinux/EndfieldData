@@ -424,7 +424,7 @@
                       "onlyExecuteWhenSourceIsMainChar": false
                     },
                     "allowCheckMainCharPosToDestPathAvailable": true,
-                    "checkMaxDistance": true,
+                    "checkMaxDistance": false,
                     "clampDirToXZ": false,
                     "ignoreNavmeshLink": true,
                     "maxDistance": 100.0,
@@ -549,6 +549,7 @@
               "priorityLevel": 0,
               "priorityOffset": 0,
               "serverActionIndex": 11,
+              "countAsControlled": false,
               "curveKey": null,
               "duration": {
                 "blackboardKey": null,
@@ -749,6 +750,65 @@
                     "cameraAnimKey": "UltimateSkillCamera",
                     "checkCollisionOnEnd": false,
                     "checkCollisionTime": -1.0,
+                    "controllerLifetimeImpulseDefinition": {
+                      "amplitudeGain": 1.0,
+                      "cameraShake2D": true,
+                      "customImpulseShape": {
+                        "preWrapMode": 8,
+                        "postWrapMode": 8,
+                        "keys": []
+                      },
+                      "directionMode": 0,
+                      "dissipationDistance": 100.0,
+                      "dissipationMode": 2,
+                      "dissipationRate": 0.0,
+                      "frequencyGain": 1.0,
+                      "impactRadius": 100.0,
+                      "impulseChannel": 1,
+                      "impulseDuration": 0.20000000298023224,
+                      "impulseShape": 0,
+                      "impulseType": 3,
+                      "propagationSpeed": 343.0,
+                      "randomize": true,
+                      "rawSignalPath": null,
+                      "repeatMode": 1,
+                      "timeEnvelope": {
+                        "m_AttackShape": {
+                          "preWrapMode": 8,
+                          "postWrapMode": 8,
+                          "keys": []
+                        },
+                        "m_AttackTime": 0.0,
+                        "m_DecayShape": {
+                          "preWrapMode": 8,
+                          "postWrapMode": 8,
+                          "keys": [
+                            {
+                              "m_Time": 0.0,
+                              "m_Value": 1.0,
+                              "m_InTangent": 0.0,
+                              "m_OutTangent": 0.0,
+                              "m_WeightedMode": 0,
+                              "m_InWeight": 0.0,
+                              "m_OutWeight": 0.0
+                            },
+                            {
+                              "m_Time": 1.0,
+                              "m_Value": 0.0,
+                              "m_InTangent": 0.0,
+                              "m_OutTangent": 0.0,
+                              "m_WeightedMode": 0,
+                              "m_InWeight": 0.0,
+                              "m_OutWeight": 0.0
+                            }
+                          ]
+                        },
+                        "m_DecayTime": 0.699999988079071,
+                        "m_HoldForever": false,
+                        "m_ScaleWithImpact": false,
+                        "m_SustainTime": 0.20000000298023224
+                      }
+                    },
                     "duration": 2.299999952316284,
                     "easeIn": false,
                     "easeInTime": -1.0,
@@ -763,6 +823,7 @@
                     "outRelativeHorizontalAngle": 0.0,
                     "outVerticalValue": 0.5,
                     "outZoomScale": 1.0,
+                    "useControllerLifetimeImpulse": false,
                     "verticalInheritType": 0,
                     "zoomScaleInheritType": 0
                   }
@@ -782,6 +843,65 @@
                     "cameraAnimKey": "UltimateSkillCamera",
                     "checkCollisionOnEnd": true,
                     "checkCollisionTime": 2.5,
+                    "controllerLifetimeImpulseDefinition": {
+                      "amplitudeGain": 1.0,
+                      "cameraShake2D": true,
+                      "customImpulseShape": {
+                        "preWrapMode": 8,
+                        "postWrapMode": 8,
+                        "keys": []
+                      },
+                      "directionMode": 0,
+                      "dissipationDistance": 100.0,
+                      "dissipationMode": 2,
+                      "dissipationRate": 0.0,
+                      "frequencyGain": 1.0,
+                      "impactRadius": 100.0,
+                      "impulseChannel": 1,
+                      "impulseDuration": 0.20000000298023224,
+                      "impulseShape": 0,
+                      "impulseType": 3,
+                      "propagationSpeed": 343.0,
+                      "randomize": true,
+                      "rawSignalPath": null,
+                      "repeatMode": 1,
+                      "timeEnvelope": {
+                        "m_AttackShape": {
+                          "preWrapMode": 8,
+                          "postWrapMode": 8,
+                          "keys": []
+                        },
+                        "m_AttackTime": 0.0,
+                        "m_DecayShape": {
+                          "preWrapMode": 8,
+                          "postWrapMode": 8,
+                          "keys": [
+                            {
+                              "m_Time": 0.0,
+                              "m_Value": 1.0,
+                              "m_InTangent": 0.0,
+                              "m_OutTangent": 0.0,
+                              "m_WeightedMode": 0,
+                              "m_InWeight": 0.0,
+                              "m_OutWeight": 0.0
+                            },
+                            {
+                              "m_Time": 1.0,
+                              "m_Value": 0.0,
+                              "m_InTangent": 0.0,
+                              "m_OutTangent": 0.0,
+                              "m_WeightedMode": 0,
+                              "m_InWeight": 0.0,
+                              "m_OutWeight": 0.0
+                            }
+                          ]
+                        },
+                        "m_DecayTime": 0.699999988079071,
+                        "m_HoldForever": false,
+                        "m_ScaleWithImpact": false,
+                        "m_SustainTime": 0.20000000298023224
+                      }
+                    },
                     "duration": 4.5,
                     "easeIn": false,
                     "easeInTime": -1.0,
@@ -796,6 +916,7 @@
                     "outRelativeHorizontalAngle": 0.0,
                     "outVerticalValue": 0.5,
                     "outZoomScale": 1.100000023841858,
+                    "useControllerLifetimeImpulse": false,
                     "verticalInheritType": 2,
                     "zoomScaleInheritType": 2
                   }
@@ -4650,6 +4771,7 @@
                         "reduceDamageForGuard": false,
                         "reduceDamageForGuardRatio": 1.0,
                         "simpleCalculation": true,
+                        "snapshotBlackboardKey": null,
                         "takeAtkSnapshot": false,
                         "updatePositionOnCoalition": true
                       }
@@ -5211,6 +5333,7 @@
                         "reduceDamageForGuard": false,
                         "reduceDamageForGuardRatio": 1.0,
                         "simpleCalculation": true,
+                        "snapshotBlackboardKey": null,
                         "takeAtkSnapshot": false,
                         "updatePositionOnCoalition": true
                       }
@@ -6081,6 +6204,7 @@
                         "reduceDamageForGuard": false,
                         "reduceDamageForGuardRatio": 1.0,
                         "simpleCalculation": true,
+                        "snapshotBlackboardKey": null,
                         "takeAtkSnapshot": false,
                         "updatePositionOnCoalition": true
                       },
@@ -6294,6 +6418,7 @@
                         "reduceDamageForGuard": false,
                         "reduceDamageForGuardRatio": 1.0,
                         "simpleCalculation": true,
+                        "snapshotBlackboardKey": null,
                         "takeAtkSnapshot": false,
                         "updatePositionOnCoalition": true
                       }
@@ -6840,6 +6965,7 @@
                 "y": 0.0,
                 "z": 0.0
               },
+              "onlyWhenActionSourceIsMainChar": false,
               "realCameraShake2D": false,
               "releaseWhenActionEnds": false,
               "targetSettings": {
@@ -6960,6 +7086,7 @@
                 "y": 0.0,
                 "z": 0.0
               },
+              "onlyWhenActionSourceIsMainChar": false,
               "realCameraShake2D": false,
               "releaseWhenActionEnds": false,
               "targetSettings": {
@@ -7080,6 +7207,7 @@
                 "y": 0.0,
                 "z": 0.0
               },
+              "onlyWhenActionSourceIsMainChar": false,
               "realCameraShake2D": false,
               "releaseWhenActionEnds": false,
               "targetSettings": {
@@ -8398,6 +8526,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -8703,6 +8832,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9008,6 +9138,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9313,6 +9444,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9618,6 +9750,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9923,6 +10056,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -10228,6 +10362,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -10533,6 +10668,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -10838,6 +10974,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -11143,6 +11280,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -11448,6 +11586,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -11753,6 +11892,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -12058,6 +12198,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -12363,6 +12504,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -12668,6 +12810,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -12973,6 +13116,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -13278,6 +13422,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -13583,6 +13728,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -13888,6 +14034,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -14193,6 +14340,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -14498,6 +14646,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -14803,6 +14952,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -15108,6 +15258,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -15413,6 +15564,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -15718,6 +15870,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -16023,6 +16176,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -16328,6 +16482,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -16633,6 +16788,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -16938,6 +17094,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -17243,6 +17400,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -17548,6 +17706,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -17853,6 +18012,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -18158,6 +18318,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -18463,6 +18624,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -18768,6 +18930,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -19073,6 +19236,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -19378,6 +19542,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -19743,40 +19908,5 @@
     "predefinedTag": []
   },
   "toggleBuffs": [],
-  "uiRangeHints": [
-    {
-      "selectAll": false,
-      "shapeData": {
-        "angle": 0.0,
-        "angleKey": null,
-        "centerBaseIsEndPoint": false,
-        "centerOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "centerOffsetXKey": null,
-        "centerOffsetZKey": null,
-        "extent": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "extentXKey": null,
-        "extentZKey": null,
-        "fixedExtent": false,
-        "radius": 0.0,
-        "radiusKey": null,
-        "restrictEndPointInRange": false,
-        "shape": 0,
-        "useAngleKey": false,
-        "useCenterOffsetKey": false,
-        "useExtentKey": false,
-        "useRadiusKey": false,
-        "useWidthKey": false,
-        "width": 0.0,
-        "widthKey": null
-      },
-      "targetFaction": 8
-    }
-  ],
   "useAIExclusiveFrame": false
 }

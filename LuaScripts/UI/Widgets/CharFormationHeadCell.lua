@@ -1,5 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
+
+local SELECT_STYLE_DEFAULT = "Normal"
+
+
+local GLOW_SOURCE_PREFAB_KEY = "CharHeadGlowAnimation"
+
 CharFormationHeadCell = HL.Class('CharFormationHeadCell', UIWidgetBase)
 
 CharFormationHeadCell.info = HL.Field(HL.Table)
@@ -19,6 +25,10 @@ CharFormationHeadCell.m_singleModeSelected = HL.Field(HL.Boolean) << false
 CharFormationHeadCell.m_charPresetData = HL.Field(HL.Userdata)
 
 
+CharFormationHeadCell.s_glowOwners = HL.StaticField(HL.Table) << {}
+CharFormationHeadCell.s_glowSourceObj = HL.StaticField(CS.UnityEngine.GameObject)
+
+
 CharFormationHeadCell._OnFirstTimeInit = HL.Override() << function(self)
     self:RegisterMessage(MessageConst.ON_CHAR_LEVEL_UP, function(args)
         self:_OnLevelChanged(args)
@@ -28,13 +38,14 @@ CharFormationHeadCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-CharFormationHeadCell.InitCharFormationHeadCell = HL.Method(HL.Table, HL.Opt(HL.Function, HL.Boolean, HL.Boolean)) << function(self, info, onClick, ignoreDead, needHover)
+CharFormationHeadCell.InitCharFormationHeadCell = HL.Method(HL.Table, HL.Opt(HL.Function, HL.Boolean, HL.Boolean, HL.String, HL.Boolean)) << function(self, info, onClick, ignoreDead, needHover, selectStyle, useWorldBackupDead)
     self:_FirstTimeInit()
     self:_HideForesightGrowthExtraNodes()
 
-    self:_InitData(info)
+    self:_InitData(info, useWorldBackupDead == true)
     self:_InitCharBaseInfo()
     self:RefreshCharInfo()
+    self.view.selectedMarkSingle:SetState(string.isEmpty(selectStyle) and SELECT_STYLE_DEFAULT or selectStyle)
     if self.charInfo and not ignoreDead then
         self:SetDead(self.isDead)
     else
@@ -147,7 +158,7 @@ CharFormationHeadCell.RefreshForesightCharGrowthMainExtra = HL.Method(HL.Opt(HL.
     end
 end
 
-CharFormationHeadCell._InitData = HL.Method(HL.Table) << function(self, info)
+CharFormationHeadCell._InitData = HL.Method(HL.Table, HL.Boolean) << function(self, info, useWorldBackupDead)
     self.info = info
     if not string.isEmpty(info.charPresetId) then
         self.m_charPresetData = Tables.charPresetTable:GetValue(info.charPresetId)
@@ -164,7 +175,11 @@ CharFormationHeadCell._InitData = HL.Method(HL.Table) << function(self, info)
     local instId = info.instId
     if instId and instId > 0 and not info.isForesight then
         self.charInfo = CharInfoUtils.getPlayerCharInfoByInstId(instId)
-        self.isDead = CharInfoUtils.isCharDead(instId)
+        if useWorldBackupDead then
+            self.isDead = CharInfoUtils.isCharDead(instId)
+        else
+            self.isDead = self.charInfo ~= nil and self.charInfo.isDead == true
+        end
     end
 
 end
@@ -256,8 +271,52 @@ end
 CharFormationHeadCell.SetMaxPotentialGlow = HL.Method(HL.Number, HL.Number) << function(self, potentialLevel, rarity)
     local currentPotentialLevel = self.charInfo and self.charInfo.potentialLevel or potentialLevel
     local shouldShowGlow = currentPotentialLevel >= UIConst.CHAR_MAX_POTENTIAL and rarity == UIConst.CHAR_POTENTIAL_EFFECT_RARITY
+    if shouldShowGlow then
+        CharFormationHeadCell._AcquireGlowSource(self)
+    else
+        CharFormationHeadCell._ReleaseGlowSource(self)
+    end
     self.view.glowAll.gameObject:SetActive(shouldShowGlow)
 end
+
+
+CharFormationHeadCell.ResetMaxPotentialGlow = HL.Method() << function(self)
+    CharFormationHeadCell._ReleaseGlowSource(self)
+    self.view.glowAll.gameObject:SetActive(false)
+end
+
+CharFormationHeadCell._OnDestroy = HL.Override() << function(self)
+    CharFormationHeadCell._ReleaseGlowSource(self)
+end
+
+
+
+
+
+
+CharFormationHeadCell._AcquireGlowSource = HL.StaticMethod(HL.Any) << function(owner)
+    CharFormationHeadCell.s_glowOwners[owner] = true
+    local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab(GLOW_SOURCE_PREFAB_KEY, owner)
+    if not CharFormationHeadCell.s_glowSourceObj then
+        CharFormationHeadCell.s_glowSourceObj = CSUtils.CreateObject(prefab, UIManager.uiRoot)
+        CS.Beyond.UI.UICharHeadGlowAnimation.instance:Init(CharFormationHeadCell.s_glowSourceObj)
+    end
+end
+
+CharFormationHeadCell._ReleaseGlowSource = HL.StaticMethod(HL.Any) << function(owner)
+    if not CharFormationHeadCell.s_glowOwners[owner] then
+        return
+    end
+    CharFormationHeadCell.s_glowOwners[owner] = nil
+    LuaSystemManager.commonPrefabSystem:Release(owner)
+    if not next(CharFormationHeadCell.s_glowOwners) then
+        CS.Beyond.UI.UICharHeadGlowAnimation.instance:UnInit()
+        GameObject.Destroy(CharFormationHeadCell.s_glowSourceObj)
+        CharFormationHeadCell.s_glowSourceObj = nil
+    end
+end
+
+
 
 CharFormationHeadCell.RefreshCharInfo = HL.Method() << function(self)
     if self.charInfo then

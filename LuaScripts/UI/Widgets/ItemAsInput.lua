@@ -213,13 +213,19 @@ ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(s
             craftCell.itemCells = UIUtils.genCellCache(craftCell.itemCell)
         end
         local incomeCount = #craftInfo.incomes
-        local outcomeCount = craftInfo.outcomes and #craftInfo.outcomes or 0
+        
+        local outComeList = craftInfo.outcomes
+        if craftInfo.byproduct and not string.isEmpty(craftInfo.byproduct.id) then
+            outComeList[1].byProductProb = 100 - craftInfo.byproduct.prob
+            outComeList[2] = { id = craftInfo.byproduct.id, count = craftInfo.byproduct.count, byProductProb = craftInfo.byproduct.prob }
+        end
+        local outcomeCount = outComeList and #outComeList or 0
         craftCell.itemCells:Refresh(incomeCount + outcomeCount, function(itemCell, itemIndex)
             local bundle
             if itemIndex <= incomeCount then
                 bundle = craftInfo.incomes[itemIndex]
             else
-                bundle = craftInfo.outcomes[itemIndex - incomeCount]
+                bundle = outComeList[itemIndex - incomeCount]
             end
             if self.m_onClickItem then
                 itemCell:InitItem(bundle, function()
@@ -236,6 +242,14 @@ ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(s
             end
         end)
         craftCell.arrow.transform:SetSiblingIndex(incomeCount + 1)
+        if craftCell.byproductSep then
+            if craftInfo.byproduct and not string.isEmpty(craftInfo.byproduct.id) then
+                craftCell.byproductSep.transform:SetSiblingIndex(incomeCount + 3)
+                craftCell.byproductSep.gameObject:SetActiveIfNecessary(true)
+            else
+                craftCell.byproductSep.gameObject:SetActiveIfNecessary(false)
+            end
+        end
 
         if craftInfo.outcomeText then
             craftCell.outcomePower.gameObject:SetActiveIfNecessary(true)
@@ -259,7 +273,7 @@ ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(s
                 craftCell.addCells = UIUtils.genCellCache(craftCell.add)
             end
             local addCount = incomeCount + outcomeCount - 2
-            if outcomeCount == 0 then
+            if outcomeCount == 0 or (craftInfo.byproduct and not string.isEmpty(craftInfo.byproduct.id)) then
                 addCount = incomeCount - 1
             end
             craftCell.addCells:Refresh(addCount, function(addCell, addCellIndex)

@@ -27,7 +27,7 @@ end
 PinBtn.InitPinBtn = HL.Method(HL.String, HL.Any, HL.Opt(HL.Function)) << function(self, pinId, pinType, pinChangedCallback)
     self:_FirstTimeInit()
 
-    if string.isEmpty(pinId) then
+    if string.isEmpty(pinId) or not FactoryUtils.isPinAllowedInCurScope() then
         self.view.gameObject:SetActive(false)
     end
 
@@ -63,10 +63,10 @@ PinBtn._RefreshPinBtnState = HL.Method(HL.String, HL.Any) << function(self, pinI
 end
 
 PinBtn._OnPinBtnToggleValueChanged = HL.Method(HL.Boolean) << function(self, isOn)
-    local curScopeIndex = ScopeUtil.GetCurrentScope():GetHashCode()
-    if curScopeIndex == 0 then
+    if not FactoryUtils.isPinAllowedInCurScope() then
         return
     end
+    local curScopeIndex = ScopeUtil.GetCurrentScope():GetHashCode()
     if isOn then
         GameInstance.player.remoteFactory.core:Message_PinSet(curScopeIndex, self.m_pinType, self.m_pinId, 0, false)
     else

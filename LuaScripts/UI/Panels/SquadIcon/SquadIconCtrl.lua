@@ -34,6 +34,8 @@ SquadIconCtrl.m_teamSwitchUnlocked = HL.Field(HL.Boolean) << false
 
 SquadIconCtrl.m_teamSwitchEnabled = HL.Field(HL.Boolean) << false
 
+SquadIconCtrl.m_blockedQuickSwitchBindingId = HL.Field(HL.Number) << -1
+
 SquadIconCtrl.m_gpuiBuffEnabled = HL.Field(HL.Boolean) << true
 
 SquadIconCtrl.m_disableTipList = HL.Field(HL.Forward("UIListCache"))
@@ -72,7 +74,14 @@ SquadIconCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.nextBtn.onPressStart:AddListener(function(eventData)
         self:_OnNextBtnClick()
     end)
-    self.view.nextBtn.gameObject:SetActive(self:_ShowNextBtn())
+    if self.isControllerPanel then
+        self.m_blockedQuickSwitchBindingId = self:BindInputPlayerAction("battle_switch_char_next_blocked", function()
+            if not self.m_teamSwitchEnabled and DeviceInfo.usingController and not InputManagerInst:GetKey(GamepadKeyCode.LB) then
+                GameAction.ShowUIToast(Language.LUA_BATTLE_CANT_SWITCH_TO_CENTER)
+            end
+        end)
+    end
+    self:_RefreshNextBtn()
 
     self:OnToggleControllerIndicator(false)
 
@@ -184,7 +193,7 @@ SquadIconCtrl._OnTeamChange = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
         item:SetEmpty(true)
     end
 
-    self.view.nextBtn.gameObject:SetActive(self:_ShowNextBtn())
+    self:_RefreshNextBtn()
 end
 
 
@@ -261,19 +270,20 @@ SquadIconCtrl.OnSystemUnlock = HL.Method(HL.Any) << function(self, arg)
             item:OnTeamSwitchUnlocked()
         end
         self.m_teamSwitchUnlocked = true
-        self.view.nextBtn.gameObject:SetActive(self:_ShowNextBtn())
+        self:_RefreshNextBtn()
     end
 end
 
 SquadIconCtrl.OnSquadIconActiveConfigChanged = HL.Method(HL.Any) << function(self, arg)
     local active = unpack(arg)
     self.view.main.gameObject:SetActive(active)
+    self:_RefreshNextBtn()
 end
 
 SquadIconCtrl.OnSwitchMainCharEnableConfigChanged = HL.Method(HL.Any) << function(self, arg)
     local enable = unpack(arg)
     self.m_teamSwitchEnabled = enable
-    self.view.nextBtn.gameObject:SetActive(self:_ShowNextBtn())
+    self:_RefreshNextBtn()
 end
 
 
@@ -302,12 +312,17 @@ SquadIconCtrl.OnSwitchCenterBtnClick = HL.Method(HL.Opt(HL.Any)) << function(sel
     end
 end
 
-SquadIconCtrl._ShowNextBtn = HL.Method().Return(HL.Boolean) << function(self)
-    return self:_GetCount() > 1 and self.m_teamSwitchUnlocked and self.m_teamSwitchEnabled
+SquadIconCtrl._RefreshNextBtn = HL.Method() << function(self)
+    local hasQuickSwitch = self:_GetCount() > 1 and self.m_teamSwitchUnlocked
+    self.view.nextBtn.gameObject:SetActive(hasQuickSwitch and self.m_teamSwitchEnabled)
+    if self.m_blockedQuickSwitchBindingId > 0 then
+        local showBlockedToast = hasQuickSwitch and not self.m_teamSwitchEnabled and GameWorld.battle.squadIconActive
+        InputManagerInst:ToggleBinding(self.m_blockedQuickSwitchBindingId, showBlockedToast)
+    end
 end
 
 SquadIconCtrl.OnDisableTipsChanged = HL.Method(HL.Table) << function(self, arg)
-    if DeviceInfo.isMobile or self.view.disableTipTemp == nil then
+    if DeviceInfo.isMobileUser or self.view.disableTipTemp == nil then
         
         return
     end

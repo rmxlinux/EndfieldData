@@ -5,6 +5,10 @@ PhaseActivityCenter = HL.Class('PhaseActivityCenter', phaseBase.PhaseBase)
 
 local ROOT_PANEL_ID = PanelId.ActivityCenter
 
+local PANEL_ID_2_FOV = {
+    [PanelId.ActivityCardGame] = 15.3818,
+}
+
 
 
 
@@ -25,6 +29,14 @@ PhaseActivityCenter.m_bgmOwnerActivityId = HL.Field(HL.String) << ""
 PhaseActivityCenter.m_isShowingInstruction = HL.Field(HL.Boolean) << false
 
 PhaseActivityCenter.m_activityPushIds = HL.Field(HL.Table)
+
+PhaseActivityCenter.GetFOV = HL.Override().Return(HL.Opt(HL.Number)) << function(self)
+    local fov = PANEL_ID_2_FOV[self.m_activityPanelId]
+    if fov ~= nil then
+        return fov
+    end
+    return PhaseActivityCenter.Super.GetFOV(self)
+end
 
 
 
@@ -192,6 +204,9 @@ PhaseActivityCenter.ShowActivity = HL.Method(HL.Any) << function(self, arg)
     end
     self:RemovePhasePanelItemById(self.m_activityPanelId)
     self.m_activityPanelId = targetPanelId
+    if PhaseManager:GetTopPhaseId() == PHASE_ID then
+        PhaseManager:RefreshFOV()
+    end
     
     controllerHintPlaceholder:InitControllerHintPlaceholder({})
 
@@ -295,6 +310,12 @@ PhaseActivityCenter.m_delayShowActivityCo = HL.Field(HL.Thread)
 PhaseActivityCenter.m_delayShowActivityArg = HL.Field(HL.Table)
 
 PhaseActivityCenter.ShowActivityFromNavi = HL.Method(HL.Table) << function(self, arg)
+    
+    
+    if self.state == PhaseConst.EPhaseState.TransitionBehind or self.state == PhaseConst.EPhaseState.Deactivated then
+        self:ShowActivity(arg)
+        return
+    end
     self.m_delayShowActivityArg = arg
     self:_ClearCoroutine(self.m_delayShowActivityCo)
     self.m_delayShowActivityCo = self:_StartCoroutine(function()
@@ -326,7 +347,7 @@ PhaseActivityCenter.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << fun
     arg.gotoCenter = true
 
     local isOpen, popupCtrl = UIManager:IsOpen(PanelId.ActivityDescriptionPopup)
-    if isOpen then
+    if isOpen and PhaseManager:GetTopPhaseId() == PHASE_ID then
         arg.isShowingInstruction = true
         arg.instructionArg = popupCtrl:GetRestoreArg()
     end

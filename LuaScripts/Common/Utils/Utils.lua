@@ -595,26 +595,16 @@ end
 
 function Utils.getTimestampToday0AM()
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
-    local curDate = os.date("!*t", curTime)
-    local today0AM = {
-        year = curDate.year,
-        month = curDate.month,
-        day = curDate.day,
-        hour = 0,
-    }
-    return os.time(today0AM)
+    local curDate = os.date("!*t", curTime + Utils.getServerTimeZoneOffsetSeconds())
+    
+    return curTime - curDate.hour * 3600 - curDate.min * 60 - curDate.sec
 end
 
 function Utils.getTimestampNowYear1M1Day()
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
-    local curDate = os.date("!*t", curTime)
-    local today0AM = {
-        year = curDate.year,
-        month = 1,
-        day = 1,
-        hour = 0,
-    }
-    return os.time(today0AM)
+    local curDate = os.date("!*t", curTime + Utils.getServerTimeZoneOffsetSeconds())
+    
+    return curTime - (curDate.yday - 1) * 24 * 3600 - curDate.hour * 3600 - curDate.min * 60 - curDate.sec
 end
 
 
@@ -1055,17 +1045,19 @@ function Utils._getCommonServerRefreshTime(offsetDays)
     
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds() + Utils.getServerTimeZoneOffsetSeconds()
     local curDate = os.date("!*t", curTime)
-    local today4AM = {
-        year = curDate.year,
-        month = curDate.month,
-        day = curDate.day,
-        hour = UIConst.COMMON_SERVER_UPDATE_TIME,
-    }
     offsetDays = offsetDays or 0
     if curDate.hour < UIConst.COMMON_SERVER_UPDATE_TIME then
         offsetDays = offsetDays - 1 
     end
-    return os.time(today4AM) + (timePerDay * offsetDays) + Utils._getTimeZoneDiffOfClientAndServer()
+    return Utils._getServerToday4AMTimestamp(curTime) + (timePerDay * offsetDays)
+end
+
+
+
+function Utils._getServerToday4AMTimestamp(curTime)
+    local timePerDay = 24 * 60 * 60
+    local serverDayStart = curTime - curTime % timePerDay
+    return serverDayStart + UIConst.COMMON_SERVER_UPDATE_TIME * 3600 - Utils.getServerTimeZoneOffsetSeconds()
 end
 
 
@@ -1073,12 +1065,7 @@ function Utils.getNextWeeklyServerRefreshTime()
     local timePerDay = 24 * 60 * 60
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds() + Utils.getServerTimeZoneOffsetSeconds()
     local curDate = os.date("!*t", curTime)
-    local today4AM = {
-        year = curDate.year,
-        month = curDate.month,
-        day = curDate.day,
-        hour = UIConst.COMMON_SERVER_UPDATE_TIME,
-    }
+    local today4AMTs = Utils._getServerToday4AMTimestamp(curTime)
 
     local weekDay = curDate.wday - 1
     if weekDay == 0 then
@@ -1087,11 +1074,11 @@ function Utils.getNextWeeklyServerRefreshTime()
 
     
     if weekDay == 1 and curDate.hour < UIConst.COMMON_SERVER_UPDATE_TIME then
-        return os.time(today4AM) + Utils._getTimeZoneDiffOfClientAndServer()
+        return today4AMTs
     end
 
     local deltaDays = 8 - weekDay
-    return os.time(today4AM) + timePerDay * deltaDays + Utils._getTimeZoneDiffOfClientAndServer()
+    return today4AMTs + timePerDay * deltaDays
 end
 
 
@@ -1126,17 +1113,12 @@ function Utils.getNextMonthlyServerRefreshTime()
     local timePerDay = 24 * 60 * 60
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds() + Utils.getServerTimeZoneOffsetSeconds()
     local curDate = os.date("!*t", curTime)
-    local today4AM = {
-        year = curDate.year,
-        month = curDate.month,
-        day = curDate.day,
-        hour = UIConst.COMMON_SERVER_UPDATE_TIME,
-    }
+    local today4AMTs = Utils._getServerToday4AMTimestamp(curTime)
 
     local monthDay = curDate.day
     
     if monthDay == 1 and curDate.hour < UIConst.COMMON_SERVER_UPDATE_TIME then
-        return os.time(today4AM) + Utils._getTimeZoneDiffOfClientAndServer()
+        return today4AMTs
     end
 
     local monthTotalDays = os.date("%d", os.time({
@@ -1145,7 +1127,7 @@ function Utils.getNextMonthlyServerRefreshTime()
         day = 0,
     }))
     local deltaDays = monthTotalDays + 1 - monthDay
-    return os.time(today4AM) + timePerDay * deltaDays + Utils._getTimeZoneDiffOfClientAndServer()
+    return today4AMTs + timePerDay * deltaDays
 end
 
 function Utils.appendUTC(timeStr)
@@ -1212,6 +1194,31 @@ function Utils.getTimeIdOpenTimeStamp(timeId)
     local timeRange = timeCfg.timeRangeList[CSIndex(serverAreaTypeInt)]
     local timeZoneSeconds = Utils.getServerTimeZoneOffsetSeconds()
     return Utils.timeStr2TimeStamp(timeRange.openTime, timeZoneSeconds)
+end
+
+
+
+
+function Utils.getTimeIdCloseTimeStamp(timeId)
+    if string.isEmpty(timeId) then
+        return nil, true
+    end
+    local hasCfg, timeCfg = Tables.timeRangeTable:TryGetValue(timeId)
+    if not hasCfg then
+        logger.error("时间区间表不存在该timeId：" .. timeId)
+        return nil, false
+    end
+    local serverAreaTypeIndex = CSIndex(Utils.getServerAreaType():GetHashCode())
+    if serverAreaTypeIndex < 0 or serverAreaTypeIndex >= timeCfg.timeRangeList.Count then
+        logger.error("serverAreaType 超出 timeRangeList 范围", serverAreaTypeIndex, timeId)
+        return nil, false
+    end
+    local closeTime = timeCfg.timeRangeList[serverAreaTypeIndex].closeTime
+    if string.isEmpty(closeTime) then
+        return nil, true
+    end
+    local timeZoneSeconds = Utils.getServerTimeZoneOffsetSeconds()
+    return Utils.timeStr2TimeStamp(closeTime, timeZoneSeconds), true
 end
 
 
@@ -1683,29 +1690,6 @@ end
 
 function Utils.getLevelConfig(levelId)
     return DataManager:TryGetLevelConfig(levelId)
-end
-
-function Utils.FreezeWorldByUI()
-    local handle = TimeManagerInst:StartChangeTimeScale(0, CS.Beyond.TimeManager.ChangeTimeScaleReason.UIPanel)
-    if GameWorld.isInited then
-        GameWorld.cutsceneManager:PauseTimelineByUI(true)
-        GameWorld.levelSeqManager:PauseTimelineByUI(true)
-        GameWorld.dialogTimelineManager:PauseTimelineByUI(true)
-    end
-    return handle
-end
-
-function Utils.ResumeWorldByUI(handle)
-    if handle <= 0 then
-        return
-    end
-
-    TimeManagerInst:StopChangeTimeScale(handle)
-    if GameWorld.isInited then
-        GameWorld.cutsceneManager:PauseTimelineByUI(false)
-        GameWorld.levelSeqManager:PauseTimelineByUI(false)
-        GameWorld.dialogTimelineManager:PauseTimelineByUI(false)
-    end
 end
 
 

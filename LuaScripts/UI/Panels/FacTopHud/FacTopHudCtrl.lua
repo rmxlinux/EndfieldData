@@ -16,7 +16,6 @@ FacTopHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BUILD_MODE_CHANGE] = 'OnBuildModeChange',
 }
 
-FacTopHudCtrl.m_facHudPanelConfig = HL.Field(HL.Table)
 FacTopHudCtrl.m_currentContent = HL.Field(HL.Userdata)
 FacTopHudCtrl.m_currentContentType = HL.Field(HL.String) << ""
 FacTopHudCtrl.m_baseMode = HL.Field(HL.String) << ""
@@ -26,8 +25,6 @@ FacTopHudCtrl.m_curBuildBuildingItemId = HL.Field(HL.String) << ''
 FacTopHudCtrl.m_allowHudContentShow = HL.Field(HL.Boolean) << false
 
 FacTopHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self:_UpdateFacHudConfig()
-
     self.m_allowHudContentShow = false
     self.view.defaultNode.animationWrapper:SampleToOutAnimationEnd()
 
@@ -44,10 +41,6 @@ FacTopHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     UIManager:SetTopOrder(PanelId.MainHud)
 end
 
-FacTopHudCtrl._UpdateFacHudConfig = HL.Method() << function(self)
-    self.m_facHudPanelConfig = LuaSystemManager.factoryHud:GetFacHudPanelConfig(PANEL_ID)
-end
-
 FacTopHudCtrl._SyncContentVisibility = HL.Method() << function(self)
     local content = self.m_currentContent
     if not content or not content.gameObject then
@@ -58,7 +51,8 @@ FacTopHudCtrl._SyncContentVisibility = HL.Method() << function(self)
 end
 
 FacTopHudCtrl._TryLoadContent = HL.Method(HL.String) << function(self, contentType)
-    local config = self.m_facHudPanelConfig[contentType]
+    local facHudPanelConfig = LuaSystemManager.factoryHud:GetFacHudPanelConfig(PANEL_ID)
+    local config = facHudPanelConfig and facHudPanelConfig[contentType]
     if not config then
         logger.warning(ELogChannel.UI, 'Content type not found: ' .. tostring(contentType))
         return
@@ -146,11 +140,11 @@ FacTopHudCtrl.OnEnterFactoryMode = HL.StaticMethod() << function()
         return
     end
     local self = UIManager:AutoOpen(PANEL_ID)
-    if not self:IsShow() then
-        self:Show()
-    end
     if self.view.defaultNode.animationWrapper.curState == CS.Beyond.UI.UIConst.AnimationState.Out then
         self.view.defaultNode.animationWrapper:SampleToOutAnimationEnd()
+    end
+    if not self:IsShow() then
+        self:Show()
     end
     self.m_allowHudContentShow = false
     self:_TryLoadContent(CONTENT_TYPE.Power)

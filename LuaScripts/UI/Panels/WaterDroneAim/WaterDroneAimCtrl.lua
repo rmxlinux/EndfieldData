@@ -221,6 +221,12 @@ end
 
 WaterDroneAimCtrl.OnShowWaterDroneAim = HL.StaticMethod() << function()
     local waterDroneAimPanel = UIManager:AutoOpen(PANEL_ID)
+    Notify(MessageConst.DISABLE_MAIN_HUD_CONTROLLER_INDICATOR, {"inWaterDroneAim", true})
+    Notify(MessageConst.RELEASE_MAIN_HUD_ATTACK_INPUT)
+end
+
+WaterDroneAimCtrl.OnHideMainHudButtons = HL.StaticMethod() << function()
+    Notify(MessageConst.DISABLE_MAIN_HUD_CONTROLLER_INDICATOR, {"inWaterDroneAim", false})
 end
 
 WaterDroneAimCtrl._OnHideWaterDroneAim = HL.Method() << function(self)

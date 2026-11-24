@@ -89,21 +89,9 @@ CharFormationSkillTipsCtrl._ShowTips = HL.Method(HL.Table) << function(self, arg
     self.m_posTrackCoroutine = self:_StartCoroutine(function()
         coroutine.step()
         self:_UpdateDescScrollLayoutAndPosition()
-        local stableCount = 0
-        local lastX, lastY
         while true do
             coroutine.step()
             self:_UpdateTipsPosition()
-            local pos = self.view.content.localPosition
-            if lastX ~= nil and math.abs(pos.x - lastX) < 0.01 and math.abs(pos.y - lastY) < 0.01 then
-                stableCount = stableCount + 1
-                if stableCount >= 3 then
-                    return
-                end
-            else
-                stableCount = 0
-            end
-            lastX, lastY = pos.x, pos.y
         end
     end)
     Notify(MessageConst.ON_CHAR_INFO_SHOW_SKILL_TIP)

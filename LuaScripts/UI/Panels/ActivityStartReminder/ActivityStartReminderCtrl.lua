@@ -679,7 +679,7 @@ ActivityStartReminderCtrl._TryMigrateLegacyBubbleReads = HL.Method() << function
     local activityRealIdToLegacyRead = {}
     local toReportPushIds = {}
     for _, pushData in pairs(Tables.activityPushBubbleTable) do
-        if pushData.pushType ~= "Bubble" or string.isEmpty(pushData.activityId) then
+        if not pushData.isEnable or pushData.pushType ~= "Bubble" or string.isEmpty(pushData.activityId) then
             goto continue
         end
         local realId = ActivityUtils.getResetableActivityRealId(pushData.activityId)
@@ -721,7 +721,7 @@ ActivityStartReminderCtrl._CollectBubbleCandidates = HL.Method(HL.Number, HL.Num
     local nextActivationTs = nil
 
     for _, pushData in pairs(Tables.activityPushBubbleTable) do
-        if pushData.pushType ~= "Bubble" then goto continue end
+        if not pushData.isEnable or pushData.pushType ~= "Bubble" then goto continue end
         local activity = activitySystem:GetActivity(pushData.activityId)
         if not activity then
             goto continue

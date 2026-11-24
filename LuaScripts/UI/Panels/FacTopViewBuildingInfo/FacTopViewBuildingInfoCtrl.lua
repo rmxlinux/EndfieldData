@@ -38,6 +38,9 @@ FacTopViewBuildingInfoCtrl.m_onUpdateFunc = HL.Field(HL.Function)
 FacTopViewBuildingInfoCtrl.m_padding = HL.Field(HL.Any)
 
 FacTopViewBuildingInfoCtrl.m_iconCache = HL.Field(LuaNodeCache)
+FacTopViewBuildingInfoCtrl.m_formationEffectManager = HL.Field(CS.Beyond.Gameplay.RemoteFactory.FormationZone.FormationZoneEffectManager)
+FacTopViewBuildingInfoCtrl.m_formationLevelCellCache = HL.Field(LuaNodeCache)
+FacTopViewBuildingInfoCtrl.m_formationLevelCells = HL.Field(HL.Table)
 
 
 
@@ -55,6 +58,10 @@ FacTopViewBuildingInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.m_iconCache = LuaNodeCache(self.view.productCell, self.view.main)
+    self.m_formationEffectManager = GameInstance.remoteFactoryManager.visual.formationZoneEffectManager
+    self.m_formationLevelCellCache = LuaNodeCache(self.view.formationLevelCell,
+        self.view.formationLevelCell.transform.parent)
+    self.m_formationLevelCells = {}
 
     self.m_padding = CSFactoryUtil.Padding(self.view.config.PADDING_TOP, self.view.config.PADDING_LEFT,
             self.view.config.PADDING_RIGHT, self.view.config.PADDING_BOTTOM)
@@ -69,6 +76,11 @@ FacTopViewBuildingInfoCtrl.OnShow = HL.Override() << function(self)
     end
     self.m_updateCor = self:_StartCoroutine(function()
         coroutine.step()
+        
+        self.m_formationEffectManager:SetFormationLevelUIActive(true, function()
+            self:_RefreshFormationLevels()
+        end)
+        self.m_formationEffectManager:FlushFormationLevelUIChanges()
         self.view.main.gameObject:SetActive(true)
 
         while true do
@@ -86,11 +98,15 @@ FacTopViewBuildingInfoCtrl.OnShow = HL.Override() << function(self)
 end
 
 FacTopViewBuildingInfoCtrl.OnHide = HL.Override() << function(self)
+    self.m_formationEffectManager:SetFormationLevelUIActive(false, nil)
     self.view.main.gameObject:SetActive(false) 
+    self:_ClearFormationLevels()
     self.m_updateCor = self:_ClearCoroutine(self.m_updateCor)
 end
 
 FacTopViewBuildingInfoCtrl.OnClose = HL.Override() << function(self)
+    self.m_formationEffectManager:SetFormationLevelUIActive(false, nil)
+    self:_ClearFormationLevels()
     self.m_updateCor = self:_ClearCoroutine(self.m_updateCor)
     self:_ClearCache()
 end
@@ -154,6 +170,48 @@ FacTopViewBuildingInfoCtrl._UpdateAllInfos = HL.Method() << function(self)
     for _, info in pairs(CSFactoryUtil.s_topViewBuildingInfos) do
         self:_OnAddInfo(info)
     end
+end
+
+FacTopViewBuildingInfoCtrl._RefreshFormationLevels = HL.Method() << function(self)
+    local changes = self.m_formationEffectManager.formationLevelUIChanges
+    local scale = self.view.formationLevelCell.transform.localScale
+    for index = 0, changes.Count - 1 do
+        local change = changes[index]
+        local cell = self.m_formationLevelCells[change.id]
+        if change.visible then
+            if not cell then
+                cell = self.m_formationLevelCellCache:Get()
+                self.m_formationLevelCells[change.id] = cell
+            end
+            cell.elementFollower.followFixedPos = false
+            if cell.elementFollower.targetTransform ~= change.target then
+                cell.elementFollower.targetTransform = change.target
+            end
+            self.m_formationEffectManager:BindFormationLevelUIFollower(change.id, cell.elementFollower)
+            if cell.levelTxt.text ~= change.text then
+                cell.levelTxt.text = change.text
+            end
+            if cell.transform.localScale ~= scale then
+                cell.transform.localScale = scale
+            end
+        elseif cell then
+            self.m_formationEffectManager:BindFormationLevelUIFollower(change.id, nil)
+            cell.elementFollower.followFixedPos = false
+            cell.elementFollower.targetTransform = nil
+            self.m_formationLevelCellCache:Cache(cell)
+            self.m_formationLevelCells[change.id] = nil
+        end
+    end
+end
+
+FacTopViewBuildingInfoCtrl._ClearFormationLevels = HL.Method() << function(self)
+    for id, cell in pairs(self.m_formationLevelCells) do
+        self.m_formationEffectManager:BindFormationLevelUIFollower(id, nil)
+        cell.elementFollower.followFixedPos = false
+        cell.elementFollower.targetTransform = nil
+        self.m_formationLevelCellCache:Cache(cell)
+    end
+    self.m_formationLevelCells = {}
 end
 
 FacTopViewBuildingInfoCtrl._UpdateInfos = HL.Method() << function(self)
@@ -326,6 +384,15 @@ end
 FacTopViewBuildingInfoCtrl.OnFacTopViewCamZoom = HL.Method(HL.Number) << function(self, zoomPercent)
     local scale = self.view.config.SIZE_ANIM_CURVE:Evaluate(zoomPercent)
     self.view.main.transform.localScale = Vector3(scale, scale, scale)
+    
+    local formationScale = self.view.config.FORMATION_SIZE_ANIM_CURVE:Evaluate(zoomPercent) / scale
+    local formationLocalScale = Vector3(formationScale, formationScale, formationScale)
+    self.view.formationLevelCell.transform.localScale = formationLocalScale
+    for _, cell in pairs(self.m_formationLevelCells) do
+        if cell.transform.localScale ~= formationLocalScale then
+            cell.transform.localScale = formationLocalScale
+        end
+    end
     local shouldUseMin = zoomPercent <= self.view.config.NAME_MIN_SIZE_ZOOM_PERCENT
     if shouldUseMin ~= self.m_useMinNameSize then
         self.m_useMinNameSize = shouldUseMin
@@ -474,7 +541,7 @@ FacTopViewBuildingInfoCtrl._UpdateLiquidIcon = HL.Method(HL.Table, HL.String) <<
         if not liquidIcon then
             return
         end
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.liquidIconPrefab, cell.transform)
+        local obj = CSUtils.CreateObject(LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonLiquidIcon"), cell.transform)
         obj.name = "LiquidIcon"
         obj.transform.localScale = Vector3.one
         local center = Vector2.one / 2

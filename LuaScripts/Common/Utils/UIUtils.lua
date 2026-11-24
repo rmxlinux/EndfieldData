@@ -398,17 +398,20 @@ end
 
 
 
-function UIUtils.updateTipsPosition(contentRectTrans, targetTransform, canvasRectTrans, uiCamera, posType, padding, xOffset)
+function UIUtils.updateTipsPosition(
+    contentRectTrans, targetTransform, canvasRectTrans, uiCamera, posType, padding, xOffset, yOffset)
     if IsNull(targetTransform) then
         contentRectTrans.anchoredPosition = Vector2.zero
         return
     end
     local targetScreenRect = UIUtils.getTransformScreenRect(targetTransform, uiCamera) 
-    UIUtils.updateTipsPositionWithScreenRect(contentRectTrans, targetScreenRect, canvasRectTrans, uiCamera, posType, padding, xOffset)
+    UIUtils.updateTipsPositionWithScreenRect(contentRectTrans, targetScreenRect, canvasRectTrans, uiCamera, posType,
+        padding, xOffset, yOffset)
 end
 
 
-function UIUtils.updateTipsPositionWithScreenRect(contentRectTrans, targetScreenRect, canvasRectTrans, uiCamera, posType, padding, xOffset)
+function UIUtils.updateTipsPositionWithScreenRect(
+    contentRectTrans, targetScreenRect, canvasRectTrans, uiCamera, posType, padding, xOffset, yOffset)
     posType = posType or UIConst.UI_TIPS_POS_TYPE.RightDown
     LayoutRebuilder.ForceRebuildLayoutImmediate(contentRectTrans)
     if BEYOND_DEBUG then
@@ -670,6 +673,12 @@ function UIUtils.updateTipsPositionWithScreenRect(contentRectTrans, targetScreen
             screenPos.x = 0
             finalXPos = UIConst.UI_TIPS_X_POS_TYPE.Left
         end
+    elseif posType == UIConst.UI_TIPS_POS_TYPE.FacFormationStakeTips then
+        
+        screenPos.x = targetScreenRect.xMin - halfWidthInScreen + xOffset * xRation
+        screenPos.y = targetScreenRect.center.y - yOffset * yRation
+        finalXPos = UIConst.UI_TIPS_X_POS_TYPE.Left
+        finalYPos = UIConst.UI_TIPS_Y_POS_TYPE.Mid
     elseif posType == UIConst.UI_TIPS_POS_TYPE.RightMid then
         
         local downHeight = screenSize.y - targetScreenRect.center.y
@@ -1737,8 +1746,14 @@ function UIUtils.PlayAnimationAndToggleActive(animationWrapper, isOn, callback)
     if animationWrapper.gameObject.activeSelf == isOn then
         if isOn then
             
-            animationWrapper:SampleToInAnimationEnd()
+            local easingClip = animationWrapper.animationInEasing
+            if not IsNull (easingClip) then
+                animationWrapper:SampleClip(easingClip.name, easingClip.length)
+            else
+                animationWrapper:SampleToInAnimationEnd()
+            end
         end
+        
         if callback then
             callback()
         end
@@ -2409,6 +2424,16 @@ function UIUtils.updateStaminaNode(node, staminaInfo)
     local hasDelStamina = delStamina ~= nil and type(delStamina) == "number"
     node.delStaminaTxt.text = hasDelStamina and delStamina or 0
     node.delStaminaTxt.gameObject:SetActive(hasDelStamina)
+end
+
+
+function UIUtils.supportsSystemCopyBuffer()
+    if CS.Beyond.CloudGame.enabled then
+        
+        
+        return false
+    end
+    return true
 end
 
 

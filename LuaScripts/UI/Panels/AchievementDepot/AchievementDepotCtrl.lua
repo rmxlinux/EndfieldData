@@ -889,6 +889,11 @@ AchievementDepotCtrl._GenFilterArgs = HL.Method().Return(HL.Any) << function(sel
             self:_LoadFilteredData()
             self:_ResetSelectIndex()
             self:_RenderViews(true)
+            if DeviceInfo.usingController then
+                
+                local target = self.m_filteredDataCount > 0 and self.view.rightListScroll.getDefaultSelectableFunc()
+                self:SetNaviTarget(target or self.view.btnCommonFilterNew.button)
+            end
         end,
         getResultCount = function(tags)
             return self:_GetFilteredCount(tags)

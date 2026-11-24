@@ -77,5 +77,49 @@
         "checkLevelId": "dung02_rdg015"
       }
     ]
+  },
+  "SweetPieDrone": {
+    "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+    "conditionOperator": 1,
+    "reverse": false,
+    "subConditions": [
+      {
+        "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+        "conditionOperator": 0,
+        "reverse": false,
+        "subConditions": [
+          {
+            "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+            "checkLevelId": "map02_lv011"
+          },
+          {
+            "$type": "Beyond.Gameplay.SimpleConditionCheckQuestState, Gameplay.Beyond",
+            "questId": "c40m1_q#6",
+            "compareOperator": 0,
+            "compareTarget": 3
+          }
+        ]
+      },
+      {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+        "checkLevelId": "dung02_cdg020"
+      },
+      {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+        "checkLevelId": "dung02_cdg021"
+      },
+      {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+        "checkLevelId": "indie_dg019"
+      },
+      {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+        "checkLevelId": "indie_dg020"
+      },
+      {
+        "$type": "Beyond.Gameplay.SimpleConditionCheckPlayerInLevel, Gameplay.Beyond",
+        "checkLevelId": "indie_dg021"
+      }
+    ]
   }
 }

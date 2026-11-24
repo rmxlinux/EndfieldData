@@ -32,6 +32,7 @@ end
 ShopTradeGoodsCell._OnDestroy = HL.Override() << function(self)
     self.view.animationWrapper:ClearTween(false)
     self:_EndTickRefreshTime()
+    LuaSystemManager.commonPrefabSystem:Release(self)
 end
 
 
@@ -59,7 +60,13 @@ ShopTradeGoodsCell.InitShopTradeGoodsCellCommonMode = HL.Method(HL.Table) << fun
     
     self.view.selectBtn.onClick:RemoveAllListeners()
     self.view.selectBtn.onClick:AddListener(function()
-        local goodsData = GameInstance.player.shopSystem:GetShopGoodsData(info.shopId, info.goodsId)
+        local shopSystem = GameInstance.player.shopSystem
+        local goodsData = shopSystem:GetShopGoodsData(info.shopId, info.goodsId)
+        if not goodsData then
+            logger.error("[ShopTradeGoodsCell] DomainShop GetShopGoodsData is nil, shopId:", info.shopId,
+                "goodsId:", info.goodsId, "hasShopData:", shopSystem:GetShopData(info.shopId) ~= nil)
+            return
+        end
         local uiCtrl = self:GetUICtrl()
         CashShopUtils.OpenShopDetailPanel(goodsData, uiCtrl)
     end)
@@ -194,7 +201,13 @@ ShopTradeGoodsCell.InitCommonShopGoodsCellCommonMode = HL.Method(HL.Table) << fu
     
     self.view.selectBtn.onClick:RemoveAllListeners()
     self.view.selectBtn.onClick:AddListener(function()
-        local goodsData = GameInstance.player.shopSystem:GetShopGoodsData(info.shopId, info.goodsId)
+        local shopSystem = GameInstance.player.shopSystem
+        local goodsData = shopSystem:GetShopGoodsData(info.shopId, info.goodsId)
+        if not goodsData then
+            logger.error("[ShopTradeGoodsCell] CommonShop GetShopGoodsData is nil, shopId:", info.shopId,
+                "goodsId:", info.goodsId, "hasShopData:", shopSystem:GetShopData(info.shopId) ~= nil)
+            return
+        end
         local uiCtrl = self:GetUICtrl()
         CashShopUtils.OpenShopDetailPanel(goodsData, uiCtrl)
     end)
@@ -322,7 +335,7 @@ ShopTradeGoodsCell._ToggleLock = HL.Method(HL.Boolean) << function(self, active)
             self.view.tagList:SetState("NotLock")
             return
         end
-        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.lockNodePrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopTradeGoodsCellLockState", self)
         if not prefab then
             return
         end
@@ -339,7 +352,7 @@ ShopTradeGoodsCell._ToggleSoldOut = HL.Method(HL.Boolean) << function(self, acti
             self.view.tagList:SetState("NotSellOut")
             return
         end
-        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.soldOutPrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopTradeGoodsCellSellOutState", self)
         if not prefab then
             return
         end
@@ -356,8 +369,8 @@ ShopTradeGoodsCell._SetSelectCount = HL.Method(HL.Number) << function(self, coun
         if count == 0 then
             return
         end
-        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.bulkOperationPrefab
-        local borderPrefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.bulkBorderPrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopTradeGoodsCellBulkOperation", self)
+        local borderPrefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopTradeGoodsCellBulkBorder", self)
         if not prefab or not borderPrefab then
             return
         end
@@ -380,7 +393,7 @@ ShopTradeGoodsCell._ToggleSelectBorder = HL.Method(HL.Boolean) << function(self,
         if not active then
             return
         end
-        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.selectBorderPrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopTradeGoodsCellSelectBorder", self)
         if not prefab then
             return
         end
@@ -396,7 +409,7 @@ ShopTradeGoodsCell._RefreshCenterInfo = HL.Method(HL.String, HL.Opt(HL.Number, H
         if not active then
             return
         end
-        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.centerInfoPrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopTradeGoodsCellCenterInfo", self)
         if not prefab then
             return
         end
@@ -423,7 +436,7 @@ ShopTradeGoodsCell._RefreshItemBundleCount = HL.Method(HL.Number) << function(se
         if not active then
             return
         end
-        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.itemBundleCountPrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopTradeGoodsCellItemBundleCount", self)
         if not prefab then
             return
         end
@@ -443,7 +456,7 @@ ShopTradeGoodsCell._RefreshCountdown = HL.Method(HL.Number) << function(self, le
         if not active then
             return
         end
-        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.countdownPrefab
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopTradeGoodsCellCountdown", self)
         if not prefab then
             return
         end

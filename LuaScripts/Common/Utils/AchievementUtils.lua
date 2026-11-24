@@ -1,5 +1,28 @@
 local AchievementUtils = {}
 
+
+function AchievementUtils.canShowAchievementInList(achievementId)
+    local found, achievementData = Tables.achievementTable:TryGetValue(achievementId)
+    if not found then
+        return false
+    end
+    local achievementInfos = GameInstance.player.achievementSystem.achievementData.achievementInfos
+    local hasPlayerInfo, playerInfo = achievementInfos:TryGetValue(achievementId)
+    local isObtained = hasPlayerInfo and playerInfo.level >= achievementData.initLevel
+    local displayTimeId = achievementData.displayTimeId
+    if not isObtained and not string.isEmpty(displayTimeId) and not Utils.isCurTimeInTimeIdRange(displayTimeId) then
+        return false
+    end
+    for _, categoryData in pairs(Tables.achievementTypeTable) do
+        for _, groupData in pairs(categoryData.achievementGroupData) do
+            if groupData.groupId == achievementData.groupId then
+                return isObtained or categoryData.noObtainCanView
+            end
+        end
+    end
+    return false
+end
+
 function AchievementUtils.loadAchievementData(loadNoObtain)
     loadNoObtain = loadNoObtain == true
     

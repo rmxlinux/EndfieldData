@@ -45,6 +45,8 @@ PhaseBase.modelLoader = HL.Field(CS.Beyond.UI.UIModelLoader)
 
 PhaseBase.m_destroyed = HL.Field(HL.Boolean) << false
 
+PhaseBase.m_uiSceneId = HL.Field(HL.String) << ""
+
 
 
 
@@ -83,6 +85,10 @@ end
 
 
 
+PhaseBase.GetFOV = HL.Virtual().Return(HL.Opt(HL.Number)) << function(self)
+    return self.cfg.fov
+end
+
 
 
 PhaseBase._OnActivated = HL.Override() << function(self)
@@ -99,6 +105,8 @@ PhaseBase._InnerDestroy = HL.Override() << function(self)
         logger.critical("PhaseBase._InnerDestroy 失败，Phase 已经销毁了", self.cfg.name)
         return
     end
+
+    self:ReleaseUIScene()
 
     for phaseItem, _ in pairs(self.m_phaseItems) do
         phaseItem:Destroy()
@@ -422,6 +430,25 @@ PhaseBase.CreatePhaseGOItem = HL.Method(HL.String, HL.Opt(HL.Userdata, HL.Any, H
     self.m_phaseItems[phaseItem] = true
     self.m_gameObject2Item[name] = phaseItem
     return phaseItem
+end
+
+PhaseBase.CreateUIScene = HL.Method(HL.String, HL.Opt(HL.Table)).Return(HL.Forward("PhaseGameObjectItem")) << function(self, sceneName, opts)
+    opts = opts or {}
+    local item = self:CreatePhaseGOItem(sceneName, nil, nil, opts.folderName)
+    local sceneId = self.cfg.name .. "_" .. sceneName
+    self.m_uiSceneId = sceneId
+    if not opts.cullingName then
+        opts.cullingName = sceneId
+    end
+    UISceneManager:Register(sceneId, item.go, opts)
+    return item
+end
+
+PhaseBase.ReleaseUIScene = HL.Method() << function(self)
+    if not string.isEmpty(self.m_uiSceneId) then
+        UISceneManager:Unregister(self.m_uiSceneId)
+        self.m_uiSceneId = ""
+    end
 end
 
 PhaseBase.CreatePhasePanelItem = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Forward("PhasePanelItem")) << function(self, panelId, arg)

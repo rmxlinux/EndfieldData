@@ -138,6 +138,36 @@ function FacBuildCheckResultHint.getBuildingHint(checkResult, ctx)
             or (checkResult.overlayNodes and checkResult.overlayNodes.Count > 0)
             or (checkResult.overlayPendingNodes and checkResult.overlayPendingNodes.Count > 0) then
             hint = Language.LUA_FAC_BUILD_MODE_BUILDING_OVERLAP
+        elseif (checkResult.formationOverlayNodes and checkResult.formationOverlayNodes.Count > 0) then
+            hint = Language.LUA_FAC_BUILD_MODE_FORMATION_BUILDING_OVERLAP
+        elseif checkResult.nodeOverlayBatchFormation or (checkResult.nodeOverlayFormations and checkResult.nodeOverlayFormations.Count > 0) then
+            hint = Language.LUA_FAC_BUILD_MODE_BUILDING_FORMATION_OVERLAP
+        elseif (checkResult.partialOverlayFormations and checkResult.partialOverlayFormations.Count > 0) then
+            hint = Language.LUA_FAC_BUILD_MODE_PARTIAL_FORMATION_OVERLAP
+        elseif checkResult.needToUnlockFormationId and not checkResult.needToUnlockFormationId:isEmpty() then
+            local fmt = Language.LUA_FAC_BUILD_MODE_FORMATION_NEED_TO_UNLOCK_FORMAT
+            local formationData = GameInstance.remoteFactoryManager.staticData:QueryFormationData(checkResult.needToUnlockFormationId)
+            if formationData then
+                hint = string.format(fmt, formationData.name)
+            else
+                hint = Language.LUA_FAC_BUILD_MODE_FORMATION_NEED_TO_UNLOCK_DEFAULT
+            end
+        elseif checkResult.needToUnlockUpgradeFormationId and not checkResult.needToUnlockUpgradeFormationId:isEmpty() then
+            local fmt = Language.LUA_FAC_BUILD_MODE_FORMATION_UPGRADE_NEED_TO_UNLOCK_FORMAT
+            local formationData = GameInstance.remoteFactoryManager.staticData:QueryFormationData(checkResult.needToUnlockUpgradeFormationId)
+            if formationData then
+                hint = string.format(fmt, formationData.name)
+            else
+                hint = Language.LUA_FAC_BUILD_MODE_FORMATION_UPGRADE_NEED_TO_UNLOCK_DEFAULT
+            end
+        elseif checkResult.formationSynthesisNotUnlocked then
+            hint = Language.LUA_FAC_BUILD_MODE_FORMATION_SYNTHESIS_NOT_UNLOCKED
+        elseif checkResult.formationNotInCoreZone then
+            hint = Language.LUA_FAC_BUILD_MODE_FORMATION_NOT_IN_CORE_ZONE
+        elseif checkResult.formationIntersectWithGround then
+            hint = Language.LUA_FAC_BUILD_MODE_FORMATION_INTERSECT_WITH_GROUND
+        elseif checkResult.formationNotOnGround then
+            hint = Language.LUA_FAC_BUILD_MODE_FORMATION_NOT_ON_GROUND
         elseif checkResult.outRanged then
             hint = Language.LUA_FAC_BUILD_MODE_OUT_OF_RANGE
         elseif checkResult.outOfHeight then
@@ -181,8 +211,6 @@ function FacBuildCheckResultHint.getBuildingHint(checkResult, ctx)
             hint = Language.LUA_FAC_BUILD_MODE_NO_SOIL_IN_SPRAY
         elseif checkResult.moveAcrossScene then
             hint = Language.LUA_FAC_BUILD_MODE_MOVE_ACROSS_SCENE
-        elseif checkResult.notAlongLogistic then
-            hint = Language.LUA_FAC_BUILD_MODE_NOT_ALONG_LOGISTIC_DIRECTION
         elseif checkResult.notPutOnConveyor then
             if ctx.buildingId and not ctx.buildingId:isEmpty() then
                 if Tables.factoryFluidValveTable:ContainsKey(ctx.buildingId) then

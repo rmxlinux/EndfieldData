@@ -10,7 +10,7 @@ local Category2Panel = {
     [DungeonConst.DUNGEON_CATEGORY.Challenge] = PanelId.DungeonCommonEntry,
     [DungeonConst.DUNGEON_CATEGORY.Resource] = PanelId.DungeonCommonEntry,
     [DungeonConst.DUNGEON_CATEGORY.WorldLevel] = PanelId.DungeonCommonEntry,
-    [DungeonConst.DUNGEON_CATEGORY.HighDifficulty] = PanelId.DungeonCommonEntry,
+    [DungeonConst.DUNGEON_CATEGORY.HighDifficulty] = "GetDungeonHighDifficultyPanelId",
     [DungeonConst.DUNGEON_CATEGORY.Train] = PanelId.DungeonTrainEntry,
     
     [DungeonConst.DUNGEON_CATEGORY.ActMonster] = PanelId.DungeonActivityEntry,
@@ -123,6 +123,7 @@ PhaseDungeonEntry._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table
         scrollPosition = self.arg.scrollPosition,
         fromDialog = self.arg.fromDialog,
         enterDungeonCallback = self.arg.enterDungeonCallback,
+        onCloseCallback = self.arg.onCloseCallback,
         activityId = self.arg.activityId
     })
     self:_TryRecoverPopupState()
@@ -167,14 +168,36 @@ PhaseDungeonEntry._OnRefresh = HL.Override() << function(self)
         scrollPosition = self.arg.scrollPosition,
         fromDialog = self.arg.fromDialog,
         enterDungeonCallback = self.arg.enterDungeonCallback,
+        onCloseCallback = self.arg.onCloseCallback,
         activityId = self.arg.activityId,
     })
     self:_TryRecoverPopupState()
 end
 
+PhaseDungeonEntry.GetDungeonHighDifficultyPanelId = HL.StaticMethod(HL.Userdata, HL.String).Return(HL.Int) << function(dungeonSeriesCfg, dungeonSeriesId)
+    
+    if dungeonSeriesCfg.gameCategory == DungeonConst.DUNGEON_CATEGORY.HighDifficulty
+        and GameInstance.player.highDifficultySystem:IsBossProgressionSeries(dungeonSeriesId) then
+        return PanelId.DungeonBossEntry
+    end
+    
+    return PanelId.DungeonCommonEntry
+end
+
 PhaseDungeonEntry._PrepareOpenPanelArgs = HL.Method().Return(HL.Table) << function(self)
     local dungeonId = self.arg.dungeonId
     local dungeonSeriesId = self.arg.dungeonSeriesId
+
+    
+    local charId = self.arg.charId
+    if string.isEmpty(dungeonId) and not string.isEmpty(charId) then
+        local virtualCharId = CS.Beyond.Gameplay.CharUtils.GetVirtualCharTemplateId(charId)
+        local charInfo = CharInfoUtils.getPlayerCharInfoByTemplateId(virtualCharId, GEnums.CharType.Default)
+        if charInfo and CharInfoUtils.IsServerDefaultChar(charInfo) then
+            dungeonId = Tables.charId2DungeonIdTable[virtualCharId]
+        end
+    end
+
     if string.isEmpty(dungeonSeriesId) then
         dungeonSeriesId = Tables.dungeonTable[dungeonId].dungeonSeriesId
         self.arg.dungeonSeriesId = dungeonSeriesId
@@ -182,8 +205,13 @@ PhaseDungeonEntry._PrepareOpenPanelArgs = HL.Method().Return(HL.Table) << functi
     local dungeonSeriesCfg = Tables.dungeonSeriesTable[dungeonSeriesId]
 
     local panelId = PanelId.DungeonCommonEntry
-    if Category2Panel[dungeonSeriesCfg.gameCategory] then
-        panelId = Category2Panel[dungeonSeriesCfg.gameCategory]
+    local panelIdGetter = Category2Panel[dungeonSeriesCfg.gameCategory]
+    if panelIdGetter then
+        if type(panelIdGetter) == "string" then
+            panelId = PhaseDungeonEntry[panelIdGetter](dungeonSeriesCfg, dungeonSeriesId)
+        else
+            panelId = panelIdGetter
+        end
     end
 
     return {
@@ -268,4 +296,3 @@ PhaseDungeonEntry.RequestClose = HL.Method() << function(self)
 end
 
 HL.Commit(PhaseDungeonEntry)
-

@@ -39,6 +39,8 @@ end
 
 DomainDepotDeliverToastCtrl.OnInterruptMainHudActionQueue = HL.Method() << function(self)
     self.m_showTimer = self:_ClearTimer(self.m_showTimer)
+    
+    self.animationWrapper:ClearTween(false)
     self:Close()
 end
 

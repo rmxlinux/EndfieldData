@@ -257,13 +257,13 @@ MainHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_SET_ENABLE_EXIT_FACTORY_MODE] = 'SetEnableExitFactoryMode',
     [MessageConst.ON_SYSTEM_UNLOCK_CHANGED] = 'OnSystemUnlock',
     [MessageConst.GAME_MODE_ENABLE] = 'OnGameModeChange',
-    [MessageConst.ON_CHANGE_THROW_MODE] = 'OnThrowModeChange',
-    [MessageConst.SHOW_WATER_DRONE_AIM] = 'OnShowWaterDroneAim',
-    [MessageConst.HIDE_WATER_DRONE_AIM] = 'OnHideWaterDroneAim',
 
     [MessageConst.FAC_TOGGLE_TOP_VIEW] = 'FacToggleTopView',
     [MessageConst.ON_TOGGLE_FAC_TOP_VIEW] = 'OnToggleFacTopView',
     [MessageConst.DISABLE_BATTLE_INDICATOR_CONTROLLER] = 'OnDisableBattleIndicatorController',
+    [MessageConst.DISABLE_MAIN_HUD_CONTROLLER_INDICATOR] = 'SetControllerIndicatorDisabled',
+    [MessageConst.RELEASE_MAIN_HUD_ATTACK_INPUT] = 'ReleaseAttackInput',
+    [MessageConst.TOGGLE_PLAYER_JUMP] = 'TogglePlayerJump',
     [MessageConst.ON_EXIT_FACTORY_MODE] = 'OnExitFactoryMode',
     [MessageConst.ON_TOGGLE_SPRINT] = 'OnToggleSprint',
     [MessageConst.ON_DASH_ENABLE_CONFIG_CHANGED] = 'OnDashEnableChanged',
@@ -360,6 +360,7 @@ MainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self:_InitV1d5Timer()
+    LuaSystemManager.mainHudSubPanel:SetMainHudAvailable(true, self)
 end
 
 
@@ -391,13 +392,15 @@ MainHudCtrl.OnShow = HL.Override() << function(self)
     self.m_characterLockedBar.gameObject:SetActive(false)
     self:OnToggleSprint({ GameInstance.playerController.isMainCharacterSprinting })
     self:_UpdateWatchBtnBinding()
-    self:OnThrowModeChange(nil)
+    Notify(MessageConst.ON_MAIN_HUD_SHOW)
     ActivityUtils.queryAllWebActivityPortalStates()
+    LuaSystemManager.mainHudSubPanel:SetMainHudVisible(true, self)
 end
 
 
 
 MainHudCtrl.OnHide = HL.Override() << function(self)
+    LuaSystemManager.mainHudSubPanel:SetMainHudVisible(false, self)
     self:_ToggleControllerIndicator(false)
     self:CheckNormalAttackBtn(false)
     self.view.topLeftBtns.expandNode:SetExpanded(false, true)
@@ -415,6 +418,7 @@ end
 
 
 MainHudCtrl.OnClose = HL.Override() << function(self)
+    LuaSystemManager.mainHudSubPanel:SetMainHudAvailable(false, self)
     self.view.attackButton:ReleaseNormalAttackBtn()
     GameInstance.playerController:ToggleIndicatorAttack(false)
     if self.m_characterFootBar then
@@ -433,7 +437,26 @@ end
 
 MainHudCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     self:_ResetTopBtnLayoutForHotSwitchReuse()
-    return nil
+    
+    if not self.m_onPressJumpOverride then
+        return nil
+    end
+
+    local state = {
+        onPressJumpOverride = self.m_onPressJumpOverride,
+    }
+    self.m_onPressJumpOverride = nil
+    return state
+end
+
+
+
+
+MainHudCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
+    if not state then
+        return
+    end
+    self.m_onPressJumpOverride = state.onPressJumpOverride
 end
 
 
@@ -1782,6 +1805,27 @@ end
 
 
 
+
+MainHudCtrl.SetControllerIndicatorDisabled = HL.Method(HL.Table) << function(self, args)
+    local key, disable = unpack(args)
+    if disable then
+        self.m_indicatorControllerDisableKeys[key] = true
+    else
+        self.m_indicatorControllerDisableKeys[key] = nil
+    end
+    self:_CheckControllerIndicatorEnabled()
+end
+
+
+
+
+MainHudCtrl.ReleaseAttackInput = HL.Method() << function(self)
+    self.view.attackButton:ReleaseNormalAttackBtn()
+end
+
+
+
+
 MainHudCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
     self:TryUpdateAllTopBtnsVisible()
 
@@ -2418,45 +2462,6 @@ end
 
 
 
-
-
-
-
-
-MainHudCtrl.OnThrowModeChange = HL.Method(HL.Any) << function(self, args)
-    local inThrowMode = GameWorld.battle.inThrowMode
-
-    self:TogglePlayerJump({"throw_mode", inThrowMode})
-    if inThrowMode then
-        self.m_indicatorControllerDisableKeys["inThrowMode"] = true
-        self:_CheckControllerIndicatorEnabled()
-
-        self.view.attackButton:ReleaseNormalAttackBtn()
-    else
-        self.m_indicatorControllerDisableKeys["inThrowMode"] = nil
-        self:_CheckControllerIndicatorEnabled()
-    end
-end
-
-
-
-
-
-
-
-MainHudCtrl.OnShowWaterDroneAim = HL.Method() << function(self)
-    self.m_indicatorControllerDisableKeys["inWaterDroneAim"] = true
-    self:_CheckControllerIndicatorEnabled()
-
-    self.view.attackButton:ReleaseNormalAttackBtn()
-end
-
-
-
-MainHudCtrl.OnHideWaterDroneAim = HL.Method() << function(self)
-    self.m_indicatorControllerDisableKeys["inWaterDroneAim"] = nil
-    self:_CheckControllerIndicatorEnabled()
-end
 
 
 

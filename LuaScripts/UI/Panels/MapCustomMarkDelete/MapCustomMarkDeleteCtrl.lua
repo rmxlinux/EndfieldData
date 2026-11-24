@@ -56,6 +56,10 @@ end
 
 MapCustomMarkDeleteCtrl._OnSelectMark = HL.Method(HL.Table) << function(self, args)
     local instId = args.instId
+    local data = GameInstance.player.mapManager:GetQuickSearchCustomMarkData(instId)
+    if data == nil or data.isSelect then
+        return
+    end
     local mark = args.mark
     if args.trackMark then
         self.m_trackMark = args.trackMark

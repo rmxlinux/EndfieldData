@@ -6,6 +6,7 @@ FacBuildingInteractCtrl = HL.Class('FacBuildingInteractCtrl', uiCtrl.UICtrl)
 
 
 FacBuildingInteractCtrl.s_messages = HL.StaticField(HL.Table) << {
+    [MessageConst.ON_FAC_SOCIAL_BUILDING_LIKED] = "_OnSocialBuildingLiked",
     
     [MessageConst.ON_BUILD_MODE_CHANGE] = 'OnBuildModeChange',
     [MessageConst.ON_FAC_DESTROY_MODE_CHANGE] = 'OnFacDestroyModeChange',
@@ -547,14 +548,20 @@ FacBuildingInteractCtrl.m_lastDetectWorldPos = HL.Field(HL.Any)
 
 FacBuildingInteractCtrl.OnActiveBuildingLike = HL.Method(HL.Any) << function(self, args)
     local nodeId = unpack(args)
-    FactoryUtils.likeSocialBuilding(nodeId, function()
-        local model = LuaSystemManager.factoryInteract:GetCurrentPresentationModel()
-        local building = model and model.resolvedTargetSet.building
-        if not building or building.nodeId ~= nodeId then
-            return 
-        end
-        FactoryUtils.updateBuildingLikeAbilityState(nodeId)
-    end)
+    FactoryUtils.likeSocialBuilding(nodeId)
+end
+
+FacBuildingInteractCtrl._OnSocialBuildingLiked = HL.Method(HL.Any) << function(self, args)
+    local chapterId, nodeId = unpack(args)
+    if chapterId ~= Utils.getCurrentChapterId() then
+        return
+    end
+    local model = LuaSystemManager.factoryInteract:GetCurrentPresentationModel()
+    local building = model and model.resolvedTargetSet.building
+    if not building or building.nodeId ~= nodeId then
+        return 
+    end
+    FactoryUtils.updateBuildingLikeAbilityState(nodeId)
 end
 
 
@@ -579,6 +586,11 @@ FacBuildingInteractCtrl._SetHighlightedPipeNode = HL.Method(HL.Opt(HL.Number, HL
     end
     self.m_curHighlightedPipeNodeId = pipeNodeId
     self.m_curHighlightedPipeUnitIndex = unitIndex
+end
+
+FacBuildingInteractCtrl._ClearHeldNodeStateOnChapterChange = HL.Method() << function(self)
+    self.m_curHighlightedPipeNodeId = nil
+    self.m_curHighlightedPipeUnitIndex = nil
 end
 
 

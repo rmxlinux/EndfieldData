@@ -542,10 +542,6 @@ WeaponExhibitPotentialCtrl._RefreshBottomCostItem = HL.Method(HL.Opt(HL.Boolean)
         cell.item.gameObject:SetActive(costItemInfo ~= nil)
         self:_RefreshWeaponCellAddOn(cell, costItemInfo)
 
-        cell.btnMinus.onClick:AddListener(function()
-            self:_RemoveFromCostItemDict(costItemInfo, 1)
-        end)
-
         if costItemInfo then
             cell.item:InitItem({
                 id = costItemInfo.itemCfg.id,

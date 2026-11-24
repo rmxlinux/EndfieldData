@@ -166,6 +166,7 @@ FacBuildModeHandler_Building.OnEnter = HL.Override(HL.Table) << function(self, a
     self:_UpdateFollowerState(true)
 
     host:_SetCamState(bData.buildCamState)
+    self:_ApplyTopViewBuildingCameraDistance(buildingId)
 end
 
 FacBuildModeHandler_Building.OnPostEnter = HL.Override() << function(self)
@@ -219,6 +220,32 @@ FacBuildModeHandler_Building.OnExit = HL.Override(HL.Table) << function(self, ct
     
     local mode = GameInstance.remoteFactoryManager.interact.buildingMode
     mode.onPlaceBuilding = mode.onPlaceBuilding - host.m_onPlaceFinish
+
+    
+    self:_RestoreTopViewBuildingCameraDistance()
+end
+
+
+FacBuildModeHandler_Building._ApplyTopViewBuildingCameraDistance = HL.Method(HL.String) << function(self, buildingId)
+    local facSys = LuaSystemManager.factory
+    if not facSys.inTopView or not facSys.m_topViewCamCtrl then
+        return
+    end
+    local cfg = FacConst.FAC_TOP_VIEW_BUILDING_CAMERA_DISTANCE[buildingId]
+    if cfg then
+        
+        facSys.m_topViewCamCtrl:SetZoomRange(cfg.minZoom, cfg.maxZoom, true)
+    else
+        facSys.m_topViewCamCtrl:ResetZoomRange(true)
+    end
+end
+
+FacBuildModeHandler_Building._RestoreTopViewBuildingCameraDistance = HL.Method() << function(self)
+    local facSys = LuaSystemManager.factory
+    if not facSys.m_topViewCamCtrl then
+        return
+    end
+    facSys.m_topViewCamCtrl:ResetZoomRange(true)
 end
 
 
@@ -544,6 +571,90 @@ end
 
 
 
+
+
+FacBuildModeHandler_Building._TryGetFormationAutoMoveCamParams = HL.Method().Return(HL.Boolean, Vector2, Vector2) << function(self)
+    local buildingId = self.m_host.m_buildingId
+    if not buildingId or string.isEmpty(buildingId) then
+        return false, Vector2.one, Vector2.zero
+    end
+    local hasBuilding, bData = Tables.factoryBuildingTable:TryGetValue(buildingId)
+    local hasStake, stakeCfg = Tables.factoryFormationStakeTable:TryGetValue(buildingId)
+    if not hasBuilding or not bData.range or not hasStake or not stakeCfg.ranges or stakeCfg.ranges.Count == 0 then
+        return false, Vector2.one, Vector2.zero
+    end
+
+    local ok, _, previewRot = self.m_provider:TryGetPreviewPose()
+    if not ok then
+        return false, Vector2.one, Vector2.zero
+    end
+
+    
+    
+    local buildingRange = bData.range
+    local baseCenterX = buildingRange.x + buildingRange.width * 0.5
+    local baseCenterZ = buildingRange.z + buildingRange.depth * 0.5
+    local rotation = Quaternion.Euler(previewRot.x, previewRot.y, previewRot.z)
+    local minX, maxX, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+    local function expand(localX, localZ)
+        local worldOffset = rotation * Vector3(localX, 0, localZ)
+        minX = math.min(minX, worldOffset.x)
+        maxX = math.max(maxX, worldOffset.x)
+        minZ = math.min(minZ, worldOffset.z)
+        maxZ = math.max(maxZ, worldOffset.z)
+    end
+
+    
+    local bXMin = buildingRange.x - baseCenterX
+    local bXMax = buildingRange.x + buildingRange.width - baseCenterX
+    local bZMin = buildingRange.z - baseCenterZ
+    local bZMax = buildingRange.z + buildingRange.depth - baseCenterZ
+    expand(bXMin, bZMin)
+    expand(bXMin, bZMax)
+    expand(bXMax, bZMin)
+    expand(bXMax, bZMax)
+
+    for i = 0, stakeCfg.ranges.Count - 1 do
+        local range = stakeCfg.ranges[i]
+        local xMin = range.x - baseCenterX
+        local xMax = range.x + range.width - baseCenterX
+        local zMin = range.z - baseCenterZ
+        local zMax = range.z + range.depth - baseCenterZ
+        expand(xMin, zMin)
+        expand(xMin, zMax)
+        expand(xMax, zMin)
+        expand(xMax, zMax)
+    end
+
+    local size = Vector2(maxX - minX, maxZ - minZ)
+    local centerOffset = Vector2((minX + maxX) * 0.5, (minZ + maxZ) * 0.5)
+    return true, size, centerOffset
+end
+
+FacBuildModeHandler_Building.GetAutoMoveCamSize = HL.Override().Return(Vector2) << function(self)
+    local ok, size = self:_TryGetFormationAutoMoveCamParams()
+    if ok then
+        return size
+    end
+    return FacBuildModeHandler_Building.Super.GetAutoMoveCamSize(self)
+end
+
+FacBuildModeHandler_Building.GetAutoMoveCamCenterOffset = HL.Override().Return(Vector2) << function(self)
+    local ok, _, centerOffset = self:_TryGetFormationAutoMoveCamParams()
+    if ok then
+        return centerOffset
+    end
+    return FacBuildModeHandler_Building.Super.GetAutoMoveCamCenterOffset(self)
+end
+
+FacBuildModeHandler_Building.GetAutoMoveCamPadding = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local buildingId = self.m_host.m_buildingId
+    if not buildingId or string.isEmpty(buildingId) then
+        return nil
+    end
+    local cfg = FacConst.FAC_TOP_VIEW_BUILDING_AUTO_MOVE_CAM[buildingId]
+    return cfg and cfg.padding or nil
+end
 
 FacBuildModeHandler_Building.GetRecoverState = HL.Override().Return(HL.Opt(HL.Table)) << function(self)
     local curMode = self:_GetCurBuildingMode()

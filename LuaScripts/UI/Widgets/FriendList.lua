@@ -277,6 +277,14 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
                         end
                     end
                 end
+                
+                if del > 0 and self.m_arg.onFriendListChanged then
+                    self.m_arg.onFriendListChanged()
+                end
+                if del > 0 and #self.m_friendList == 0 then
+                    self:RefreshInfo(self.m_friendList, self.m_needLoadingItem, self.m_noInfoTip)
+                    return
+                end
                 self.view.scrollList:UpdateCount(endIndex - del, true)
                 
                 
@@ -300,6 +308,14 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
                             end
                         end
                     end
+                end
+                
+                if del > 0 and self.m_arg.onFriendListChanged then
+                    self.m_arg.onFriendListChanged()
+                end
+                if del > 0 and #self.m_friendList == 0 then
+                    self:RefreshInfo(self.m_friendList, self.m_needLoadingItem, self.m_noInfoTip)
+                    return
                 end
                 self.view.scrollList:UpdateCount(endIndex - del, true)
                 
@@ -551,6 +567,14 @@ FriendList._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)
                             end
                         end
                     end
+                    
+                    if del > 0 and self.m_arg.onFriendListChanged then
+                        self.m_arg.onFriendListChanged()
+                    end
+                    if del > 0 and #self.m_friendList == 0 then
+                        self:RefreshInfo(self.m_friendList, self.m_needLoadingItem, self.m_noInfoTip)
+                        return
+                    end
                     self.view.scrollList:UpdateCount(endIndex - del, false, false, false, true)
                 end)
             else
@@ -569,6 +593,14 @@ FriendList._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)
                                 end
                             end
                         end
+                    end
+                    
+                    if del > 0 and self.m_arg.onFriendListChanged then
+                        self.m_arg.onFriendListChanged()
+                    end
+                    if del > 0 and #self.m_friendList == 0 then
+                        self:RefreshInfo(self.m_friendList, self.m_needLoadingItem, self.m_noInfoTip)
+                        return
                     end
                     self.view.scrollList:UpdateCount(endIndex - del, false, false, false, true)
                 end)

@@ -800,8 +800,16 @@ ActivityCenterCtrl.OnActivityUpdated = HL.Method(HL.Any) << function(self, arg)
     local id = unpack(arg)
     local activity = GameInstance.player.activitySystem:GetActivity(id)
 
-    
     if not activity then
+        
+        local matchSystem = GameInstance.player.multiplayerMatchSystem
+        local cardGameSystem = LuaSystemManager.cardGameSystem
+        if matchSystem.quickStatus.isMatching or matchSystem.isInMatchRoom
+            or cardGameSystem.isServerInGame or GameInstance.player.multiplayerPlayRoomSystem.inRoom
+            or cardGameSystem.isClientInGame then
+            PhaseManager:ExitPhaseFast(PHASE_ID)
+            return
+        end
         ActivityUtils.backToMainHud(true, id)
         return
     end
@@ -881,7 +889,10 @@ end
 
 ActivityCenterCtrl._PlayInAnimationWithAudio = HL.Method() << function(self)
     self.view.animationWrapper:PlayInAnimation()
-    AudioAdapter.PostEvent("Au_UI_Menu_ActivityCenter_Open")
+    
+    if not PhaseManager.isRecovering then
+        AudioAdapter.PostEvent("Au_UI_Menu_ActivityCenter_Open")
+    end
 end
 
 ActivityCenterCtrl._OnBackToTop = HL.Method() << function(self)

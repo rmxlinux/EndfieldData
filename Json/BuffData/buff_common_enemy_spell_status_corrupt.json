@@ -6,6 +6,7 @@
     "value": 0.0
   },
   "applyTags": [],
+  "atbGainModifier": [],
   "attributeModifier": {
     "attributeModifiers": [
       {
@@ -46,8 +47,8 @@
     },
     {
       "isDynamic": false,
-      "key": "movespeed_scale_max",
-      "valueDouble": 1.0,
+      "key": "movespeed_scale_min",
+      "valueDouble": 0.6,
       "valueStr": null
     },
     {
@@ -88,14 +89,14 @@
               "priorityLevel": 0,
               "priorityOffset": 0,
               "serverActionIndex": 1,
-              "compare": 0,
+              "compare": 2,
               "valueA": {
                 "blackboardKey": "movespeed_scale",
                 "useBlackboardKey": true,
                 "value": 0.0
               },
               "valueB": {
-                "blackboardKey": "movespeed_scale_max",
+                "blackboardKey": "movespeed_scale_min",
                 "useBlackboardKey": true,
                 "value": 0.0
               }
@@ -397,6 +398,7 @@
                   "reduceDamageForGuard": false,
                   "reduceDamageForGuardRatio": 1.0,
                   "simpleCalculation": false,
+                  "snapshotBlackboardKey": null,
                   "takeAtkSnapshot": false,
                   "updatePositionOnCoalition": true
                 }
@@ -524,6 +526,7 @@
     "showProgressInHpBar": false,
     "showProgressInNormalSkillButton": false,
     "showProgressInUltimateSkillButton": false,
+    "showStackCountInMainCharHpBar": false,
     "showWarningBackground": false,
     "useWeakProgressInNormalSkillButton": false
   },

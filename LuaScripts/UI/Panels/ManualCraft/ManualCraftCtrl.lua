@@ -721,6 +721,14 @@ ManualCraftCtrl._RefreshCraftList = HL.Method() << function(self)
     if activeFilter == false then
         self.view.settingList.gameObject:SetActive(activeFilter)
     end
+    
+    local sortDataById = {}
+    for _, craftInfo in ipairs(self.m_craftInfoList) do
+        sortDataById[craftInfo.id] = {
+            rarity = Tables.itemTable:GetValue(craftInfo.outcomes[0].id).rarity,
+            sortId = craftInfo.sortId,
+        }
+    end
     local sortFunc = Utils.genSortFunction(UIConst.ManualCraftSortOptions[self.m_sortMode].sortKeys, self.m_sortIncremental)
     local craftSortFun = function(a,b)
         if self.m_sortMode == 1 then
@@ -733,10 +741,8 @@ ManualCraftCtrl._RefreshCraftList = HL.Method() << function(self)
                     return aCanDo
                 end
             end
-            return sortFunc(a,b)
-        else
-            return sortFunc(a,b)
         end
+        return sortFunc(sortDataById[a.id], sortDataById[b.id])
     end
     table.sort(self.m_craftInfoList, craftSortFun)
 
@@ -1309,8 +1315,10 @@ ManualCraftCtrl.OnManualWorkModify = HL.Method(HL.Any) << function(self, arg)
             count = item.count,
         })
     end
-    local _arg = {info, self:_GetIngredientItems(arg.FormulaId, arg.Count)}
-    UIManager:Open(PanelId.CompositeToast, _arg)
+    UIManager:Open(PanelId.CompositeToast, {
+        rewardInfo = info,
+        needItems = self:_GetIngredientItems(arg.FormulaId, arg.Count),
+    })
 
     self:_RefreshCraftNode()
     self:_RefreshManufactureList()

@@ -211,6 +211,17 @@ ShopGiftPackDetailsCtrl._OnCashShopOpenCategory = HL.Method() << function(self)
 end
 
 ShopGiftPackDetailsCtrl._OnCashShopReceiveRefreshMsg = HL.Method() << function(self)
+    
+    for _, groupData in ipairs(CashShopUtils.GetAllGiftPackGoodsByGroup()) do
+        if groupData.cashShopId == self.m_cashShopId then
+            for _, goodsInfo in ipairs(groupData.goodsInfos) do
+                if goodsInfo.goodsId == self.m_goodsId then
+                    return
+                end
+            end
+            break
+        end
+    end
     GameInstance.player.guide:OnShopRefreshItemInfo()
     Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
     self:Close()

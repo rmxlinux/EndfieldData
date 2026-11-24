@@ -646,6 +646,7 @@ end
 SpaceshipGuestRoomClueCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = {
         moveCam = self.m_moveCam,
+        isRemoteCamera = self.m_isRemote,
         clearScreenKey = self.m_clearScreenKey,
     }
     local currentPanel = self.m_panelStack:Peek()

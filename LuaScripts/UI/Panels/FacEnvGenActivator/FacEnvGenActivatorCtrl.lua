@@ -128,7 +128,7 @@ FacEnvGenActivatorCtrl._UpdateConsumeItem = HL.Method(HL.Boolean) << function(se
         itemId = self.m_lockItemId
     end
 
-    local curConsumeCount = self.m_uiInfo.activatorCost.currentBufCnt * 6
+    local curConsumeCount = self.m_uiInfo.activatorCost.currentBufCnt * FacConst.FAC_RECENT_10S_COUNT_TO_MINUTE_RATE_SCALE
     if itemId ~= self.m_lastItemId or isInit then
         self.m_lastItemId = itemId
         if string.isEmpty(itemId) then

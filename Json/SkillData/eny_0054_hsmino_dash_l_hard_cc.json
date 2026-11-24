@@ -612,6 +612,8 @@
                 "z": 0.0
               },
               "hitMountPoint": 0,
+              "hitWeaponIndex": 0,
+              "hitWeaponMp": 0,
               "overrideEmitBone": true,
               "overrideHitBone": false,
               "presetPoints": [],
@@ -707,6 +709,7 @@
                 "targetGroupKey": "pos",
                 "targetSource": 2
               },
+              "useWeaponHitMp": false,
               "useWeaponMp": false,
               "weaponIndex": 0,
               "weaponMp": 0
@@ -765,6 +768,7 @@
                 "y": 0.0,
                 "z": 0.0
               },
+              "onlyWhenActionSourceIsMainChar": false,
               "realCameraShake2D": false,
               "releaseWhenActionEnds": false,
               "targetSettings": {
@@ -809,249 +813,6 @@
         }
       },
       {
-        "_endFrame": 25,
-        "_sequenceActionData": {
-          "actionData": [
-            {
-              "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
-              "isEnable": true,
-              "priorityLevel": 0,
-              "priorityOffset": 0,
-              "serverActionIndex": 8,
-              "alwaysNext": true,
-              "conditionAction": {
-                "actionData": [
-                  {
-                    "$type": "Beyond.Gameplay.Core.CheckBuffStackNumAdvanced+Data, Gameplay.Beyond",
-                    "isEnable": true,
-                    "priorityLevel": 0,
-                    "priorityOffset": 0,
-                    "serverActionIndex": 9,
-                    "buffSettings": {
-                      "buffIdList": [
-                        "buff_eny_0054_hsmino_fullfire"
-                      ],
-                      "checkType": 0,
-                      "tagQuery": {
-                        "queryType": 0,
-                        "tags": []
-                      }
-                    },
-                    "buffStackNumType": 0,
-                    "checkTarget": {
-                      "advancedDirection": {
-                        "clampToXZ": true,
-                        "customSourceAndTarget": false,
-                        "directionType": 0,
-                        "invertDirection": false,
-                        "source": null,
-                        "sourceMountPoint": 0,
-                        "target": null,
-                        "targetMountPoint": 0
-                      },
-                      "centerContextKey": null,
-                      "centerToGround": false,
-                      "centerType": 0,
-                      "enableAdvancedDirection": false,
-                      "ownerContextKey": null,
-                      "selectorData": {
-                        "finderData": null,
-                        "postProcessorData": [],
-                        "validatorData": []
-                      },
-                      "selectorDirection": 0,
-                      "selectorOwner": 1,
-                      "target": 0,
-                      "targetContextKey": null,
-                      "targetGroupKey": null,
-                      "targetSource": 4
-                    },
-                    "compareType": 3,
-                    "limitSkillCastId": false,
-                    "value": {
-                      "blackboardKey": null,
-                      "useBlackboardKey": false,
-                      "value": 1.0
-                    }
-                  }
-                ],
-                "onlyExecuteWhenSourceIsGuard": false,
-                "onlyExecuteWhenSourceIsMainChar": false
-              },
-              "failActions": {
-                "actionData": [],
-                "onlyExecuteWhenSourceIsGuard": false,
-                "onlyExecuteWhenSourceIsMainChar": false
-              },
-              "succeedActions": {
-                "actionData": [
-                  {
-                    "$type": "Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond",
-                    "isEnable": true,
-                    "priorityLevel": 0,
-                    "priorityOffset": 0,
-                    "serverActionIndex": 10,
-                    "alwaysNext": true,
-                    "conditionAction": {
-                      "actionData": [
-                        {
-                          "$type": "Beyond.Gameplay.Core.CheckBuffStackNumAdvanced+Data, Gameplay.Beyond",
-                          "isEnable": true,
-                          "priorityLevel": 0,
-                          "priorityOffset": 0,
-                          "serverActionIndex": 11,
-                          "buffSettings": {
-                            "buffIdList": [
-                              "buff_eny_0054_hsmino_hard_castskill09"
-                            ],
-                            "checkType": 0,
-                            "tagQuery": {
-                              "queryType": 0,
-                              "tags": []
-                            }
-                          },
-                          "buffStackNumType": 0,
-                          "checkTarget": {
-                            "advancedDirection": {
-                              "clampToXZ": true,
-                              "customSourceAndTarget": false,
-                              "directionType": 0,
-                              "invertDirection": false,
-                              "source": null,
-                              "sourceMountPoint": 0,
-                              "target": null,
-                              "targetMountPoint": 0
-                            },
-                            "centerContextKey": null,
-                            "centerToGround": false,
-                            "centerType": 0,
-                            "enableAdvancedDirection": false,
-                            "ownerContextKey": null,
-                            "selectorData": {
-                              "finderData": null,
-                              "postProcessorData": [],
-                              "validatorData": []
-                            },
-                            "selectorDirection": 0,
-                            "selectorOwner": 1,
-                            "target": 0,
-                            "targetContextKey": null,
-                            "targetGroupKey": null,
-                            "targetSource": 4
-                          },
-                          "compareType": 3,
-                          "limitSkillCastId": false,
-                          "value": {
-                            "blackboardKey": null,
-                            "useBlackboardKey": false,
-                            "value": 1.0
-                          }
-                        }
-                      ],
-                      "onlyExecuteWhenSourceIsGuard": false,
-                      "onlyExecuteWhenSourceIsMainChar": false
-                    },
-                    "failActions": {
-                      "actionData": [],
-                      "onlyExecuteWhenSourceIsGuard": false,
-                      "onlyExecuteWhenSourceIsMainChar": false
-                    },
-                    "succeedActions": {
-                      "actionData": [
-                        {
-                          "$type": "Beyond.Gameplay.Core.CastSkill+Data, Gameplay.Beyond",
-                          "isEnable": true,
-                          "priorityLevel": 0,
-                          "priorityOffset": 0,
-                          "serverActionIndex": 12,
-                          "caster": {
-                            "advancedDirection": {
-                              "clampToXZ": true,
-                              "customSourceAndTarget": false,
-                              "directionType": 0,
-                              "invertDirection": false,
-                              "source": null,
-                              "sourceMountPoint": 0,
-                              "target": null,
-                              "targetMountPoint": 0
-                            },
-                            "centerContextKey": null,
-                            "centerToGround": false,
-                            "centerType": 0,
-                            "enableAdvancedDirection": false,
-                            "ownerContextKey": null,
-                            "selectorData": {
-                              "finderData": null,
-                              "postProcessorData": [],
-                              "validatorData": []
-                            },
-                            "selectorDirection": 0,
-                            "selectorOwner": 1,
-                            "target": 0,
-                            "targetContextKey": null,
-                            "targetGroupKey": null,
-                            "targetSource": 4
-                          },
-                          "inheritSourceSkillCastId": false,
-                          "interruptCurSkillOnlyWhenTargetCastable": false,
-                          "skillId": {
-                            "blackboardKey": null,
-                            "useBlackboardKey": false,
-                            "value": "eny_0054_hsmino_skill09_hard"
-                          },
-                          "skipApplyCost": false,
-                          "target": {
-                            "advancedDirection": {
-                              "clampToXZ": true,
-                              "customSourceAndTarget": false,
-                              "directionType": 0,
-                              "invertDirection": false,
-                              "source": null,
-                              "sourceMountPoint": 0,
-                              "target": null,
-                              "targetMountPoint": 0
-                            },
-                            "centerContextKey": null,
-                            "centerToGround": false,
-                            "centerType": 0,
-                            "enableAdvancedDirection": false,
-                            "ownerContextKey": null,
-                            "selectorData": {
-                              "finderData": null,
-                              "postProcessorData": [],
-                              "validatorData": []
-                            },
-                            "selectorDirection": 0,
-                            "selectorOwner": 1,
-                            "target": 0,
-                            "targetContextKey": null,
-                            "targetGroupKey": null,
-                            "targetSource": 5
-                          }
-                        }
-                      ],
-                      "onlyExecuteWhenSourceIsGuard": false,
-                      "onlyExecuteWhenSourceIsMainChar": false
-                    }
-                  }
-                ],
-                "onlyExecuteWhenSourceIsGuard": false,
-                "onlyExecuteWhenSourceIsMainChar": false
-              }
-            }
-          ],
-          "onlyExecuteWhenSourceIsGuard": false,
-          "onlyExecuteWhenSourceIsMainChar": false
-        },
-        "_startFrame": 25,
-        "forceSyncAnimData": {
-          "forceSync": false,
-          "montageName": null,
-          "playbackSpeed": 0.0,
-          "targetFrame": 0
-        }
-      },
-      {
         "_endFrame": 26,
         "_sequenceActionData": {
           "actionData": [
@@ -1060,7 +821,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 13,
+              "serverActionIndex": 8,
               "maxValue": {
                 "blackboardKey": null,
                 "useBlackboardKey": false,
@@ -1079,7 +840,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 14,
+              "serverActionIndex": 9,
               "alwaysNext": true,
               "conditionAction": {
                 "actionData": [
@@ -1088,7 +849,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 15,
+                    "serverActionIndex": 10,
                     "compare": 0,
                     "valueA": {
                       "blackboardKey": "random",
@@ -1112,7 +873,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 17
+                    "serverActionIndex": 12
                   }
                 ],
                 "onlyExecuteWhenSourceIsGuard": false,
@@ -1125,7 +886,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 16,
+                    "serverActionIndex": 11,
                     "caster": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -1217,7 +978,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 18,
+              "serverActionIndex": 13,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -1471,6 +1232,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -1693,6 +1455,5 @@
     "predefinedTag": []
   },
   "toggleBuffs": [],
-  "uiRangeHints": [],
   "useAIExclusiveFrame": false
 }

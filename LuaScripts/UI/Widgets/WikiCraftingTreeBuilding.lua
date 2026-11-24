@@ -70,6 +70,7 @@ WikiCraftingTreeBuilding.InitWikiCraftingTreeBuilding = HL.Method(HL.Table) << f
         local _, buildingData = Tables.factoryBuildingTable:TryGetValue(buildingId)
         if buildingData then
             name = buildingData.name
+            
             iconFolder = UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON
             iconId = buildingData.iconOnPanel
         end
@@ -130,7 +131,15 @@ WikiCraftingTreeBuilding.InitWikiCraftingTreeBuilding = HL.Method(HL.Table) << f
     end
 
     
-    FactoryUtils.refreshEnvIcon(args.craftInfo.env, self.view.envTitleController)
+    if args.craftInfo.formationEnvState then
+        self.view.envTitleController.gameObject:SetActive(true)
+        self.view.envTitleController:SetState(args.craftInfo.formationEnvState)
+        if args.craftInfo.wikiModeTitle then
+            self.view.nameTxt.text = string.format(Language.LUA_WIKI_BUILDING_FORMATION_LEVEL_FORMAT, args.craftInfo.formationLevel)
+        end
+    else
+        FactoryUtils.refreshEnvIcon(args.craftInfo.env, self.view.envTitleController)
+    end
 
     self:_InitController()
 

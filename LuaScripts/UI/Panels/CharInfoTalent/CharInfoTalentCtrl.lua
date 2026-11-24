@@ -77,6 +77,8 @@ CharInfoTalentCtrl.m_arg = HL.Field(HL.Any)
 
 CharInfoTalentCtrl.m_isInInitTransition = HL.Field(HL.Boolean) << false
 
+CharInfoTalentCtrl.m_nodeAnimName = HL.Field(HL.String) << ""
+
 
 CharInfoTalentCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitActionEvent()
@@ -1207,6 +1209,22 @@ CharInfoTalentCtrl._RefreshNodeCellDefault = HL.Method(HL.Table) << function(sel
     end
 end
 
+
+CharInfoTalentCtrl._PlayNodeAnimation = HL.Method(HL.String, HL.Opt(HL.Boolean)) << function(self, animName, isFast)
+    local animationNode = self.view.animationNode
+    if not string.isEmpty(self.m_nodeAnimName) and animationNode:IsPlaying(self.m_nodeAnimName) then
+        animationNode:Stop()
+        animationNode:SeekToPercent(self.m_nodeAnimName, 1)
+    end
+
+    self.m_nodeAnimName = animName
+    if isFast then
+        animationNode:SeekToPercent(animName, 1)
+    else
+        animationNode:Play(animName)
+    end
+end
+
 CharInfoTalentCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isExpand, isFast)
     if isFast == nil then
         isFast = false
@@ -1243,21 +1261,11 @@ CharInfoTalentCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean))
         if self.m_isShowSkill then
             self.view.btnExchangeText.text = Language.LUA_CHAR_INFO_TALENT_EXCHANGE_TALENT
             self.view.btnExchangeRedDot:InitRedDot("CharTalent", self.m_charInfo.instId)
-
-            if isFast then
-                self.view.animationNode:SeekToPercent(skillExpandAnim, 1)
-            else
-                self.view.animationNode:Play(skillExpandAnim)
-            end
+            self:_PlayNodeAnimation(skillExpandAnim, isFast)
         else
             self.view.btnExchangeText.text = Language.LUA_CHAR_INFO_TALENT_EXCHANGE_SKILL
             self.view.btnExchangeRedDot:InitRedDot("CharSkill", self.m_charInfo.instId)
-
-            if isFast then
-                self.view.animationNode:SeekToPercent(talentExpandAnim, 1)
-            else
-                self.view.animationNode:Play(talentExpandAnim)
-            end
+            self:_PlayNodeAnimation(talentExpandAnim, isFast)
         end
         self.view.arrowUp.gameObject:SetActive(self.m_isShowSkill)
         self.view.arrowDown.gameObject:SetActive(not self.m_isShowSkill)
@@ -1267,7 +1275,7 @@ CharInfoTalentCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean))
         if self.m_isShowSkill then
             backAnim = isEndmin and "charinfo_talent_expand_skill_talent_adminiback" or "charinfo_talent_expand_skill_talent_back"
         end
-        self.view.animationNode:Play(backAnim)
+        self:_PlayNodeAnimation(backAnim)
         self.m_isShowSkill = false
     end
 
@@ -1342,12 +1350,12 @@ CharInfoTalentCtrl._ExchangeToSkill = HL.Method(HL.Boolean) << function(self, is
         local toSkillAnim = isEndmin and "charinfo_talent_expand_skilladmini" or "charinfo_talent_expand_skill"
         self.view.btnExchangeText.text = Language.LUA_CHAR_INFO_TALENT_EXCHANGE_TALENT
         self.view.btnExchangeRedDot:InitRedDot("CharTalent", self.m_charInfo.instId)
-        self.view.animationNode:Play(toSkillAnim)
+        self:_PlayNodeAnimation(toSkillAnim)
     else
         local toTalentAnim = isEndmin and "charinfo_talent_expand_skillbackadmini" or "charinfo_talent_expand_skillback"
         self.view.btnExchangeText.text = Language.LUA_CHAR_INFO_TALENT_EXCHANGE_SKILL
         self.view.btnExchangeRedDot:InitRedDot("CharSkill", self.m_charInfo.instId)
-        self.view.animationNode:Play(toTalentAnim)
+        self:_PlayNodeAnimation(toTalentAnim)
     end
 
     self.view.arrowUp.gameObject:SetActive(isSkill)
@@ -1403,6 +1411,11 @@ CharInfoTalentCtrl._InitController = HL.Method() << function(self)
     InputManagerInst:ToggleBinding(self.m_detailTalentBindingId, false)
 
     self.view.eliteNodeNaviGroup.onDefaultNaviFailed:AddListener(function(dir)
+        
+        if dir == Unity.UI.NaviDirection.Down then
+            return
+        end
+
         if self.m_isShowSkill and dir == Unity.UI.NaviDirection.Up then
             local lastSkillSelectable = self.m_skillLayoutCache:Get(self.m_skillLayoutCache:GetCount()).btnSkill.view.button
             self:SetNaviTarget(lastSkillSelectable)

@@ -24,13 +24,9 @@ FriendDialogueSendArea.m_showRoleId = HL.Field(HL.Number) << 0
 
 FriendDialogueSendArea.friendChatSystem = HL.Field(HL.Any)
 
-FriendDialogueSendArea.m_csIndex2textTabCell = HL.Field(HL.Table)
-
 FriendDialogueSendArea.m_curTextTabCsIndex = HL.Field(HL.Number) << -1
 
 FriendDialogueSendArea.m_curTextTabFocusCsIndex = HL.Field(HL.Number) << -1
-
-FriendDialogueSendArea.m_csIndex2emotionTabCell = HL.Field(HL.Table)
 
 FriendDialogueSendArea.m_recentTextUniqList = HL.Field(HL.Table)
 
@@ -65,8 +61,6 @@ local PanelBtnState = {
 FriendDialogueSendArea.InitFriendDialogueSendArea = HL.Method(HL.Any) << function(self, friendDialogContent)
     self.friendDialogContent = friendDialogContent
     self.friendChatSystem = GameInstance.player.friendChatSystem
-    self.m_csIndex2textTabCell = {}
-    self.m_csIndex2emotionTabCell = {}
 
 
     self.m_recordTab2TextCsIndex = {}
@@ -212,7 +206,9 @@ end
 FriendDialogueSendArea.UpdateTextMessagePanelBind = HL.Method() << function(self)
     self.m_getTextTabCell = UIUtils.genCachedCellFunction(self.view.textMessagePanel.textTabScrollList)
     self.m_getTextMessageCell = UIUtils.genCachedCellFunction(self.view.textMessagePanel.textMessageList)
-    self.m_csIndex2textTabCell = {}
+    self.view.textMessagePanel.textTabScrollList.getCurSelectedIndex = function()
+        return self.m_curTextTabCsIndex
+    end
     self.view.textMessagePanel.textTabScrollList.onUpdateCell:AddListener(function(obj, csIndex)
         self:_OnUpdateTextTabCell(self.m_getTextTabCell(obj), csIndex)
     end)
@@ -284,13 +280,6 @@ FriendDialogueSendArea._SelectTextTab = HL.Method(HL.Number) << function(self, c
         end
     end
 
-    for key, value in pairs(self.m_csIndex2textTabCell) do
-        value.tabStateController:SetState(TextMessageTabState.Normal)
-    end
-
-    local cell = self.m_csIndex2textTabCell[csIndex]
-    cell.tabStateController:SetState(TextMessageTabState.Selected)
-
     if csIndex == 0 then
         self.m_curTextTabCsIndex = csIndex
         self.m_curTextTabFocusCsIndex = 0
@@ -306,7 +295,6 @@ FriendDialogueSendArea._SelectTextTab = HL.Method(HL.Number) << function(self, c
         local succ, chatTexts = self.friendChatSystem.m_tab2chatTexts:TryGetValue(tabName)
         if succ then
             self.m_curTextTabCsIndex = csIndex
-            cell.redDot.gameObject:SetActive(false)
             self.friendChatSystem:SetTextTabRedDotRecord(tabName)
 
             self.m_curTextTabFocusCsIndex = 0
@@ -326,10 +314,21 @@ FriendDialogueSendArea._SelectTextTab = HL.Method(HL.Number) << function(self, c
             self.view.textMessagePanel.textMessageEmptyNode.gameObject:SetActive(true)
         end
     end
+
+    self.view.textMessagePanel.textTabScrollList:UpdateShowingCells(function(index, obj)
+        local cell = self.m_getTextTabCell(obj)
+        local isSelected = index == self.m_curTextTabCsIndex
+        cell.tabStateController:SetState(isSelected and TextMessageTabState.Selected or TextMessageTabState.Normal)
+        if isSelected then
+            cell.redDot.gameObject:SetActive(false)
+        end
+    end)
 end
 
 FriendDialogueSendArea._OnUpdateTextTabCell = HL.Method(HL.Table, HL.Number) << function(self, cell, csIndex)
     
+    
+    cell.tabStateController:SetState(csIndex == self.m_curTextTabCsIndex and TextMessageTabState.Selected or TextMessageTabState.Normal)
     if csIndex == 0 then
         cell.tabSelectedTxt.text = Language.LUA_FRIEND_TEXT_RECENT_TAB_TEXT
         cell.tabNormalTxt.text = Language.LUA_FRIEND_TEXT_RECENT_TAB_TEXT
@@ -347,8 +346,6 @@ FriendDialogueSendArea._OnUpdateTextTabCell = HL.Method(HL.Table, HL.Number) << 
             cell.redDot.gameObject:SetActive(false)
         end
     end
-
-    self.m_csIndex2textTabCell[csIndex] = cell
 
     cell.button.onClick:RemoveAllListeners()
     cell.button.onClick:AddListener(function()
@@ -373,6 +370,9 @@ FriendDialogueSendArea.UpdateEmotionPanelBind = HL.Method() << function(self)
 
     self.m_getEmotionTabCell = UIUtils.genCachedCellFunction(self.view.emotionPanel.emotionTabScrollList)
     self.m_getEmotionListCell = UIUtils.genCachedCellFunction(self.view.emotionPanel.emotionList)
+    self.view.emotionPanel.emotionTabScrollList.getCurSelectedIndex = function()
+        return self.m_curEmotionTabCsIndex
+    end
 
     self.view.emotionPanel.emotionTabScrollList.onUpdateCell:AddListener(function(obj, csIndex)
         self:_OnUpdateEmotionTab(self.m_getEmotionTabCell(obj), csIndex)
@@ -415,6 +415,8 @@ end
 
 FriendDialogueSendArea._OnUpdateEmotionTab = HL.Method(HL.Table, HL.Number) << function(self, cell, csIndex)
     
+    
+    cell.tabStateController:SetState(csIndex == self.m_curEmotionTabCsIndex and EmotionTabState.Selected or EmotionTabState.Normal)
     local tabName = self.friendChatSystem.m_index2emotionTabName[csIndex]
 
     local success, tableData = Tables.friendChatTabEmotionTable:TryGetValue(tabName)
@@ -424,7 +426,6 @@ FriendDialogueSendArea._OnUpdateEmotionTab = HL.Method(HL.Table, HL.Number) << f
     end
 
     cell.redDot.gameObject:SetActive(not self.friendChatSystem:GetEmotionTabRedDotRecord(tabName))
-    self.m_csIndex2emotionTabCell[csIndex] = cell
     cell.button.onClick:RemoveAllListeners()
     cell.button.onClick:AddListener(function()
         if self.m_curEmotionTabCsIndex == csIndex then
@@ -440,19 +441,20 @@ FriendDialogueSendArea._SelectEmotionTab = HL.Method(HL.Number) << function(self
         csIndex = 0
     end
 
-    for key, value in pairs(self.m_csIndex2emotionTabCell) do
-        value.tabStateController:SetState(EmotionTabState.Normal)
-    end
-
-    local cell = self.m_csIndex2emotionTabCell[csIndex]
-    cell.tabStateController:SetState(EmotionTabState.Selected)
-
     local tabName = self.friendChatSystem.m_index2emotionTabName[csIndex]
     local succ, chatTexts = self.friendChatSystem.m_tab2chatEmotions:TryGetValue(tabName)
     if succ then
         self.m_curEmotionTabCsIndex = csIndex
-        cell.redDot.gameObject:SetActive(false)
         self.friendChatSystem:SetEmotionTabRedDotRecord(tabName)
+
+        self.view.emotionPanel.emotionTabScrollList:UpdateShowingCells(function(index, obj)
+            local cell = self.m_getEmotionTabCell(obj)
+            local isSelected = index == csIndex
+            cell.tabStateController:SetState(isSelected and EmotionTabState.Selected or EmotionTabState.Normal)
+            if isSelected then
+                cell.redDot.gameObject:SetActive(false)
+            end
+        end)
 
         self.m_curEmotionTabFocusCsIndex = 0
 

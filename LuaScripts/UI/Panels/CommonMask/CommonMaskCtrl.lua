@@ -29,6 +29,7 @@ CommonMaskCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
+
 CommonMaskCtrl.m_curMaskData = HL.Field(HL.Any)
 
 
@@ -63,6 +64,12 @@ CommonMaskCtrl.m_playerBlackScreenActive = HL.Field(HL.Boolean) << false
 
 CommonMaskCtrl.m_mainHudBlackScreenActive = HL.Field(HL.Boolean) << false
 
+CommonMaskCtrl.m_customBgGo = HL.Field(HL.Userdata)
+
+CommonMaskCtrl.m_customBgPath = HL.Field(HL.String) << ""
+
+CommonMaskCtrl.m_customBgPrefabKey = HL.Field(HL.Number) << -1
+
 CommonMaskCtrl.OnCommonMaskStart = HL.StaticMethod(HL.Table) << function(arg)
     local ctrl = CommonMaskCtrl.AutoOpen(PANEL_ID, {}, true)
     local commonMaskData
@@ -89,6 +96,18 @@ CommonMaskCtrl.OnCommonMaskEnd = HL.StaticMethod(HL.Table) << function(arg)
 
     ctrl:AddCinematicQueueHandle(handle)
     ctrl:TryStartCommonMask(commonMaskData)
+end
+
+
+
+CommonMaskCtrl.OnDisposeLuaEnv = HL.StaticMethod() << function()
+    for _, panelId in ipairs({ PanelId.CommonMask, PanelId.CommonMaskLower }) do
+        local isOpen, ctrl = UIManager:IsOpen(panelId)
+        if isOpen then
+            ctrl.m_afterEndCallbacks = {}
+            ctrl:_Clear()
+        end
+    end
 end
 
 CommonMaskCtrl.OnCommonMaskShutDown = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
@@ -227,6 +246,12 @@ CommonMaskCtrl._UpdateCurMaskData = HL.Method(CS.Beyond.Gameplay.UICommonMaskDat
 
         self.m_extraData.waitHide = commonMaskData.waitHide
         self.m_extraData.enableTimeOutWhenWaitHide = commonMaskData.enableTimeOutWhenWaitHide
+        if self.m_curMaskData.maskType == commonMaskData.maskType and self.m_curMaskData.customMaskType == commonMaskData.customMaskType then
+            self.m_curMaskData.customWidgetArgs = commonMaskData.customWidgetArgs
+            if self.m_customBgGo and NotNull(self.m_customBgGo) then
+                self:_InitCustomBg()
+            end
+        end
     else
         if commonMaskData.fadeType == UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn then
             self.m_extraData.waitHide = self.m_extraData.waitHide or commonMaskData.waitHide
@@ -338,16 +363,24 @@ CommonMaskCtrl._SwitchState = HL.Method(HL.Number) << function(self, newState)
 
 end
 
+
+CommonMaskCtrl._InvokeCallbacks = HL.Method(HL.Table) << function(self, callbacks)
+    for _, callback in pairs(callbacks) do
+        if callback then
+            local succ, log = xpcall(callback, debug.traceback)
+            if not succ then
+                logger.critical("CommonMaskCtrl callback fail", self.panelCfg.name, "state:", self.m_state, "\n" .. tostring(log))
+            end
+        end
+    end
+end
+
 CommonMaskCtrl._SolveAllAfterEndCallbacks = HL.Method() << function(self)
     if not self.m_afterEndCallbacks then
         logger.info("CommonMaskCtrl _SolveAllAfterEndCallbacks no afterEndCallbacks")
         return
     end
-    for _, afterEndCallback in pairs(self.m_afterEndCallbacks) do
-        if afterEndCallback then
-            afterEndCallback()
-        end
-    end
+    self:_InvokeCallbacks(self.m_afterEndCallbacks)
     self.m_afterEndCallbacks = {}
 end
 
@@ -381,10 +414,32 @@ CommonMaskCtrl._SolveCallbacks = HL.Method() << function(self)
     logger.info("CommonMaskCtrl _SolveCallbacks do callbacks, num: %d", #executeCbs)
 
     
-    for _, callback in pairs(executeCbs) do
-        if callback then
-            callback()
-        end
+    self:_InvokeCallbacks(executeCbs)
+end
+
+CommonMaskCtrl._UnloadCustomBg = HL.Method() << function(self)
+    if self.m_customBgGo and NotNull(self.m_customBgGo) then
+        
+        self.m_customBgGo:SetActive(false)
+        GameObject.DestroyImmediate(self.m_customBgGo)
+    end
+    self.m_customBgGo = nil
+    if self.m_customBgPrefabKey >= 0 then
+        self.loader:DisposeHandleByKey(self.m_customBgPrefabKey)
+        self.m_customBgPrefabKey = -1
+    end
+    self.m_customBgPath = ""
+end
+
+CommonMaskCtrl._InitCustomBg = HL.Method() << function(self)
+    local data = self.m_curMaskData
+    if data.maskType ~= UIConst.UI_COMMON_MASK_TYPE.Custom or data.fadeType ~= UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn or string.isEmpty(data.customWidgetArgs) then
+        return
+    end
+    local cfg = UIConst.UI_CUSTOM_LOADING_CONFIG[data.customMaskType]
+    if cfg and cfg.init then
+        local luaWidget = self.m_customBgGo:GetComponent("LuaUIWidget")
+        cfg.init(luaWidget.table[1], data.customWidgetArgs)
     end
 end
 
@@ -393,18 +448,52 @@ CommonMaskCtrl._RefreshMaskType = HL.Method().Return(HL.Any) << function(self)
     local maskCanvas
     local maskWhite = maskType == UIConst.UI_COMMON_MASK_TYPE.WhiteScreen
     local maskAlphaBlock = maskType == UIConst.UI_COMMON_MASK_TYPE.AlphaBlock
-    local maskBlack = (not maskWhite) and (not maskAlphaBlock)
+    local maskSweetPie = maskType == UIConst.UI_COMMON_MASK_TYPE.SweetPieMask
+    local maskBlack = (not maskWhite) and (not maskAlphaBlock) and (not maskSweetPie)
+    local customBgCfg = maskType == UIConst.UI_COMMON_MASK_TYPE.Custom and UIConst.UI_CUSTOM_LOADING_CONFIG[self.m_curMaskData.customMaskType]
+
     if maskWhite then
         maskCanvas = self.view.maskWhite
     elseif maskAlphaBlock then
         maskCanvas = self.view.maskAlphaBlock
+    elseif maskSweetPie then
+        maskCanvas = self.view.miBingMask
     else
         maskCanvas = self.view.mask
+    end
+
+    if customBgCfg then
+        self.view.customBg.gameObject:SetActive(true)
+        local hasSprite = not string.isEmpty(customBgCfg.sprite)
+        self.view.customBg.enabled = hasSprite
+        if hasSprite then
+            self.view.customBg:LoadSprite(UIConst.UI_LOADING_BG, customBgCfg.sprite)
+        end
+        maskCanvas = self.view.customBgCanvasGroup
+        if self.m_customBgPath ~= customBgCfg.prefab then
+            self:_UnloadCustomBg()
+            local prefab
+            if not string.isEmpty(customBgCfg.prefab) and self.loader:CheckExists(customBgCfg.prefab) then
+                prefab, self.m_customBgPrefabKey = self.loader:LoadGameObject(customBgCfg.prefab)
+            end
+            if prefab then
+                self.m_customBgGo = CSUtils.CreateObject(prefab, self.view.customBg.gameObject)
+                self.m_customBgPath = customBgCfg.prefab
+                Utils.wrapLuaNode(self.m_customBgGo)
+                self:_InitCustomBg()
+            end
+        end
+    else
+        self:_UnloadCustomBg()
+        self.view.customBg.gameObject:SetActive(false)
     end
 
     self.view.mask.gameObject:SetActive(maskBlack)
     self.view.maskWhite.gameObject:SetActive(maskWhite)
     self.view.maskAlphaBlock.gameObject:SetActive(maskAlphaBlock)
+    if self.view.miBingMask then
+        self.view.miBingMask.gameObject:SetActive(maskSweetPie)
+    end
     self.view.text.gameObject:SetActive(false)
     self.view.textWhite.gameObject:SetActive(false)
     return maskCanvas
@@ -499,6 +588,36 @@ CommonMaskCtrl._DoMaskFade = HL.StaticMethod(Unity.CanvasGroup, HL.Number, HL.Nu
         end
     end
 
+
+CommonMaskCtrl._DoMaskTransition = HL.Method(Unity.CanvasGroup, HL.Boolean, HL.Number, HL.Opt(Unity.AnimationCurve)).Return(HL.Number) <<
+    function(self, maskCanvas, fadeIn, duration, curve)
+        if self.m_curMaskData.maskType == UIConst.UI_COMMON_MASK_TYPE.SweetPieMask then
+            local wrapper = self.view.miBingMaskAnimation
+            local clip = fadeIn and wrapper.animationIn or wrapper.animationOut
+            local clipLength = wrapper:GetClipLength(clip.name)
+            wrapper:ClearTween(false)
+            if duration <= 0 then
+                wrapper:SampleClip(clip.name, clipLength, false)
+                return 0
+            end
+
+            if fadeIn then
+                wrapper:PlayInAnimation(nil, false)
+            else
+                wrapper:PlayOutAnimation()
+            end
+            return clipLength
+        end
+
+        local alpha = fadeIn and 1 or 0
+        if duration > 0 then
+            CommonMaskCtrl._DoMaskFade(maskCanvas, alpha, duration, curve)
+            return duration
+        end
+        maskCanvas.alpha = alpha
+        return 0
+    end
+
 CommonMaskCtrl._CheckSync = HL.Method().Return(HL.Boolean) << function(self)
     if not self.m_curMaskData then
         return true
@@ -545,7 +664,7 @@ CommonMaskCtrl._DoCommonMaskSync = HL.Method() << function(self)
         self:_SwitchState(UIConst.COMMON_MASK_STATE.WaitFade)
 
         
-        maskCanvas.alpha = 1
+        self:_DoMaskTransition(maskCanvas, true, 0)
         if logicId ~= self.m_logicId then
             return
         end
@@ -564,7 +683,7 @@ CommonMaskCtrl._DoCommonMaskSync = HL.Method() << function(self)
         self:_SetCommonMaskFrameTagState(false)
         NarrativeUtils.UnMuteAudioBlackScreen(self.m_curMaskData.layerType)
         
-        maskCanvas.alpha = 0
+        self:_DoMaskTransition(maskCanvas, false, 0)
         if logicId ~= self.m_logicId then
             return
         end
@@ -694,11 +813,7 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
 
             
             fadeInTime = self.m_curMaskData.fadeInTime
-            if fadeInTime > 0 then
-                CommonMaskCtrl._DoMaskFade(maskCanvas, 1, fadeInTime, curve)
-            else
-                maskCanvas.alpha = 1
-            end
+            local transitionDuration = self:_DoMaskTransition(maskCanvas, true, fadeInTime, curve)
 
             if CoroutineManager:IsCorCleared(corKey) then
                 return
@@ -707,8 +822,8 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
             if CoroutineManager:IsCorCleared(corKey) then
                 return
             end
-            if fadeInTime > 0 then
-                coroutine.wait(fadeInTime)
+            if transitionDuration > 0 then
+                coroutine.wait(transitionDuration)
             end
 
             
@@ -736,7 +851,8 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
                 local maskType = self.m_curMaskData.maskType
                 local maskWhite = maskType == UIConst.UI_COMMON_MASK_TYPE.WhiteScreen
                 local maskBlack = maskType == UIConst.UI_COMMON_MASK_TYPE.BlackScreen
-                if maskWhite or maskBlack then
+                local maskSweetPie = maskType == UIConst.UI_COMMON_MASK_TYPE.SweetPieMask
+                if maskWhite or maskBlack or maskSweetPie then
                     self:_SetBurstMode(true)
                     if self.m_curMaskData.enableEntitySyncLoadMode then
                         self:_SetEntitySyncLoadMode(true)
@@ -836,11 +952,7 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
             local fadeOutTime = self.m_curMaskData and self.m_curMaskData.fadeOutTime or 0
             self:_SetCommonMaskFrameTagState(false)
             NarrativeUtils.UnMuteAudioBlackScreen(self.m_curMaskData.layerType, fadeOutTime);
-            if fadeOutTime > 0 then
-                CommonMaskCtrl._DoMaskFade(maskCanvas, 0, fadeOutTime, curve)
-            else
-                maskCanvas.alpha = 0
-            end
+            local transitionDuration = self:_DoMaskTransition(maskCanvas, false, fadeOutTime, curve)
 
             if CoroutineManager:IsCorCleared(corKey) then
                 return
@@ -849,8 +961,8 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
             if CoroutineManager:IsCorCleared(corKey) then
                 return
             end
-            if fadeOutTime > 0 then
-                coroutine.wait(fadeOutTime)
+            if transitionDuration > 0 then
+                coroutine.wait(transitionDuration)
             end
 
 
@@ -897,7 +1009,14 @@ CommonMaskCtrl._StartCommonMask = HL.Method() << function(self)
         local fadeInTime = self.m_curMaskData.fadeInTime
         local fadeOutTime = self.m_curMaskData.fadeOutTime
         
-        if fadeIn then
+        if self.m_curMaskData.maskType == UIConst.UI_COMMON_MASK_TYPE.SweetPieMask then
+            local wrapper = self.view.miBingMaskAnimation
+            local clip = fadeIn and wrapper.animationIn or wrapper.animationOut
+            local clipLength = wrapper:GetClipLength(clip.name)
+            
+            local sampleEnd = fadeIn and fadeInTime <= 0
+            wrapper:SampleClip(clip.name, sampleEnd and clipLength or 0, false)
+        elseif fadeIn then
             if fadeInTime <= 0 then
                 maskCanvas.alpha = 1
             else
@@ -978,6 +1097,7 @@ CommonMaskCtrl._Clear = HL.Method() << function(self)
     self.m_curMaskData = nil
     self.m_extraData = nil
     self.m_state = UIConst.COMMON_MASK_STATE.None
+    self:_UnloadCustomBg()
     self:_ClearTimeoutTimer()
     self:_ClearAllHandles()
 end
@@ -1001,17 +1121,17 @@ CommonMaskCtrl._ClearAndSolveCallBacks = HL.Method() << function(self)
 
     self:_Clear()
 
-    for _, callback in pairs(executeCbs) do
-        if callback then
-            callback()
-        end
-    end
+    self:_InvokeCallbacks(executeCbs)
 end
 
 CommonMaskCtrl._ClearTween = HL.Method() << function(self)
     self.view.mask:DOKill()
     self.view.maskWhite:DOKill()
     self.view.text:DOKill()
+    
+    if self.view.miBingMaskAnimation then
+        self.view.miBingMaskAnimation:ClearTween(false)
+    end
     self.m_showingText = false
     local corKey = self.m_corKey
     if self.m_corKey then

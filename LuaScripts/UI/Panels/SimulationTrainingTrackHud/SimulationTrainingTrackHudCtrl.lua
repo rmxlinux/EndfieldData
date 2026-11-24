@@ -36,7 +36,6 @@ SimulationTrainingTrackHudCtrl.m_gambleBattleGameStarted = HL.Field(HL.Boolean) 
 
 SimulationTrainingTrackHudCtrl.m_contentShowingCor = HL.Field(HL.Thread)
 
-SimulationTrainingTrackHudCtrl.taskGoalShowing = HL.Field(HL.Boolean) << false
 
 
 
@@ -409,13 +408,6 @@ SimulationTrainingTrackHudCtrl.OnSubGameStageFinish = HL.Method() << function(se
     self:_ToggleBtnVisible(false)
     local action = function()
         self.m_contentShowingCor = self:_StartCoroutine(function()
-            while true do
-                
-                if not self.taskGoalShowing then
-                    break
-                end
-                coroutine.step()
-            end
             self:_SafelyPlayAnimAsync(self.animationWrapper, CONTENT_SCROLL_FADE_ANIM)
             self:_SafelyPlayAnimAsync(self.animationWrapper, PANEL_OUT_ANIM)
             self:_TrackStageFinish()
@@ -423,25 +415,6 @@ SimulationTrainingTrackHudCtrl.OnSubGameStageFinish = HL.Method() << function(se
         end)
     end
     action()
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 end
 
 SimulationTrainingTrackHudCtrl.OnSubGameStageChange = HL.Method() << function(self)
@@ -518,13 +491,6 @@ SimulationTrainingTrackHudCtrl._DoFailContentShowing = HL.Method(HL.Number) << f
     self:_ManuSetFailState()
     AudioAdapter.PostEvent("Au_UI_Mission_Step_Fail")
     self.m_contentShowingCor = self:_StartCoroutine(function()
-        while true do
-            
-            if not self.taskGoalShowing then
-                break
-            end
-            coroutine.step()
-        end
         self:_SafelyPlayAnimAsync(self.animationWrapper, CONTENT_SCROLL_FADE_ANIM)
 
         Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackHudShowEndEffect")
@@ -540,13 +506,6 @@ end
 SimulationTrainingTrackHudCtrl._DoSuccContentShowing = HL.Method(HL.Number) << function(self, phase)
     self:_ToggleBtnVisible(false)
     self.m_contentShowingCor = self:_StartCoroutine( function()
-        while true do
-            
-            if not self.taskGoalShowing then
-                break
-            end
-            coroutine.step()
-        end
 
         self:_SafelyPlayAnimAsync(self.animationWrapper, CONTENT_SCROLL_FADE_ANIM)
 

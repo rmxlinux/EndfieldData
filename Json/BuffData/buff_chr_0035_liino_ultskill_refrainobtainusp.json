@@ -6,6 +6,7 @@
     "value": 0.0
   },
   "applyTags": [],
+  "atbGainModifier": [],
   "attributeModifier": {
     "attributeModifiers": [],
     "isConvertedAttribute": false
@@ -68,6 +69,63 @@
         }
       ],
       "buffEvent": 5
+    },
+    {
+      "actions": [
+        {
+          "actionData": [
+            {
+              "$type": "Beyond.Gameplay.Core.SetSkillCdAtOnce+Data, Gameplay.Beyond",
+              "isEnable": true,
+              "priorityLevel": 0,
+              "priorityOffset": 0,
+              "serverActionIndex": 1,
+              "functionType": 0,
+              "isPercentage": false,
+              "skillId": null,
+              "skillTypeMask": 128,
+              "target": {
+                "advancedDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "centerContextKey": null,
+                "centerToGround": false,
+                "centerType": 0,
+                "enableAdvancedDirection": false,
+                "ownerContextKey": null,
+                "selectorData": {
+                  "finderData": null,
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 0,
+                "selectorOwner": 1,
+                "target": 0,
+                "targetContextKey": null,
+                "targetGroupKey": null,
+                "targetSource": 4
+              },
+              "triggerEvent": true,
+              "useSkillType": true,
+              "value": {
+                "blackboardKey": null,
+                "useBlackboardKey": false,
+                "value": 0.0
+              }
+            }
+          ],
+          "onlyExecuteWhenSourceIsGuard": false,
+          "onlyExecuteWhenSourceIsMainChar": false
+        }
+      ],
+      "buffEvent": 2
     }
   ],
   "damageModifier": [],
@@ -108,6 +166,7 @@
     "showProgressInHpBar": false,
     "showProgressInNormalSkillButton": false,
     "showProgressInUltimateSkillButton": false,
+    "showStackCountInMainCharHpBar": false,
     "showWarningBackground": false,
     "useWeakProgressInNormalSkillButton": false
   },

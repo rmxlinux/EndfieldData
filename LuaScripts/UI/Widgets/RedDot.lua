@@ -163,7 +163,7 @@ RedDot._ToggleLimitTimeMarkNode = HL.Method(HL.Boolean, HL.Opt(HL.Number)) << fu
             return
         end
         
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.redDotLimitTime, self.view.content.transform)
+        local obj = CSUtils.CreateObject(LuaSystemManager.commonPrefabSystem:LoadPrefab("RedDotLimitTime"), self.view.content.transform)
         obj.name = "LimitTimeMarkNode"
         
         local transform = obj.transform

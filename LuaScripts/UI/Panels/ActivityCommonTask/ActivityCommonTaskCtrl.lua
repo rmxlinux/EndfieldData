@@ -42,6 +42,30 @@ ActivityCommonTaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_taskWidget.view.btnBack.onClick:AddListener(function()
         PhaseManager:PopPhase(PHASE_ID)
     end)
+
+    
+    if self.m_taskWidget.view.helpBtn then
+        self.m_taskWidget.view.helpBtn.onClick:AddListener(function()
+            ActivityUtils.openDescriptionPopup(self.m_activityId)
+        end)
+    end
+
+    if arg.instructionArg then
+        UIManager:Open(PanelId.ActivityDescriptionPopup, arg.instructionArg)
+    end
+end
+
+ActivityCommonTaskCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = lume.deepCopy(self.m_phase.arg)
+    arg.instructionArg = nil
+    local isOpen, popupCtrl = UIManager:IsOpen(PanelId.ActivityDescriptionPopup)
+    if PhaseManager:GetTopPhaseId() == PHASE_ID and isOpen and popupCtrl:IsShow() then
+        local instructionArg = popupCtrl:GetRestoreArg()
+        if instructionArg.activityId == self.m_activityId then
+            arg.instructionArg = instructionArg
+        end
+    end
+    return arg
 end
 
 HL.Commit(ActivityCommonTaskCtrl)

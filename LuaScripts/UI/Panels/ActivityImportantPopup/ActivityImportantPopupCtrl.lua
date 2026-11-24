@@ -63,7 +63,7 @@ ActivityImportantPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local videoAspectRatio
     if Utils.checkIsPSDevice() then
         videoAspectRatio = self.view.config.VIDEO_ASPECT_RATIO_PS5
-    elseif DeviceInfo.isMobile then
+    elseif DeviceInfo.isMobileUser then
         videoAspectRatio = self.view.config.VIDEO_ASPECT_RATIO_MOBILE
     else
         videoAspectRatio = self.view.config.VIDEO_ASPECT_RATIO_PC

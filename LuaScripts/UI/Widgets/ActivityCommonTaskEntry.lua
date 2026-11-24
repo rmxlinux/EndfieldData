@@ -111,8 +111,20 @@ ActivityCommonTaskEntry._RefreshUI = HL.Method() << function(self)
     if self.view.taskNumTxt then
         local completedTaskCount = 0
         local totalTaskCount = 0
-        for _, taskData in cs_pairs(activity.taskDataDict) do
+        local _, taskConfig = Tables.activityConditionalMultiStageTaskConfigTable:TryGetValue(self.m_activityId)
+        for id, taskData in cs_pairs(activity.taskDataDict) do
             local status = GEnums.ActivityConditionalTaskState.__CastFrom(taskData.Status)
+            if taskConfig then
+                local _, singleTaskConfig = taskConfig.TaskConfigMap:TryGetValue(id)
+                if singleTaskConfig then
+                    
+                    local unlockTimeArrived = string.isEmpty(singleTaskConfig.unlockTimeId) or Utils.isCurTimeInTimeIdRange(singleTaskConfig.unlockTimeId)
+                    local noUnlockCondition = #singleTaskConfig.unlockConditionId == 0
+                    if activity.status == GEnums.ActivityStatus.Locked and unlockTimeArrived and noUnlockCondition then
+                        status = GEnums.ActivityConditionalTaskState.Unlocked
+                    end
+                end
+            end
             if status ~= GEnums.ActivityConditionalTaskState.Locked then
                 totalTaskCount = totalTaskCount + 1
             end

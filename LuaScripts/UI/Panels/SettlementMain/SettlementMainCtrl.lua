@@ -74,6 +74,8 @@ local TradeIconAniStage = {
     Out = 4,
 }
 
+SettlementMainCtrl.m_arg = HL.Field(HL.Any)
+
 SettlementMainCtrl.m_genStlCellFunc = HL.Field(HL.Function)
 
 SettlementMainCtrl.m_getTagCells = HL.Field(HL.Forward("UIListCache"))
@@ -159,6 +161,7 @@ end
 
 
 SettlementMainCtrl._InitData = HL.Method(HL.Any).Return(HL.Boolean) << function(self, arg)
+    self.m_arg = arg
     local domainId, defaultStlId = DomainPOIUtils.resolveOpenSettlementArgs(arg)
     local initSelectItemCount = 0
     if type(arg) == "table" and arg.resumeState then
@@ -203,10 +206,7 @@ SettlementMainCtrl._UpdateData = HL.Method(HL.Boolean) << function(self, isInit)
 
     self.m_stlInfoList = {}
     local defaultIndex = 1
-    for index, stlId in pairs(self.m_domainInfo.stlIdList) do
-        if stlId == self.m_domainInfo.defaultStlId then
-            defaultIndex = LuaIndex(index)
-        end
+    for _, stlId in pairs(self.m_domainInfo.stlIdList) do
         
         
         local stlData = settlementSystem:GetUnlockSettlementData(stlId)
@@ -252,6 +252,9 @@ SettlementMainCtrl._UpdateData = HL.Method(HL.Boolean) << function(self, isInit)
             }
             table.insert(self.m_stlInfoList, stlInfo)
             self:_UpdateStlRuntimeInfo(stlInfo)
+            if stlId == self.m_domainInfo.defaultStlId then
+                defaultIndex = #self.m_stlInfoList
+            end
         end
     end
     
@@ -582,9 +585,10 @@ SettlementMainCtrl._InitUI = HL.Method() << function(self)
         end
         local tradeNode = self.view.tradeNode
         tradeNode.playerDepotStore.changeItemBtn.gameObject:SetActive(not isFocused)
-        tradeNode.stlStore.moneyTipsBtn.interactable = not isFocused
+        tradeNode.stlStore.moneyTipsBtn.enabled = not isFocused
         tradeNode.reduceBtnKeyHint.gameObject:SetActive(not isFocused)
         tradeNode.addBtnKeyHint.gameObject:SetActive(not isFocused)
+
     end)
     self.view.tradeNode.centerNaviGroup.getDefaultSelectableFunc = function()
         return self.view.tradeNode.stlStore.moneyItemTipsBtn
@@ -1147,7 +1151,7 @@ SettlementMainCtrl._OnTradeSuccess = HL.Method(HL.Any) << function(self, rawMsg)
     
     local tradeAni = "tradenodenewpc_done"
     local tradeAniReset = "tradenodenewpc_default"
-    local isMobileAni = DeviceInfo.isMobile and ((Screen.width / Screen.height) >= (16/9))
+    local isMobileAni = DeviceInfo.isMobileUser and ((Screen.width / Screen.height) >= (16/9))
     if isMobileAni then
         tradeAni = "tradenodenewmobile_done"
         tradeAniReset = "tradenodenewmobile_default"
@@ -1222,7 +1226,8 @@ SettlementMainCtrl._CurStlHasActivity = HL.Method().Return(HL.Boolean) << functi
         return false
     end
     
-    return domainActivityInfo[self.m_stlInfoList[self.m_curSelectStlIndex].stlId] ~= nil
+    local stlInfo = self.m_stlInfoList[self.m_curSelectStlIndex]
+    return stlInfo ~= nil and domainActivityInfo[stlInfo.stlId] ~= nil
 end
 
 SettlementMainCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, arg)
@@ -1254,10 +1259,13 @@ SettlementMainCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) <<
             })
         end
     end
-    local arg = {
-        resumeState = self:_CollectResumeState(),
-        resumeOpenPanel = resumeOpenPanel,
-    }
+    local arg = type(self.m_arg) == "table" and lume.deepCopy(self.m_arg) or {}
+    if string.isEmpty(arg.domainId) then
+        
+        arg.domainId = self.m_domainInfo.id
+    end
+    arg.resumeState = self:_CollectResumeState()
+    arg.resumeOpenPanel = resumeOpenPanel
     return arg
 end
 

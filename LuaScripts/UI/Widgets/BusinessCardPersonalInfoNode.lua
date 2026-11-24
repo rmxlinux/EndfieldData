@@ -6,6 +6,8 @@ BusinessCardPersonalInfoNode.m_id = HL.Field(HL.Number) << 0
 
 BusinessCardPersonalInfoNode.m_preview = HL.Field(HL.Boolean) << false
 
+BusinessCardPersonalInfoNode.m_businessCardMoreActionArgs = HL.Field(HL.Table)
+
 
 BusinessCardPersonalInfoNode._OnFirstTimeInit = HL.Override() << function(self)
     self.view.btnOther.onClick:RemoveAllListeners()
@@ -20,7 +22,8 @@ BusinessCardPersonalInfoNode._OnFirstTimeInit = HL.Override() << function(self)
         if self.m_id == GameInstance.player.roleId then
             FriendUtils.FRIEND_CELL_INIT_FUNC.onSelfClick(self.view.tipRect, self.m_id, recordTipsTransform)
         elseif GameInstance.player.friendSystem.friendInfoDic:ContainsKey(self.m_id) then
-            FriendUtils.FRIEND_CELL_INIT_FUNC.onBusinessCardFriendPlayerClick(self.view.tipRect, self.m_id, recordTipsTransform)
+            FriendUtils.FRIEND_CELL_INIT_FUNC.onBusinessCardFriendPlayerClick(
+                self.view.tipRect, self.m_id, recordTipsTransform, self.m_businessCardMoreActionArgs)
         else
             FriendUtils.FRIEND_CELL_INIT_FUNC.onBusinessCardStrangerPlayerClick(self.view.tipRect, self.m_id, recordTipsTransform)
         end
@@ -47,10 +50,11 @@ BusinessCardPersonalInfoNode._OnFirstTimeInit = HL.Override() << function(self)
     self.view.seasonTagName.onClick:AddListener(function() openRecordTips(self.view.seasonTagName.transform) end)
 end
 
-BusinessCardPersonalInfoNode.InitBusinessCardPersonalInfoNodeByRoleId = HL.Method(HL.Number, HL.Boolean) << function(self, roleId, preview)
+BusinessCardPersonalInfoNode.InitBusinessCardPersonalInfoNodeByRoleId = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Table)) << function(self, roleId, preview, businessCardMoreActionArgs)
     self:_FirstTimeInit()
 
     self.m_preview = preview
+    self.m_businessCardMoreActionArgs = businessCardMoreActionArgs
     self.m_id = roleId
     if self.m_id == GameInstance.player.roleId then
         self.view.redDot:InitRedDot("NewAvatarInfo")

@@ -106,6 +106,8 @@ SpaceshipScheduleCtrl.m_hasShownSchedulePanel = HL.Field(HL.Boolean) << false
 
 SpaceshipScheduleCtrl.m_timeReminderShouldShowByTeamType = HL.Field(HL.Table)
 
+SpaceshipScheduleCtrl.m_workHourAllocationPointerUpEntries = HL.Field(HL.Table) << function() return {} end
+
 SpaceshipScheduleCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = {
         roomId = self.m_roomId,
@@ -799,6 +801,15 @@ SpaceshipScheduleCtrl._BindWorkHourAllocationSliderPointerUp = HL.Method(HL.Any)
         self:_OnWorkHourAllocationInputReleased()
     end)
     eventTrigger.triggers:Add(entry)
+    self.m_workHourAllocationPointerUpEntries[eventTrigger] = entry
+end
+
+SpaceshipScheduleCtrl._ClearWorkHourAllocationSliderPointerUp = HL.Method() << function(self)
+    for eventTrigger, entry in pairs(self.m_workHourAllocationPointerUpEntries) do
+        entry.callback:RemoveAllListeners()
+        eventTrigger.triggers:Remove(entry)
+    end
+    self.m_workHourAllocationPointerUpEntries = {}
 end
 
 SpaceshipScheduleCtrl._UpdateWorkHourAllocation = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function(self, schedule, playTimeReminderAnimation)
@@ -1035,14 +1046,17 @@ SpaceshipScheduleCtrl._UpdateWorkHourAllocationSliderVisuals = HL.Method() << fu
     self:_UpdateWorkHourAllocationGradRed(showActiveReminder)
     self.view.workHourAllocation.redShadowImage.gameObject:SetActive(showReminderA or showReminderB)
     local sliderAIsTeamA = not self.m_isWorkHourAllocationVisualReversed
+    local sliderBIsTeamA = not sliderAIsTeamA
+    local showSliderAReminder = (sliderAIsTeamA and showReminderA) or (not sliderAIsTeamA and showReminderB)
+    local showSliderBReminder = (sliderBIsTeamA and showReminderA) or (not sliderBIsTeamA and showReminderB)
     self:_UpdateWorkHourAllocationSliderColor()
     local leftTeamText = self.view.workHourAllocation.leftTeamText
     leftTeamText.text = SpaceshipUtils.getScheduleTeamTextByIsTeamA(not sliderAIsTeamA)
     leftTeamText.gameObject:SetActive(self.view.workHourAllocation.spaceshipScheduleSliderA.slider.value ~= 0)
     self:_UpdateWorkHourAllocationSliderVisual(self.view.workHourAllocation.spaceshipScheduleSliderA, sliderAIsTeamA,
-        self.m_selectedWorkHourAllocationSlider == 1, showSideReminder)
-    self:_UpdateWorkHourAllocationSliderVisual(self.view.workHourAllocation.spaceshipScheduleSliderB, not sliderAIsTeamA,
-        self.m_selectedWorkHourAllocationSlider == 2, showSideReminder)
+        self.m_selectedWorkHourAllocationSlider == 1, showSliderAReminder)
+    self:_UpdateWorkHourAllocationSliderVisual(self.view.workHourAllocation.spaceshipScheduleSliderB, sliderBIsTeamA,
+        self.m_selectedWorkHourAllocationSlider == 2, showSliderBReminder)
 end
 
 SpaceshipScheduleCtrl._UpdateWorkHourAllocationGradRed = HL.Method(HL.Boolean) << function(self, showReminder)
@@ -1678,6 +1692,7 @@ SpaceshipScheduleCtrl.OnShow = HL.Override() << function(self)
 end
 
 SpaceshipScheduleCtrl.OnClose = HL.Override() << function(self)
+    self:_ClearWorkHourAllocationSliderPointerUp()
     self:_ClearAutoReminderTimer()
     self:_ClearTimeNowRefreshTimer()
 end

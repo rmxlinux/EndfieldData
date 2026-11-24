@@ -73,7 +73,8 @@ MissionCompletePopCtrl.m_itemCells = HL.Field(HL.Forward("UIListCache"))
 
 MissionCompletePopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
-    Notify(MessageConst.COMMON_START_BLOCK_MAIN_HUD_ACTION_QUEUE)
+    LuaSystemManager.mainHudActionQueue:Interrupt()
+    LuaSystemManager.mainHudActionQueue:AddBlocker("MissionCompletePop")
 
     self.m_chapterEffectList = {}
     
@@ -347,7 +348,7 @@ end
 
 
 MissionCompletePopCtrl.OnClose = HL.Override() << function(self)
-    Notify(MessageConst.COMMON_END_BLOCK_MAIN_HUD_ACTION_QUEUE)
+    LuaSystemManager.mainHudActionQueue:RemoveBlocker("MissionCompletePop")
 end
 
 HL.Commit(MissionCompletePopCtrl)

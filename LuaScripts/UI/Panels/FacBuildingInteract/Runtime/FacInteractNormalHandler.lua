@@ -220,6 +220,22 @@ FacInteractNormalHandler._CollectClickTargets = HL.Method(HL.Table, HL.Table, HL
             })
         end
     end
+
+    local formationZone = resolvedTargetSet.formationZone
+    if formationZone then
+        local info = formationZone.formationZoneInfo
+        local levelCfg = Tables.factoryFormationLevelTable:GetValue(info.formationId).levels[info.data.level]
+        local cube = formationZone.cube or info.data.cube
+        table.insert(targets, 1, {
+            type = FacConst.FAC_INTERACT_TARGET_TYPE.FormationZone,
+            name = levelCfg.name,
+            effectInfo = {
+                worldPos = formationZone.logicWorldPos or info.logicWorldPos,
+                scale = Vector3(cube.width, 1, cube.depth),
+            },
+            option = { formationZoneInfo = info },
+        })
+    end
     return targets
 end
 
@@ -292,6 +308,11 @@ FacInteractNormalHandler.OnRelease = HL.Override(HL.Any) << function(self, event
 end
 
 FacInteractNormalHandler.ExecuteInteract = HL.Override(HL.Table) << function(self, option)
+    if option.formationZoneInfo then
+        Notify(MessageConst.FAC_OPEN_FORMATION_ZONE_PANEL, option.formationZoneInfo)
+        return
+    end
+
     local buildingNodeId = option.buildingNodeId
     if not string.isEmpty(buildingNodeId) then
         

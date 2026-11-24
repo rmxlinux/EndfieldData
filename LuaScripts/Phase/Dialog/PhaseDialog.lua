@@ -238,6 +238,9 @@ end
 
 PhaseDialog.OnExitDialog = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     
+    self.doingOut = true
+
+    
     
     if self.state == PhaseConst.EPhaseState.TransitionBackToTop then
         self.m_pendingExitDialogArg = arg
@@ -254,8 +257,13 @@ PhaseDialog.OnExitDialog = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     UIManager:Hide(PanelId.CommonPopUp)
 
     if not fast then
-        self.doingOut = true
-        self.m_panelItem.uiCtrl:PlayAnimationOutWithCallback(function()
+        local uiCtrl = self.m_panelItem.uiCtrl
+        
+        if uiCtrl:_ShouldSkipPlayAnimationOut() then
+            self:_ExitSelfFastSafely(true)
+            return
+        end
+        uiCtrl:PlayAnimationOutWithCallback(function()
             self:_ExitSelfFastSafely(true)
         end)
     else
@@ -478,11 +486,17 @@ end
 
 
 PhaseDialog._OnDestroy = HL.Override() << function(self)
+    
+    self.doingOut = true
     UIManager:ToggleBlockObtainWaysJump("IN_CINEMATIC", false)
     self.m_panelItem = nil
 end
 
 PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
+    if self.doingOut or self.m_destroyed then
+        return
+    end
+
     local panelIdStr, paramStr, actionData = unpack(arg)
     local phaseId = PhaseId[panelIdStr]
     local param = not string.isEmpty(paramStr) and Utils.stringJsonToTable(paramStr) or {}
@@ -503,6 +517,10 @@ PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
     end
 
     self.m_panelItem.uiCtrl:PlayAnimationOutWithCallback(function()
+        if self.doingOut or self.m_destroyed then
+            return
+        end
+
         if phaseId == PhaseId.ReadingPopUp then
             local closeCallback = function() end
             param = {param.id, closeCallback}
@@ -512,7 +530,7 @@ PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
         local openCallback
         if continueAfterOpen then
             openCallback = function()
-                if self.m_destroyed then
+                if self.doingOut or self.m_destroyed then
                     return
                 end
                 GameWorld.dialogManager:TryPauseVoiceManager()
@@ -666,17 +684,14 @@ PhaseDialog._OpenDialogSkipPopUp = HL.Method() << function(self)
 
         panelItem.uiCtrl:Show()
         panelItem.uiCtrl:RefreshSummary(summaryId)
-        if curAuto then
-            panelItem.uiCtrl:SetCloseRecoverAuto()
-        end
+        panelItem.uiCtrl:SetCloseRecoverAuto(curAuto)
     end
 end
 
+
+
 PhaseDialog._HideDialogSkipPopUp = HL.Method() << function(self)
-    local panelItem = self:_GetPanelPhaseItem(PanelId.DialogSkipPopUp)
-    if panelItem then
-        panelItem.uiCtrl:Hide()
-    end
+    self:RemovePhasePanelItemById(PanelId.DialogSkipPopUp)
 end
 
 PhaseDialog._SkipDialog = HL.Method() << function(self)

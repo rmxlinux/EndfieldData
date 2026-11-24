@@ -15,7 +15,7 @@ CompositeToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 CompositeToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    local needItems = arg[2]
+    local needItems = arg.needItems
     local count = #needItems
     local node
     for k = 1, 3 do
@@ -33,7 +33,7 @@ CompositeToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     self:_StartTimer(1, function()
         UIManager:Close(PANEL_ID)
-        Notify(MessageConst.SHOW_SYSTEM_REWARDS, arg[1])
+        Notify(MessageConst.SHOW_SYSTEM_REWARDS, arg.rewardInfo)
     end)
 end
 

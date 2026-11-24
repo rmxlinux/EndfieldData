@@ -17,6 +17,8 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     
     ['BattleAction'] = {
         
+        [MessageConst.ON_MAIN_HUD_SHOW] = 'ApplyThrowModeToMainHud',
+        
         [MessageConst.ON_CHANGE_THROW_MODE] = 'OnChangeThrowMode',
         
         [MessageConst.SHOW_WATER_DRONE_AIM] = 'EnterWaterDroneMode',
@@ -108,6 +110,8 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_COMMON_MASK_HIGH_START] = 'OnCommonMaskStart',
         
         [MessageConst.ON_COMMON_MASK_END] = 'OnCommonMaskEnd',
+        
+        [MessageConst.ON_DISPOSE_LUA_ENV] = 'OnDisposeLuaEnv',
     },
     
     ['CommonMaskLower'] = {
@@ -158,6 +162,13 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['EquipToast'] = {
         
         [MessageConst.SHOW_EQUIP_TOAST] = 'OnShowToast',
+    },
+    
+    ['DungeonBossEntry'] = {
+        
+        [MessageConst.ON_ENTER_DUNGEON] = 'RecordBossDungeonStart',
+        
+        [MessageConst.ON_SUB_GAME_UNLOCK] = 'RecordBossGameUnlock',
     },
     
     ['DungeonCommonToast'] = {
@@ -627,6 +638,20 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.SELECT_MAP_MARK] = 'OnSelectMark',
     },
     
+    ['MultiplayerRoom'] = {
+        
+        [MessageConst.ON_MULTIPLAYER_MATCH_ROOM_CREATE_RSP] = 'OnCreateRoomRsp',
+        
+        [MessageConst.ON_MULTIPLAYER_MATCH_ROOM_JOIN_RSP] = 'OnJoinRoomRsp',
+    },
+    
+    ['MultiplayerSuccess'] = {
+        
+        [MessageConst.ON_MULTIPLAYER_ENTER_PLAY_ROOM] = 'ShowMultiplayerSuccess',
+        
+        [MessageConst.ON_CARD_GAME_START] = 'FinishMultiplayerSuccessFlow',
+    },
+    
     ['MissionCompletePop'] = {
         
         [MessageConst.ON_CHAPTER_START] = 'OnChapterStart',
@@ -936,6 +961,22 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['BombAim'] = {
         [MessageConst.SHOW_BOMB_AIM] = '_OnShowBombAim',
     },
+    
+    ['SweetPieAim'] = {
+        [MessageConst.SHOW_SWEET_PIE_AIM] = '_OnShowSweetPieAim',
+        [MessageConst.HIDE_SWEET_PIE_AIM] = 'OnHideMainHudButtons',
+        
+        [MessageConst.ON_ENTER_SWEET_PIE] = 'OnEnterSweetPie',
+        
+        [MessageConst.ON_EXIT_SWEET_PIE] = 'OnExitSweetPie',
+        
+        [MessageConst.ON_MAIN_HUD_SHOW] = 'ApplySweetPieToMainHud',
+    },
+    
+    ['SweetPieManual'] = {
+        
+        [MessageConst.SHOW_SWEET_PIE_POPTIPS] = 'ShowSelf',
+    },
     ['SpaceshipCharTips'] = {
         
         [MessageConst.SHOW_SPACESHIP_CHAR_TIPS] = 'ShowTips',
@@ -1204,6 +1245,7 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     
     ['WaterDroneAim'] = {
         [MessageConst.SHOW_WATER_DRONE_AIM] = 'OnShowWaterDroneAim',
+        [MessageConst.HIDE_WATER_DRONE_AIM] = 'OnHideMainHudButtons',
     },
     
     ['WaterDroneBag'] = {

@@ -2,6 +2,10 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 CashShopItem = HL.Class('CashShopItem', UIWidgetBase)
 
+CashShopItem._OnDestroy = HL.Override() << function(self)
+    LuaSystemManager.commonPrefabSystem:Release(self)
+end
+
 CashShopItem.m_info = HL.Field(HL.Any)
 
 CashShopItem.m_isBox = HL.Field(HL.Boolean) << false
@@ -328,7 +332,7 @@ CashShopItem._ToggleSoldOut = HL.Method(HL.Boolean) << function(self, active)
         if not active then
             return
         end
-        local prefab = LuaSystemManager.cashShopItemPrefabSystem.soldOutNode
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("CashShopItemSoldOutNode", self)
         if not prefab then
             return
         end
@@ -343,7 +347,7 @@ CashShopItem._ToggleLock = HL.Method(HL.Boolean) << function(self, active)
         if not active then
             return
         end
-        local prefab = LuaSystemManager.cashShopItemPrefabSystem.lockNode
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("CashShopItemLockNode", self)
         if not prefab then
             return
         end
@@ -362,7 +366,7 @@ CashShopItem._SetNumberTxt = HL.Method(HL.Number) << function(self, number)
         if not active then
             return
         end
-        local prefab = LuaSystemManager.cashShopItemPrefabSystem.numberNode
+        local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("CashShopItemNumber", self)
         if not prefab then
             return
         end

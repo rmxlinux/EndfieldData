@@ -777,7 +777,9 @@ HyperlinkPopupCtrl._OnJumpToWiki = HL.Method(HL.String) << function(self, jumpWi
     if PhaseManager:CheckIsInTransition() then
         return
     end
-    Notify(MessageConst.HIDE_ITEM_TIPS)
+    Notify(MessageConst.HIDE_ITEM_TIPS, {
+        jumpArgs = { phaseId = PhaseId.Wiki, phaseArgs = { wikiEntryId = jumpWikiId } },
+    })
     if PhaseManager:IsOpen(PhaseId.Wiki) then
         
         

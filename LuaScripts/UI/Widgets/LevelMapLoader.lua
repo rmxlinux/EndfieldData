@@ -28,7 +28,7 @@ local EXTRA_LOW_RT_DRAW_SCALE_DEFAULT = 0.5
 local EXTRA_RT_SIZE_SCALE_DEFAULT = 1
 
 local MIN_MARK_ORDER = 1
-local MAX_MARK_ORDER = 6
+local MAX_MARK_ORDER = 8
 local CUSTOM_MARK_ORDER = 6
 local MARK_ORDER_VIEW_NAME_FORMAT = "order%d"
 
@@ -216,6 +216,8 @@ LevelMapLoader.m_visibilityCheckList = HL.Field(HL.Table)
 
 LevelMapLoader.m_hideOtherLevels = HL.Field(HL.Boolean) << false
 
+LevelMapLoader.m_isOverrideFollowTarget = HL.Field(HL.Boolean) << false
+
 
 
 LevelMapLoader.m_gridRectLength = HL.Field(HL.Number) << -1  
@@ -347,6 +349,9 @@ LevelMapLoader.InitLevelMapLoader = HL.Method(HL.String, HL.Opt(HL.Table)) << fu
 
     self:_FirstTimeInit()
     self:_RefreshFallbackLevelMarks()
+
+    self.m_isOverrideFollowTarget = false
+    self.view.element.overridePlayer.gameObject:SetActive(false)
 
     self.m_initialized = true
 end
@@ -832,7 +837,10 @@ LevelMapLoader._OnMarkInstDataModified = HL.Method(HL.String) << function(self, 
     if belongGridLoaderData == nil or not self.view.loader:IsGridInHitList(belongGridLoaderData.gridId) then
         return
     end
-    self:_RefreshGridMark(markInstId, markRuntimeData, markRuntimeData.isVisible)
+    
+    
+    local keepInView = markRuntimeData.isVisible or markRuntimeData.keepStateChangeCallbackWhenInvisible
+    self:_RefreshGridMark(markInstId, markRuntimeData, keepInView)
 end
 
 LevelMapLoader._OnMarkInstDataChanged = HL.Method(HL.String, HL.Boolean) << function(self, markInstId, isAdd)
@@ -2192,9 +2200,10 @@ LevelMapLoader._RefreshLoadedChunks = HL.Method(HL.Userdata, ChunkLODType, HL.Op
 
     
     local isHighLOD = lodType == ChunkLODType.High
-    local dedupGlobalIds = isHighLOD and {} or nil
-    for loaderData in cs_pairs(chunks) do
-        if isHighLOD then
+    if isHighLOD then
+        local dedupGlobalIds = {}
+        
+        self:_ProcessChunksWithCurrentLevelPriority(chunks, function(loaderData)
             local globalId = loaderData.globalId
             if globalId ~= 0 then
                 if dedupGlobalIds[globalId] then
@@ -2206,7 +2215,9 @@ LevelMapLoader._RefreshLoadedChunks = HL.Method(HL.Userdata, ChunkLODType, HL.Op
             else
                 drawerData.drawList[loaderData.chunkId] = loaderData
             end
-        else
+        end)
+    else
+        for loaderData in cs_pairs(chunks) do
             drawerData.drawList[loaderData.chunkId] = loaderData
         end
     end
@@ -2942,7 +2953,7 @@ LevelMapLoader._RefreshMissionTrackingMarksOffset = HL.Method() << function(self
     for instId, missionTrackingMarkObj in pairs(self.m_loadedMissionTrackingMarks) do
         local success, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(instId)
         if success then
-            local needOffset = markRuntimeData.trackingInfo.isMapOverlap or markRuntimeData.trackingInfo.isOverlap
+            local needOffset = markRuntimeData.isTrackerOverlapped
             missionTrackingMarkObj.view.content.anchoredPosition = needOffset and offsetPosition or Vector2.zero
         end
     end
@@ -2992,8 +3003,10 @@ LevelMapLoader._RefreshWaitVisibleInMistMarksState = HL.Method() << function(sel
 end
 
 LevelMapLoader._RefreshCustomMarkOrderActiveState = HL.Method(HL.Boolean) << function(self, state)
-    for order = 1, CUSTOM_MARK_ORDER - 1 do
-        self:SetMarkOrderState(order, state)
+    for order = MIN_MARK_ORDER, MAX_MARK_ORDER do
+        if order ~= CUSTOM_MARK_ORDER then
+            self:SetMarkOrderState(order, state)
+        end
     end
 end
 
@@ -3324,7 +3337,11 @@ LevelMapLoader.SetLoaderElementsShownState = HL.Method(HL.Boolean) << function(s
     element.markRoot.gameObject:SetActive(isShown)
     element.trackingMarkRoot.gameObject:SetActive(isShown)
     element.staticElementBottomRoot.switchMask.gameObject:SetActive(isShown)
-    element.player.gameObject:SetActive(isShown)
+    if self.m_isOverrideFollowTarget then
+        element.overridePlayer.gameObject:SetActive(isShown)
+    else
+        element.player.gameObject:SetActive(isShown)
+    end
 end
 
 LevelMapLoader.SetMarkOrderState = HL.Method(HL.Number, HL.Boolean) << function(self, orderNum, state)
@@ -3452,7 +3469,11 @@ LevelMapLoader.SetLoaderLineVisibleState = HL.Method(HL.Boolean) << function(sel
 end
 
 LevelMapLoader.SetLoaderPlayerVisibleState = HL.Method(HL.Boolean) << function(self, isVisible)
-    self.view.element.player.gameObject:SetActive(isVisible)
+    if self.m_isOverrideFollowTarget then
+        self.view.element.overridePlayer.gameObject:SetActive(isVisible)
+    else
+        self.view.element.player.gameObject:SetActive(isVisible)
+    end
 end
 
 LevelMapLoader.SetLoaderTierId = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, tierId, needAnim)
@@ -3600,10 +3621,33 @@ LevelMapLoader.RefreshMarkStateAfterMistUnlocked = HL.Method() << function(self)
 end
 
 LevelMapLoader.RefreshCharacterPosition = HL.Method() << function(self)
-    local playerNode = self.view.element.player
+    local playerNode = self.m_isOverrideFollowTarget
+        and self.view.element.overridePlayer
+        or self.view.element.player
     playerNode.rectTransform.anchoredPosition = self.m_mapManager.characterRectPosition
     playerNode.playerArrow.localEulerAngles = Vector3(0.0, 0.0, -self.m_mapManager.characterForwardAngle)
     playerNode.playerView.localEulerAngles = Vector3(0.0, 0.0, -self.m_mapManager.characterViewForwardAngle)
+end
+
+LevelMapLoader.OnOverrideFollowTargetChanged = HL.Method(HL.Boolean) << function(self, isOverriding)
+    self.m_isOverrideFollowTarget = isOverriding
+    local player = self.view.element.player
+    local overridePlayer = self.view.element.overridePlayer
+
+    if isOverriding then
+        player.playerView.gameObject:SetActive(false)
+        player.playerArrow.gameObject:SetActive(false)
+        local overrideTarget = self.m_mapManager.currOverrideFollowTarget
+        if overrideTarget ~= nil then
+            overridePlayer.overrideImg.sprite = LuaSystemManager.mapResourceSystem:GetSingleMarkIconSprite(overrideTarget.iconSpriteName)
+            overridePlayer.overrideImg:SetNativeSize()
+        end
+        overridePlayer.gameObject:SetActive(true)
+    else
+        overridePlayer.gameObject:SetActive(false)
+        player.playerView.gameObject:SetActive(true)
+        player.playerArrow.gameObject:SetActive(true)
+    end
 end
 
 LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(self)

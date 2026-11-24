@@ -6,6 +6,7 @@
     "value": 0.0
   },
   "applyTags": [],
+  "atbGainModifier": [],
   "attributeModifier": {
     "attributeModifiers": [],
     "isConvertedAttribute": false
@@ -109,7 +110,8 @@
                     "contextKey": null,
                     "selectorData": {
                       "finderData": {
-                        "$type": "Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond"
+                        "$type": "Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond",
+                        "includeIndividualParts": false
                       },
                       "postProcessorData": [],
                       "validatorData": [
@@ -193,7 +195,8 @@
                     "contextKey": null,
                     "selectorData": {
                       "finderData": {
-                        "$type": "Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond"
+                        "$type": "Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond",
+                        "includeIndividualParts": false
                       },
                       "postProcessorData": [],
                       "validatorData": [
@@ -1490,11 +1493,29 @@
               "failActions": {
                 "actionData": [
                   {
-                    "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+                    "$type": "Beyond.Gameplay.Core.CompareFloat+Data, Gameplay.Beyond",
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
                     "serverActionIndex": 28,
+                    "compare": 4,
+                    "valueA": {
+                      "blackboardKey": "EntityBB_soulback",
+                      "useBlackboardKey": true,
+                      "value": 0.0
+                    },
+                    "valueB": {
+                      "blackboardKey": null,
+                      "useBlackboardKey": false,
+                      "value": 0.0
+                    }
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 29,
                     "advancedSelectorDirection": {
                       "clampToXZ": true,
                       "customSourceAndTarget": false,
@@ -1543,7 +1564,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 29,
+                    "serverActionIndex": 30,
                     "alsoLaunchToHittableTarget": false,
                     "assignBlackboard": true,
                     "assignEntityBlackboard": true,
@@ -1631,6 +1652,8 @@
                       "z": 0.0
                     },
                     "hitMountPoint": 52,
+                    "hitWeaponIndex": 0,
+                    "hitWeaponMp": 0,
                     "overrideEmitBone": true,
                     "overrideHitBone": true,
                     "presetPoints": [],
@@ -1726,6 +1749,7 @@
                       "targetGroupKey": "soul_display",
                       "targetSource": 2
                     },
+                    "useWeaponHitMp": false,
                     "useWeaponMp": false,
                     "weaponIndex": 0,
                     "weaponMp": 0
@@ -1735,7 +1759,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 30,
+                    "serverActionIndex": 31,
                     "affectInit": false,
                     "isShow": false,
                     "modelPartEnum": 1,
@@ -1775,7 +1799,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 31,
+                    "serverActionIndex": 32,
                     "owner": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -1811,7 +1835,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 32,
+                    "serverActionIndex": 33,
                     "calculateType": 0,
                     "calculationTarget": {
                       "advancedDirection": {
@@ -1871,7 +1895,7 @@
               "isEnable": false,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 33,
+              "serverActionIndex": 34,
               "calculateType": 0,
               "calculationTarget": {
                 "advancedDirection": {
@@ -1956,6 +1980,7 @@
     "showProgressInHpBar": false,
     "showProgressInNormalSkillButton": false,
     "showProgressInUltimateSkillButton": false,
+    "showStackCountInMainCharHpBar": false,
     "showWarningBackground": false,
     "useWeakProgressInNormalSkillButton": false
   },

@@ -234,11 +234,11 @@ end
 
 
 ShopTradeCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
-    self.m_domainId = arg.domainId or ""
+    self.m_domainId = arg.domainId or ScopeUtil.GetCurrentChapterIdAsStr()
     self.m_onCloseCallBack = arg.onCloseCB
     self.m_friendRoleId = arg.friendRoleId or 0
     self.m_showFriendRecord = (arg.showFriendRecord == true) or Utils.isInSpaceShip()
-    self.m_isLocalShop = not string.isEmpty(self.m_domainId)
+    self.m_isLocalShop = self.m_friendRoleId == 0
     
     local targetJumpShopId = arg.shopId == nil and "" or arg.shopId
     if string.isEmpty(targetJumpShopId) then
@@ -1459,7 +1459,7 @@ ShopTradeCtrl._RefreshLocalShopGoodsUI = HL.Method(HL.Boolean) << function(self,
         local fastScrollToIndex = CSIndex(self:_GetGoodsGroupFirstGlobalIndex(self.m_curSelectTagIndex))
         self.view.goodsNode.goodsGroupList:UpdateGroup(count, fastScrollToIndex)
     else
-        self.view.goodsNode.goodsGroupList:UpdateGroup(count, isChangeTab)
+        self.view.goodsNode.goodsGroupList:UpdateGroup(count, isChangeTab, false, false, not isChangeTab)
     end
     
     self.m_goodsTagCellCache:Refresh(count, function(cell, luaIndex)

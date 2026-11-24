@@ -234,17 +234,10 @@ FacPowerPoleAutoConnectHintCtrl.LinkWireModeUpdateTrackers = HL.Method() << func
     local yRadius = panelRect.height * 0.5 - (self.view.config.ELLIPSE_Y_MARGIN + self.view.config.ELLIPSE_BOTTOM_MARGIN_UDPIPE) * 0.5
     local yOffset = (self.view.config.ELLIPSE_BOTTOM_MARGIN_UDPIPE - self.view.config.ELLIPSE_Y_MARGIN) * 0.5
 
-    local commonTrackingSystem = GameInstance.player.commonTrackingSystem
-    local uiPos, uiAngle, isOutBound = commonTrackingSystem:WorldPosToTrackerUIData(linkStartPos)
-    local trackingRoot = commonTrackingSystem.rootTransform
-    if trackingRoot ~= nil then
-        local trackingRect = trackingRoot.rect
-        local csXRadius = commonTrackingSystem.xRadiusRate * trackingRect.width
-        local csYRadius = commonTrackingSystem.yRadiusRate * trackingRect.height
-        if csXRadius ~= 0 and csYRadius ~= 0 then
-            uiPos = Vector2(uiPos.x / csXRadius * xRadius, uiPos.y / csYRadius * yRadius + yOffset)
-        end
-    end
+    
+    local uiPos, uiAngle, isOutBound = CS.Beyond.UI.CommonTrackerUtils.WorldPosToTrackerUIData(
+        linkStartPos, panelRect, xRadius, yRadius)
+    uiPos = Vector2(uiPos.x, uiPos.y + yOffset)
 
     if not self.m_linkWireModeTrackerPool[1] then
         self.m_linkWireModeTrackerPool[1] = self:_CreateNewTracker()

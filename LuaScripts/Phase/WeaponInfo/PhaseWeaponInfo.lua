@@ -31,9 +31,6 @@ local HIDE_GRID_PAGE_TYPE = {
     [UIConst.WEAPON_EXHIBIT_PAGE_TYPE.UPGRADE] = true,
 }
 
-local PHASE_ITEMS = {
-    PHASE_WEAPON_INFO_GAME_OBJECT,
-}
 
 
 
@@ -51,8 +48,6 @@ PhaseWeaponInfo.m_effectCor = HL.Field(HL.Thread)
 PhaseWeaponInfo.m_cameraGroup = HL.Field(HL.Userdata)
 
 PhaseWeaponInfo.m_blendTransitionCor = HL.Field(HL.Thread)
-
-PhaseWeaponInfo.m_hideCamCor = HL.Field(HL.Thread)
 
 PhaseWeaponInfo.m_isBlendExit = HL.Field(HL.Boolean) << false
 
@@ -80,42 +75,19 @@ PhaseWeaponInfo.ResetWeaponRotation = HL.Method() << function(self)
 end
 
 PhaseWeaponInfo._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    CameraManager:EnableUIModelCullingMask(true, "weaponInfo")
 end
 
 PhaseWeaponInfo._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    if PhaseManager:IsPhaseHaveSceneCamera(args and args.anotherPhaseId) then
-        CameraManager:EnableUIModelCullingMask(false, "weaponInfo")
-    end
-
-    self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
-    local isRecovering = PhaseManager.isRecovering
-    self.m_hideCamCor = self:_StartCoroutine(function()
-        if not isRecovering then
-            coroutine.wait(1) 
-        end
-        CameraManager:EnableUIModelCullingMask(false, "weaponInfo")
-        self:_ResetVCam()
-        self:_ToggleSceneLight(false)
-    end)
 end
 
 PhaseWeaponInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
-        if not PhaseManager:IsPhaseHaveSceneCamera(anotherPhaseId) then
-            CameraManager:EnableUIModelCullingMask(true, "weaponInfo")
-        end
-    end
-
-    if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
-        self.m_hideCamCor = PhaseManager:_ClearCoroutine(self.m_hideCamCor)
-        self:_ToggleSceneLight(true)
+        UISceneManager:Activate(self.m_uiSceneId)
         self:_RefreshVCam(self.m_curPageType)
     end
 
     if transitionType == PhaseConst.EPhaseState.TransitionIn then
-        self.m_hideCamCor = PhaseManager:_ClearCoroutine(self.m_hideCamCor)
-        self.m_isBlendExit = true 
+        self.m_isBlendExit = true
         UIManager:PreloadPanelAsset(PanelId.WeaponExhibitEmpty, PHASE_ID)
     end
 end
@@ -377,7 +349,6 @@ PhaseWeaponInfo._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table))
 end
 
 PhaseWeaponInfo._OnActivated = HL.Override() << function(self)
-    CameraManager:EnableUIModelCullingMask(true, "weaponInfo")
     local arg = self.arg
     local weaponTemplateId = arg.weaponTemplateId
     local weaponInstId = arg.weaponInstId
@@ -439,7 +410,6 @@ PhaseWeaponInfo._OnDeActivated = HL.Override() << function(self)
 end
 
 PhaseWeaponInfo._OnDestroy = HL.Override() << function(self)
-    CameraManager:EnableUIModelCullingMask(false, "weaponInfo")
     self:_CleanUpWeapon()
     self:_RemoveCameraController()
 
@@ -591,9 +561,16 @@ PhaseWeaponInfo._ToggleWeaponEquippedMarker = HL.Method(HL.Boolean) << function(
 end
 
 PhaseWeaponInfo._InitGameObject = HL.Method(HL.Number, HL.Table) << function(self, pageType, arg)
-    for _, name in ipairs(PHASE_ITEMS) do
-        self:CreatePhaseGOItem(name)
-    end
+    self:CreateUIScene(PHASE_WEAPON_INFO_GAME_OBJECT, {
+        skipSetActive = true,
+        onDeactivate = function()
+            self:_ResetVCam()
+            self:_ToggleSceneLight(false)
+        end,
+        onActivate = function()
+            self:_ToggleSceneLight(true)
+        end,
+    })
 end
 
 PhaseWeaponInfo._CleanUpWeapon = HL.Method() << function(self)

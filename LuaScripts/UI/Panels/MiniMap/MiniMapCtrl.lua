@@ -19,6 +19,7 @@ MiniMapCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TOGGLE_FAC_TOP_VIEW] = '_RefreshMaskState',
     [MessageConst.ON_TOGGLE_PHASE_FORBID] = '_RefreshMaskState',
     [MessageConst.FORBID_SYSTEM_CHANGED] = '_OnForbidSystemChanged',
+    [MessageConst.ON_MAP_OVERRIDE_FOLLOW_TARGET_CHANGED] = '_RefreshMainButtonBindingState',
 
     [MessageConst.ON_SETTLEMENT_UPGRADE] = '_OnSettlementUpgrade',
     [MessageConst.TRAVEL_POLE_ENTER_TRAVEL_MODE] = '_HideMainButtonInTravelMode',
@@ -141,7 +142,15 @@ MiniMapCtrl._RefreshMiniMapShownState = HL.Method(HL.Boolean) << function(self, 
     self.view.main.gameObject:SetActiveIfNecessary(isMapUnlocked and isShow)
 end
 
+MiniMapCtrl._RefreshMainButtonBindingState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
+    
+    local mainButton = self.view.mainButton
+    mainButton:InitBinding()
+    InputManagerInst:ToggleBinding(mainButton.onClick.bindingId, not GameInstance.player.mapManager.isOverrideFollowTarget)
+end
+
 MiniMapCtrl._RefreshMaskState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
+    self:_RefreshMainButtonBindingState()
     self.view.settlementDefenseNode.gameObject:SetActive(false)
     if self:_IsForbidTypeHideMiniMap() then
         UIManager:Hide(PANEL_ID)

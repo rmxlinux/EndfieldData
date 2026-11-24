@@ -16,9 +16,7 @@ local DELETE_EQUIP_NOTIFY_TAG = 1
 
 local DELETE_PRESET_GROUP_NOTIFY_TAG = 2
 
-local PRESET_NAME_ACTION_CREATE = "Create"
-
-local PRESET_NAME_ACTION_RENAME = "Rename"
+local PRESET_LIST_ACTION_CREATE = "Create"
 
 local PRESET_LIST_ACTION_DELETE = "Delete"
 
@@ -178,12 +176,6 @@ end
 
 
 
-
-
-
-
-
-
 EquipPresetGroupCtrl = HL.Class('EquipPresetGroupCtrl', uiCtrl.UICtrl)
 
 
@@ -196,7 +188,6 @@ EquipPresetGroupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_EQUIP_PRESET_GROUP_CHANGED] = '_OnPresetGroupChanged',
     [MessageConst.ON_EQUIP_PRESET_GROUP_APPLIED] = '_OnPresetGroupApplied',
-    [MessageConst.ON_CHECK_SENSITIVE_SUCCESS] = '_OnCheckSensitiveSuccess',
     [MessageConst.ON_INPUT_DEVICE_TYPE_CHANGED] = '_OnInputDeviceTypeChanged',
 }
 
@@ -249,9 +240,6 @@ EquipPresetGroupCtrl.m_itemFocusContext = HL.Field(HL.Table)
 EquipPresetGroupCtrl.m_itemFocusItem = HL.Field(HL.Any)
 
 EquipPresetGroupCtrl.m_sourceFormationCharInstIds = HL.Field(HL.Table)
-
-
-EquipPresetGroupCtrl.m_pendingPresetNameAction = HL.Field(HL.Table)
 
 
 EquipPresetGroupCtrl.m_pendingPresetListAction = HL.Field(HL.Table)
@@ -1729,6 +1717,9 @@ EquipPresetGroupCtrl._ReleasePresetDeleteCell = HL.Method(HL.Table) << function(
         self.view.presetListNode.scrollList:SetCellCanCache(csIndex, true)
     end
     pendingAction.cellIndex = nil
+    if not self:IsPlayingAnimationOut() then
+        self.view.luaPanel:RecoverAllInput()
+    end
 end
 
 EquipPresetGroupCtrl._FinishDeletedPresetListAction = HL.Method(HL.Table) << function(self, pendingAction)
@@ -1758,6 +1749,7 @@ EquipPresetGroupCtrl._PlayPresetCellSaveOutAnimation = HL.Method(HL.Table) << fu
     pendingAction.cellIndex = cell.csIndex
     self.view.presetListNode.scrollList:SetCellCanCache(cell.csIndex, false)
     animationWrapper:ClearTween(false)
+    self.view.luaPanel:BlockAllInput()
     animationWrapper:Play(PRESET_CELL_SAVE_OUT_ANIMATION, function()
         self:_FinishDeletedPresetListAction(pendingAction)
     end)
@@ -1787,7 +1779,7 @@ EquipPresetGroupCtrl._ConsumePendingPresetListSelection =
         return
     end
 
-    if pendingAction.actionType == PRESET_NAME_ACTION_CREATE then
+    if pendingAction.actionType == PRESET_LIST_ACTION_CREATE then
         local createdPresetId = self:_FindCreatedPresetId(pendingAction)
         if not createdPresetId then
             return
@@ -1853,7 +1845,7 @@ EquipPresetGroupCtrl._OnPresetGroupChanged = HL.Method() << function(self)
     end
     self:_RefreshPresetList()
     self:_ScrollSelectedPresetIntoView(scrollMode)
-    if resolvedAction and resolvedAction.actionType == PRESET_NAME_ACTION_CREATE then
+    if resolvedAction and resolvedAction.actionType == PRESET_LIST_ACTION_CREATE then
         self:_ResetCreatePresetNameInput()
         self:_PlayPresetCellSaveInAnimation(resolvedAction.presetId)
     end
@@ -2097,67 +2089,45 @@ EquipPresetGroupCtrl._HasDuplicateCurrentEquipPreset = HL.Method().Return(HL.Boo
     return false
 end
 
-EquipPresetGroupCtrl._RequestPresetNameSensitiveCheck = HL.Method(HL.Table) << function(self, pendingAction)
-    self.m_pendingPresetNameAction = pendingAction
-    GameInstance.player.wikiSystem:CheckSensitive(pendingAction.name)
-end
-
-EquipPresetGroupCtrl._SubmitPresetNameAction = HL.Method(HL.Table) << function(self, pendingAction)
+EquipPresetGroupCtrl._SubmitCreatePreset = HL.Method(HL.Number, HL.String) << function(self, charInstId, name)
     if self.m_pendingPresetListAction then
         return
     end
-    if pendingAction.actionType == PRESET_NAME_ACTION_CREATE then
-        if not Utils.isInMainScope() then
-            Notify(MessageConst.SHOW_TOAST, Language.LUA_INVALID_SYSTEM_COMMON_DESCRIPTION)
-            return
-        end
-        local existingPresetIdMap = {}
-        for _, presetData in ipairs(self.m_allPresetGroupList or {}) do
-            existingPresetIdMap[presetData.presetId] = true
-        end
-        self.m_pendingPresetListAction = {
-            actionType = PRESET_NAME_ACTION_CREATE,
-            name = pendingAction.name,
-            existingPresetIdMap = existingPresetIdMap,
-        }
-        local listAction = self.m_pendingPresetListAction
-        self.m_pendingPresetScrollMode = PRESET_SCROLL_MODE_VISIBLE
-        GameInstance.player.equipPresetGroupSystem:SendEquipPresetGroupCreate(
-            pendingAction.charInstId, pendingAction.name, function(errorCode)
-                if self.m_isClosed or self.m_pendingPresetListAction ~= listAction then
-                    return
-                end
-                self.m_pendingPresetListAction = nil
-                self.m_pendingPresetScrollMode = PRESET_SCROLL_MODE_NONE
-            end)
-    elseif pendingAction.actionType == PRESET_NAME_ACTION_RENAME then
-        GameInstance.player.equipPresetGroupSystem:SendEquipPresetGroupRename(
-            pendingAction.presetId, pendingAction.name)
-    end
-end
-
-EquipPresetGroupCtrl._OnCheckSensitiveSuccess = HL.Method() << function(self)
-    local pendingAction = self.m_pendingPresetNameAction
-    if not pendingAction then
+    if not Utils.isInMainScope() then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_INVALID_SYSTEM_COMMON_DESCRIPTION)
         return
     end
-    self.m_pendingPresetNameAction = nil
-    if pendingAction.actionType == PRESET_NAME_ACTION_RENAME then
-        UIManager:Close(PanelId.CommonPopUp)
+    local existingPresetIdMap = {}
+    for _, presetData in ipairs(self.m_allPresetGroupList or {}) do
+        existingPresetIdMap[presetData.presetId] = true
     end
-    self:_SubmitPresetNameAction(pendingAction)
+    self.m_pendingPresetListAction = {
+        actionType = PRESET_LIST_ACTION_CREATE,
+        name = name,
+        existingPresetIdMap = existingPresetIdMap,
+    }
+    local listAction = self.m_pendingPresetListAction
+    self.m_pendingPresetScrollMode = PRESET_SCROLL_MODE_VISIBLE
+    GameInstance.player.equipPresetGroupSystem:SendEquipPresetGroupCreate(
+        charInstId, name, function(errorCode)
+            if self.m_isClosed or self.m_pendingPresetListAction ~= listAction then
+                return
+            end
+            self.m_pendingPresetListAction = nil
+            self.m_pendingPresetScrollMode = PRESET_SCROLL_MODE_NONE
+        end)
 end
 
-EquipPresetGroupCtrl._RequestCreatePreset = HL.Method(HL.Table) << function(self, pendingAction)
+EquipPresetGroupCtrl._RequestCreatePreset = HL.Method(HL.Number, HL.String) << function(self, charInstId, name)
     if not self:_HasDuplicateCurrentEquipPreset() then
-        self:_RequestPresetNameSensitiveCheck(pendingAction)
+        self:_SubmitCreatePreset(charInstId, name)
         return
     end
 
     Notify(MessageConst.SHOW_POP_UP, {
         content = Language.LUA_EQUIP_PRESET_GROUP_DUPLICATE_SAVE_CONFIRM,
         onConfirm = function()
-            self:_RequestPresetNameSensitiveCheck(pendingAction)
+            self:_SubmitCreatePreset(charInstId, name)
         end,
     })
 end
@@ -2176,11 +2146,7 @@ EquipPresetGroupCtrl._SubmitCreatePresetFromInput = HL.Method() << function(self
     if string.isEmpty(name) then
         name = self:_GetDefaultCreatePresetName()
     end
-    self:_RequestCreatePreset({
-        actionType = PRESET_NAME_ACTION_CREATE,
-        name = name,
-        charInstId = self.m_curCharInfo.instId,
-    })
+    self:_RequestCreatePreset(self.m_curCharInfo.instId, name)
 end
 
 EquipPresetGroupCtrl._OpenRenamePopup = HL.Method(HL.Table) << function(self, presetData)
@@ -2206,11 +2172,15 @@ EquipPresetGroupCtrl._OpenRenamePopup = HL.Method(HL.Table) << function(self, pr
 end
 
 EquipPresetGroupCtrl._OnRenameConfirm = HL.Method(HL.Number, HL.String) << function(self, presetId, newName)
-    self:_RequestPresetNameSensitiveCheck({
-        actionType = PRESET_NAME_ACTION_RENAME,
-        name = newName,
-        presetId = presetId,
-    })
+    if self.m_pendingPresetListAction then
+        return
+    end
+    GameInstance.player.equipPresetGroupSystem:SendEquipPresetGroupRename(presetId, newName, function()
+        if self.m_isClosed then
+            return
+        end
+        Notify(MessageConst.HIDE_POP_UP)
+    end)
 end
 
 EquipPresetGroupCtrl._TryRecoverRenamePopUp = HL.Method(HL.Opt(HL.Table)) << function(self, popUpArg)
@@ -2304,7 +2274,15 @@ EquipPresetGroupCtrl._RefreshPresetCell = HL.Method(HL.Table, HL.Number) << func
                     fallbackPresetId = fallbackPreset
                         and fallbackPreset.presetId or CURRENT_EQUIP_PRESET_ID,
                 }
-                GameInstance.player.equipPresetGroupSystem:SendEquipPresetGroupDelete(data.presetId)
+                local listAction = self.m_pendingPresetListAction
+                GameInstance.player.equipPresetGroupSystem:SendEquipPresetGroupDelete(
+                    data.presetId, function(errorCode)
+                        if self.m_isClosed or self.m_pendingPresetListAction ~= listAction then
+                            return
+                        end
+                        self.m_pendingPresetListAction = nil
+                        self.m_pendingPresetScrollMode = PRESET_SCROLL_MODE_NONE
+                    end)
             end,
         })
     end)
@@ -2509,7 +2487,13 @@ EquipPresetGroupCtrl._InitCharList = HL.Method(HL.Opt(HL.Any)) << function(self,
     end
 
     if Utils.isInMainScope() then
-        self.m_charInfoList = CharInfoUtils.getCharInfoList()
+        local playerChars = GameInstance.player.charBag.charInfos
+        self.m_charInfoList = {}
+        for _, charInfo in ipairs(CharInfoUtils.getCharInfoList()) do
+            if CharInfoUtils.IsServerDefaultChar(playerChars[charInfo.instId]) then
+                table.insert(self.m_charInfoList, charInfo)
+            end
+        end
     else
         self.m_charInfoList = CharInfoUtils.getCurScopeCharInfoList()
     end

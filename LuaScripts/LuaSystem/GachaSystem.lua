@@ -194,9 +194,11 @@ GachaSystem._UpdateGachaCamSettingEnabled = HL.Method() << function(self)
     if active then
         self.m_camCullingEnabled = true
         CameraManager:EnableGachaCullingMask(true, "Gacha")
+        CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
     else
         self.m_camCullingEnabled = false
         CameraManager:EnableGachaCullingMask(false, "Gacha")
+        CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(true)
     end
 end
 

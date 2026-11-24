@@ -112,6 +112,11 @@ MapTrackingInfo.InitMapTrackingInfo = HL.Method(HL.Table) << function(self, args
         cell.imgTrackIcon.color = trackingInfo.color
         cell.btn.onClick:RemoveAllListeners()
         cell.btn.onClick:AddListener(function()
+            
+            if PhaseManager:IsInPhaseTransition() then
+                return
+            end
+
             if DeviceInfo.usingController then
                 self.view.listNaviGroup:ManuallyStopFocus()
             end

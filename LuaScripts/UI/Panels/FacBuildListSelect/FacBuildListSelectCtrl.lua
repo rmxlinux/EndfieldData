@@ -174,6 +174,8 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.commonToggle.gameObject:SetActiveIfNecessary(not self.m_onlyCraftNode)
 
     self.view.topNode.gameObject:SetActiveIfNecessary(self.m_bluePrintMode)
+    local depotKey = self.m_bluePrintMode and "ui_common_item_tips_own" or "ui_fac_common_storage_have_local"
+    self.view.craftNode.depotCountTitle.text = Language[depotKey]
     if self.m_bluePrintMode then
         self.view.toppingToggle.onValueChanged:RemoveAllListeners()
         if recoverState ~= nil and recoverState.toppingToggleIsOn ~= nil then
@@ -1055,8 +1057,7 @@ FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean))
     self.view.craftNode.CannotNode.gameObject:SetActiveIfNecessary(not isBuilding)
     if isBuilding then
         local bagCount = Utils.getBagItemCount(id)
-        local depotCount
-        depotCount = Utils.getItemCount(id, true, true)
+        local depotCount = Utils.getItemCount(id, true, true)
         self.view.craftNode.bagCountTxt.text = tostring(bagCount)
         self.view.craftNode.depotCountTxt.text = tostring(depotCount)
         self.view.craftNode.bagCountTxt.color = bagCount == 0 and self.view.config.COUNT_EMPTY_COLOR or self.view.config.COUNT_ENOUGH_COLOR
@@ -1275,9 +1276,9 @@ FacBuildListSelectCtrl.OnActionScrollToTarget = HL.Method(HL.Any) << function(se
             if cell ~= nil then
                 self:SetNaviTarget(cell.view.inputNaviDecorator)
             end
+        else
+            self.view.scrollList:SetSelectedIndex(CSIndex(targetIndex))
         end
-        
-        self.view.scrollList:SetSelectedIndex(CSIndex(targetIndex))
     end
 end
 

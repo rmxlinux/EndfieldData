@@ -268,14 +268,6 @@ DialogCtrl._RefreshAutoMode = HL.Override(HL.Boolean) << function(self, autoMode
     DialogCtrl.Super._RefreshAutoMode(self, autoMode)
 end
 
-DialogCtrl.OnBtnBackClick = HL.Override() << function(self)
-    self:Notify(MessageConst.ON_COMMON_BACK_CLICKED)
-end
-
-DialogCtrl.OnBtnStopClick = HL.Override() << function(self)
-    self:Notify(MessageConst.SHOW_TOAST, Language.LUA_FEATURE_NOT_AVAILABLE)
-end
-
 DialogCtrl._CloseAutoMode = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self:_SetUIHiddenActiveState(self.view.textAuto, false)
     GameWorld.dialogManager:SetAutoMode(false)
@@ -707,39 +699,6 @@ DialogCtrl.ShowPresentSuccess = HL.Method(HL.Boolean, HL.Number, HL.Table) << fu
     self.view.friendshipRight.reliabilityCell:ShowPresentSuccessTips(levelChanged, deltaFav, selectedItems)
     local workFriendship = GameWorld.dialogManager.showSpaceshipCharFriendship
     self:_SwitchFriendshipShow(workFriendship)
-end
-
-DialogCtrl._RefreshRestCell = HL.Method(HL.String) << function(self, charId)
-    local restCell = self.view.friendshipRight.restCell
-    local roomId, isWorking = CSPlayerDataUtil.GetCharRoomId(charId)
-    local maxStamina = Tables.spaceshipConst.maxPhysicalStrength
-    local curStamina = CSPlayerDataUtil.GetCharCharCurStamina(charId)
-    local percent = curStamina / maxStamina
-    if isWorking then
-        
-        restCell.textRest.text = Language.LUA_SPACESHIP_CHAR_WORKING
-    elseif string.isEmpty(roomId) then
-        
-        if percent >= 1 then
-            
-            restCell.textRest.text = Language.LUA_SPACESHIP_CHAR_HANGING
-        else
-            restCell.textRest.text = Language.LUA_SPACESHIP_CHAR_RESTING
-        end
-    else
-        restCell.textRest.text = Language.LUA_SPACESHIP_CHAR_RESTING
-    end
-
-    restCell.slider.value = percent
-    restCell.textStamina.text = tostring(lume.round(percent * 100)) .. "%"
-
-    if string.isEmpty(roomId) then
-        restCell.textRoom.text = Language.LUA_SPACESHIP_HALL_NAME
-    else
-        local res, data = GameInstance.player.spaceship:TryGetRoom(roomId)
-        restCell.textRoom.text = data.name
-    end
-
 end
 
 

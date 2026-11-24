@@ -2,6 +2,9 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonPopUp
 
 
+local FREEZE_HOLDER_KEY = "@CommonPopUp"
+
+
 
 EToggleStyle = {
     Square = "Square",    
@@ -24,8 +27,6 @@ CommonPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
 CommonPopUpCtrl.m_getItemCell = HL.Field(HL.Function)
 
 CommonPopUpCtrl.m_getCharIconCell = HL.Field(HL.Function)
-
-CommonPopUpCtrl.m_timeScaleHandler = HL.Field(HL.Number) << 0
 
 CommonPopUpCtrl.m_isInterrupted = HL.Field(HL.Boolean) << false
 
@@ -151,23 +152,11 @@ CommonPopUpCtrl.OnStaminaChanged = HL.Method() << function(self)
 end
 
 CommonPopUpCtrl._FreezeWorld = HL.Method() << function(self)
-    self:_ResumeWorld()
-    self.m_timeScaleHandler = Utils.FreezeWorldByUI()
-    AudioAdapter.PostEvent("au_global_contr_fullscreen_menu_pause")
-    if self.m_args.pauseGame == true then
-        GameWorld.subGameManager:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
-    end
+    UIWorldFreezeManager:AddFreezeHolder(FREEZE_HOLDER_KEY, self.m_args.pauseGame == true)
 end
 
 CommonPopUpCtrl._ResumeWorld = HL.Method() << function(self)
-    if self.m_timeScaleHandler > 0 then
-        Utils.ResumeWorldByUI(self.m_timeScaleHandler)
-        self.m_timeScaleHandler = 0
-        AudioAdapter.PostEvent("au_global_contr_fullscreen_menu_resume")
-        if self.m_args.pauseGame == true then
-            GameWorld.subGameManager:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
-        end
-    end
+    UIWorldFreezeManager:RemoveFreezeHolder(FREEZE_HOLDER_KEY)
 end
 
 CommonPopUpCtrl.ShowPopUp = HL.StaticMethod(HL.Table) << function(args)
@@ -250,6 +239,7 @@ end
 
 
 
+
 CommonPopUpCtrl.m_args = HL.Field(HL.Table)
 CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
     Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -277,11 +267,13 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         self.view.warningNode.gameObject:SetActive(false)
     end
 
-    if args.reminderContent then
-        self.view.reminderNode.reminderTxt:SetAndResolveTextStyle(args.reminderContent)
-        self.view.reminderNode.gameObject:SetActive(true)
-    else
-        self.view.reminderNode.gameObject:SetActive(false)
+    if self.view.reminderNode then
+        if args.reminderContent then
+            self.view.reminderNode.reminderTxt:SetAndResolveTextStyle(args.reminderContent)
+            self.view.reminderNode.gameObject:SetActive(true)
+        else
+            self.view.reminderNode.gameObject:SetActive(false)
+        end
     end
 
 
@@ -340,7 +332,7 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         self.view.inputField.gameObject:SetActive(true)
         self.view.inputField.placeholder.text = self.m_args.inputPlaceholder or ""
         self.view.inputFieldMore.gameObject:SetActive(false)
-        if self.m_args.inputPaste then
+        if self.m_args.inputPaste and UIUtils.supportsSystemCopyBuffer() then
             self.view.pasteBtn.gameObject:SetActive(true)
             self.view.pasteBtn.onClick:AddListener(function()
                 local targetText = CS.UnityEngine.GUIUtility.systemCopyBuffer
@@ -359,7 +351,7 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         self.view.inputField.gameObject:SetActive(false)
         self.view.inputFieldMore.placeholder.text = self.m_args.inputPlaceholder or ""
         self.view.inputFieldMore.gameObject:SetActive(true)
-        if self.m_args.inputPaste then
+        if self.m_args.inputPaste and UIUtils.supportsSystemCopyBuffer() then
             self.view.pasteBtn.gameObject:SetActive(true)
             self.view.pasteBtn.onClick:AddListener(function()
                 if self.m_args.pasteFunc then
@@ -505,10 +497,11 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
     if self.m_args.showGameSettingBtn then
         self.view.setNode.gameObject:SetActive(true)
         self.view.setBtn.onClick:RemoveAllListeners()
+        local gameSettingArg = self.m_args.gameSettingArg
         self.view.setBtn.onClick:AddListener(function()
             self:PlayAnimationOutWithCallback(function()
                 self:Hide()
-                PhaseManager:OpenPhaseFast(PhaseId.GameSetting)
+                PhaseManager:OpenPhaseFast(PhaseId.GameSetting, gameSettingArg)
             end)
         end)
     else
@@ -550,6 +543,13 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         end)
     else
         self.view.worldUpgradeNode.gameObject:SetActive(false)
+    end
+
+    if self.m_args.tips then
+        self.view.tipsNode.gameObject:SetActive(true)
+        self.view.tipsNode.tipsTxt.text = self.m_args.tips
+    else
+        self.view.tipsNode.gameObject:SetActive(false)
     end
 
     self:_UpdateStartDungeonClearData()

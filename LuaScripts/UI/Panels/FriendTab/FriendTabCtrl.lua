@@ -57,6 +57,8 @@ FriendTabCtrl._InitTabs = HL.Method() << function(self)
 end
 
 FriendTabCtrl.ChangeTab = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
+    
+    self.view.tabs.gameObject:SetActiveIfNecessary(not (arg and arg.hideTabs))
     if arg and arg.panelId then
         
         self.m_curTabIndex = self:_GetCurTabIndexByPanelId(arg.panelId)

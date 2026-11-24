@@ -39,6 +39,7 @@ local DETAIL_PANEL_MAP = {
     [MarkType.KiteStation] = PanelId.MapMarkDetailKiteStation,
     [MarkType.SettlementDefenseTerminal] = PanelId.MapMarkDetailSettlementDefenseTerminal,
     [MarkType.NpcCommonShop] = PanelId.MapMarkDetailDefault,
+    [MarkType.ActivityCardGame] = PanelId.MapMarkDetailActivityCardGame,
     [MarkType.SocialBuilding] = PanelId.MapMarkDetailSocialBuilding,
     [MarkType.WeekRaid] = PanelId.MapMarkDetailWeekRaid,
     [MarkType.SimulationTraining] = PanelId.MapMarkDetailSimulationTraining,
@@ -237,6 +238,7 @@ PhaseMap.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
         arg.templateId = nil
         arg.resourceTemplateId = nil
         arg.resourceItemId = nil
+        arg.resourceItemIds = nil
     end
 
     local isInfoPopupOpen = UIManager:IsOpen(PanelId.MapInfoPopup)

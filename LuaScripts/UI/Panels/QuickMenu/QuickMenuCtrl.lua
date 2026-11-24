@@ -73,12 +73,8 @@ QuickMenuCtrl.OnClose = HL.Override() << function(self)
     QuickMenuCtrl.DeactivateQuickMenu()
 end
 
-QuickMenuCtrl.OnAnimationInFinished = HL.Override() << function(self)
-    GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.QuickMenuSystemActionConflictName)
-end
-
 QuickMenuCtrl.ActivateQuickMenu = HL.StaticMethod() << function()
-    if not GameInstance.player.systemActionConflictManager:TryStartSystemAction(Const.QuickMenuSystemActionConflictName) then
+    if not string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
         return
     end
 
@@ -95,7 +91,6 @@ QuickMenuCtrl.DeactivateQuickMenu = HL.StaticMethod() << function()
     if QuickMenuCtrl.s_clearScreenKey <= 0 then
         return
     end
-    GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.QuickMenuSystemActionConflictName)
     UIManager:RecoverScreen(QuickMenuCtrl.s_clearScreenKey)
     QuickMenuCtrl.s_clearScreenKey = -1
 end

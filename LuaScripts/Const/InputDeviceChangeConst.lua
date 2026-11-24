@@ -15,6 +15,8 @@ FORBID_INPUT_DEVICE_CHANGE_PANELS = {
     "DungeonSettlementPopup", 
     "GambleBattleSubSettlement", 
     "GambleBattleFinalSettlement", 
+    "CardGameBlackjackRoundSettle", 
+    "MultiplayerSuccess", 
     "WulingParkourSettlement", 
     "WulingParkourChallengeResult", 
     "SimulationTrainingSettlementPopup", 
@@ -98,6 +100,7 @@ INPUT_DEVICE_CHANGE_FORCE_CLOSE_PANELS = {
 
 EXCEPT_CHANGE_DEVICE_CLOSE_PANEL = {
     "CommonMask",
+    "InputDeviceChangeMask",
     "SpaceShipCharPoster",
     "InteractOption",
     "CommonWorldUI",
@@ -123,6 +126,7 @@ EXCEPT_CHANGE_DEVICE_CLOSE_PANEL = {
     
     "BombAim",
     "WaterDroneAim",
+    "SweetPieAim",
     "EnvironmentalPrompt",
     "TyphoeaArcheryHud",
 

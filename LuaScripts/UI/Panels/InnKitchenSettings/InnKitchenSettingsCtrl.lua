@@ -260,7 +260,10 @@ InnKitchenSettingsCtrl._RefreshAll = HL.Method(HL.Opt(HL.Boolean)) << function(s
     self:_RefreshCommonPrompt()
     self:_RefreshKitchenList()
     if playAim then
-        self:PlayAnimationIn()
+        self.view.luaPanel:BlockAllInput()
+        self.animationWrapper:PlayInAnimation(function()
+            self.view.luaPanel:RecoverAllInput()
+        end)
     end
 end
 

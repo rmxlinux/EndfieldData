@@ -12,9 +12,12 @@ local LINE_TYPE = {
     Dotted = 3,
 }
 
+local LINE_TEXT_WIDTH = 100
+local LINE_TEXT_NODE_OFFSET = 20
+
 local ITEM_CELL_HEIGHT = 230
 local ITEM_CELL_WIDTH = 175
-local ITEM_CELL_GAP_WIDTH = 175 + 120 * 2
+local ITEM_CELL_GAP_WIDTH = 175 + 120 * 2 + LINE_TEXT_WIDTH * 2
 local CREATE_LINE_THRESHOLD = 5
 
 local LINE_THICKNESS = {
@@ -189,10 +192,13 @@ WikiCraftingTreeCtrl.m_curveLeftCellCacheTable = HL.Field(HL.Table)
 
 WikiCraftingTreeCtrl.m_curveRightCellCacheTable = HL.Field(HL.Table)
 
+WikiCraftingTreeCtrl.m_lineTextCellCache = HL.Field(HL.Forward("UIGoCache"))
+
 WikiCraftingTreeCtrl._RecycleAllCell = HL.Method() << function(self)
     self.m_itemCellCache:RecycleAll()
     self.m_buildingCellCache:RecycleAll()
     self.m_moreCraftCellCache:RecycleAll()
+    self.m_lineTextCellCache:RecycleAll()
     for _, lineCellCache in pairs(self.m_lineCellCacheTable) do
         lineCellCache:RecycleAll()
     end
@@ -208,6 +214,7 @@ WikiCraftingTreeCtrl._InitAllCellCache = HL.Method() << function(self)
     self.m_itemCellCache = UIUtils.genGoCache(self.view.itemCell, nil, self.view.rootNode)
     self.m_buildingCellCache = UIUtils.genGoCache(self.view.buildingCell, nil, self.view.rootNode)
     self.m_moreCraftCellCache = UIUtils.genGoCache(self.view.moreCraftCell, nil, self.view.rootNode)
+    self.m_lineTextCellCache = UIUtils.genGoCache(self.view.lineText, Utils.bindLuaRef, self.view.lineRootNode)
     self.m_lineCellCacheTable = {
         [LINE_TYPE.Solid] = UIUtils.genGoCache(self.view.lineCell, Utils.bindLuaRef, self.view.lineRootNode),
         [LINE_TYPE.Translucent] = UIUtils.genGoCache(self.view.translucentLine, Utils.bindLuaRef, self.view.lineRootNode),
@@ -297,6 +304,7 @@ WikiCraftingTreeCtrl._RefreshCraft = HL.Method(HL.String) << function(self, item
     self:_RecycleAllCell()
     self:_CreateLeftCraft(itemId, 0, Vector2.zero, LINE_TYPE.Solid, START_ITEM_CRAFT_KEY,  true)
     self:_CreateRightCraft(itemId, true)
+    self:_BringLineTextToFront()
 
     local viewportSize = self.view.viewport.rect.size
     local contentSize = Vector2(
@@ -364,6 +372,7 @@ WikiCraftingTreeCtrl._RefreshCraftAfterExpand = HL.Method() << function(self)
     self:_RecycleAllCell()
     self:_CreateLeftCraft(self.m_mainItemId, 0, Vector2.zero, LINE_TYPE.Solid, START_ITEM_CRAFT_KEY, false)
     self:_CreateRightCraft(self.m_mainItemId, false)
+    self:_BringLineTextToFront()
     if DeviceInfo.usingController then
         if self.m_collapsedBuildingCell then
             self:SetNaviTarget(self.m_collapsedBuildingCell.view.button)
@@ -453,7 +462,7 @@ WikiCraftingTreeCtrl._CreateLeftCraft = HL.Method(HL.String, HL.Number, Vector2,
     end
 
     
-    local craftInfoList = FactoryUtils.getItemCrafts(itemId, false, true, true, true)
+    local craftInfoList = FactoryUtils.getItemCrafts(itemId, false, true, true, true, true)
 
     local craftCount = craftInfoList and #craftInfoList or 0
     if craftCount == 0 then
@@ -525,6 +534,17 @@ WikiCraftingTreeCtrl._CreateLeftCraft = HL.Method(HL.String, HL.Number, Vector2,
             
             for i, craftInfo in ipairs(craftInfoList) do
                 if not Tables.factoryManualCraftTable:ContainsKey(craftInfo.craftId) then
+                    defaultCraftIndex = i
+                    break
+                end
+            end
+        end
+        local firstFormation = craftInfoList[1]
+        if firstFormation and firstFormation.formationId then
+            local constKey = FactoryUtils.FORMATION_WIKI_DEFAULT_LEVEL_KEYS[firstFormation.formationId]
+            local wikiDefaultLevel = Tables.factoryConst[constKey]
+            for i, craftInfo in ipairs(craftInfoList) do
+                if craftInfo.formationLevel == wikiDefaultLevel then
                     defaultCraftIndex = i
                     break
                 end
@@ -720,7 +740,23 @@ WikiCraftingTreeCtrl._CreateLeftItemOneCraft = HL.Method(HL.Table).Return(HL.Use
     
     local linkRightPoint = arg.itemCell:GetLeftMountPoint(self.view.rootNode, 1)
     local linkLeftPoint = buildingCell:GetRightMountPoint(self.view.rootNode)
-    self:_CreateLeftLink(linkLeftPoint, linkRightPoint, arg.lineType)
+    local chanceText = nil
+    local parentItemId = arg.itemCell:GetItemId()
+    if arg.craftInfo.outcomes then
+        for _, outcome in ipairs(arg.craftInfo.outcomes) do
+            if outcome.id == parentItemId then
+                chanceText = FactoryUtils.getOutcomeChanceText(arg.craftInfo, outcome)
+                break
+            end
+        end
+    end
+    if not chanceText and arg.craftInfo.byproduct then
+        local bp = arg.craftInfo.byproduct
+        if bp.id == parentItemId then
+            chanceText = FactoryUtils.getOutcomeChanceText(arg.craftInfo, { id = parentItemId })
+        end
+    end
+    self:_CreateLeftLink(linkLeftPoint, linkRightPoint, arg.lineType, nil, chanceText)
 
     
     local buildingLeftPoint = buildingCell:GetLeftMountPoint(self.view.rootNode)
@@ -815,7 +851,15 @@ WikiCraftingTreeCtrl._CreateRightCraft = HL.Method(HL.String, HL.Boolean) << fun
 
         
         local buildingRightPoint = buildingCell:GetRightMountPoint(self.view.rootNode)
-        for j, itemBundle in ipairs(craftInfo.outcomes) do
+        local displayOutcomes = {}
+        for _, outcome in ipairs(craftInfo.outcomes) do
+            table.insert(displayOutcomes, outcome)
+        end
+        local bp = craftInfo.byproduct
+        if bp and not string.isEmpty(bp.id) and bp.prob > 0 then
+            table.insert(displayOutcomes, { id = bp.id, count = bp.count or 1 })
+        end
+        for j, itemBundle in ipairs(displayOutcomes) do
             
             
             local itemCell = self.m_itemCellCache:Get()
@@ -841,7 +885,8 @@ WikiCraftingTreeCtrl._CreateRightCraft = HL.Method(HL.String, HL.Boolean) << fun
             itemCell:SetLeftMountPointCount(1)
             itemCell:SetRightMountPointCount(0)
             local itemLeftPoint = itemCell:GetLeftMountPoint(self.view.rootNode.transform, 1)
-            self:_CreateRightLink(buildingRightPoint, itemLeftPoint, LINE_TYPE.Dotted)
+            local outcomeChanceText = FactoryUtils.getOutcomeChanceText(craftInfo, itemBundle)
+            self:_CreateRightLink(buildingRightPoint, itemLeftPoint, LINE_TYPE.Dotted, nil, outcomeChanceText)
 
             self.m_rowCountRight = self.m_rowCountRight + 1
         end
@@ -883,48 +928,83 @@ end
 
 
 
-WikiCraftingTreeCtrl._CreateLeftLink = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number)) << function(
-    self, leftPoint, rightPoint, lineType, offset)
+WikiCraftingTreeCtrl._CreateLeftLink = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number, HL.String)) << function(
+    self, leftPoint, rightPoint, lineType, offset, chanceText)
     if math.abs(leftPoint.y - rightPoint.y) < CREATE_LINE_THRESHOLD then
-        self:_CreateLine(leftPoint, rightPoint, lineType)
+        self:_CreateLine(leftPoint, rightPoint, lineType, chanceText, true)
     else
-        self:_CreateLeftCurve(leftPoint, rightPoint, lineType, offset)
+        self:_CreateLeftCurve(leftPoint, rightPoint, lineType, offset, chanceText)
     end
 end
 
-WikiCraftingTreeCtrl._CreateRightLink = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number)) << function(
-    self, leftPoint, rightPoint, lineType, offset)
+WikiCraftingTreeCtrl._CreateRightLink = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number, HL.String)) << function(
+    self, leftPoint, rightPoint, lineType, offset, chanceText)
     if math.abs(leftPoint.y - rightPoint.y) < CREATE_LINE_THRESHOLD then
-        self:_CreateLine(leftPoint, rightPoint, lineType)
+        self:_CreateLine(leftPoint, rightPoint, lineType, chanceText, false)
     else
-        self:_CreateRightCurve(leftPoint, rightPoint, lineType, offset)
+        self:_CreateRightCurve(leftPoint, rightPoint, lineType, offset, chanceText)
     end
 end
 
-WikiCraftingTreeCtrl._CreateLine = HL.Method(Vector2, Vector2, HL.Number) << function(self, pointStart, pointEnd, lineType)
+WikiCraftingTreeCtrl._CreateLineText = HL.Method(Vector2, HL.String) << function(self, position, chanceText)
+    local lineTextCell = self.m_lineTextCellCache:Get()
+    lineTextCell.transform.localPosition = Vector3(position.x, position.y, 0)
+    lineTextCell.text.text = chanceText
+end
+
+WikiCraftingTreeCtrl._BringLineTextToFront = HL.Method() << function(self)
+    for _, lineTextCell in ipairs(self.m_lineTextCellCache.m_usedList) do
+        lineTextCell.transform:SetAsLastSibling()
+    end
+end
+
+WikiCraftingTreeCtrl._CreateLine = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.String, HL.Boolean)) << function(
+    self, pointStart, pointEnd, lineType, chanceText, isLeftLink)
     local lineCell = self.m_lineCellCacheTable[lineType]:Get()
+    local lineWidth = math.abs(pointEnd.x - pointStart.x)
     local pointMiddle = (pointStart + pointEnd) / 2
     lineCell.line.localPosition = Vector3(pointMiddle.x, pointMiddle.y, 0)
-    lineCell.line.sizeDelta = Vector2(math.abs(pointEnd.x - pointStart.x), LINE_THICKNESS[lineType])
+    lineCell.line.sizeDelta = Vector2(lineWidth, LINE_THICKNESS[lineType])
+    if not chanceText then
+        return
+    end
+
+    local textWidth = LINE_TEXT_WIDTH
+    local lineDirection = pointEnd.x >= pointStart.x and 1 or -1
+    local textPosition
+    if isLeftLink then
+        textPosition = pointStart + Vector2(lineDirection * (textWidth * 0.5 + LINE_TEXT_NODE_OFFSET), 0)
+    else
+        textPosition = pointEnd - Vector2(lineDirection * (textWidth * 0.5 + LINE_TEXT_NODE_OFFSET), 0)
+    end
+    self:_CreateLineText(textPosition, chanceText)
 end
 
 local CURVE_WIDTH = 47
 local CURVE_HEIGHT = 47
 
-WikiCraftingTreeCtrl._CreateLeftCurve = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number)) << function(
-    self, pointLeft, pointRight, lineType, offset)
+WikiCraftingTreeCtrl._CreateLeftCurve = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number, HL.String)) << function(
+    self, pointLeft, pointRight, lineType, offset, chanceText)
     local curveCell = self.m_curveLeftCellCacheTable[lineType]:Get()
     offset = offset or 0
     self:_SetCurveCell(curveCell, pointLeft, pointRight, pointRight.x - offset - CURVE_WIDTH,
         LINE_THICKNESS[lineType],  offset)
+    if chanceText then
+        local lineDirection = pointRight.x >= pointLeft.x and 1 or -1
+        self:_CreateLineText(pointLeft + Vector2(lineDirection * (LINE_TEXT_WIDTH * 0.5 + LINE_TEXT_NODE_OFFSET), 0), chanceText)
+    end
 end
 
-WikiCraftingTreeCtrl._CreateRightCurve = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number)) << function(
-    self, pointLeft, pointRight, lineType, offset)
+WikiCraftingTreeCtrl._CreateRightCurve = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number, HL.String)) << function(
+    self, pointLeft, pointRight, lineType, offset, chanceText)
     local curveCell = self.m_curveRightCellCacheTable[lineType]:Get()
     offset = offset or 0
     self:_SetCurveCell(curveCell, pointLeft, pointRight, pointLeft.x + offset + CURVE_WIDTH,
         LINE_THICKNESS[lineType], offset)
+    if chanceText then
+        local lineDirection = pointRight.x >= pointLeft.x and 1 or -1
+        self:_CreateLineText(pointRight - Vector2(lineDirection * (LINE_TEXT_WIDTH * 0.5 + LINE_TEXT_NODE_OFFSET), 0), chanceText)
+    end
 end
 
 WikiCraftingTreeCtrl._SetCurveCell = HL.Method(HL.Table, Vector2, Vector2, HL.Number, HL.Number, HL.Number) << function(

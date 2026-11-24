@@ -1535,6 +1535,7 @@
               "priorityLevel": 0,
               "priorityOffset": 0,
               "serverActionIndex": 19,
+              "countAsControlled": false,
               "curveKey": null,
               "duration": {
                 "blackboardKey": null,
@@ -4502,6 +4503,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -4601,11 +4603,51 @@
               "actionOnTick": {
                 "actionData": [
                   {
-                    "$type": "Beyond.Gameplay.Core.Conditions.CheckMainCharacterCondition+Data, Gameplay.Beyond",
+                    "$type": "Beyond.Gameplay.Core.Conditions.CheckEntityNum+Data, Gameplay.Beyond",
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
                     "serverActionIndex": 77,
+                    "checkTarget": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": null,
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": null,
+                      "selectorData": {
+                        "finderData": null,
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 0,
+                      "targetContextKey": null,
+                      "targetGroupKey": "line_tar",
+                      "targetSource": 2
+                    },
+                    "compareType": 3,
+                    "containsHittableTarget": false,
+                    "excludeDeadEntity": false,
+                    "minNum": 1,
+                    "storeKey": null
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.Core.Conditions.CheckMainCharacterCondition+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 78,
                     "checkTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -4640,7 +4682,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 78,
+                    "serverActionIndex": 79,
                     "alignSpawnPhaseToTimeline": false,
                     "bigEffectName": null,
                     "bigEffectTarget": {
@@ -4894,6 +4936,7 @@
                     "playOnHittableObjects": false,
                     "saveEffectIdToBlackboard": null,
                     "spawnPhaseAlignFrame": 0,
+                    "stopPostProcessWhenHidden": false,
                     "targetSettings": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -4929,7 +4972,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 79,
+                    "serverActionIndex": 80,
                     "alwaysNext": true,
                     "conditionAction": {
                       "actionData": [
@@ -4938,7 +4981,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 80,
+                          "serverActionIndex": 81,
                           "clampToXZ": false,
                           "compareType": 1,
                           "dir1DirectionType": 0,
@@ -5066,7 +5109,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 81,
+                          "serverActionIndex": 82,
                           "clampToXZ": false,
                           "compareType": 3,
                           "dir1DirectionType": 0,
@@ -5200,7 +5243,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 86,
+                          "serverActionIndex": 87,
                           "attackerTargetSettings": {
                             "advancedDirection": {
                               "clampToXZ": true,
@@ -5356,7 +5399,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 87,
+                          "serverActionIndex": 88,
                           "blackboardKey": null,
                           "checkTarget": {
                             "advancedDirection": {
@@ -5395,7 +5438,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 88,
+                          "serverActionIndex": 89,
                           "alwaysNext": false,
                           "attacker": 0,
                           "damageUnits": [
@@ -5596,6 +5639,7 @@
                               "reduceDamageForGuard": true,
                               "reduceDamageForGuardRatio": 0.20000000298023224,
                               "simpleCalculation": true,
+                              "snapshotBlackboardKey": null,
                               "takeAtkSnapshot": false,
                               "updatePositionOnCoalition": true
                             }
@@ -5682,7 +5726,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 89,
+                          "serverActionIndex": 90,
                           "autoFinishByAction": false,
                           "duration": {
                             "blackboardKey": null,
@@ -5735,7 +5779,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 82,
+                          "serverActionIndex": 83,
                           "attackerTargetSettings": {
                             "advancedDirection": {
                               "clampToXZ": true,
@@ -5891,7 +5935,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 83,
+                          "serverActionIndex": 84,
                           "blackboardKey": null,
                           "checkTarget": {
                             "advancedDirection": {
@@ -5930,7 +5974,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 84,
+                          "serverActionIndex": 85,
                           "alwaysNext": false,
                           "attacker": 0,
                           "damageUnits": [
@@ -6131,6 +6175,7 @@
                               "reduceDamageForGuard": true,
                               "reduceDamageForGuardRatio": 0.20000000298023224,
                               "simpleCalculation": true,
+                              "snapshotBlackboardKey": null,
                               "takeAtkSnapshot": false,
                               "updatePositionOnCoalition": true
                             }
@@ -6217,7 +6262,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 85,
+                          "serverActionIndex": 86,
                           "autoFinishByAction": false,
                           "duration": {
                             "blackboardKey": null,
@@ -6322,15 +6367,55 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 90,
+              "serverActionIndex": 91,
               "actionOnTick": {
                 "actionData": [
+                  {
+                    "$type": "Beyond.Gameplay.Core.Conditions.CheckEntityNum+Data, Gameplay.Beyond",
+                    "isEnable": true,
+                    "priorityLevel": 0,
+                    "priorityOffset": 0,
+                    "serverActionIndex": 92,
+                    "checkTarget": {
+                      "advancedDirection": {
+                        "clampToXZ": true,
+                        "customSourceAndTarget": false,
+                        "directionType": 0,
+                        "invertDirection": false,
+                        "source": null,
+                        "sourceMountPoint": 0,
+                        "target": null,
+                        "targetMountPoint": 0
+                      },
+                      "centerContextKey": null,
+                      "centerToGround": false,
+                      "centerType": 0,
+                      "enableAdvancedDirection": false,
+                      "ownerContextKey": null,
+                      "selectorData": {
+                        "finderData": null,
+                        "postProcessorData": [],
+                        "validatorData": []
+                      },
+                      "selectorDirection": 0,
+                      "selectorOwner": 1,
+                      "target": 0,
+                      "targetContextKey": null,
+                      "targetGroupKey": "line_tar_l",
+                      "targetSource": 2
+                    },
+                    "compareType": 3,
+                    "containsHittableTarget": false,
+                    "excludeDeadEntity": false,
+                    "minNum": 1,
+                    "storeKey": null
+                  },
                   {
                     "$type": "Beyond.Gameplay.Core.Conditions.CheckMainCharacterCondition+Data, Gameplay.Beyond",
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 91,
+                    "serverActionIndex": 93,
                     "checkTarget": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -6365,7 +6450,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 92,
+                    "serverActionIndex": 94,
                     "alignSpawnPhaseToTimeline": false,
                     "bigEffectName": null,
                     "bigEffectTarget": {
@@ -6619,6 +6704,7 @@
                     "playOnHittableObjects": false,
                     "saveEffectIdToBlackboard": null,
                     "spawnPhaseAlignFrame": 0,
+                    "stopPostProcessWhenHidden": false,
                     "targetSettings": {
                       "advancedDirection": {
                         "clampToXZ": true,
@@ -6654,7 +6740,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 93,
+                    "serverActionIndex": 95,
                     "alwaysNext": true,
                     "conditionAction": {
                       "actionData": [
@@ -6663,7 +6749,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 94,
+                          "serverActionIndex": 96,
                           "clampToXZ": false,
                           "compareType": 1,
                           "dir1DirectionType": 0,
@@ -6791,7 +6877,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 95,
+                          "serverActionIndex": 97,
                           "clampToXZ": false,
                           "compareType": 3,
                           "dir1DirectionType": 0,
@@ -6925,7 +7011,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 100,
+                          "serverActionIndex": 102,
                           "attackerTargetSettings": {
                             "advancedDirection": {
                               "clampToXZ": true,
@@ -7081,7 +7167,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 101,
+                          "serverActionIndex": 103,
                           "blackboardKey": null,
                           "checkTarget": {
                             "advancedDirection": {
@@ -7120,7 +7206,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 102,
+                          "serverActionIndex": 104,
                           "alwaysNext": false,
                           "attacker": 0,
                           "damageUnits": [
@@ -7321,6 +7407,7 @@
                               "reduceDamageForGuard": true,
                               "reduceDamageForGuardRatio": 0.20000000298023224,
                               "simpleCalculation": true,
+                              "snapshotBlackboardKey": null,
                               "takeAtkSnapshot": false,
                               "updatePositionOnCoalition": true
                             }
@@ -7407,7 +7494,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 103,
+                          "serverActionIndex": 105,
                           "autoFinishByAction": false,
                           "duration": {
                             "blackboardKey": null,
@@ -7460,7 +7547,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 96,
+                          "serverActionIndex": 98,
                           "attackerTargetSettings": {
                             "advancedDirection": {
                               "clampToXZ": true,
@@ -7616,7 +7703,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 97,
+                          "serverActionIndex": 99,
                           "blackboardKey": null,
                           "checkTarget": {
                             "advancedDirection": {
@@ -7655,7 +7742,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 98,
+                          "serverActionIndex": 100,
                           "alwaysNext": false,
                           "attacker": 0,
                           "damageUnits": [
@@ -7856,6 +7943,7 @@
                               "reduceDamageForGuard": true,
                               "reduceDamageForGuardRatio": 0.20000000298023224,
                               "simpleCalculation": true,
+                              "snapshotBlackboardKey": null,
                               "takeAtkSnapshot": false,
                               "updatePositionOnCoalition": true
                             }
@@ -7942,7 +8030,7 @@
                           "isEnable": true,
                           "priorityLevel": 0,
                           "priorityOffset": 0,
-                          "serverActionIndex": 99,
+                          "serverActionIndex": 101,
                           "autoFinishByAction": false,
                           "duration": {
                             "blackboardKey": null,
@@ -8047,7 +8135,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 104,
+              "serverActionIndex": 106,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -8301,6 +8389,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -8352,7 +8441,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 105,
+              "serverActionIndex": 107,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -8606,6 +8695,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -8657,7 +8747,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 106,
+              "serverActionIndex": 108,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -8911,6 +9001,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -8962,7 +9053,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 107,
+              "serverActionIndex": 109,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -9216,6 +9307,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9267,7 +9359,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 108,
+              "serverActionIndex": 110,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -9521,6 +9613,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9572,7 +9665,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 109,
+              "serverActionIndex": 111,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -9826,6 +9919,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9877,7 +9971,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 110,
+              "serverActionIndex": 112,
               "owner": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -9929,7 +10023,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 111,
+              "serverActionIndex": 113,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -10183,6 +10277,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -10234,7 +10329,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 112,
+              "serverActionIndex": 114,
               "alignSpawnPhaseToTimeline": false,
               "bigEffectName": null,
               "bigEffectTarget": {
@@ -10488,6 +10583,7 @@
               "playOnHittableObjects": false,
               "saveEffectIdToBlackboard": null,
               "spawnPhaseAlignFrame": 0,
+              "stopPostProcessWhenHidden": false,
               "targetSettings": {
                 "advancedDirection": {
                   "clampToXZ": true,
@@ -10539,7 +10635,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 113,
+              "serverActionIndex": 115,
               "_canInterruptTimeMs": 0,
               "_intrptFadeDurationMs": 100,
               "_jumpToWhenPlayMs": 0,
@@ -10607,7 +10703,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 114,
+              "serverActionIndex": 116,
               "_canInterruptTimeMs": 0,
               "_intrptFadeDurationMs": 100,
               "_jumpToWhenPlayMs": 0,
@@ -10675,7 +10771,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 115,
+              "serverActionIndex": 117,
               "_canInterruptTimeMs": 0,
               "_intrptFadeDurationMs": 100,
               "_jumpToWhenPlayMs": 0,
@@ -10956,6 +11052,5 @@
     "predefinedTag": []
   },
   "toggleBuffs": [],
-  "uiRangeHints": [],
   "useAIExclusiveFrame": false
 }

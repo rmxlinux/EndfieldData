@@ -160,6 +160,22 @@ InputDeviceChangeSystem._OnInputDeviceTypeChangeFinish = HL.Method(HL.Userdata) 
 end
 
 InputDeviceChangeSystem._RealChangeInputDevice = HL.Method(HL.Userdata) << function(self, newInputType)
+    
+    local showMask = UIManager:GetHideCameraPanelCount() > 0 and not CameraManager.isUsingSystemSceneCamera
+    if showMask then
+        for _, ctrl in pairs(UIManager.m_openedPanels) do
+            if ctrl.panelCfg.isWorldUI and ctrl:IsShow() then
+                showMask = false
+                break
+            end
+        end
+    end
+    if showMask then
+        UIManager:AutoOpen(PanelId.InputDeviceChangeMask)
+    else
+        UIManager:Close(PanelId.InputDeviceChangeMask)
+    end
+
     local phaseArgs = PhaseManager:CollectCurPhaseArgs()
 
     Notify(MessageConst.ON_CONFIRM_CHANGE_INPUT_DEVICE_TYPE, { inputType = newInputType })

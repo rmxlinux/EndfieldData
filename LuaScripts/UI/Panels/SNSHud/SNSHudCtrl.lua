@@ -44,6 +44,10 @@ SNSHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnClickJumpPhaseSNS()
     end)
 
+    self.view.inviteLayout.onClick:AddListener(function()
+        self:_OnClickJumpPhaseSNS()
+    end)
+
     self.view.snsRedDot:InitRedDot(RED_DOT_NAME)
     self.view.noticeNode.gameObject:SetActive(false)
     self.view.entryBtn.gameObject:SetActive(self:_ShowEntryBtn())
@@ -66,6 +70,8 @@ end
 
 SNSHudCtrl._StartShowingNotice = HL.Method(HL.Table) << function(self, data)
     self.m_curSNSNoticeShowingData = data
+    self.view.noticeNewMsg.gameObject:SetActive(not data.isRoomInvite)
+    self.view.noticeNewInvite.gameObject:SetActive(data.isRoomInvite == true)
     local dialogId = data.dialogId
     local chatRoleId = data.chatRoleId
     if not string.isEmpty(dialogId) then
@@ -282,13 +288,22 @@ SNSHudCtrl.OnSNSFriendChatAdd = HL.Method(HL.Any) << function(self, args)
         return
     end
 
-    local chatRoleId = unpack(args)
+    local chatRoleId, fromSelf, importantNotifyBitset = unpack(args)
+    if fromSelf then
+        return
+    end
+
+    local roomInviteMask = 1 << (GEnums.FriendImportantNotifyType.RoomGameInvite:ToInt() - 1)
+    if (importantNotifyBitset & roomInviteMask) ~= 0 and GameInstance.player.friendSystem.isCommunicationRestricted then
+        return
+    end
     local data = {
         chatRoleId = chatRoleId,
+        isRoomInvite = (importantNotifyBitset & roomInviteMask) ~= 0,
     }
 
     LuaSystemManager.mainHudActionQueue:AddRequest("SNSNormalNotice", function()
-        if self.m_friendChat then
+        if self.m_friendChat and not data.isRoomInvite then
             
             return
         end

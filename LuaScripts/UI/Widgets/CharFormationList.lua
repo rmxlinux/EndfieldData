@@ -11,6 +11,8 @@ local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
 
 
+
+
 CharFormationList.info = HL.Field(HL.Table)
 
 
@@ -304,7 +306,7 @@ CharFormationList.OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Fun
 
     cell:InitCharFormationHeadCell(item, function(arg)
         self:OnClickItem(index)
-    end, self.m_ignoreDead, self.m_mode == UIConst.CharListMode.MultiSelect)
+    end, self.m_ignoreDead, self.m_mode == UIConst.CharListMode.MultiSelect, self.info.selectStyle, self.info.useWorldBackupDead)
 
     cell:RefreshExInfo(self.info)
 
@@ -324,9 +326,12 @@ CharFormationList.OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Fun
             end
         else
             
+            
             if self.info.lockedTeamData then
                 for _, char in pairs(self.info.lockedTeamData.chars) do
-                    if char.isLocked and char.charId == item.templateId and char.charInstId ~= item.instId then
+                    local isOtherSlot = selectedCharInfo == nil or char.charInstId ~= selectedCharInfo.charInstId
+                    if char.charId == item.templateId and char.charInstId ~= item.instId and
+                        (isOtherSlot or char.isLocked) then
                         isUnavailable = true
                         break
                     end
@@ -444,12 +449,14 @@ CharFormationList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Bool
 
     if cell.isUnavailable then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_TEAM_FORMATION_CAN_NOT_REPLACE)
+        self:_NotifySingleNaviUnavailable(true)
         return
     end
 
     if self.m_mode == UIConst.CharListMode.Single then  
 
         if self.curSingleSelect == cellIndex then
+            self:_NotifySingleNaviUnavailable(false)
             return
         end
 
@@ -473,7 +480,7 @@ CharFormationList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Bool
         end
 
         
-        if cell.info.isLocked and cell.info.isReplaceable then
+        if cellSelectIndex < 0 then
             local replaceSelectedIndex = nil
             for selectedIndex, index in pairs(self.m_select2Cell) do
                 local selectedCharItem = self.m_filteredCharList[index]
@@ -485,15 +492,21 @@ CharFormationList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Bool
                 Notify(MessageConst.SHOW_POP_UP, {
                     content = Language.LUA_TEAM_FORMATION_REPLACE_CHAR,
                     onConfirm = function()
-                        local replaceCell = self:GetCellByIndex(self.m_select2Cell[replaceSelectedIndex])
+                        local replaceCellIndex = self.m_select2Cell[replaceSelectedIndex]
+                        local replaceCharItem = self.m_filteredCharList[replaceCellIndex]
+                        self:_UpdateSlotIndex(replaceCharItem, nil)
+
+                        local replaceCell = self:GetCellByIndex(replaceCellIndex)
+                        self.cell2Select[replaceCellIndex] = nil
+                        replaceCharItem.selectIndex = nil
                         self.m_select2Cell[replaceSelectedIndex] = cellIndex
                         self.cell2Select[cellIndex] = replaceSelectedIndex
                         self.m_filteredCharList[cellIndex].selectIndex = replaceSelectedIndex
 
                         if replaceCell then
                             replaceCell:SetMultiSelect(nil, playAnim)
-                            self:_UpdateSlotIndex(self.m_filteredCharList[cellIndex], nil)
                         end
+                        InputManagerInst:SetBindingText(cell.view.button.hoverConfirmBindingId, Language.LUA_CHAR_FORMATION_CONTROLLER_OUT_TEAM)
                         local charItemList, charInfoList = self:_UpdateMultiSelect(playAnim)
                         if self.m_clickFunc then
                             self.m_clickFunc(false, cellIndex, cell.info, charItemList, charInfoList)
@@ -532,6 +545,15 @@ CharFormationList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Bool
         if self.m_clickFunc then
             self.m_clickFunc(false, cellIndex, cell.info, charItemList, charInfoList)
         end
+    end
+end
+
+CharFormationList._NotifySingleNaviUnavailable = HL.Method(HL.Boolean) << function(self, isUnavailable)
+    if self.m_mode ~= UIConst.CharListMode.Single or not DeviceInfo.usingController then
+        return
+    end
+    if self.info.onSingleNaviUnavailableChanged then
+        self.info.onSingleNaviUnavailableChanged(isUnavailable)
     end
 end
 

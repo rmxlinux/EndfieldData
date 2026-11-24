@@ -16,6 +16,8 @@ Item.canClear = HL.Field(HL.Boolean) << false
 
 Item.canDestroy = HL.Field(HL.Boolean) << false
 
+Item.isWonderBuild = HL.Field(HL.Boolean) << false
+
 Item.canSetQuickBar = HL.Field(HL.Boolean) << false
 
 Item.fromDepot = HL.Field(HL.Boolean) << false
@@ -77,6 +79,7 @@ Item._ResetOnInit = HL.Method() << function(self)
     self.canUse = false
     self.canDestroy = false
     self.canSetQuickBar = false
+    self.isWonderBuild = false
 
     self:ShowPickUpLogo(false)
     self:ShowGemPerfectIcon(false)
@@ -101,6 +104,7 @@ Item._ResetOnInit = HL.Method() << function(self)
 
     self:_ToggleSkipChapterTagNode(false)
     self:_ToggleSkipChapterInvalidNode(false)
+    self:_ToggleByProductProbTag(false)
 
     
     self.m_needShowDeco1 = self.view.deco1.gameObject.activeSelf
@@ -239,6 +243,7 @@ Item.InitItem = HL.Method(HL.Opt(HL.Any, HL.Any, HL.String, HL.Boolean))
     self:_UpdateLimitTimeNode(itemBundle)
     self:_UpdateItemRewardTypeTagNode(itemBundle)
     self:_UpdateSkipChapterBuildingNodes(itemBundle)
+    self:_UpdateByProductProbTag(itemBundle)
 
     if onClick then
         self.view.button.enabled = true
@@ -303,7 +308,7 @@ end
 Item._UpdateCompositeIconBG = HL.Method() << function(self)
     local active = not self.view.icon.showRarity
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "CompositeIconBG",
-        LuaSystemManager.itemPrefabSystem.compositeIconBGPrefab, active,
+        active and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonCompositeIconBG") or nil, active,
         function(o)
             o.transform:SetSiblingIndex(0)
             o.transform.localScale = Vector3.one
@@ -332,7 +337,7 @@ end
 Item._InitLockNode = HL.Method() << function(self)
     local hasLock = self.instId and self.instId > 0
     local obj = self:tryToggleDynamicNode(self.view.content.transform, "LockNode",
-        LuaSystemManager.itemPrefabSystem.lockNodePrefab, hasLock,
+        hasLock and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemLock") or nil, hasLock,
         function(o)
             o.transform.localScale = Vector3.one
             o.transform.pivot = Vector2.one / 2
@@ -371,7 +376,7 @@ end
 
 Item._TogglePotentialStar = HL.Method(HL.Boolean) << function(self, active)
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "PotentialStar",
-        LuaSystemManager.itemPrefabSystem.potentialStarPrefab, active,
+        active and LuaSystemManager.commonPrefabSystem:LoadPrefab("SimplePotentialStar") or nil, active,
         function(o)
             o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
             o.transform.localScale = Vector3.one
@@ -390,7 +395,7 @@ end
 
 Item._ToggleGemEquipped = HL.Method(HL.Opt(HL.Boolean)) << function(self, active)
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "GemEquipped",
-        LuaSystemManager.itemPrefabSystem.gemEquippedNodePrefab, active,
+        active and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonGemEquipped") or nil, active,
         function(o)
             o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
             
@@ -402,7 +407,7 @@ end
 
 Item._ToggleEquipEnhanceNode = HL.Method(HL.Boolean) << function(self, active)
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "EquipEnhanceNode",
-        LuaSystemManager.itemPrefabSystem.equipEnhanceNodePrefab, active,
+        active and LuaSystemManager.commonPrefabSystem:LoadPrefab("EquipEnhanceNode") or nil, active,
         function(o)
             o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
             o.transform.localScale = self.view.config.EQUIP_ENHANCE_NODE_SCALE
@@ -420,7 +425,7 @@ end
 
 Item._ToggleItemLimitTimeMarkNode = HL.Method(HL.Boolean) << function(self, active)
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "LimitTimeMarkNode",
-        LuaSystemManager.itemPrefabSystem.itemLimitTimeMarkNodePrefab, active,
+        active and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemLimitTimeMarkNode") or nil, active,
         function(o)
             
             local transform = o.transform
@@ -441,7 +446,7 @@ end
 
 Item._ToggleItemRewardTypeTagNode = HL.Method(HL.Boolean) << function(self, active)
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "ItemRewardTypeTag",
-        LuaSystemManager.itemPrefabSystem.itemRewardTypeTagPrefab, active,
+        active and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemRewardTypeTag") or nil, active,
         function(o)
             
             local transform = o.transform
@@ -465,7 +470,7 @@ end
 
 Item._ToggleSkipChapterTagNode = HL.Method(HL.Boolean) << function(self, active)
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "SkipChapterTagNode",
-        LuaSystemManager.itemPrefabSystem.skipChapterTagNodePrefab, active,
+        active and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonSkipChapterTag") or nil, active,
         function(o) o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1) end)
     if obj then
         self.view.skipChapterTagNode = obj.transform
@@ -474,10 +479,30 @@ end
 
 Item._ToggleSkipChapterInvalidNode = HL.Method(HL.Opt(HL.Boolean)) << function(self, active)
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "SkipChapterInvalidNode",
-        LuaSystemManager.itemPrefabSystem.skipChapterInvalidNodePrefab, active,
+        active and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonSkipChapterInvalid") or nil, active,
         function(o) o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1) end)
     if obj then
         self.view.skipChapterInvalidNode = obj.transform
+    end
+end
+
+Item._ToggleByProductProbTag = HL.Method(HL.Opt(HL.Boolean)) << function(self, active)
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "ItemAddonProbabilityTag",
+        active and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonProbabilityTag") or nil, active,
+        function(o) o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1) end)
+    if obj then
+        
+        self.view.byProductProbTagNode = obj.transform
+        self.view.byProductProbCountText = obj.transform:Find("BG/ProbabilityNum"):GetComponent("UIText")
+    end
+end
+
+Item._UpdateByProductProbTag = HL.Method(HL.Opt(HL.Any)) << function(self, itemBundle)
+    local byProductProb = itemBundle and itemBundle.byProductProb
+    local active = byProductProb ~= nil and byProductProb > 0
+    self:_ToggleByProductProbTag(active)
+    if active and self.view.byProductProbCountText then
+        self.view.byProductProbCountText.text = string.format(Language.LUA_ITEM_PROBABILITY_PERCENT_FORMAT, byProductProb)
     end
 end
 
@@ -530,7 +555,7 @@ end
 Item._UpdateLevelNode = HL.Method(HL.Opt(HL.Number)) << function(self, lv)
     if not self.view.levelNode then
         local obj = self:tryToggleDynamicNode(self.view.countNode.transform.parent, "LevelNode",
-            LuaSystemManager.itemPrefabSystem.levelNodePrefab, lv ~= nil,
+            lv ~= nil and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonLevelNode") or nil, lv ~= nil,
             function(o)
                 
                 self.view.bottomTxtBgDecoLineActiveHelper.checkTargets:Add(o)
@@ -639,6 +664,7 @@ Item.ShowTips = HL.Method(HL.Opt(HL.Table, HL.Function)) << function(self, posIn
 
         notPenetrate = self.config.NOT_PENETRATE_ITEM_TIPS_PANEL,
         forceShowOwnCount = self.config.ITEM_TIPS_FORCE_SHOW_OWN_COUNT,
+        isWonderBuild = self.isWonderBuild,
 
         hideItemObtainWays = self.hideItemObtainWays,
         hideBottomInfo = self.hideBottomInfo,
@@ -776,7 +802,7 @@ end
 Item.UpdateRedDot = HL.Method(HL.Opt(HL.String, HL.Any)) << function(self, name, arg)
     if not self.redDot then
         local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "RedDot",
-            LuaSystemManager.itemPrefabSystem.redDotPrefab, true,
+            LuaSystemManager.commonPrefabSystem:LoadPrefab("RedDot"), true,
             function(o)
                 
                 o.transform:SetAsLastSibling()
@@ -841,7 +867,7 @@ end
 
 Item.ShowPickUpLogo = HL.Method(HL.Boolean) << function(self, isShow)
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "SpTypeIconNode",
-        LuaSystemManager.itemPrefabSystem.spTypeIconNodePrefab, isShow,
+        isShow and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonSpTypeIconNode") or nil, isShow,
         function(o)
             o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
             o.transform.localScale = Vector3.one
@@ -879,7 +905,7 @@ end
 
 Item.ShowGemPerfectIcon = HL.Method(HL.Boolean) << function(self, isShow)
     local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "GemPerfectIcon",
-        LuaSystemManager.itemPrefabSystem.gemPerfectIconPrefab, isShow,
+        isShow and LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonGemPerfectIcon") or nil, isShow,
         function(o)
             o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
             o.transform.localScale = Vector3.one
@@ -998,9 +1024,9 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
         local cacheHasNormal = (args.cacheArea and args.cacheArea.hasNormalCacheIn) or
                                (args.cacheRepo and args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal)
         local cacheHasFluid = (args.cacheArea and args.cacheArea.hasFluidCacheIn) or
-                              (args.cacheRepo and args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+                              (args.cacheRepo and (args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid or args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid))
         local cacheHasGas = (args.cacheArea and args.cacheArea.hasGasCacheIn) or
-                            (args.cacheRepo and args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+                            (args.cacheRepo and (args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas or args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid))
         
         if isEmptyGasJar and cacheHasGas then
             table.insert(actionMenuInfos, {
@@ -1547,7 +1573,7 @@ Item._OnHoverChange = HL.Method(HL.Boolean) << function(self, isHover)
         return
     end
 
-    local showHover, delay, targetRect
+    local showHover, delay, targetRect, owner
     if DeviceInfo.usingController then
         showHover = isHover and self.view.button.groupEnabled and not self.extraInfo.isSideTips
         if isHover and not self.view.button.groupEnabled then
@@ -1562,6 +1588,7 @@ Item._OnHoverChange = HL.Method(HL.Boolean) << function(self, isHover)
         end
         delay = 0
         targetRect = self.view.transform
+        owner = self.view.button
     elseif DeviceInfo.usingKeyboard then
         showHover = isHover and not self.m_isSelected
         delay = self.view.config.HOVER_TIP_DELAY
@@ -1582,6 +1609,7 @@ Item._OnHoverChange = HL.Method(HL.Boolean) << function(self, isHover)
             delay = delay,
             targetRect = targetRect,
             posType = posType,
+            owner = owner,
         })
         self.m_showingHover = true
     else

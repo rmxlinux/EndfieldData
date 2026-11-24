@@ -1164,6 +1164,7 @@ SpaceshipGrowCabinCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)
     local arg = {
         roomId = self.m_roomId,
         moveCam = self.m_moveCam,
+        isRemoteCamera = self.m_isRemote,
         clearScreenKey = self.m_clearScreenKey,
     }
     local isOpen, popupCtrl = UIManager:IsOpen(PanelId.SpaceShipFriendHelpList)

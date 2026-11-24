@@ -3,18 +3,19 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 FriendListCell = HL.Class('FriendListCell', UIWidgetBase)
 
 local DYNAMIC_PACKAGE_CONFIG = {
-    LoadingNode = { prefab = "loadingNodePrefab", slot = "loadingNodeSlot", order = 1, refs = {} },
-    NoDataNode = { prefab = "noDataNodePrefab", slot = "noDataNodeSlot", order = 2, stateController = true, refs = { "dynamicStateController", "noDataSplitLineHelper" } },
-    NonGameUserNode = { prefab = "nonGameUserNodePrefab", slot = "nonGameUserNodeSlot", order = 3, refs = { "psnInfoBtnForNoGameUser", "sonyNameTxt", "playerHeadBtnForNoGameUser" } },
-    BlackListBackgroundNode = { prefab = "blackListBackgroundNodePrefab", slot = "blackListBackgroundNodeSlot", order = 3, refs = {} },
-    NormalActionNode = { prefab = "normalActionNodePrefab", slot = "normalActionNodeSlot", order = 9, refs = { "shipBtn", "msgBtn", "messageNumText", "shipBtnStateController", "shipHelp", "msgRedDotNumber", "lockMask", "clueExchange" } },
-    FriendRequestNode = { prefab = "friendRequestNodePrefab", slot = "friendRequestNodeSlot", order = 10, refs = { "acceptFriendBtn", "notAcceptFriendBtn" } },
-    BlackListNode = { prefab = "blackListNodePrefab", slot = "blackListNodeSlot", order = 11, refs = { "removeBlackListBtn", "psnInfoBtnForBlackUser" } },
-    CheckDataListNode = { prefab = "checkDataListNodePrefab", slot = "checkDataListNodeSlot", order = 12, refs = {} },
-    StrangerNode = { prefab = "strangerNodePrefab", slot = "strangerNodeSlot", order = 13, stateController = true, refs = { "addFriendBtn", "dynamicStateController" } },
-    ModeActionNode = { prefab = "modeActionNodePrefab", slot = "modeActionNodeSlot", order = 14, stateController = true, refs = { "chatBtn", "shareBtn", "messageNumNode", "dynamicStateController", "dynamicMessageNumText" } },
-    SpaceshipVisitorNode = { prefab = "spaceshipVisitorNodePrefab", slot = "spaceshipVisitorNodeSlot", order = 15, refs = { "spaceshipVisitorBtn", "spreadBtn", "spreadIconRect", "visitorState", "visitorTxt" } },
-    SpaceshipClueGiftNode = { prefab = "spaceshipClueGiftNodePrefab", slot = "spaceshipClueGiftNodeSlot", order = 16, refs = { "clueNodes", "clueState", "clueNode", "giftBtn" } },
+    LoadingNode = { prefab = "FriendListCellLoadingNode", slot = "loadingNodeSlot", order = 1, refs = {} },
+    NoDataNode = { prefab = "FriendListCellNoDataNode", slot = "noDataNodeSlot", order = 2, stateController = true, refs = { "dynamicStateController", "noDataSplitLineHelper" } },
+    NonGameUserNode = { prefab = "FriendListCellNonGameUserNode", slot = "nonGameUserNodeSlot", order = 3, refs = { "psnInfoBtnForNoGameUser", "sonyNameTxt", "playerHeadBtnForNoGameUser" } },
+    BlackListBackgroundNode = { prefab = "FriendListCellBlackListBackgroundNode", slot = "blackListBackgroundNodeSlot", order = 3, refs = {} },
+    NormalActionNode = { prefab = "FriendListCellNormalActionNode", slot = "normalActionNodeSlot", order = 9, refs = { "shipBtn", "msgBtn", "messageNumText", "shipBtnStateController", "shipHelp", "msgRedDotNumber", "lockMask", "clueExchange" } },
+    FriendRequestNode = { prefab = "FriendListCellFriendRequestNode", slot = "friendRequestNodeSlot", order = 10, refs = { "acceptFriendBtn", "notAcceptFriendBtn" } },
+    BlackListNode = { prefab = "FriendListCellBlackListNode", slot = "blackListNodeSlot", order = 11, refs = { "removeBlackListBtn", "psnInfoBtnForBlackUser" } },
+    CheckDataListNode = { prefab = "FriendListCellCheckDataListNode", slot = "checkDataListNodeSlot", order = 12, refs = {} },
+    StrangerNode = { prefab = "FriendListCellStrangerNode", slot = "strangerNodeSlot", order = 13, stateController = true, refs = { "addFriendBtn", "dynamicStateController" } },
+    ModeActionNode = { prefab = "FriendListCellModeActionNode", slot = "modeActionNodeSlot", order = 14, stateController = true, refs = { "chatBtn", "shareBtn", "messageNumNode", "dynamicStateController", "dynamicMessageNumText" } },
+    SpaceshipVisitorNode = { prefab = "FriendListCellSpaceshipVisitorNode", slot = "spaceshipVisitorNodeSlot", order = 15, refs = { "spaceshipVisitorBtn", "spreadBtn", "spreadIconRect", "visitorState", "visitorTxt" } },
+    SpaceshipClueGiftNode = { prefab = "FriendListCellSpaceshipClueGiftNode", slot = "spaceshipClueGiftNodeSlot", order = 16, refs = { "clueNodes", "clueState", "clueNode", "giftBtn" } },
+    InviteNode = { prefab = "FriendListCellInviteNode", slot = "inviteNodeSlot", order = 17, stateController = true, stateMap = { Invite = "Normal", InviteSent = "Sent", Lock = "Lock" }, refs = { "dynamicStateController", "inviteBtn" } },
 }
 
 local DYNAMIC_PACKAGE_NAMES = {
@@ -30,6 +31,7 @@ local DYNAMIC_PACKAGE_NAMES = {
     "ModeActionNode",
     "SpaceshipVisitorNode",
     "SpaceshipClueGiftNode",
+    "InviteNode",
 }
 
 local CONTENT_STATE_PACKAGE = {
@@ -43,6 +45,9 @@ local CONTENT_STATE_PACKAGE = {
     ChatBtn = { "ModeActionNode" },
     SpaceshipVisitor = { "SpaceshipVisitorNode" },
     SpaceshipClueGift = { "SpaceshipClueGiftNode" },
+    Invite = { "InviteNode" },
+    InviteSent = { "InviteNode" },
+    Lock = { "InviteNode" },
 }
 
 local EMPTY_STATE_PACKAGE = {
@@ -71,6 +76,34 @@ FriendListCell.showCharInfoCallBack = HL.Field(HL.Function)
 FriendListCell.searchKey = HL.Field(HL.String) << ""
 
 FriendListCell.m_buildNodeId = HL.Field(HL.Number) << 0
+
+FriendListCell._OnDestroy = HL.Override() << function(self)
+    LuaSystemManager.commonPrefabSystem:Release(self)
+end
+
+
+
+FriendListCell._ResolveInviteStateName = HL.Method(HL.Number, HL.Opt(HL.String, HL.Table)).Return(HL.String) << function(self, roleId, accountId, sentInviteTargets)
+    if GameInstance.player.multiplayerMatchSystem:IsPlayerInCurrentMatchRoom(roleId) then
+        return "InviteSent"
+    end
+    if sentInviteTargets then
+        local key = roleId ~= 0 and "role:" .. tostring(roleId) or "psn:" .. (accountId or "")
+        if sentInviteTargets[key] then
+            return "InviteSent"
+        end
+    end
+
+    local room = GameInstance.player.multiplayerMatchSystem.matchRoom
+    local gameId = room ~= nil and room.gameId or ""
+    local unlocked = false
+    if accountId ~= nil then
+        unlocked = GameInstance.player.multiplayerMatchSystem:IsPsnFriendGameUnlocked(accountId, gameId)
+    else
+        unlocked = GameInstance.player.multiplayerMatchSystem:IsFriendGameUnlocked(roleId, gameId)
+    end
+    return unlocked and "Invite" or "Lock"
+end
 
 
 FriendListCell._BindDynamicPackage = HL.Method(HL.String, GameObject) << function(self, packageName, obj)
@@ -166,6 +199,14 @@ FriendListCell._BindDynamicPackage = HL.Method(HL.String, GameObject) << functio
                 end)
             end
         end)
+    elseif packageName == "InviteNode" then
+        self.view.inviteBtn.onClick:RemoveAllListeners()
+        self.view.inviteBtn.onClick:AddListener(function()
+            if self.arg.onInviteClick and self.info
+                and self.arg.onInviteClick(self.info, self.arg.sentInviteTargets) then
+                self:_SetContentState("InviteSent")
+            end
+        end)
     elseif packageName == "NonGameUserNode" then
         self.view.psnInfoBtnForNoGameUser.onClick:RemoveAllListeners()
         self.view.psnInfoBtnForNoGameUser.onClick:AddListener(function()
@@ -188,7 +229,10 @@ end
 FriendListCell._ToggleDynamicPackage = HL.Method(HL.String, HL.Boolean).Return(HL.Opt(GameObject)) << function(self, packageName, active)
     local config = DYNAMIC_PACKAGE_CONFIG[packageName]
     local parent = self.view[config.slot]
-    local prefab = LuaSystemManager.friendListCellPrefabSystem[config.prefab]
+    local prefab
+    if active then
+        prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab(config.prefab, self)
+    end
     local obj = self:tryToggleDynamicNode(parent, packageName, prefab, active)
     if obj and active then
         self:_BindDynamicPackage(packageName, obj)
@@ -221,8 +265,13 @@ FriendListCell._SetContentState = HL.Method(HL.String) << function(self, stateNa
     if packageNames then
         for _, packageName in ipairs(packageNames) do
             local packageView = self:_ToggleDynamicPackage(packageName, true)
-            if DYNAMIC_PACKAGE_CONFIG[packageName].stateController and packageView and self.view.dynamicStateController then
-                self.view.dynamicStateController:SetState(stateName)
+            local config = DYNAMIC_PACKAGE_CONFIG[packageName]
+            if config.stateController and packageView and self.view.dynamicStateController then
+                local dynamicStateName = config.stateMap and config.stateMap[stateName] or stateName
+                self.view.dynamicStateController:SetState(dynamicStateName)
+            end
+            if packageName == "InviteNode" and self.view.inviteBtn then
+                self.view.inviteBtn.interactable = stateName == "Invite"
             end
         end
     end
@@ -254,7 +303,8 @@ FriendListCell._OnFirstTimeInit = HL.Override() << function(self)
             local recordTipsTransform = seasonTag.gameObject.activeInHierarchy and seasonTag.transform
                 or levelTag.gameObject.activeInHierarchy and levelTag.transform
                 or self.view.headRectTransform
-            self.arg.onPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, nil, recordTipsTransform)
+            self.arg.onPlayerClick(
+                self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, nil, self.arg.businessCardMoreActionArgs, recordTipsTransform)
         end
     end)
     self:RegisterMessage(MessageConst.ON_SPACESHIP_CLUE_INFO_CHANGE, function()
@@ -298,6 +348,9 @@ FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String)
         elseif GameInstance.player.friendSystem:ContainWaitAcceptRequestID(id) then
             stateName = stateName .. "_Wait"
         end
+    end
+    if stateName == "Invite" then
+        stateName = self:_ResolveInviteStateName(id, nil, arg.sentInviteTargets)
     end
     self:_SetContentState(stateName)
     if self.view.psnInfoBtnForBlackUser then
@@ -363,6 +416,15 @@ FriendListCell.RefreshFriendListCellByPsnId = HL.Method(HL.String, HL.Table, HL.
     end
     self.id = info.roleId
     self:_FirstTimeInit()
+    if stateName == "Invite" then
+        local accountId = info.psnData ~= nil and info.psnData.AccountId or ""
+        stateName = self:_ResolveInviteStateName(info.roleId, accountId, arg.sentInviteTargets)
+    end
+    if info.roleId == 0 and (stateName == "Invite" or stateName == "InviteSent" or stateName == "Lock") then
+        self:_UpdateUnRegisterPlayer(info)
+        self:_SetContentState(stateName)
+        return
+    end
     
     if stateName == "Normal" then
         
@@ -476,11 +538,12 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
             or self.view.headRectTransform
 
         if isStranger then
-            FriendUtils.FRIEND_CELL_INIT_FUNC.onStrangerPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, nil, recordTipsTransform)
+            FriendUtils.FRIEND_CELL_INIT_FUNC.onStrangerPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, nil, nil, recordTipsTransform)
         else
             local friendInfo = GameInstance.player.spaceship:GetFriendRoleInfo()
             local lshowShipBtn = friendInfo ~= nil and friendInfo.roleId ~= self.info.roleId and showShipBtn and self.info.guestRoomUnlock
-            FriendUtils.FRIEND_CELL_INIT_FUNC.onFriendPlayerClick(self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, lshowShipBtn, recordTipsTransform)
+            FriendUtils.FRIEND_CELL_INIT_FUNC.onFriendPlayerClick(
+                self.view.headRectTransform, self.info.roleId, self.showCharInfoCallBack, lshowShipBtn, self.arg.businessCardMoreActionArgs, recordTipsTransform)
         end
     end or false
 
@@ -512,7 +575,7 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
         local state = self.view.charInfoGroup["charCellRoot" .. i]
         local cell = self.view.charInfoGroup["charHeadCell" .. i]
         
-        cell.view.glowAll.gameObject:SetActive(false)
+        cell:ResetMaxPotentialGlow()
         if i <= self.info.charInfos.Count and self.info.charInfos[CSIndex(i)] then
             local item = self.info.charInfos[CSIndex(i)]
             local charConfig = Tables.characterTable:GetValue(item.templateId)

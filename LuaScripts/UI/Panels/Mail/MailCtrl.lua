@@ -5,8 +5,6 @@ MailCtrl = HL.Class('MailCtrl', uiCtrl.UICtrl)
 local ASYNC_TEXTINFO_LINKINFO = 0.1
 
 local MAIL_CELL_PREFAB_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Mail/%s_MailCellBg.prefab"
-local MAIL_TITLE_PNG_PATH = "Mail/DynamicBg/%s_mailtitlebg"
-local MAIL_CONTENT_PNG_PATH = "Mail/DynamicBg/%s_mailcontentbg"
 
 
 
@@ -14,6 +12,7 @@ local MAIL_CONTENT_PNG_PATH = "Mail/DynamicBg/%s_mailcontentbg"
 
 MailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ALL_MAIL_INITED] = 'OnAllMailInited',
+    [MessageConst.ON_MAIL_PARTIAL_INITED] = 'OnMailPartialInited',
     [MessageConst.ON_READ_MAIL] = 'OnReadMail',
     [MessageConst.ON_GET_MAIL_ATTACHMENT] = 'OnGetMailAttachment',
     [MessageConst.ON_DEL_MAILS] = 'OnDelMails',
@@ -266,7 +265,15 @@ MailCtrl.m_cacheMailCellBg = HL.Field(HL.Table)
 MailCtrl._GetMailSkinPrefix = HL.Method(HL.Table, HL.Boolean).Return(HL.String) << function(self, info, upper)
     local prefix = ""
     if info.mail.subType == GEnums.MailSubType.Birthday then
-        prefix = "birthday"
+        if info.mail.isTemplate and not string.isEmpty(info.mail.templateId) then
+            if info.mail.templateId == "happy_birthday_mail_2026" then
+                prefix = "birthday"
+            elseif info.mail.templateId == "happy_birthday_mail_2027" then
+                prefix = "birthday2027"
+            end
+        else
+            prefix = "birthday"
+        end
     else
         prefix = "default"
     end
@@ -751,6 +758,18 @@ end
 
 
 MailCtrl.OnAllMailInited = HL.Method() << function(self)
+    self:_RefreshMailViewAfterFetch()
+    logger.info("OnAllMailInited")
+end
+
+
+
+MailCtrl.OnMailPartialInited = HL.Method() << function(self)
+    self:_RefreshMailViewAfterFetch()
+    logger.info("OnMailPartialInited")
+end
+
+MailCtrl._RefreshMailViewAfterFetch = HL.Method() << function(self)
     if self.m_inLoading then
         self:_OnLoadingFinished()
     else

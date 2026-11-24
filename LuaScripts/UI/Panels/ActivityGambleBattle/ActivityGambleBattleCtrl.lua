@@ -36,7 +36,6 @@ ActivityGambleBattleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_activityId = arg.activityId
     self.m_rankRelatedId = Tables.GambleBattleConst.rankRelatedId
 
-    arg.skipReceive = true
     self.view.activityCommonInfo:InitActivityCommonInfo(arg)
     self.m_system:RefreshProgressFromRecord()
     ActivityUtils.playGambleBattleBgm("")
@@ -147,51 +146,6 @@ ActivityGambleBattleCtrl._RefreshEntryProgress = HL.Method() << function(self)
     local succ, rankValue = GameInstance.player.activitySystem:TryGetActivityOwnRankValue(self.m_activityId, self.m_rankRelatedId)
     self.m_rankScore = (succ and rankValue >= 0) and math.floor(rankValue) or 0
     self.view.rankingNumTxt.text = self.m_rankScore > 0 and tostring(self.m_rankScore) or "-"
-    self:_RefreshActivityCommonInfoRewardState()
-end
-
-
-ActivityGambleBattleCtrl._RefreshActivityCommonInfoRewardState = HL.Method() << function(self)
-    local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
-    local receiveAll = activity ~= nil and activity.receiveAllReward
-        and self:_HasReceivedAllMilestoneRewards() and self:_HasReceivedHeadReward()
-        and not self.view.activityCommonInfo.view.config.HIDE_RECEIVE_ALL
-    local gotoNode = self.view.activityCommonInfo.view.gotoNode
-    gotoNode.receiveAllNode.gameObject:SetActive(receiveAll)
-    gotoNode.notReceiveAllNode.gameObject:SetActive(not receiveAll)
-end
-
-ActivityGambleBattleCtrl._HasReceivedAllMilestoneRewards = HL.Method().Return(HL.Boolean) << function(self)
-    local haveCfg, milestoneCfg = Tables.activityCommonUIMilestoneTable:TryGetValue(self.m_activityId)
-    if not haveCfg then
-        return false
-    end
-
-    local hasMilestoneReward = false
-    for _, nodeData in pairs(milestoneCfg.milestoneMap) do
-        if not ActivityUtils.IsActivityCoinMilestoneReceived(self.m_activityId, nodeData.milestoneId) then
-            return false
-        end
-        hasMilestoneReward = true
-    end
-    return hasMilestoneReward
-end
-
-ActivityGambleBattleCtrl._HasReceivedHeadReward = HL.Method().Return(HL.Boolean) << function(self)
-    local hasCfg, cfg = Tables.activityCommonCoinRewardTable:TryGetValue(self.m_activityId)
-    if not hasCfg or string.isEmpty(cfg.headItemId) then
-        return true
-    end
-
-    local taskInfos = ActivityUtils.GetTaskInfos(self.m_activityId)
-    for _, taskInfo in ipairs(taskInfos) do
-        for _, rewardItem in ipairs(UIUtils.getRewardItems(taskInfo.rewardId)) do
-            if rewardItem.id == cfg.headItemId then
-                return taskInfo.status == GEnums.ActivityConditionalTaskState.Rewarded
-            end
-        end
-    end
-    return false
 end
 
 ActivityGambleBattleCtrl._OnActivityUpdated = HL.Method(HL.Any) << function(self, arg)

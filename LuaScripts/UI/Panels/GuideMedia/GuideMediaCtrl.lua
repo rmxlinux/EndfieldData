@@ -17,6 +17,8 @@ GuideMediaCtrl.m_mediaInfos = HL.Field(HL.Userdata)
 
 GuideMediaCtrl.m_getMediaCell = HL.Field(HL.Function)
 
+GuideMediaCtrl.m_mediaCells = HL.Field(HL.Table)
+
 GuideMediaCtrl.m_onComplete = HL.Field(HL.Function)
 
 GuideMediaCtrl.m_loadedImgKeys = HL.Field(HL.Table)
@@ -27,6 +29,7 @@ GuideMediaCtrl.m_isHideMissionHud = HL.Field(HL.Boolean) << false
 
 GuideMediaCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_loadedImgKeys = {}
+    self.m_mediaCells = {}
     local mediaScrollList = self.view.mediaNode.mediaList
     self.view.mediaNode.closeButton.onClick:AddListener(function()
         self:_OnClickClose()
@@ -43,7 +46,11 @@ GuideMediaCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     mediaScrollList.onCenterIndexChanged:AddListener(function(oldIndex, newIndex)
         self:_OnUpdateSelectImageIndex(newIndex)
     end)
-    self.m_getMediaCell = UIUtils.genCachedCellFunction(mediaScrollList)
+    self.m_getMediaCell = UIUtils.genCachedCellFunction(mediaScrollList, function(obj)
+        local cell = Utils.wrapLuaNode(obj)
+        table.insert(self.m_mediaCells, cell)
+        return cell
+    end)
 
     if DeviceInfo.usingController then
         UIUtils.bindHyperlinkPopup(self, "guideMediaContent", self.view.inputGroup.groupId)
@@ -59,6 +66,7 @@ end
 
 GuideMediaCtrl.OnHide = HL.Override() << function(self)
     self:_DisposeLoadedGuideImages()
+    self:_DisposeLoadedGuideVideos()
     UIManager:ShowWithKey(PanelId.MissionHud, "GuideMedia")
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self.panelId, enabled = false})
     CameraManager:ResumeTick("GuideMediaCtrl")
@@ -175,6 +183,8 @@ GuideMediaCtrl._OnUpdateSelectImageIndex = HL.Method(HL.Number) << function(self
     local descTxt = Utils.getGuideText(info.descTxtId)
     node.titleTxt:SetAndResolveTextStyle(InputManager.ParseTextActionId(titleTxt))
     node.contentTxt:SetAndResolveTextStyle(InputManager.ParseTextActionId(descTxt))
+    node.contentScrollRect:KillScrollTween()
+    node.contentScrollRect.verticalNormalizedPosition = 1
     node.indexTxt.text = string.format("%d/%d", LuaIndex(newIndex), infos.Count)
 
     local isLast = newIndex == infos.Count - 1
@@ -193,6 +203,18 @@ GuideMediaCtrl._DisposeLoadedGuideImages = HL.Method() << function(self)
         self.loader:DisposeHandleByKey(key)
     end
     self.m_loadedImgKeys = {}
+end
+
+GuideMediaCtrl._DisposeLoadedGuideVideos = HL.Method() << function(self)
+    for _, cell in ipairs(self.m_mediaCells) do
+        cell.coroutine = self:_ClearCoroutine(cell.coroutine)
+        local video = cell.video
+        local player = video.player
+        if player ~= nil then
+            video:Stop()
+            player:DisposeRendererResource()
+        end
+    end
 end
 
 HL.Commit(GuideMediaCtrl)

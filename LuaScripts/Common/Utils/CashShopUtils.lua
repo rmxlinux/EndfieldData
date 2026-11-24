@@ -1349,29 +1349,9 @@ function CashShopUtils.GetAllTokenGoods()
 end
 
 
-function CashShopUtils.HaveCharPotentialExchange()
-    local charBag = GameInstance.player.charBag
-    for _, charInfo in pairs(charBag.charInfos) do
-        if charInfo.charType == GEnums.CharType.Default then
-            local templateId = charInfo.templateId
-            local currentPotentialLevel = charInfo.potentialLevel
-            local succ, characterPotentialList = Tables.characterPotentialTable:TryGetValue(templateId)
-            if succ and characterPotentialList then
-                
-                local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
-                local materialId = characterPotentialList.firstItemId
-                local getCount = Utils.getItemCount(materialId)
-                
-                local redundant = currentPotentialLevel + getCount - maxPotentialLevel
-                
-                if redundant > 0 then
-                    return true
-                end
-            end
-        end
-    end
 
-    return false
+function CashShopUtils.HaveCharPotentialExchange()
+    return GameInstance.player.cashShopSystem:HasCharPotentialExchange()
 end
 
 
@@ -1607,6 +1587,10 @@ end
 
 
 function CashShopUtils.OpenShopDetailPanel(info, uiCtrl)
+    if not info then
+        logger.error("[CashShopUtils] OpenShopDetailPanel info is nil, from:", uiCtrl and uiCtrl.panelCfg.name or "nil")
+        return
+    end
     local isOpen, shopDetailCtrl = UIManager:IsOpen(PanelId.ShopDetail)
     if isOpen then
         if shopDetailCtrl.m_phase then

@@ -892,13 +892,13 @@ QTECtrl._PollKeys = HL.Method(HL.Any).Return(HL.Boolean, HL.Boolean, HL.Boolean)
     local action = state.action
 
     local kbKey = action.keyBinding
-    if kbKey then
+    if not DeviceInfo.usingTouch and not DeviceInfo.usingController and kbKey then
         keyDown = keyDown or InputManagerInst:GetKeyDown(kbKey)
         keyHeld = keyHeld or InputManagerInst:GetKey(kbKey)
         keyUp   = keyUp   or InputManagerInst:GetKeyUp(kbKey)
     end
     local gpKey = action.gamepadBinding
-    if gpKey then
+    if not DeviceInfo.usingTouch and DeviceInfo.usingController and gpKey then
         keyDown = keyDown or InputManagerInst:GetKeyDown(gpKey)
         keyHeld = keyHeld or InputManagerInst:GetKey(gpKey)
         keyUp   = keyUp   or InputManagerInst:GetKeyUp(gpKey)

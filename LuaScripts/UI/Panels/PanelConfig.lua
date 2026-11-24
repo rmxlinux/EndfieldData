@@ -168,6 +168,15 @@
 
 
 
+
+
+
+
+
+
+
+
+
 config = {
     
     
@@ -206,6 +215,7 @@ config = {
     
     
     AchievementDepot = {
+        needOwnNaviScope = true,
         folder = "Achievement",
         orderType = Types.EPanelOrderTypes.Window,
         clearedPanel = true,
@@ -319,7 +329,7 @@ config = {
         preserveWhenChangeLanguage = false,
         hideCamera = true,
         hideCameraAfterInAnim = true, 
-        clearScreen = false,
+        clearScreen = true, 
         blockKeyboardEvent = true,
         multiTouchType = Types.EPanelMultiTouchTypes.Disable,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
@@ -488,7 +498,24 @@ config = {
     },
     
     
-    ActivityCharGiftPopUp = {
+    ActivityCharGiftPopUp = { 
+        folder = "Activity",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = true,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = true,
+        blockObtainWaysJump = true,
+    },
+    ActivityCharGiftCommonPopUp = {
         folder = "Activity",
         orderType = Types.EPanelOrderTypes.Window,
         clearedPanel = true,
@@ -538,7 +565,22 @@ config = {
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         freezeWorld = true,
     },
-    ActivityCharacterGift = {
+    ActivityCharacterGift = { 
+        folder = "Activity",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = true,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = true,
+    },
+    ActivityCharacterGiftCommon = {
         folder = "Activity",
         orderType = Types.EPanelOrderTypes.Window,
         clearedPanel = true,
@@ -1069,6 +1111,21 @@ config = {
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         freezeWorld = true,
     },
+    ActivityDoubleAssaultV2 = {
+        folder = "Activity",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = true,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = true,
+    },
     
     
     ActivityRanking = {
@@ -1218,6 +1275,21 @@ config = {
         freezeWorld = true,
     },
     ActivityPhotoTaking = {
+        folder = "Activity",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = true,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = true,
+    },
+    ActivityWonderBuild = {
         folder = "Activity",
         orderType = Types.EPanelOrderTypes.Window,
         clearedPanel = true,
@@ -1716,6 +1788,21 @@ config = {
         virtualMouseMode = Types.EPanelMouseMode.NotNeedShow,
         freezeWorld = false,
     },
+    SweetPieAim = {
+        folder = "Battle",
+        orderType = Types.EPanelOrderTypes.Hud,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        freezeWorld = false,
+    },
     WaterDroneBag = {
         folder = "Battle",
         orderType = Types.EPanelOrderTypes.Hud,
@@ -1917,6 +2004,22 @@ config = {
         virtualMouseMode = Types.EPanelMouseMode.NotNeedShow,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
         isResidentPanel = true,
+    },
+    SweetPieManual = {
+        folder = "Battle",
+        orderType = Types.EPanelOrderTypes.PopUp,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
     },
     
     
@@ -3350,6 +3453,22 @@ config = {
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         freezeWorld = true,
     },
+    CommonShareWait = {
+        folder = "Common",
+        orderType = Types.EPanelOrderTypes.System,
+        clearedPanel = false,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        realMouseMode = Types.EPanelMouseMode.ForceHide,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
     Joystick = {
         useCanvasHide = true,
         folder = "Common",
@@ -4543,6 +4662,43 @@ config = {
     },
     
     
+    InputDeviceChangeMask = {
+        folder = "Common",
+        selfMaintainOrder = true,
+        clearedPanel = false,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = false,
+        needOwnNaviScope = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        isWorldUI = false,
+        freezeWorld = false,
+    },
+    
+    
+    CommonSelectChar = {
+        folder = "Common",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = true,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
     CommonRewardDetailsPopup = {
         folder = "Common",
         orderType = Types.EPanelOrderTypes.PopUp,
@@ -4634,7 +4790,7 @@ config = {
     },
     SubGamePopup = {
         folder = "CommonTaskTrack",
-        orderType = Types.EPanelOrderTypes.PopUp,
+        orderType = Types.EPanelOrderTypes.Window,
         clearedPanel = false,
         closeWhenChangeScene = true,
         hideCamera = false,
@@ -5123,6 +5279,21 @@ config = {
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
     },
+    DialogSentencePreview = {
+        folder = "Dialog",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = false,
+        clearScreen = false,
+        useCanvasHide = true,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.AutoShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+    },
     
     
     DialogSkipPopUp = {
@@ -5324,7 +5495,7 @@ config = {
         clearedPanel = true,
         closeWhenChangeScene = true,
         hideCamera = true,
-        clearScreen = false,
+        clearScreen = true,
         blockKeyboardEvent = true,
         multiTouchType = Types.EPanelMultiTouchTypes.Both,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
@@ -5498,9 +5669,7 @@ config = {
         clearedPanel = true,
         closeWhenChangeScene = true,
         hideCamera = true,
-        clearScreen = {
-            "DomainMain",
-        },
+        clearScreen = true,
         blockKeyboardEvent = true,
         multiTouchType = Types.EPanelMultiTouchTypes.Disable,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
@@ -5605,7 +5774,7 @@ config = {
         closeWhenChangeScene = true,
         preserveWhenChangeLanguage = false,
         hideCamera = true,
-        clearScreen = false,
+        clearScreen = true,
         blockKeyboardEvent = true,
         multiTouchType = Types.EPanelMultiTouchTypes.Both,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
@@ -5858,6 +6027,22 @@ config = {
         realMouseMode = Types.EPanelMouseMode.NeedShow,
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        freezeWorld = true,
+    },
+    DungeonBossEntry = {
+        folder = "Dungeon",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = true,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         freezeWorld = true,
     },
     
@@ -6487,6 +6672,7 @@ config = {
     FacRegionUpgrade = {
         folder = "Factory",
         orderType = Types.EPanelOrderTypes.Window,
+        needOwnNaviScope = true,
         clearedPanel = true,
         closeWhenChangeScene = true,
         hideCamera = false,
@@ -7133,6 +7319,21 @@ config = {
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         freezeWorld = false,
     },
+    FormationFormula = {
+        folder = "Factory",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = false,
+    },
     
     
     FacMachineCrafter = {
@@ -7653,6 +7854,83 @@ config = {
     },
     
     
+    FacRebuildSupplyPort = {
+        folder = "Factory",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = false,
+    },
+    FacFormationStake = {
+        folder = "Factory",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = false,
+    },
+    FacFormationStakeSelect = {
+        folder = "Factory",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = false,
+    },
+    FacFormationStakeTips = {
+        folder = "Factory",
+        orderType = Types.EPanelOrderTypes.PopUp,
+        clearedPanel = false,
+        closeWhenChangeScene = true,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = false,
+    },
+    FacFormationZone = {
+        folder = "Factory",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = false,
+    },
+    
+    
 
     
     
@@ -7754,6 +8032,9 @@ config = {
             "SpaceshipGuestRoomClue",
             "SpaceshipControlCenter",
             "SpaceshipControlCenterRoom",
+            "SNSBasic",
+            "SNSFriend",
+            "MultiplayerRoom",
         },
         blockKeyboardEvent = false,
         multiTouchType = Types.EPanelMultiTouchTypes.Disable,
@@ -8508,6 +8789,24 @@ config = {
     },
     
     
+    InventoryMushroom = {
+        folder = "Inventory",
+        orderType = Types.EPanelOrderTypes.PopUp,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Enable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = false,
+    },
+    
+    
 
     
     
@@ -8544,6 +8843,25 @@ config = {
         freezeWorld = true,
     },
     
+    
+
+
+    
+    WonderBuild = {
+        folder = "WonderBuild",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = false,
+        clearScreen = true,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        freezeWorld = true,
+    },
     
 
     
@@ -9103,6 +9421,24 @@ config = {
         virtualMouseMode = Types.EPanelMouseMode.NotNeedShow,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
         isResidentPanel = true,
+    },
+    
+    
+    MushroomBossHud = {
+        folder = "MainHud",
+        orderType = Types.EPanelOrderTypes.Hud,
+        clearedPanel = false,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = false,
     },
     
     
@@ -9760,6 +10096,24 @@ config = {
         isWorldUI = false,
         realMouseMode = Types.EPanelMouseMode.NeedShow,
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = true,
+    },
+    
+    
+    MapMarkDetailActivityCardGame = {
+        folder = "Map",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
         freezeWorld = true,
     },
     
@@ -11487,7 +11841,7 @@ config = {
         clearedPanel = true,
         closeWhenChangeScene = true,
         hideCamera = false,
-        clearScreen = false,
+        clearScreen = true,
         blockKeyboardEvent = true,
         multiTouchType = Types.EPanelMultiTouchTypes.Disable,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
@@ -11641,7 +11995,7 @@ config = {
         clearedPanel = true,
         closeWhenChangeScene = true,
         hideCamera = true,
-        clearScreen = false,
+        clearScreen = true,
         blockKeyboardEvent = true,
         multiTouchType = Types.EPanelMultiTouchTypes.Disable,
         gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
@@ -13216,6 +13570,7 @@ config = {
         realMouseMode = Types.EPanelMouseMode.NeedShow,
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         freezeWorld = true,
+        blockObtainWaysJump = true,
     },
     
     
@@ -14424,6 +14779,423 @@ config = {
     
 
     ActivityInn = {
+        folder = "Activity",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        hideCamera = true,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        isWorldUI = false,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameLandlordHud = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Hud,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = true,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameLandlordPlayerGameInfo = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameBlackjackShopMain = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameBlackjackRoundSettle = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameBlackjackPlayerGameInfo = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameBlackjackShopChangeCard = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameBlackjackSelectChange = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameBlackjackFinalSettleRank = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameBlackjackHud = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Hud,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = true,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameQuickMenu = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    
+    CardGameBlackjackShopSelect = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameBlackjackOpenCardPack = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    CardGameLandlordFinalSettleRank = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = true,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    CardGameBlackjackFinalSettle = {
+        folder = "CardGame",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+
+
+    
+    
+    MultiplayerPSOnlyNotice = {
+        folder = "Multiplayer",
+        orderType = Types.EPanelOrderTypes.SystemToast,
+        clearedPanel = false,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        isWorldUI = false,
+        freezeWorld = false,
+    },
+    
+    
+    MultiplayerRoomNotice = {
+        folder = "Multiplayer",
+        orderType = Types.EPanelOrderTypes.SystemToast,
+        clearedPanel = false,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        isWorldUI = false,
+        freezeWorld = false,
+    },
+    
+    
+    MultiplayerMatch = {
+        folder = "Multiplayer",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    MultiplayerMain = {
+        folder = "Multiplayer",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = true,
+        clearScreen = true,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    MultiplayerEnterRoom = {
+        folder = "Multiplayer",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    MultiplayerRoomInvitation = {
+        folder = "Multiplayer",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = false,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = false,
+        multiTouchType = Types.EPanelMultiTouchTypes.Both,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Both,
+        realMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.NotNeedShow,
+        isWorldUI = false,
+        freezeWorld = false,
+    },
+    
+    
+    MultiplayerSuccess = {
+        folder = "Multiplayer",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = false,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+    MultiplayerRoom = {
+        folder = "Multiplayer",
+        orderType = Types.EPanelOrderTypes.Window,
+        clearedPanel = true,
+        closeWhenChangeScene = true,
+        preserveWhenChangeLanguage = false,
+        hideCamera = false,
+        clearScreen = true,
+        blockKeyboardEvent = true,
+        multiTouchType = Types.EPanelMultiTouchTypes.Disable,
+        gyroscopeEffect = Types.EPanelGyroscopeEffect.Disable,
+        realMouseMode = Types.EPanelMouseMode.NeedShow,
+        virtualMouseMode = Types.EPanelMouseMode.ForceHide,
+        isWorldUI = false,
+        freezeWorld = true,
+    },
+    
+    
+
+    ActivityCardGame = {
         folder = "Activity",
         orderType = Types.EPanelOrderTypes.Window,
         clearedPanel = true,

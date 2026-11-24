@@ -180,8 +180,7 @@ CommonTaskTrackToastCtrl.OnClose = HL.Override() << function(self)
 end
 
 CommonTaskTrackToastCtrl._IsWorldFreeze = HL.Method().Return(HL.Boolean) << function(self)
-    local isOpen, ctrl = UIManager:IsOpen(PanelId.CommonPopUp)
-    return UIWorldFreezeManager:IsUIWorldFreeze() or isOpen and ctrl.m_timeScaleHandler > 0
+    return UIWorldFreezeManager:IsUIWorldFreeze()
 end
 
 CommonTaskTrackToastCtrl.ShowCountdownToast = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, args, endFunc)

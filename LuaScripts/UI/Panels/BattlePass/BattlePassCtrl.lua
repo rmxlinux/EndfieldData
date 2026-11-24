@@ -384,7 +384,10 @@ BattlePassCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function
         arg.panelArgs = self.m_arg.panelArgs
         arg.popupPlanBuy = self.m_arg.popupPlanBuy
     end
-    local ret = self.m_phase:ChangePanel(tabInfo.panelId, isRight, arg)
+    
+    local blockedByPhase = not isInit and (PhaseManager:CheckIsInTransition()
+        or PhaseManager:GetTopPhaseId() ~= PhaseId.BattlePass)
+    local ret = not blockedByPhase and self.m_phase:ChangePanel(tabInfo.panelId, isRight, arg)
     if not ret then
         
         self.m_curTabIndex = 3 - luaIndex

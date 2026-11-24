@@ -31,7 +31,7 @@ FacFertilizationModePopupCtrl.m_haveSetNaviTarget = HL.Field(HL.Boolean) << fals
 
 
 FacFertilizationModePopupCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
+    [MessageConst.ON_FAC_FERTILIZATION_MODE_SETTING_CHANGED] = '_RefreshModeSetting',
 }
 
 
@@ -68,7 +68,6 @@ FacFertilizationModePopupCtrl._SetupUI = HL.Method() << function(self)
         if luaIndex == ModeCellType.EnableTeammateFertilize then
             local desc = string.format(config.desc, self:_GetFertilizationName())
             cell.descTxt.text = desc
-            cell.toggleWhite:SetIsOnWithoutNotify(FactoryUtils.isEnableTeammateFertilize())
             cell.toggleWhite.onValueChanged:AddListener(function(isOn)
                 local sameSoil = isOn and FactoryUtils.isTeammateFertilizeSameSoil() or false
                 FactoryUtils.setTeammateAutoSoilData(isOn, sameSoil)
@@ -89,6 +88,15 @@ FacFertilizationModePopupCtrl._SetupUI = HL.Method() << function(self)
             self:SetNaviTarget(cell.naviDecorator)
         end
     end)
+    self:_RefreshModeSetting()
+end
+
+FacFertilizationModePopupCtrl._RefreshModeSetting = HL.Method() << function(self)
+    local cell = self.m_cellCache:GetItem(ModeCellType.EnableTeammateFertilize)
+    local isReady = GameInstance.player.farmTerminalSystem.isAIOptionReady
+    cell.toggleWhite:SetIsOnWithoutNotify(FactoryUtils.isEnableTeammateFertilize())
+    cell.toggleWhite.interactable = isReady
+    cell.naviDecorator.interactable = isReady
     self:_RefreshSameSoilToggleDisplay()
 end
 
@@ -105,13 +113,14 @@ FacFertilizationModePopupCtrl._RefreshSameSoilToggleDisplay = HL.Method(HL.Opt(H
     if isTeammateFertilizeSameSoil == nil then
         isTeammateFertilizeSameSoil = FactoryUtils.isTeammateFertilizeSameSoil()
     end
-    cell.toggleWhite.interactable = isEnableTeammateFertilize
+    local canInteract = GameInstance.player.farmTerminalSystem.isAIOptionReady and isEnableTeammateFertilize
+    cell.toggleWhite.interactable = canInteract
     cell.toggleWhite:SetIsOnWithoutNotify(isTeammateFertilizeSameSoil)
     cell.bgLockMask.gameObject:SetActive(not isEnableTeammateFertilize)
     
     
     local naviDecorator = cell.naviDecorator
-    naviDecorator.interactable = isEnableTeammateFertilize
+    naviDecorator.interactable = canInteract
 end
 
 

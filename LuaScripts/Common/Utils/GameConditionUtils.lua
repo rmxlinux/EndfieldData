@@ -82,6 +82,9 @@ local _conditionHandlers = {
         local ret = GameConditionUtils.CheckBitSetCount(key)
         return ret
     end,
+    [GEnums.ConditionType.CheckAdventureLevel] = function()
+        return GameConditionUtils.CheckAdventureLevel()
+    end,
     [GEnums.ConditionType.CheckWorldLevel] = function(params)
         local ret = GameConditionUtils.CheckWorldLevel()
         return ret
@@ -128,9 +131,42 @@ local _conditionHandlers = {
         local args = LuaGameConditionUtils._extractStrings(params)
         return GameConditionUtils.CheckActivityState(args[1], tonumber(args[2]), tonumber(args[3]))
     end,
+    [GEnums.ConditionType.CheckActivityConditionalStageStatus] = function(params)
+        local args = LuaGameConditionUtils._extractStrings(params)
+        return GameConditionUtils.CheckActivityConditionalStageStatus(args[1], tonumber(args[2]), tonumber(args[3]))
+    end,
+    
+    [GEnums.ConditionType.CheckActivityConditionalTaskStatus] = function(params, context)
+        local args = LuaGameConditionUtils._extractStrings(params)
+        local activityId = context and context.activityId or ""
+        return GameConditionUtils.CheckActivityConditionalTaskStatus(activityId, args[1], tonumber(args[2]), tonumber(args[3]))
+    end,
+    
+    [GEnums.ConditionType.CheckActivityWebRewardAll] = function(params, context)
+        local args = LuaGameConditionUtils._extractStrings(params)
+        local activityId = args[1]
+        if string.isEmpty(activityId) or activityId == "__EMPTY_STR__" then
+            activityId = context and context.activityId or ""
+        end
+        return GameConditionUtils.CheckActivityWebRewardAll(activityId)
+    end,
+    
+    [GEnums.ConditionType.CheckActivityMileStoneRewardAllTaken] = function(params, context)
+        local args = LuaGameConditionUtils._extractStrings(params)
+        local activityId = args[1]
+        if string.isEmpty(activityId) or activityId == "__EMPTY_STR__" then
+            activityId = context and context.activityId or ""
+        end
+        return GameConditionUtils.CheckActivityMileStoneRewardAllTaken(activityId)
+    end,
+    [GEnums.ConditionType.CheckActivityShopSoldOut] = function(params)
+        local args = LuaGameConditionUtils._extractStrings(params)
+        return ActivityUtils.isShopGroupAllGoodsSoldOut(args[1] or "") and 1 or 0
+    end,
 }
 
-function LuaGameConditionUtils.getConditionValueByParameters(conditionType, parameters)
+
+function LuaGameConditionUtils.getConditionValueByParameters(conditionType, parameters, context)
     if not GameConditionUtils.CheckClientConditionType(conditionType) then
         
         
@@ -139,7 +175,7 @@ function LuaGameConditionUtils.getConditionValueByParameters(conditionType, para
     end
     local handler = _conditionHandlers[conditionType]
     if handler then
-        local ok, result = pcall(handler, parameters)
+        local ok, result = pcall(handler, parameters, context)
         if ok then
             return true, result or 0
         end

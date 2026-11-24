@@ -65,6 +65,9 @@ LuaConsoleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.clearButton.onClick:AddListener(function()
         self:_ClearLog()
     end)
+    self.view.copyLatestLogButton.onClick:AddListener(function()
+        self:_CopyLatestLog()
+    end)
     self:_ClearLog()
 end
 
@@ -204,6 +207,65 @@ LuaConsoleCtrl._OnRefreshLogCell = HL.Method(HL.Any, HL.Number) << function(self
         self:_TryExecute()
         self:Hide()
     end)
+    cell.copyLogBtn.onClick:RemoveAllListeners()
+    cell.copyLogBtn.onClick:AddListener(function()
+        self:_CopyLogData(data)
+    end)
+end
+
+
+
+LuaConsoleCtrl.ExecuteWithDiagnostics = HL.StaticMethod(HL.String).Return(HL.String) << function(inputText)
+    
+    local _, output = xpcall(function()
+        local chunk, compileError = loadstring("return " .. inputText, "LuaConsoleDiagnostics")
+        if not chunk then
+            chunk, compileError = loadstring(inputText, "LuaConsoleDiagnostics")
+        end
+        if not chunk then
+            return "[Lua compile error]\n" .. compileError
+        end
+
+        local startSeq
+        if BEYOND_DEBUG_COMMAND then
+            startSeq = CS.Beyond.Lua.LuaLogBuffer.LastSeq()
+        end
+        
+        local results = table.pack(xpcall(chunk, function(err)
+            return debug.traceback(tostring(err), 2)
+        end))
+        local lines = {}
+        if results[1] then
+            for index = 2, results.n do
+                table.insert(lines, inspect(results[index], { depth = 3 }))
+            end
+            if results.n == 1 then
+                table.insert(lines, "[Completed without a return value]")
+            end
+        else
+            table.insert(lines, "[Lua error]\n" .. results[2])
+        end
+
+        
+        if startSeq then
+            local captured = Json.decode(CS.Beyond.Lua.LuaLogBuffer.Query("error,exception,assert", nil, 50, false, true, true, startSeq))
+            for _, entry in ipairs(captured.logs) do
+                table.insert(lines, "[" .. entry.type .. "] " .. entry.msg)
+                if entry.stack and entry.stack ~= "" then
+                    table.insert(lines, entry.stack)
+                end
+            end
+            if captured.matched > captured.returned then
+                table.insert(lines, "[Only the first 50 error entries are included; check the client log for the rest.]")
+            end
+        else
+            table.insert(lines, "[Unity error capture is unavailable in this build.]")
+        end
+        return table.concat(lines, "\n")
+    end, function(err)
+        return "[Diagnostic failed; the command may have executed. Do not retry automatically.]\n" .. debug.traceback(tostring(err), 2)
+    end)
+    return output
 end
 
 LuaConsoleCtrl.OnLuaDebugSocketMessage = HL.StaticMethod(HL.Table) << function(arg)
@@ -221,6 +283,20 @@ LuaConsoleCtrl.SyncClientRemoteTask = HL.StaticMethod(HL.Table) << function(arg)
     local result = table.concat(logs or {})
     logger.info("LuaConsoleCtrl.SyncClientRemoteTask Finish:\n", result)
     callback(result)
+end
+
+LuaConsoleCtrl._CopyLogData = HL.Method(HL.Table) << function(self, data)
+    Unity.GUIUtility.systemCopyBuffer = luaConsoleFormatLogCellText(data.inputText, data.contentText, data.logIndex)
+    Notify(MessageConst.SHOW_TOAST, "已复制Log") 
+end
+
+LuaConsoleCtrl._CopyLatestLog = HL.Method() << function(self)
+    local data = self.m_executeInputStrList[1]
+    if not data then
+        Notify(MessageConst.SHOW_TOAST, "没有可复制的Log") 
+        return
+    end
+    self:_CopyLogData(data)
 end
 
 HL.Commit(LuaConsoleCtrl)

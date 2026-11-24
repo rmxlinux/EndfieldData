@@ -127,7 +127,7 @@ ItemIcon._RefreshGemAddOnNode = HL.Method(HL.Boolean, HL.Any, HL.Opt(HL.Number))
         if not gemAttrIconPath then
             return
         end
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.gemAttrIconPrefab, self.view.transform)
+        local obj = CSUtils.CreateObject(LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonGemAttrIcon"), self.view.transform)
         obj.name = "GemAttrIcon"
         obj.transform.localScale = Vector3.one
         obj.transform.pivot = Vector2.one / 2
@@ -171,7 +171,7 @@ ItemIcon._UpdateLiquidOrGasIcon = HL.Method() << function(self)
         if not icon then
             return
         end
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.liquidIconPrefab, self.view.transform)
+        local obj = CSUtils.CreateObject(LuaSystemManager.commonPrefabSystem:LoadPrefab("ItemAddonLiquidIcon"), self.view.transform)
         obj.name = "LiquidIcon"
         obj.transform.localScale = Vector3.one
         local center = Vector2.one / 2

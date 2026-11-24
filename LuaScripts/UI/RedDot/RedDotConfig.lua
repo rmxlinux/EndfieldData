@@ -1,6 +1,33 @@
 
 
 local Config = {
+    MultiplayerNewGame = {
+        readLike = false,
+        needArg = true,
+        Check = function(gameId)
+            return MultiplayerUtils.isNewGameUnread(gameId), UIConst.RED_DOT_TYPE.Normal
+        end,
+    },
+    MultiplayerNewGameEntry = {
+        readLike = false,
+        needArg = false,
+        Check = function()
+            for _, data in pairs(Tables.multiplayerGameCenterTable) do
+                if MultiplayerUtils.isNewGameUnread(data.gameId) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            return false
+        end,
+        sons = { MultiplayerNewGame = false }, 
+    },
+    MultiplayerEmojiTab = {
+        readLike = true,
+        needArg = true,
+        Check = function(tabId)
+            return not string.isEmpty(tabId) and not MultiplayerUtils.isRedDotRead("MultiplayerEmojiTab", tabId), UIConst.RED_DOT_TYPE.New
+        end,
+    },
     InnPrivateChefNew = {
         readLike = true,
         needArg = false,
@@ -244,7 +271,7 @@ local Config = {
     TechTreeLayer = {
         msgs = {
             MessageConst.FAC_ON_REFRESH_TECH_TREE_UI,
-            MessageConst.ON_ITEM_COUNT_CHANGED,
+            MessageConst.ON_MISSION_ITEM_COUNT_CHANGED,
         },
         readLike = false,
         needArg = true,
@@ -271,7 +298,7 @@ local Config = {
     TechTreeNode = {
         msgs = {
             MessageConst.FAC_ON_REFRESH_TECH_TREE_UI,
-            MessageConst.ON_ITEM_COUNT_CHANGED,
+            MessageConst.ON_FAC_TECH_POINT_ITEM_COUNT_CHANGED,
         },
         readLike = false,
         needArg = true,
@@ -295,6 +322,12 @@ local Config = {
                 return false
             end
 
+            local pointItemId = Tables.facSTTGroupTable[nodeData.groupId].costPointType
+            local isEnough = Utils.getItemCount(pointItemId) >= nodeData.costPointCount
+            if not isEnough then
+                return false
+            end
+
             local isMatchCondition = true
             if nodeData.conditions.Count > 0 then
                 for i = 1, nodeData.conditions.Count do
@@ -307,12 +340,6 @@ local Config = {
             end
 
             if not isMatchCondition then
-                return false
-            end
-
-            local isEnough = Utils.getItemCount(Tables.facSTTGroupTable[nodeData.groupId].costPointType)
-                >= nodeData.costPointCount
-            if not isEnough then
                 return false
             end
 
@@ -1999,14 +2026,22 @@ local Config = {
         },
         readLike = false,
         needArg = true,
-        Check = function(isSuit)
+        
+        Check = function(arg)
             if Utils.isInBlackbox() then
                 return false
             end
 
+            local isHighLevelSuit, isSuit
+            if type(arg) == "table" then
+                isHighLevelSuit, isSuit = arg.isHighLevelSuit, arg.isSuit
+            end
+
             for packId, _ in pairs(Tables.equipPackFormulaTable) do
                 local _, packData = Tables.equipPackTable:TryGetValue(packId)
-                if packData and (isSuit == nil or packData.isSuit == isSuit) then
+                if packData
+                    and (isHighLevelSuit == nil or packData.isHighLevelSuit == isHighLevelSuit)
+                    and (isSuit == nil or packData.isSuit == isSuit) then
                     if RedDotManager:GetRedDotState("EquipPack", packId) then
                         return true, UIConst.RED_DOT_TYPE.Normal
                     end
@@ -2420,16 +2455,18 @@ local Config = {
             MessageConst.ON_HIGH_DIFFICULTY_NEW_RED_DOT_SET_FALSE,
             MessageConst.ON_ACTIVITY_UPDATED,
             MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_SUB_GAME_UNLOCK,
         },
         readLike = false,
         needArg = true,
         Check = function()
             
             if GameInstance.player.highDifficultySystem:IsHighDifficultyUnlocked() then
-                local seriesIds = GameInstance.player.highDifficultySystem:GetAllUnlockSeriesIds()
-                for i = 1,seriesIds.Count do
-                    local seriesId = seriesIds[CSIndex(i)]
-                    if HighDifficultyUtils.isNewHighDifficultySeries(seriesId) then
+                
+                local seriesIds = HighDifficultyUtils.GetLatestSeriesIds()
+                for _, seriesId in ipairs(seriesIds) do
+                    if HighDifficultyUtils.isNewHighDifficultySeries(seriesId)
+                        or HighDifficultyUtils.hasNewHighDifficultyBossInSeries(seriesId) then
                         return true, UIConst.RED_DOT_TYPE.Normal
                     end
                 end
@@ -2905,6 +2942,7 @@ local Config = {
             MessageConst.ON_COLLECT_DELEGATE_REWARD,
             MessageConst.ON_DOMAIN_DEPOT_DAILY_REFRESHED,
             MessageConst.ON_KITE_STATION_COLLECTION_REWARD,
+            MessageConst.ON_WONDER_BUILD_REWARD_CHANGE,
         },
         sons = {
         },
@@ -2956,6 +2994,109 @@ local Config = {
             return GameInstance.player.kiteStationSystem:CheckKiteStationCollectionReward(stationId), UIConst.RED_DOT_TYPE.Normal
         end,
     },
+
+    
+    WonderBuild = {
+        readLike = false,
+        needArg = false,
+        msgs = {
+            MessageConst.ON_WONDER_BUILD_REWARD_CHANGE,
+            MessageConst.ON_WONDER_BUILD_STAGE_UPGRADE,
+        },
+        sons = {
+            WonderBuildCanUpgrade = true,
+        },
+        Check = function()
+            local wonderProgress = GameInstance.remoteFactoryManager.system.core.progressStatus.wonderProgress
+            if wonderProgress == nil then
+                return false
+            end
+            for stage = 1, wonderProgress.stage do
+                if RedDotManager:GetRedDotState("WonderBuildStage", stage) then
+                    return true
+                end
+            end
+            return false
+        end,
+    },
+    WonderBuildStage = {
+        readLike = false,
+        needArg = true,
+        sons = {
+            WonderBuildRewardUnclaimed = true,
+        }
+    },
+    WonderBuildStagePrev = {
+        readLike = false,
+        needArg = true,
+        Check = function(curStage)
+            for stage = 1, curStage-1 do
+                if RedDotManager:GetRedDotState("WonderBuildRewardUnclaimed", stage) then
+                    return true
+                end
+            end
+            return false
+        end,
+    },
+    WonderBuildStageNext = {
+        readLike = false,
+        needArg = true,
+        Check = function(curStage)
+            curStage = curStage + 1
+            while Tables.wonderStageTable:ContainsKey(curStage) do
+                if RedDotManager:GetRedDotState("WonderBuildRewardUnclaimed", curStage) then
+                    return true
+                end
+                curStage = curStage + 1
+            end
+            return false
+        end,
+    },
+    WonderBuildRewardUnclaimed = {
+        msgs = {
+            MessageConst.ON_WONDER_BUILD_REWARD_CHANGE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(stage)
+            local wonderProgress = GameInstance.remoteFactoryManager.system.core.progressStatus.wonderProgress
+            if wonderProgress.stage < stage then
+                return false
+            end
+            local suc, stageData = Tables.wonderStageTable:TryGetValue(stage)
+            if not suc then
+                return false
+            end
+            for i = 0, stageData.wonderRewards.length - 1 do
+                local reward = stageData.wonderRewards[i]
+                if reward.repeatedReward then
+                    local count = wonderProgress:GetRepeatedRewardCount(reward.index)
+                    if count > 0 then
+                        return true
+                    end
+                elseif (wonderProgress.stage > stage or wonderProgress.curExp >= reward.wonderExp) and not wonderProgress:IsRewardClaimedByResIndex(reward.index) then
+                    return true
+                end
+            end
+            return false
+        end,
+    },
+    WonderBuildCanUpgrade = {
+        msgs = {
+            MessageConst.ON_WONDER_BUILD_STAGE_UPGRADE,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            local wonderProgress = GameInstance.remoteFactoryManager.system.core.progressStatus.wonderProgress
+            local suc, stageData = Tables.wonderStageTable:TryGetValue(wonderProgress.stage)
+            if not suc then
+                return false
+            end
+            return Tables.wonderStageTable:ContainsKey(wonderProgress.stage+1) and wonderProgress.curExp >= stageData.levelExp
+        end,
+    },
+    
 
     
 
@@ -3282,36 +3423,6 @@ local Config = {
         readLike = false,
         needArg = true,
         Check = function(activityId)
-            
-            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
-            if not activity or activity.status ~= GEnums.ActivityStatus.InProgress then
-                return false
-            end
-            local _, shopGroupId = Tables.activityId2ShopGroupId:TryGetValue(activityId)
-            if not shopGroupId then
-                return false
-            end
-            local moneyId = Tables.activityShopAdditionalTable[shopGroupId].activityMoneyId
-            local shopSystem = GameInstance.player.shopSystem
-
-            
-            local shopGroupData = shopSystem:GetShopGroupData(shopGroupId)
-            for _, shopId in pairs(shopGroupData.shopIdList) do
-                local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
-                local shopTableData = Tables.shopTable[shopId]
-                if isUnlocked or shopTableData.isShowWhenLock then
-                    local shopData = shopSystem:GetShopData(shopId)
-                    for goodsId, goodsData in pairs(shopData.goodsDic) do
-                        local isUnlocked = shopSystem:CheckGoodsUnlocked(goodsId)
-                        local goodsTableData = Tables.shopGoodsTable[goodsData.goodsTemplateId]
-                        if isUnlocked or goodsTableData.isShowWhenLock then
-                            if shopSystem:GetRemainCountByGoodsId(shopId, goodsId) > 0 then
-                                return true, UIConst.RED_DOT_TYPE.Normal
-                            end
-                        end
-                    end
-                end
-            end
             return false
         end
     },
@@ -3799,10 +3910,11 @@ local Config = {
     ActivityHighDifficulty = {
         msgs = {
             MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
-            MessageConst.ON_HIGH_DIFFICULTY_NEW_RED_DOT_SET_FALSE,
             MessageConst.ON_ACTIVITY_UPDATED,
             MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
             MessageConst.ACTIVITY_HIGH_DIFFICULTY_NEW_TASK_SET_FALSE,
+            MessageConst.ON_HIGH_DIFFICULTY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_SUB_GAME_UNLOCK,
         },
         readLike = false,
         needArg = true,
@@ -3812,20 +3924,19 @@ local Config = {
                 return false
             end
             
-            if GameInstance.player.highDifficultySystem:IsHighDifficultyUnlocked() and ActivityUtils.hasIntroMissionAndComplete(id) then
-                local seriesIds = GameInstance.player.highDifficultySystem:GetAllUnlockSeriesIds()
-                for i = 1,seriesIds.Count do
-                    local seriesId = seriesIds[CSIndex(i)]
-                    if HighDifficultyUtils.isNewHighDifficultySeries(seriesId) then
-                        return true, UIConst.RED_DOT_TYPE.Normal
-                    end
+            
+            for stageId, stageData in pairs(activity.stageDataDict) do
+                if RedDotManager:GetRedDotState("ActivityHighDifficultyTask", {id, stageId}) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
                 end
             end
             
-            for stageId, stageData in pairs(activity.stageDataDict) do
-                local unlocked = stageData.Status ~= GEnums.ActivityConditionalStageState.Locked:GetHashCode()
-                if unlocked and RedDotManager:GetRedDotState("ActivityHighDifficultyTask", {id, stageId}) then
-                    return true, UIConst.RED_DOT_TYPE.Normal
+            if GameInstance.player.highDifficultySystem:IsHighDifficultyUnlocked() and ActivityUtils.hasIntroMissionAndComplete(id) then
+                local seriesIds = HighDifficultyUtils.GetLatestSeriesIds()
+                for _, seriesId in ipairs(seriesIds) do
+                    if HighDifficultyUtils.hasNewHighDifficultyBossInSeries(seriesId) then
+                        return true, UIConst.RED_DOT_TYPE.Normal
+                    end
                 end
             end
             return ActivityUtils.checkActivityRedDot(id)
@@ -3837,16 +3948,20 @@ local Config = {
             MessageConst.ON_HIGH_DIFFICULTY_NEW_RED_DOT_SET_FALSE,
             MessageConst.ON_ACTIVITY_UPDATED,
             MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_SUB_GAME_UNLOCK,
         },
         readLike = false,
         needArg = true,
         Check = function(id)
+            if not GameInstance.player.activitySystem:GetActivity(id) then
+                return false
+            end
             
             if GameInstance.player.highDifficultySystem:IsHighDifficultyUnlocked() and ActivityUtils.hasIntroMissionAndComplete(id) then
-                local seriesIds = GameInstance.player.highDifficultySystem:GetAllUnlockSeriesIds()
-                for i = 1,seriesIds.Count do
-                    local seriesId = seriesIds[CSIndex(i)]
-                    if HighDifficultyUtils.isNewHighDifficultySeries(seriesId) then
+                local seriesIds = HighDifficultyUtils.GetLatestSeriesIds()
+                for _, seriesId in ipairs(seriesIds) do
+                    if HighDifficultyUtils.isNewHighDifficultySeries(seriesId)
+                        or HighDifficultyUtils.hasNewHighDifficultyBossInSeries(seriesId) then
                         return true, UIConst.RED_DOT_TYPE.Normal
                     end
                 end
@@ -3857,6 +3972,7 @@ local Config = {
     ActivityHighDifficultyTask = {
         msgs = {
             MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ACTIVITY_HIGH_DIFFICULTY_NEW_TASK_SET_FALSE,
         },
         readLike = false,
         needArg = true,
@@ -3867,16 +3983,29 @@ local Config = {
             if not activity then
                 return false
             end
+
+            local stageStatus
+            local openTimeTs
             for id, stageData in cs_pairs(activity.stageDataDict) do
-                if id == stageId and stageData.Status == GEnums.ActivityConditionalStageState.Completed:GetHashCode() then
-                    return true, UIConst.RED_DOT_TYPE.Normal
+                if id == stageId then
+                    stageStatus = stageData.Status
+                    openTimeTs = stageData.OpenTimeTs
+                    break
                 end
             end
 
             
-            if activity.isCompleted then
-                return false 
+            if stageStatus == GEnums.ActivityConditionalStageState.Completed:GetHashCode() then
+                return true, UIConst.RED_DOT_TYPE.Normal
             end
+
+            
+            local isClientLocked = stageStatus == GEnums.ActivityConditionalStageState.Locked:GetHashCode() and openTimeTs > DateTimeUtils.GetCurrentTimestampBySeconds()
+            if isClientLocked or activity.isCompleted then
+                return false
+            end
+
+            
             if HighDifficultyUtils.isNewHighDifficultyTask(activityId, stageId) then
                 return true, UIConst.RED_DOT_TYPE.New
             end
@@ -4021,12 +4150,35 @@ local Config = {
     HighDifficultyMainHudCell = {
         msgs = {
             MessageConst.ON_HIGH_DIFFICULTY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_SUB_GAME_UNLOCK,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(seriesId)
+            
+            if HighDifficultyUtils.isNewHighDifficultySeries(seriesId) then
+                return true, UIConst.RED_DOT_TYPE.New
+            end
+            if HighDifficultyUtils.hasNewHighDifficultyBossInSeries(seriesId) then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            return false
+        end
+    },
+    
+    HighDifficultyBossCell = {
+        msgs = {
+            MessageConst.ON_HIGH_DIFFICULTY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_SUB_GAME_UNLOCK,
+            MessageConst.ON_ACTIVITY_UPDATED,
         },
         readLike = true,
         needArg = true,
-        Check = function(seriesId)
-            if HighDifficultyUtils.isNewHighDifficultySeries(seriesId) then
-                return true, UIConst.RED_DOT_TYPE.New
+        Check = function(bossGroupId)
+            local hdId = Tables.highDifficultyBossGroupTable[bossGroupId].hdId
+            if HighDifficultyUtils.isInLatestHighDifficultyActivity(hdId)
+                and HighDifficultyUtils.isNewHighDifficultyBoss(bossGroupId) then
+                return true, UIConst.RED_DOT_TYPE.Normal
             end
             return false
         end
@@ -4818,11 +4970,9 @@ local Config = {
             end
 
             local info = Tables.activityContingencyContractTable[activityId]
-            local shopId = info.shopGroupId
-            local moneyId = Tables.activityShopAdditionalTable[shopId].activityMoneyId
             local shopGroupId = info.shopGroupId
+            local moneyId = Tables.activityShopAdditionalTable[shopGroupId].activityMoneyId
             local compareToMoneyCount = info.compareToMoneyCount
-            local shopSystem = GameInstance.player.shopSystem
 
             
             local currentMoneyCount = Utils.getItemCount(moneyId,true,true)
@@ -4831,22 +4981,8 @@ local Config = {
             end
 
             
-            local shopGroupData = shopSystem:GetShopGroupData(shopGroupId)
-            for _, shopId in pairs(shopGroupData.shopIdList) do
-                local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
-                local shopTableData = Tables.shopTable[shopId]
-                if isUnlocked or shopTableData.isShowWhenLock then
-                    local shopData = shopSystem:GetShopData(shopId)
-                    for goodsId, goodsData in pairs(shopData.goodsDic) do
-                        local isUnlocked = shopSystem:CheckGoodsUnlocked(goodsId)
-                        local goodsTableData = Tables.shopGoodsTable[goodsData.goodsTemplateId]
-                        if isUnlocked or goodsTableData.isShowWhenLock then
-                            if shopSystem:GetRemainCountByGoodsId(shopId, goodsId) > 0 then
-                                return true, UIConst.RED_DOT_TYPE.Normal
-                            end
-                        end
-                    end
-                end
+            if ActivityUtils.hasShopGroupLimitedGoodsAvailable(shopGroupId) then
+                return true, UIConst.RED_DOT_TYPE.Normal
             end
             return false
         end
@@ -5564,6 +5700,42 @@ local Config = {
             ActivityCommonTaskEntry = true, 
         }
     },
+    ActivityWonderBuild = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            
+
+            
+            return ActivityUtils.checkActivityRedDot(activityId)
+        end,
+        sons = {
+            ActivityCommonTaskEntry = true, 
+        }
+    },
+    ActivityCardGame = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            
+
+            
+            return ActivityUtils.checkActivityRedDot(activityId)
+        end,
+        sons = {
+            MultiplayerNewGameEntry = true, 
+            ActivityCommonTaskEntry = true, 
+            ActivityCommonShopEntry = true, 
+        }
+    },
     
 
 
@@ -6091,7 +6263,7 @@ local Config = {
         msgs = {
             MessageConst.ON_SPACESHIP_GUEST_ROOM_RECV_VISIT_LIST_REWARD,
             MessageConst.ON_SPACESHIP_RECV_QUERY_VISIT_INFO,
-            MessageConst.ON_ITEM_COUNT_CHANGED,
+            MessageConst.ON_CHAR_POTENTIAL_ITEM_COUNT_CHANGED,
         },
         needArg = false,
         Check = function()

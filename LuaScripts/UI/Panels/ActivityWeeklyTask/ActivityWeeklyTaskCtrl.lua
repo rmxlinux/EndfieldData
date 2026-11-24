@@ -8,6 +8,7 @@ ActivityWeeklyTaskCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = 'OnUpdate',
     [MessageConst.ON_ACTIVITY_UPDATED] = 'OnUpdate',
     [MessageConst.ON_WEEKLY_TASK_CHANGE] = 'OnUpdate',
+    [MessageConst.ON_WEEKLY_TASK_PROGRESS] = 'OnTaskProgress',
 }
 
 ActivityWeeklyTaskCtrl.m_activityId = HL.Field(HL.String) << ''
@@ -324,6 +325,41 @@ ActivityWeeklyTaskCtrl.OnUpdate = HL.Method(HL.Table) << function(self, args)
         return
     end
     self:_Refresh()
+end
+
+
+ActivityWeeklyTaskCtrl.OnTaskProgress = HL.Method(HL.Table) << function(self, args)
+    
+    local activityId, taskId = unpack(args)
+    if activityId ~= self.m_activityId then
+        return
+    end
+    if not self.m_tasks or not ActivityUtils.isActivityUnlocked(self.m_activityId)then
+        return
+    end
+    local success1, runtimeTask = self.m_activity.taskInfo:TryGetValue(taskId)
+    local success2, taskInfo = Tables.activityWeeklyTaskTable:TryGetValue(taskId)
+    if not success1 or not success2 then
+        return
+    end
+
+    
+    local progress = math.floor(runtimeTask.Item2 * taskInfo.displayFactor + 1e-6)
+    local progressToCompare = math.floor(taskInfo.progressToCompare * taskInfo.displayFactor + 1e-6)
+    if runtimeTask.Item1 >= GEnums.ActivityConditionalStageState.Completed:GetHashCode() then
+        progress = progressToCompare
+    end
+    for i, task in ipairs(self.m_tasks) do
+        if task.taskId == taskId then
+            task.progress = progress
+            local cell = self.m_taskCells:Get(i)
+            if cell then
+                cell.progressTxt.text = progress .. "/" .. progressToCompare
+                cell.scrollbar.size = lume.clamp(progress/progressToCompare, 0, 1)
+            end
+            return
+        end
+    end
 end
 
 HL.Commit(ActivityWeeklyTaskCtrl)

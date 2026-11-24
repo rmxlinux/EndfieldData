@@ -1,6 +1,6 @@
+
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
-
 ActivityCharacterGiftCtrl = HL.Class('ActivityCharacterGiftCtrl', uiCtrl.UICtrl)
 
 

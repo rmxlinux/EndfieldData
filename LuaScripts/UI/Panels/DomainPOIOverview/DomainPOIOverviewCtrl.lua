@@ -120,8 +120,6 @@ DomainPOIOverviewCtrl._UpdateData = HL.Method() << function(self)
                     table.insert(self.m_info.poiInfos, poiInfo)
                 end
             end
-        else
-            logger.error(string.format("【系统POI总览：%s】未实现DomainPOIUtils.GetPOIRemindInfoFunc!", domainPOICfg.name))
         end
     end
     

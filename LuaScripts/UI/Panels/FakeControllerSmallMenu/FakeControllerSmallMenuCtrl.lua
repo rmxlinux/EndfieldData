@@ -224,7 +224,10 @@ FakeControllerSmallMenuCtrl._RefreshHighlight = HL.Method() << function(self)
     end
 
     local target = self.m_currMenuData.rectTransform
-    if not NotNull(target) then
+    
+    if not NotNull(target) or not target.gameObject.activeInHierarchy then
+        cell.normalFrame.gameObject:SetActive(false)
+        cell.darkFrame.gameObject:SetActive(false)
         return
     end
 

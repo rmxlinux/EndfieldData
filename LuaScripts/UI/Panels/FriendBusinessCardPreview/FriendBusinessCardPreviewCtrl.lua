@@ -179,7 +179,8 @@ FriendBusinessCardPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
 
     self.m_businessCard = Utils.wrapLuaNode(self.m_panel)
     self.m_forceShare = arg.forceShare == true
-    self.m_businessCard:InitFriendBusinessCard(self.m_roleId, true ,self.m_forceShare)
+    self.m_businessCard:InitFriendBusinessCard(
+        self.m_roleId, true, self.m_forceShare, nil, nil, self.m_arg.businessCardMoreActionArgs)
     self.m_businessCard.m_bId = arg.bId
     if hasDesiredExpandedArg then
         self.m_desiredExpanded = arg.isExpanded == true
@@ -201,7 +202,8 @@ end
 
 FriendBusinessCardPreviewCtrl.OnFriendBusinessInfoChange = HL.Method() << function(self)
     self:_CaptureDesiredExpanded()
-    self.m_businessCard:InitFriendBusinessCard(self.m_roleId, true ,self.m_forceShare)
+    self.m_businessCard:InitFriendBusinessCard(
+        self.m_roleId, true, self.m_forceShare, nil, nil, self.m_arg.businessCardMoreActionArgs)
     self:_SyncExpandToWidget()
 end
 
@@ -236,7 +238,8 @@ end
 
 FriendBusinessCardPreviewCtrl.OnShow = HL.Override() << function(self)
     self:_CaptureDesiredExpanded()
-    self.m_businessCard:InitFriendBusinessCard(self.m_roleId, true ,self.m_forceShare)
+    self.m_businessCard:InitFriendBusinessCard(
+        self.m_roleId, true, self.m_forceShare, nil, nil, self.m_arg.businessCardMoreActionArgs)
     self:_SyncExpandToWidget()
 end
 

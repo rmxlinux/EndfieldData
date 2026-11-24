@@ -1,0 +1,491 @@
+{
+  "actionGroupData": {
+    "passiveEventActions": [
+      {
+        "abilityEvent": 9,
+        "actions": [
+          {
+            "actionData": [
+              {
+                "$type": "Beyond.Gameplay.Core.Conditions.CheckBuffIdInContextAdvanced+Data, Gameplay.Beyond",
+                "isEnable": true,
+                "priorityLevel": 0,
+                "priorityOffset": 0,
+                "serverActionIndex": 0,
+                "blackboardKey": null,
+                "buffIdList": [
+                  {
+                    "blackboardKey": null,
+                    "useBlackboardKey": false,
+                    "value": "buff_chr_0040_sweetpie_passive_talent2_signal"
+                  }
+                ],
+                "checkType": 0,
+                "query": {
+                  "queryType": 0,
+                  "tags": []
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.Core.CompareFloat+Data, Gameplay.Beyond",
+                "isEnable": true,
+                "priorityLevel": 0,
+                "priorityOffset": 0,
+                "serverActionIndex": 1,
+                "compare": 2,
+                "valueA": {
+                  "blackboardKey": "talent_2",
+                  "useBlackboardKey": true,
+                  "value": 0.0
+                },
+                "valueB": {
+                  "blackboardKey": null,
+                  "useBlackboardKey": false,
+                  "value": 0.0
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.Core.Conditions.CheckTimedMarkerCondition+Data, Gameplay.Beyond",
+                "isEnable": true,
+                "priorityLevel": 0,
+                "priorityOffset": 0,
+                "serverActionIndex": 2,
+                "blackboardKey": null,
+                "checkTarget": {
+                  "advancedDirection": {
+                    "clampToXZ": true,
+                    "customSourceAndTarget": false,
+                    "directionType": 0,
+                    "invertDirection": false,
+                    "source": null,
+                    "sourceMountPoint": 0,
+                    "target": null,
+                    "targetMountPoint": 0
+                  },
+                  "centerContextKey": null,
+                  "centerToGround": false,
+                  "centerType": 0,
+                  "enableAdvancedDirection": false,
+                  "ownerContextKey": null,
+                  "selectorData": {
+                    "finderData": null,
+                    "postProcessorData": [],
+                    "validatorData": []
+                  },
+                  "selectorDirection": 0,
+                  "selectorOwner": 1,
+                  "target": 0,
+                  "targetContextKey": null,
+                  "targetGroupKey": null,
+                  "targetSource": 4
+                },
+                "id": "chr_0040_sweetpie_passive_talent2",
+                "returnTrueIfNotExists": true,
+                "useBlackboardKey": false
+              },
+              {
+                "$type": "Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond",
+                "isEnable": true,
+                "priorityLevel": 0,
+                "priorityOffset": 0,
+                "serverActionIndex": 3,
+                "advancedSelectorDirection": {
+                  "clampToXZ": true,
+                  "customSourceAndTarget": false,
+                  "directionType": 0,
+                  "invertDirection": false,
+                  "source": null,
+                  "sourceMountPoint": 0,
+                  "target": null,
+                  "targetMountPoint": 0
+                },
+                "center": 2,
+                "centerContextKey": "fakepoint",
+                "centerMountPoint": 0,
+                "centerToGround": true,
+                "contextKey": "fakepoint",
+                "selectorData": {
+                  "finderData": {
+                    "$type": "Beyond.Gameplay.Core.Selector+RandomPointFinder+Data, Gameplay.Beyond",
+                    "angle": {
+                      "blackboardKey": null,
+                      "useBlackboardKey": false,
+                      "value": 240.0
+                    },
+                    "extent2D": {
+                      "x": {
+                        "blackboardKey": null,
+                        "useBlackboardKey": false,
+                        "value": 0.0
+                      },
+                      "y": {
+                        "blackboardKey": null,
+                        "useBlackboardKey": false,
+                        "value": 0.0
+                      }
+                    },
+                    "localPlaneRotationEulers": {
+                      "x": {
+                        "blackboardKey": null,
+                        "useBlackboardKey": false,
+                        "value": 0.0
+                      },
+                      "y": {
+                        "blackboardKey": null,
+                        "useBlackboardKey": false,
+                        "value": 0.0
+                      },
+                      "z": {
+                        "blackboardKey": null,
+                        "useBlackboardKey": false,
+                        "value": 0.0
+                      }
+                    },
+                    "minRadius": {
+                      "blackboardKey": null,
+                      "useBlackboardKey": false,
+                      "value": 3.0
+                    },
+                    "pointNum": {
+                      "blackboardKey": "sheep_num",
+                      "useBlackboardKey": false,
+                      "value": 1.0
+                    },
+                    "radius": {
+                      "blackboardKey": null,
+                      "useBlackboardKey": false,
+                      "value": 6.0
+                    },
+                    "shape": 1,
+                    "snapToNavMesh": true,
+                    "useExtraJitter": false
+                  },
+                  "postProcessorData": [],
+                  "validatorData": []
+                },
+                "selectorDirection": 2,
+                "selectorOwner": 5,
+                "selectorOwnerContextKey": null,
+                "target": 2,
+                "targetGroupKey": "leavepoint",
+                "useAdvancedDirectionSetting": false,
+                "useCenterEntityMountPoint": false
+              },
+              {
+                "$type": "Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond",
+                "isEnable": true,
+                "priorityLevel": 0,
+                "priorityOffset": 0,
+                "serverActionIndex": 4,
+                "asChildBuff": false,
+                "autoFinishByAction": false,
+                "buffIconDurationSource": {
+                  "durationSourceType": 0,
+                  "timedMarkerId": null
+                },
+                "buffs": [
+                  {
+                    "assignBlackboard": false,
+                    "assignItems": [],
+                    "buffId": "buff_chr_0040_sweetpie_passive_talent2_do",
+                    "buffIdKey": null,
+                    "readIdFromBlackboard": false
+                  }
+                ],
+                "buffSource": 2,
+                "contextKey": null,
+                "count": {
+                  "blackboardKey": null,
+                  "useBlackboardKey": false,
+                  "value": 1.0
+                },
+                "finishWithNextSkillIfNotInherited": true,
+                "inheritSkillIdList": [],
+                "inheritSourceSkillCastId": false,
+                "inheritSourceSkillCastInfo": true,
+                "isExtra": false,
+                "overrideBuffIconDuration": false,
+                "passTargetGroupsToBuff": false,
+                "targetSettings": {
+                  "advancedDirection": {
+                    "clampToXZ": true,
+                    "customSourceAndTarget": false,
+                    "directionType": 0,
+                    "invertDirection": false,
+                    "source": null,
+                    "sourceMountPoint": 0,
+                    "target": null,
+                    "targetMountPoint": 0
+                  },
+                  "centerContextKey": null,
+                  "centerToGround": false,
+                  "centerType": 0,
+                  "enableAdvancedDirection": false,
+                  "ownerContextKey": null,
+                  "selectorData": {
+                    "finderData": null,
+                    "postProcessorData": [],
+                    "validatorData": []
+                  },
+                  "selectorDirection": 0,
+                  "selectorOwner": 1,
+                  "target": 0,
+                  "targetContextKey": null,
+                  "targetGroupKey": null,
+                  "targetSource": 4
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.Core.CreateTimedMarker+Data, Gameplay.Beyond",
+                "isEnable": true,
+                "priorityLevel": 0,
+                "priorityOffset": 0,
+                "serverActionIndex": 5,
+                "autoFinishByAction": false,
+                "duration": {
+                  "blackboardKey": "cd",
+                  "useBlackboardKey": true,
+                  "value": 0.0
+                },
+                "markerId": {
+                  "blackboardKey": null,
+                  "useBlackboardKey": false,
+                  "value": "chr_0040_sweetpie_passive_talent2"
+                },
+                "targetSettings": {
+                  "advancedDirection": {
+                    "clampToXZ": true,
+                    "customSourceAndTarget": false,
+                    "directionType": 0,
+                    "invertDirection": false,
+                    "source": null,
+                    "sourceMountPoint": 0,
+                    "target": null,
+                    "targetMountPoint": 0
+                  },
+                  "centerContextKey": null,
+                  "centerToGround": false,
+                  "centerType": 0,
+                  "enableAdvancedDirection": false,
+                  "ownerContextKey": null,
+                  "selectorData": {
+                    "finderData": null,
+                    "postProcessorData": [],
+                    "validatorData": []
+                  },
+                  "selectorDirection": 0,
+                  "selectorOwner": 1,
+                  "target": 0,
+                  "targetContextKey": null,
+                  "targetGroupKey": null,
+                  "targetSource": 4
+                },
+                "useTimeDilationDt": false
+              }
+            ],
+            "onlyExecuteWhenSourceIsGuard": false,
+            "onlyExecuteWhenSourceIsMainChar": false
+          }
+        ]
+      }
+    ],
+    "timelineActions": []
+  },
+  "aiExclusiveFrame": 0,
+  "attackRangeType": 0,
+  "blackboard": [
+    {
+      "isDynamic": false,
+      "key": "heal_base",
+      "valueDouble": 0.0,
+      "valueStr": null
+    },
+    {
+      "isDynamic": false,
+      "key": "heal_sub_multi",
+      "valueDouble": 0.0,
+      "valueStr": null
+    },
+    {
+      "isDynamic": false,
+      "key": "atb_food",
+      "valueDouble": 0.0,
+      "valueStr": null
+    },
+    {
+      "isDynamic": false,
+      "key": "talent_2",
+      "valueDouble": 0.0,
+      "valueStr": null
+    },
+    {
+      "isDynamic": false,
+      "key": "cd",
+      "valueDouble": 15.0,
+      "valueStr": null
+    }
+  ],
+  "buffInputBase": null,
+  "buffs": [
+    {
+      "assignBlackboard": false,
+      "assignItems": [],
+      "buffId": "buff_chr_0040_sweetpie_passive_talent2"
+    }
+  ],
+  "canCastInAir": false,
+  "canCastInWater": false,
+  "canDummyCast": true,
+  "canMove": false,
+  "cardAttributeModifier": {
+    "attributeModifiers": [],
+    "isConvertedAttribute": false
+  },
+  "castData": {
+    "castAngle": 360.0,
+    "castDistance": {
+      "blackboardKey": null,
+      "useBlackboardKey": false,
+      "value": 0.0
+    },
+    "checkCastDistanceType": 0,
+    "checkHeightDiff": false,
+    "cooldownTime": 0.0,
+    "costData": {
+      "atbValueThreshold": 0.0,
+      "costType": 0,
+      "costValue": 0.0
+    },
+    "heightDiffLimit": {
+      "blackboardKey": null,
+      "useBlackboardKey": false,
+      "value": 0.0
+    },
+    "maxChargeTime": 1,
+    "rotateType": 3,
+    "startCdFrame": 0,
+    "useCustomCastDistance": false
+  },
+  "castType": 1,
+  "characterReturnToIdle": false,
+  "comboSkillUIBigSpriteName": null,
+  "comboSkillUISpriteName": null,
+  "dontInterruptCombo": false,
+  "dummyPositionOffset": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 4.0
+  },
+  "durationFrame": 0,
+  "exclusiveFrame": 0,
+  "hittableAttackRange": 0.0,
+  "iconBgType": 0,
+  "iconId": null,
+  "level": 1,
+  "needEnemyOutOfScreenWarning": false,
+  "needEnemyOutOfScreenWarningOverrideValue": false,
+  "normalSkillSubType": 0,
+  "offsetRecordFrame": 0,
+  "overrideHittableObjAttackRange": false,
+  "overrideNeedEnemyOutOfScreenWarning": false,
+  "passiveSkillType": 0,
+  "rootMotionCliffCheck": true,
+  "selectStrategy": 2,
+  "showNotRecommendState": false,
+  "skillHighlightCondition": {
+    "actionData": [],
+    "onlyExecuteWhenSourceIsGuard": false,
+    "onlyExecuteWhenSourceIsMainChar": false
+  },
+  "skillId": "chr_0040_sweetpie_passive_talent2_2",
+  "skillName": null,
+  "skillSpecification": 0,
+  "skillTags": {
+    "predefinedTag": []
+  },
+  "smartTargetBuffFindSettings": {
+    "buffIdList": [],
+    "checkType": 0,
+    "tagQuery": {
+      "queryType": 0,
+      "tags": []
+    }
+  },
+  "smartTargetBuffIds": [],
+  "smartTargetSelectStrategy": 0,
+  "smartTargetTagQuery": {
+    "queryType": 0,
+    "tags": []
+  },
+  "switchToBuffConfig": {
+    "asSkillCast": true,
+    "buffs": [],
+    "buffSource": {
+      "advancedDirection": {
+        "clampToXZ": true,
+        "customSourceAndTarget": false,
+        "directionType": 0,
+        "invertDirection": false,
+        "source": null,
+        "sourceMountPoint": 0,
+        "target": null,
+        "targetMountPoint": 0
+      },
+      "centerContextKey": null,
+      "centerToGround": false,
+      "centerType": 0,
+      "enableAdvancedDirection": false,
+      "ownerContextKey": null,
+      "selectorData": {
+        "finderData": null,
+        "postProcessorData": [],
+        "validatorData": []
+      },
+      "selectorDirection": 0,
+      "selectorOwner": 1,
+      "target": 0,
+      "targetContextKey": null,
+      "targetGroupKey": null,
+      "targetSource": 4
+    },
+    "condition": {
+      "actionData": [],
+      "onlyExecuteWhenSourceIsGuard": false,
+      "onlyExecuteWhenSourceIsMainChar": false
+    },
+    "targets": {
+      "advancedDirection": {
+        "clampToXZ": true,
+        "customSourceAndTarget": false,
+        "directionType": 0,
+        "invertDirection": false,
+        "source": null,
+        "sourceMountPoint": 0,
+        "target": null,
+        "targetMountPoint": 0
+      },
+      "centerContextKey": null,
+      "centerToGround": false,
+      "centerType": 0,
+      "enableAdvancedDirection": false,
+      "ownerContextKey": null,
+      "selectorData": {
+        "finderData": null,
+        "postProcessorData": [],
+        "validatorData": []
+      },
+      "selectorDirection": 0,
+      "selectorOwner": 1,
+      "target": 0,
+      "targetContextKey": null,
+      "targetGroupKey": null,
+      "targetSource": 0
+    }
+  },
+  "switchToCenterBeforeCast": false,
+  "tagDuringAttach": {
+    "predefinedTag": []
+  },
+  "toggleBuffs": [],
+  "useAIExclusiveFrame": false
+}

@@ -723,6 +723,7 @@ SpaceshipManufacturingStationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.
     local arg = {
         roomId = self.m_roomId,
         moveCam = self.m_moveCam,
+        isRemoteCamera = self.m_isRemote,
         clearScreenKey = self.m_clearScreenKey,
         recoverState = {
             showingFormulaList = self.m_showingFormulaList,

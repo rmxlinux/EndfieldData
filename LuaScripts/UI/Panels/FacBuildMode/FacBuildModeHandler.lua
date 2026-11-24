@@ -197,6 +197,16 @@ FacBuildModeHandler.GetAutoMoveCamSize = HL.Virtual().Return(Vector2) << functio
 end
 
 
+FacBuildModeHandler.GetAutoMoveCamCenterOffset = HL.Virtual().Return(Vector2) << function(self)
+    return Vector2.zero
+end
+
+
+FacBuildModeHandler.GetAutoMoveCamPadding = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
+    return nil
+end
+
+
 FacBuildModeHandler.GetRecoverState = HL.Virtual().Return(HL.Opt(HL.Table)) << function(self)
     return nil
 end

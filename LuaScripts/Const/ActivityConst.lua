@@ -111,6 +111,12 @@ ACTIVITY_TABLE = {
     [ActivityType.Inn] = {
         redDot = "ActivityInn",
     },
+    [ActivityType.WonderConstruct] = {
+        redDot = "ActivityWonderBuild",
+    },
+    [ActivityType.CardGameV1D7] = {
+        redDot = "ActivityCardGame",
+    },
     
 }
 ACTIVITY_COMMON_SONS = {
@@ -146,6 +152,8 @@ ACTIVITY_COMMON_SONS = {
     ActivityReflowNew = false,
     ActivityWEB = false,
     ActivityInn = false,
+    ActivityWonderBuild = false,
+    ActivityCardGame = false,
     
 }
 ACTIVITY_REMINDER_DRAW_MODE = {

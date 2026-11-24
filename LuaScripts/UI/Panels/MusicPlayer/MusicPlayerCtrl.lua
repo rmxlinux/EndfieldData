@@ -498,9 +498,17 @@ MusicPlayerCtrl._OnFilterConfirm = HL.Method(HL.Any) << function(self, tags)
     self:_SortMusicList(self.view.rightNode.sortNodeDown:GetCurSortData(), self.view.rightNode.sortNodeDown.isIncremental)
     self:_UpdateMusicList()
 
-    if DeviceInfo.usingController and #self.m_filteredMusicList == 0 and self.m_isChooseMusicController then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_MUSIC_NO_MUSIC_TOAST_DESC)
-        self:_HighlightAlbumController()
+    if DeviceInfo.usingController and self.m_isChooseMusicController then
+        if #self.m_filteredMusicList == 0 then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_MUSIC_NO_MUSIC_TOAST_DESC)
+            local naviGroup = self.view.rightNode.musicListScrollListSelectableNaviGroup
+            if InputManagerInst.controllerNaviManager:IsLayerInStack(naviGroup) then
+                InputManagerInst.controllerNaviManager:TryRemoveLayer(naviGroup)
+            end
+            self:_HighlightAlbumController()
+        else
+            self:_HighlightMusicController(false)
+        end
     end
 end
 

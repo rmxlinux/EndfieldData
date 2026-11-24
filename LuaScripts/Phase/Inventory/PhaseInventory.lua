@@ -73,6 +73,9 @@ PhaseInventory._OnActivated = HL.Override() << function(self)
     if not self.m_radioTagHandle then
         self.m_radioTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.GlobalTagDefine.notStopRadioTags)
     end
+    if Utils.isInFight() then
+        self:ExitSelfFast()
+    end
 end
 
 PhaseInventory._OnDeActivated = HL.Override() << function(self)

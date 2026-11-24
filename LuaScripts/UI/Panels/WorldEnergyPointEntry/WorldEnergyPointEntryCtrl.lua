@@ -305,7 +305,7 @@ end
 WorldEnergyPointEntryCtrl._OnClickBtnRewardDetails = HL.Method() << function(self)
     local wepGroupCfg = Tables.worldEnergyPointGroupTable[self.m_gameGroupId]
     local wepCfg = Tables.worldEnergyPointTable[self.m_gameId]
-    local rewardArgs = {}
+    local rewardArgs = { gameMechanicsId = self.m_gameId }
 
     
     local firstPartRewards = {}

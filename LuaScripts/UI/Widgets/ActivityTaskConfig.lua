@@ -35,6 +35,16 @@ local Config = {
             return "Normal"
         end,
     },
+    [GEnums.ActivityType.CardGameV1D7] = {
+        Check = function(activityId)
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            
+            if not activity or activity.status ~= GEnums.ActivityStatus.InProgress then
+                return "Hide"
+            end
+            return "Normal"
+        end,
+    },
 
 }
 

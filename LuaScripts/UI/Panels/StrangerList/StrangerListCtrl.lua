@@ -27,7 +27,7 @@ StrangerListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     local initArg = FriendUtils.FRIEND_CELL_INIT_CONFIG.Stranger;
     initArg.onSearchChange = function(str)
-        self.view.pasteBtn.gameObject:SetActive(string.isEmpty(str))
+        self.view.pasteBtn.gameObject:SetActive(string.isEmpty(str) and UIUtils.supportsSystemCopyBuffer())
     end
     self.view.friendList:InitFriendListCtrl(initArg)
 

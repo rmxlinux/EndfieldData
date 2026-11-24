@@ -223,19 +223,17 @@ end
 RegionMap3DCtrl._InitNaviTarget = HL.Method() << function(self)
     local _, initialLevelId = DataManager.uiLevelMapConfig.controllerInitialSelectLevel:TryGetValue(self.m_domainId)
     local currDomainId = Utils.getCurDomainId()
-    if currDomainId == self.m_domainId then
+    if not string.isEmpty(self.m_args.levelId) then
         
-        if not string.isEmpty(self.m_args.levelId) then
-            
-            if self.m_levelDataList[self.m_args.levelId] ~= nil then
-                initialLevelId = self.m_args.levelId
-            end
-        else
-            
-            local currLevelId = GameWorld.worldInfo.curLevelId
-            if self.m_levelDataList[currLevelId] then
-                initialLevelId = currLevelId
-            end
+        if self.m_levelDataList[self.m_args.levelId] ~= nil then
+            initialLevelId = self.m_args.levelId
+        end
+    elseif currDomainId == self.m_domainId then
+        
+        
+        local currLevelId = GameWorld.worldInfo.curLevelId
+        if self.m_levelDataList[currLevelId] then
+            initialLevelId = currLevelId
         end
     end
 

@@ -45,6 +45,8 @@ CharFormationCtrl.state = HL.Field(HL.Number) << -1
 
 CharFormationCtrl.singleState = HL.Field(HL.Number) << -1
 
+CharFormationCtrl.m_isNaviOnUnavailableChar = HL.Field(HL.Boolean) << false
+
 CharFormationCtrl.m_index2Char = HL.Field(HL.Table)
 
 CharFormationCtrl.m_singleCharIndex = HL.Field(HL.Number) << -1
@@ -466,14 +468,14 @@ CharFormationCtrl.RefreshPriorityBtnVisible = HL.Method() << function(self)
 end
 
 CharFormationCtrl.RefreshSingleBtns = HL.Method(HL.Number, HL.Table) << function(self, singleState, charInfo)
+    self.m_isNaviOnUnavailableChar = false
+
     self:_PlayBtnSingleAnim(singleState)
 
     self.singleState = singleState
 
     if singleState == UIConst.UI_CHAR_FORMATION_SINGLE_STATE.None then
-        self.view.btnSoloConfirm.gameObject:SetActive(false)
-        self.view.btnRemove.gameObject:SetActive(false)
-        self.view.btnCannotReplace.gameObject:SetActive(false)
+        self:_HideSingleBtns()
         return
     end
 
@@ -501,6 +503,12 @@ CharFormationCtrl.RefreshSingleBtns = HL.Method(HL.Number, HL.Table) << function
         local isFixed = charInfo and charInfo.isLocked and not charInfo.isReplaceable
         self.view.txtCannotReplace.text = isFixed and Language.LUA_TEAM_FORMATION_CHAR_CANNOT_CHANGE or Language.LUA_TEAM_FORMATION_CHAR_CANNOT_LEAVE
     end
+end
+
+CharFormationCtrl._HideSingleBtns = HL.Method() << function(self)
+    self.view.btnSoloConfirm.gameObject:SetActive(false)
+    self.view.btnRemove.gameObject:SetActive(false)
+    self.view.btnCannotReplace.gameObject:SetActive(false)
 end
 
 CharFormationCtrl.RefreshEmpty = HL.Method(HL.Boolean) << function(self, empty)
@@ -752,7 +760,6 @@ CharFormationCtrl._Init = HL.Method() << function(self)
     self.view.charInformation.gameObject:SetActive(false)
     self.view.emptyNode.gameObject:SetActive(false)
     self.view.btnCannotReplace.gameObject:SetActive(false)
-    self.view.trialOperators.gameObject:SetActive(self.m_lockedTeamData and self.m_lockedTeamData.shouldShowTrailTips)
 
     if not string.isEmpty(self.m_dungeonId) or self.m_weekRaidArg or self:_IsSpecialFormation() then
         UIManager:ToggleBlockObtainWaysJump(CHAR_FORMATION_BLOCK_OBTAIN_WAYS_JUMP, true)
@@ -761,6 +768,7 @@ CharFormationCtrl._Init = HL.Method() << function(self)
     self.view.customNode.gameObject:SetAllChildrenActiveIfNecessary(false)
     self:_UpdateWeekRaid()
     self:_UpdateContingencyContract()
+    self:_RefreshEquipPresetGroupEntry()
 end
 
 CharFormationCtrl._InitAction = HL.Method() << function(self)
@@ -1109,6 +1117,10 @@ CharFormationCtrl.OpenCharList = HL.Method(HL.Number, HL.Opt(HL.Int)) << functio
         mode = self.m_charListMode,
         selectedCharInfo = self.m_singleCharInfo,
         lockedTeamData = self.m_lockedTeamData,
+        useWorldBackupDead = true,
+        onSingleNaviUnavailableChanged = function(isUnavailable)
+            self:_OnCharListNaviUnavailableChanged(isUnavailable)
+        end,
     }
     UIUtils.PlayAnimationAndToggleActive(self.view.charList.view.animationWrapper, true)
     self.view.charList:InitCharFormationList(info, function(charList)
@@ -1260,7 +1272,8 @@ end
 
 CharFormationCtrl._RefreshCharList = HL.Method() << function(self)
     if self.m_lockedTeamData then
-        self.m_tmpCharItems = CharInfoUtils.getCharInfoListWithLockedTeamData(self.m_lockedTeamData, self.m_args.candidateScope)
+        self.m_tmpCharItems = CharInfoUtils.getCharInfoListWithLockedTeamData(self.m_lockedTeamData,
+            self.m_args.candidateScope, self.m_args.pinTrialCandidates)
     else
         self.m_tmpCharItems = CharInfoUtils.getCharInfoList(CSIndex(self.m_curTeamIndex), true)
     end
@@ -1359,6 +1372,18 @@ CharFormationCtrl._InitController = HL.Method() << function(self)
         end
         self.view.charInformation.controllerFocusHintNode.gameObject:SetActive(not isFocused)
     end)
+end
+
+CharFormationCtrl._OnCharListNaviUnavailableChanged = HL.Method(HL.Boolean) << function(self, isUnavailable)
+    if self.state ~= UIConst.UI_CHAR_FORMATION_STATE.SingleChar or self.m_isNaviOnUnavailableChar == isUnavailable then
+        return
+    end
+    if isUnavailable then
+        self.m_isNaviOnUnavailableChar = true
+        self:_HideSingleBtns()
+    else
+        self:RefreshSingleBtns(self.singleState, self.m_singleCharInfo)
+    end
 end
 
 CharFormationCtrl._UpdateSlotConfirmBinding = HL.Method() << function(self)

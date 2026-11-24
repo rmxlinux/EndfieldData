@@ -201,7 +201,6 @@ CharInfoCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo
             self.view.charInfoBasicNodeLeft:RefreshTipsForCurrentNaviTarget()
         end)
         
-        
         self:_OnControllerNaviTargetChanged()
     end)
 end
@@ -335,12 +334,15 @@ CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.commonToggle.gameObject:SetActive(isPreview)
     if isPreview then
         self.view.commonToggle:InitCommonToggle(function(isOn)
+            
             Notify(MessageConst.CHAR_INFO_CLOSE_SKILL_TIP)
             Notify(MessageConst.CHAR_INFO_CLOSE_ATTR_TIP)
             self.m_phase:ToggleInitMaxState(isOn)
             self.m_charInfo = self.m_phase.m_charInfo
             self.m_charInfoList = self.m_phase.m_charInfoList
             self:_RefreshCharInfo(self.m_charInfo, self.m_charInfoList)
+            
+            self.view.charInfoBasicNodeLeft:RefreshTipsForCurrentNaviTarget()
         end, false, true)
         if self.m_arg.stateArg and self.m_arg.stateArg.isInitPreview then
             self.view.commonToggle:SetValue(true)
@@ -373,8 +375,10 @@ CharInfoCtrl._RefreshCharInfo = HL.Method(HL.Table, HL.Table) << function(self, 
 end
 
 CharInfoCtrl._RefreshCharInfoBasic = HL.Method(HL.Number) << function(self, charInstId)
-    self.view.charInfoBasicNodeLeft:InitCharInfoBasicNode(charInstId, nil, true)
+    self.view.charInfoBasicNodeLeft:InitCharInfoBasicNode(charInstId, nil)
     self.view.charInfoBasicNodeRight:InitCharInfoBasicNode(charInstId, true)
+    
+    self.view.charInfoBasicNodeRight:ShowControllerFocusHintNode(false)
     self.view.friendshipNode:InitFriendshipNode(charInstId)
 end
 

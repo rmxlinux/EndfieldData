@@ -1126,7 +1126,8 @@ end
 
 
 
-function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData, candidateScope)
+
+function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData, candidateScope, pinTrialCandidates)
     local charBag = GameInstance.player.charBag
     local charInfoList = {}
     local playerChars = charBag.charInfos
@@ -1234,7 +1235,44 @@ function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData, candida
         end
     end
 
+    if pinTrialCandidates then
+        CharInfoUtils._applyTrialPinOrder(charInfoList, charTeamData)
+    end
+
     return charInfoList, allCount
+end
+
+
+
+
+function CharInfoUtils._applyTrialPinOrder(charInfoList, charTeamData)
+    local trialOrder = {}
+    local trialCount = 0
+    if charTeamData then
+        for _, charPresetId in pairs(charTeamData.presetCharList) do
+            local hasValue, charPresetData = Tables.charPresetTable:TryGetValue(charPresetId)
+            if hasValue then
+                local templateId = CharUtils.GetCharTemplateId(charPresetData.charId)
+                if not trialOrder[templateId] then
+                    trialCount = trialCount + 1
+                    trialOrder[templateId] = trialCount
+                end
+            end
+        end
+    end
+
+    local otherOrder = trialCount * 2 + 1
+    for _, item in ipairs(charInfoList) do
+        local order = trialOrder[item.templateId]
+        if not order then
+            item.trialPinOrder = otherOrder
+        elseif item.isTrail then
+            item.trialPinOrder = order
+        else
+            item.trialPinOrder = trialCount + order
+        end
+        item.trialPinPriority = otherOrder - item.trialPinOrder
+    end
 end
 
 function CharInfoUtils.getLeaderCharInfo()
@@ -3124,6 +3162,14 @@ end
 
 
 
+function CharInfoUtils.IsInMultiPresetTeamDungeon()
+    local curDungeonId = GameInstance.dungeonManager.curDungeonId
+    local _, subGameData = DataManager.subGameInstDataTable:TryGetValue(curDungeonId)
+    return subGameData ~= nil and subGameData.teamConfigIds ~= nil
+end
+
+
+
 function CharInfoUtils.IsFocusModeFullLockedTeam(focusModeInstId)
     local curFocusModeInstId = focusModeInstId
     if not curFocusModeInstId and FocusModeUtils.isInFocusMode then
@@ -3154,7 +3200,6 @@ function CharInfoUtils.getLockedFormationData(teamConfigId, createClientCharInfo
         maxTeamMemberCount = Const.BATTLE_SQUAD_MAX_CHAR_NUM,
         lockedTeamMemberCount = 0,
         hasReplaceable = false,
-        shouldShowTrailTips = false,
         chars = {},
     }
 
@@ -3172,7 +3217,6 @@ function CharInfoUtils.getLockedFormationData(teamConfigId, createClientCharInfo
     end
 
     
-    local shouldShowTrailTips = #charTeamData.presetCharList > 0
     if createClientCharInfo then
         for _, charPresetId in pairs(charTeamData.presetCharList) do
             GameInstance.player.charBag:CreateClientCharInfo(charPresetId, ScopeUtil.GetCurrentScope())
@@ -3206,7 +3250,6 @@ function CharInfoUtils.getLockedFormationData(teamConfigId, createClientCharInfo
             table.insert(chars, charInfo)
 
         end
-        shouldShowTrailTips = false
     end
 
     local hasReplaceable = false
@@ -3272,12 +3315,10 @@ function CharInfoUtils.getLockedFormationData(teamConfigId, createClientCharInfo
 
             hasReplaceable = true
         end
-        shouldShowTrailTips = false
     end
     lockedTeamData.chars = chars
     lockedTeamData.lockedTeamMemberCount = #chars
     lockedTeamData.hasReplaceable = hasReplaceable
-    lockedTeamData.shouldShowTrailTips = shouldShowTrailTips
 
     return lockedTeamData
 end

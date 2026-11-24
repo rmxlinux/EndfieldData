@@ -48,7 +48,6 @@ local MODEL_ROOT_ANIM_NAME = {
 local SCENE_ITEM_NAME = "WikiModelShow"
 local CAMERA_GROUP_NAME = "WikiCameraGroup"
 local LIGHT_GROUP_NAME = "WikiLightGroup"
-local SCENE_POS = Vector3(0, 600, 0)
 
 local WIKI_ENY_POSE_CONTROLLER_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Prefabs/UIModels/WikiEnyPose/%s.overrideController"
 local WIKI_ENY_UIMODEL_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Prefabs/UIModels/Wiki/%s_uimodel.prefab"
@@ -252,7 +251,7 @@ PhaseWiki._CollectVisiblePanelStates = HL.Method().Return(HL.Table) << function(
             local groupPanelItem = self:_GetPanelPhaseItem(panelCfg.groupPanelId)
             if groupPanelItem and groupPanelItem.uiCtrl then
                 tryAddPanel(panelCfg.groupPanelId)
-            elseif currentDetailArgs then
+            elseif currentDetailArgs and self:_GetPanelPhaseItem(panelCfg.detailPanelId) then
                 local groupArg = lume.deepCopy(currentGroupArgs or {})
                 groupArg.categoryType = currentCategoryType
                 groupArg.detailPanelId = panelCfg.detailPanelId
@@ -356,13 +355,9 @@ end
 
 
 
-PhaseWiki.m_hideCamCor = HL.Field(HL.Thread)
-
 PhaseWiki.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
-    self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
     if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
-        self.m_cameraGroup:SetActive(true)
-        self.m_lightGroup:SetActive(true)
+        UISceneManager:Activate(self.m_uiSceneId)
     end
 end
 
@@ -382,30 +377,9 @@ PhaseWiki._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
 end
 
 PhaseWiki._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    local isRecovering = PhaseManager.isRecovering
-    self.m_hideCamCor = self:_StartCoroutine(function()
-        if not isRecovering then
-            
-            coroutine.wait(1)
-        end
-
-        local needCameraPhaseIds = {
-            [PhaseId.FacBuildListSelect] = true,
-            [PhaseId.PRTSStoryCollDetail] = true,
-            [PhaseId.ManualCraftPopups] = true,
-            [PhaseId.FacDecoObtainWays] = true,
-        }
-
-        
-        if args == nil or needCameraPhaseIds[args.anotherPhaseId] == nil then
-            self.m_cameraGroup:SetActive(false)
-            self.m_lightGroup:SetActive(false)
-        end
-    end)
 end
 
 PhaseWiki._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-
 end
 
 
@@ -550,8 +524,19 @@ PhaseWiki.m_currentModelCategory = HL.Field(HL.String) << ''
 
 PhaseWiki._InitSceneRoot = HL.Method() << function(self)
     if self.m_sceneRoot == nil then
-        self.m_sceneRoot = self:CreatePhaseGOItem(SCENE_ITEM_NAME)
-        self.m_sceneRoot.view.transform.position = SCENE_POS
+        self.m_sceneRoot = self:CreateUIScene(SCENE_ITEM_NAME, {
+            position = Vector3(-300, 1000, -900),
+            skipSetActive = true,
+            onDeactivate = function()
+                self.m_cameraGroup:SetActive(false)
+                self.m_lightGroup:SetActive(false)
+            end,
+            onActivate = function()
+                self.m_cameraGroup:SetActive(true)
+                self.m_lightGroup:SetActive(true)
+            end,
+            useUIModelLayer = false,
+        })
         self.m_cameraGroup = self:CreatePhaseGOItem(CAMERA_GROUP_NAME, self.m_sceneRoot.view.sceneCamera)
         self.m_lightGroup = self:CreatePhaseGOItem(LIGHT_GROUP_NAME, self.m_sceneRoot.view.sceneLight)
         if UNITY_EDITOR then
@@ -755,7 +740,7 @@ PhaseWiki._ShowMonsterModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(
     if not modelData or not modelData.path or string.isEmpty(modelData.path) then
         return
     end
-    
+
     local modelPath = modelData.path
     local uimodePath = string.format(WIKI_ENY_UIMODEL_PATH, monsterTemplateId)
     if self.m_resourceLoader:CheckExists(uimodePath) then

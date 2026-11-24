@@ -219,6 +219,8 @@ DomainItemTransferSelectCtrl._OpenDepot = HL.Method(HL.Opt(HL.Any)) << function(
             end
 
             if DeviceInfo.usingController then
+                
+                InputManagerInst:SetBindingText(cell.item.view.button.hoverConfirmBindingId, Language["key_hint_domain_trans_select_item"])
                 cell.item.view.button.onIsNaviTargetChanged = function(isTarget, isGroupChanged, naviTargetEnabledAgain)
                     if isTarget then
                         self:_OnFocusTarget(cell, info, luaIndex)

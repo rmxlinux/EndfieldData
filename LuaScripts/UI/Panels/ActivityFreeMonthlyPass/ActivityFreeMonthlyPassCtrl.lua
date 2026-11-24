@@ -114,6 +114,11 @@ ActivityFreeMonthlyPassCtrl._RefreshUI = HL.Method() << function(self)
             btnStateCtrl:SetState("DisableTodayReceiveState")
         end
     end
+
+    
+    if DeviceInfo.usingController then
+        Notify(MessageConst.REFRESH_CONTROLLER_HINT)
+    end
 end
 
 ActivityFreeMonthlyPassCtrl._OnGetRewardBtnClick = HL.Method() << function(self)

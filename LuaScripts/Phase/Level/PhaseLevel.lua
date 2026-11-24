@@ -719,6 +719,9 @@ PhaseLevel._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) 
         
         
     elseif fastMode or usingBT or PhaseLevel.s_forceTransitionBehindFastMode then
+        if self.m_hidePanelKey ~= -1 then
+            logger.critical("PhaseLevel:ClearScreen失败，上一个ClearScreen还未恢复，可能导致MainHud无法恢复", self.m_hidePanelKey)
+        end
         self.m_hidePanelKey = UIManager:ClearScreen(self.m_transitionReservePanelIds)
     else
         self.m_inTransition = true
@@ -844,6 +847,7 @@ PhaseLevel.OnEnterTowerDefenseDefendingPhase = HL.Method(HL.Opt(HL.Boolean)) << 
     self.m_defenseInGameClearScreenKey = UIManager:ClearScreen(lume.concat(defenseExpectedPanels, Const.BATTLE_MODE_ONLY_PANELS))
     Notify(MessageConst.TOGGLE_HIDE_INTERACT_OPTION_LIST, { "TowerDefense", true })
     GameInstance.player.towerDefenseSystem.systemInDefense = true
+    LuaSystemManager.mainHudActionQueue:AddBlocker("SettlementDefense")
 
     local isOpen, taskTrackHudCtrl = UIManager:IsOpen(PanelId.CommonTaskTrackHud)
     if isOpen and not isRestore then
@@ -861,6 +865,8 @@ PhaseLevel.OnTowerDefenseDefendingTransitFinished = HL.Method() << function(self
 end
 
 PhaseLevel.OnLeaveTowerDefenseDefendingPhase = HL.Method() << function(self)
+    
+    LuaSystemManager.mainHudActionQueue:Interrupt()
     GameInstance.player.towerDefenseSystem.hudState = CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.WaitingFinished
     local waitCloseItemList = {
         self.m_defenseInGamePanelItem,
@@ -1438,12 +1444,12 @@ PhaseLevel.PerformLoginCheck = HL.Method() << function(self)
     if not PhaseLevel.s_LoginCheckFinishedInfo then
         logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "Init PhaseLevel.s_LoginCheckFinishedInfo")
         PhaseLevel.s_LoginCheckFinishedInfo = {}
-        LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_CashShopOrderSettle, true)
-        LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_MonthlypassPopup, true)
-        LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_StartGuide, true)
-        LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_ForceSNS, true)
-        LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_ImportantActivity_WaitCinematic, true)
-        LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_ImportantActivity_Top, true)
+        LuaSystemManager.mainHudActionQueue:SetAllowStartOutsideMainHud(Name_LoginCheck_CashShopOrderSettle, true)
+        LuaSystemManager.mainHudActionQueue:SetAllowStartOutsideMainHud(Name_LoginCheck_MonthlypassPopup, true)
+        LuaSystemManager.mainHudActionQueue:SetAllowStartOutsideMainHud(Name_LoginCheck_StartGuide, true)
+        LuaSystemManager.mainHudActionQueue:SetAllowStartOutsideMainHud(Name_LoginCheck_ForceSNS, true)
+        LuaSystemManager.mainHudActionQueue:SetAllowStartOutsideMainHud(Name_LoginCheck_ImportantActivity_WaitCinematic, true)
+        LuaSystemManager.mainHudActionQueue:SetAllowStartOutsideMainHud(Name_LoginCheck_ImportantActivity_Top, true)
         
         
     end

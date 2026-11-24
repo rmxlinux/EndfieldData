@@ -13,7 +13,7 @@ MapMarkDetailInnRanchCtrl = HL.Class('MapMarkDetailInnRanchCtrl', uiCtrl.UICtrl)
 
 MapMarkDetailInnRanchCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_RANCH_PRODUCT_UPDATED] = "_OnRanchProductUpdated",
-    [MessageConst.ON_RANCH_HARVEST_SUCC] = "_OnHarvestSuccess",
+    [MessageConst.ON_ITEM_COUNT_CHANGED_FOR_TOAST] = "_OnHarvestSuccess",
 }
 
 MapMarkDetailInnRanchCtrl.m_markInstId = HL.Field(HL.String) << ""
@@ -23,6 +23,7 @@ MapMarkDetailInnRanchCtrl.m_rewardItems = HL.Field(HL.Table)
 MapMarkDetailInnRanchCtrl.m_rewardCells = HL.Field(HL.Forward("UIListCache"))
 MapMarkDetailInnRanchCtrl.m_rewardNaviGroup = HL.Field(CS.Beyond.UI.UISelectableNaviGroup)
 MapMarkDetailInnRanchCtrl.m_onBeforeItemJump = HL.Field(HL.Function)
+MapMarkDetailInnRanchCtrl.m_waitingHarvestItemToast = HL.Field(HL.Boolean) << false
 
 
 MapMarkDetailInnRanchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -37,6 +38,7 @@ MapMarkDetailInnRanchCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_ranchId = markRuntimeData.detail.ranchId
     self.m_domainName = Tables.domainDataTable:GetValue(Tables.innManagementConst.domainId).domainName
     self.m_rewardItems = {}
+    self.m_waitingHarvestItemToast = false
 end
 
 MapMarkDetailInnRanchCtrl._InitUI = HL.Method() << function(self)
@@ -166,6 +168,7 @@ MapMarkDetailInnRanchCtrl._OnStoreBtnClick = HL.Method() << function(self)
         Notify(MessageConst.SHOW_TOAST, Language.LUA_RANCH_HARVEST_EMPTY_TOAST)
         return
     end
+    self.m_waitingHarvestItemToast = true
     ranchSystem:SendRanchProductTake(self.m_ranchId)
 end
 
@@ -184,7 +187,26 @@ MapMarkDetailInnRanchCtrl._Teleport = HL.Method() << function(self)
 end
 
 MapMarkDetailInnRanchCtrl._OnHarvestSuccess = HL.Method(HL.Any) << function(self, arg)
-    local _, items = unpack(arg)
+    if not self.m_waitingHarvestItemToast then
+        return
+    end
+    local itemId2DiffCount = unpack(arg)
+    if not itemId2DiffCount then
+        return
+    end
+    local items = {}
+    for itemId, diffCount in pairs(itemId2DiffCount) do
+        if diffCount > 0 then
+            table.insert(items, {
+                id = itemId,
+                count = diffCount,
+            })
+        end
+    end
+    if #items == 0 then
+        return
+    end
+    self.m_waitingHarvestItemToast = false
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
         items = items,
     })

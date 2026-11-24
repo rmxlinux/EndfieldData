@@ -72,6 +72,9 @@ FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
         Notify(MessageConst.FAC_EXIT_DESTROY_MODE, true)
         self:ToggleTopView(false, true)
     end)
+    self:RegisterMessage(MessageConst.ON_CURRENT_CHAPTER_CHANGED, function()
+        self:_ClearHeldNodeStateOnChapterChange()
+    end)
 
     self:_InitFactoryMode()
     self:_InitFacBackupViewedState()
@@ -87,42 +90,6 @@ FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
 end
 
 FacLuaSystem.OnInit = HL.Override() << function(self)
-    xlua.private_accessible(CS.Beyond.Gameplay.FarmTerminalSystem)
-    self:RegisterMessage(MessageConst.ON_FARM_TERMINAL_DATA_CHANGED, function(arg)
-        local id = unpack(arg)
-        if string.isEmpty(id) then
-            self:_SyncTeammateAutoSoilData()
-        end
-    end)
-    self:_SyncTeammateAutoSoilData()
-end
-
-FacLuaSystem._SyncTeammateAutoSoilData = HL.Method() << function(self)
-    local dataMap = GameInstance.player.farmTerminalSystem.m_autoSoilDataMap
-    local found, sourceData = dataMap:TryGetValue(Tables.factorySoilConst.SoilMgrDomainId)
-    if not found then
-        
-        return
-    end
-
-    
-    local openAutoSoil = sourceData.openAutoSoil
-    local onlySameSoil = sourceData.onlySameSoil
-    local changed = false
-    local enumerator = dataMap:GetEnumerator()
-    while enumerator:MoveNext() do
-        local data = enumerator.Current.Value
-        if data.openAutoSoil ~= openAutoSoil or data.onlySameSoil ~= onlySameSoil then
-            data.openAutoSoil = openAutoSoil
-            data.onlySameSoil = onlySameSoil
-            changed = true
-        end
-    end
-    enumerator:Dispose()
-
-    if changed then
-        Notify(MessageConst.ON_FAC_FERTILIZATION_MODE_SETTING_CHANGED)
-    end
 end
 
 FacLuaSystem.OnRelease = HL.Override() << function(self)
@@ -358,16 +325,25 @@ end
 
 FacLuaSystem.m_autoMoveTopViewCamRelatedSize = HL.Field(HL.Any)
 
+FacLuaSystem.m_autoMoveTopViewCamCenterOffset = HL.Field(Vector2)
+
 FacLuaSystem.m_autoMoveTopViewCamPadding = HL.Field(HL.Any)
 
 FacLuaSystem.m_stopAutoMoveTopViewCamOnce = HL.Field(HL.Boolean) << false
 
 FacLuaSystem.m_autoMoveTopViewCamUpdateKey = HL.Field(HL.Any)
 
-FacLuaSystem.ToggleAutoMoveTopViewCam = HL.Method(HL.Opt(Vector2, Vector4)) << function(self, size, extraPadding)
+
+FacLuaSystem.ToggleAutoMoveTopViewCam = HL.Method(HL.Opt(Vector2, Vector4, Vector2, HL.Any)) << function(self, size, extraPadding, centerOffset, customPadding)
     self.m_autoMoveTopViewCamRelatedSize = size
+    self.m_autoMoveTopViewCamCenterOffset = centerOffset or Vector2.zero
     if size then
-        local padding = CSFactoryUtil.Padding(150, 200, 200, 150) 
+        local padding
+        if customPadding then
+            padding = CSFactoryUtil.Padding(customPadding.top, customPadding.left, customPadding.right, customPadding.bottom)
+        else
+            padding = CSFactoryUtil.Padding(150, 200, 200, 150) 
+        end
         if extraPadding then
             padding.top = padding.top + extraPadding.x
             padding.left = padding.left + extraPadding.y
@@ -399,30 +375,111 @@ FacLuaSystem._CalcAutoMoveTopViewCam = HL.Method() << function(self)
     local mousePos = InputManager.mousePosition
     local cam = CameraManager.mainCamera
     local target = self.topViewCamTarget
-    local posFromMouse = cam:ScreenToWorldPoint(Vector3(mousePos.x, mousePos.y, cam.transform.position.y - target.position.y))
-    local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect(self.m_autoMoveTopViewCamPadding)
+    local depth = cam.transform.position.y - target.position.y
+    local posFromMouse = cam:ScreenToWorldPoint(Vector3(mousePos.x, mousePos.y, depth))
+    local centerOffset = self.m_autoMoveTopViewCamCenterOffset or Vector2.zero
     local size = self.m_autoMoveTopViewCamRelatedSize
-    local center = curScreenWorldRect.center
-    curScreenWorldRect.width = math.max(curScreenWorldRect.width - size.x, 0)
-    curScreenWorldRect.height = math.max(curScreenWorldRect.height - size.y, 0)
-    curScreenWorldRect.center = center
-    if not curScreenWorldRect:Contains(posFromMouse:XZ()) then
-        local rectForTarget = Unity.Rect(posFromMouse.x - curScreenWorldRect.width / 2, posFromMouse.z - curScreenWorldRect.height / 2, curScreenWorldRect.width, curScreenWorldRect.height)
-        local targetNewPos = target.position
-        targetNewPos.x = lume.clamp(targetNewPos.x, rectForTarget.xMin, rectForTarget.xMax)
-        targetNewPos.z = lume.clamp(targetNewPos.z, rectForTarget.yMin, rectForTarget.yMax)
-        local diff = targetNewPos - target.position
-        if diff == Vector3.zero then
-            return
+    local targetNewPos = target.position
+    local hasDiff = false
+
+    if centerOffset.x ~= 0 or centerOffset.y ~= 0 then
+        
+        
+        
+        local formCenter = posFromMouse + Vector3(centerOffset.x, 0, centerOffset.y)
+        local halfW = size.x * 0.5
+        local halfH = size.y * 0.5
+        local minSX, maxSX, minSY, maxSY = math.huge, -math.huge, math.huge, -math.huge
+        local corners = {
+            Vector3(formCenter.x - halfW, formCenter.y, formCenter.z - halfH),
+            Vector3(formCenter.x - halfW, formCenter.y, formCenter.z + halfH),
+            Vector3(formCenter.x + halfW, formCenter.y, formCenter.z - halfH),
+            Vector3(formCenter.x + halfW, formCenter.y, formCenter.z + halfH),
+        }
+        for i = 1, 4 do
+            local sp = cam:WorldToScreenPoint(corners[i])
+            minSX = math.min(minSX, sp.x)
+            maxSX = math.max(maxSX, sp.x)
+            minSY = math.min(minSY, sp.y)
+            maxSY = math.max(maxSY, sp.y)
         end
-        local maxDist = Time.deltaTime * FacConst.FAC_TOP_VIEW_AUTO_MOVE_CAM_SPD 
-        local curDist = diff.magnitude
-        if curDist > maxDist then
-            targetNewPos = target.position + diff / curDist * maxDist
+
+        local pad = self.m_autoMoveTopViewCamPadding
+        local csUIConst = CS.Beyond.UI.UIConst
+        local paddingRatio
+        if Screen.width / Screen.height > csUIConst.STANDARD_RATIO then
+            paddingRatio = Screen.height / csUIConst.STANDARD_VERTICAL_RESOLUTION
+        else
+            paddingRatio = Screen.width / csUIConst.STANDARD_HORIZONTAL_RESOLUTION
         end
-        target.position = FactoryUtils.clampTopViewCamTargetPosition(targetNewPos, target.position)
-        Notify(MessageConst.ON_FAC_TOP_VIEW_CAM_TARGET_MOVED)
+        local padLeft = pad.left * paddingRatio
+        local padRight = pad.right * paddingRatio
+        local padBottom = pad.bottom * paddingRatio
+        local padTop = pad.top * paddingRatio
+
+        local overflowLeft = padLeft - minSX
+        local overflowRight = maxSX - (Screen.width - padRight)
+        local overflowBottom = padBottom - minSY
+        local overflowTop = maxSY - (Screen.height - padTop)
+
+        local function screenDeltaToWorld(dx, dy)
+            local a = cam:ScreenToWorldPoint(Vector3(Screen.width * 0.5, Screen.height * 0.5, depth))
+            local b = cam:ScreenToWorldPoint(Vector3(Screen.width * 0.5 + dx, Screen.height * 0.5 + dy, depth))
+            return b - a
+        end
+
+        
+        local move = Vector3.zero
+        local dx = 0
+        if overflowLeft > 0 or overflowRight > 0 then
+            if overflowLeft > overflowRight then
+                dx = -overflowLeft
+            elseif overflowRight > overflowLeft then
+                dx = overflowRight
+            end
+        end
+        local dy = 0
+        if overflowBottom > 0 or overflowTop > 0 then
+            if overflowBottom > overflowTop then
+                dy = -overflowBottom
+            elseif overflowTop > overflowBottom then
+                dy = overflowTop
+            end
+        end
+        if dx ~= 0 or dy ~= 0 then
+            move = screenDeltaToWorld(dx, dy)
+            hasDiff = true
+        end
+        targetNewPos = targetNewPos + move
+    else
+        
+        local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect(self.m_autoMoveTopViewCamPadding)
+        local center = curScreenWorldRect.center
+        curScreenWorldRect.width = math.max(curScreenWorldRect.width - size.x, 0)
+        curScreenWorldRect.height = math.max(curScreenWorldRect.height - size.y, 0)
+        curScreenWorldRect.center = center
+        if not curScreenWorldRect:Contains(posFromMouse:XZ()) then
+            local rectForTarget = Unity.Rect(posFromMouse.x - curScreenWorldRect.width / 2, posFromMouse.z - curScreenWorldRect.height / 2, curScreenWorldRect.width, curScreenWorldRect.height)
+            targetNewPos.x = lume.clamp(targetNewPos.x, rectForTarget.xMin, rectForTarget.xMax)
+            targetNewPos.z = lume.clamp(targetNewPos.z, rectForTarget.yMin, rectForTarget.yMax)
+            hasDiff = true
+        end
     end
+
+    if not hasDiff then
+        return
+    end
+    local diff = targetNewPos - target.position
+    if diff == Vector3.zero then
+        return
+    end
+    local maxDist = Time.deltaTime * FacConst.FAC_TOP_VIEW_AUTO_MOVE_CAM_SPD 
+    local curDist = diff.magnitude
+    if curDist > maxDist then
+        targetNewPos = target.position + diff / curDist * maxDist
+    end
+    target.position = FactoryUtils.clampTopViewCamTargetPosition(targetNewPos, target.position)
+    Notify(MessageConst.ON_FAC_TOP_VIEW_CAM_TARGET_MOVED)
 end
 
 FacLuaSystem.RotateTopViewCam = HL.Method() << function(self)
@@ -795,6 +852,21 @@ FacLuaSystem._ApplyPipeHighlight = HL.Method() << function(self)
     end
 
     self.m_activePipeHighlights = wanted
+end
+
+FacLuaSystem._ClearHeldNodeStateOnChapterChange = HL.Method() << function(self)
+    self.m_pipeHighlightRequests = {}
+    self.m_activePipeHighlights = {}
+    self.batchSelectTargets = {}
+    GameInstance.remoteFactoryManager.batchSelect:ClearTargets()
+    local interact = LuaSystemManager.factoryInteract
+    if not interact then
+        return
+    end
+    local presenter = interact:GetPresenter()
+    if presenter then
+        presenter:_ClearHeldNodeStateOnChapterChange()
+    end
 end
 
 

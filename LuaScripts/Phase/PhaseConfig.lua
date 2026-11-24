@@ -268,6 +268,7 @@ config = {
 
         panels = {},
         systemId = "system_inventory",
+        sceneVisible = true,
         checkCanOpen = function(arg)
             if Utils.isInFight() then
                 return false, Language.LUA_CANT_OPEN_INVENTORY_IN_FIGHT
@@ -281,6 +282,24 @@ config = {
             end
             return true
         end
+    },
+    
+    InventoryMushroom = {
+
+        panels = {
+            PanelId.InventoryMushroom,
+        },
+        isSimpleUIPhase = true,
+        sceneVisible = true,
+    },
+    
+    SweetPieManual = {
+
+        panels = {
+            PanelId.SweetPieManual,
+        },
+        isSimpleUIPhase = true,
+        sceneVisible = true,
     },
     
     ChangePortableDevice = {
@@ -324,11 +343,14 @@ config = {
                 return false
             end
 
-            if string.isEmpty(arg.domainId) then
+            local domainId = arg.domainId
+            if string.isEmpty(domainId) then
+                domainId = ScopeUtil.GetCurrentChapterIdAsStr()
+            end
+            if string.isEmpty(domainId) then
                 return arg.friendRoleId ~= nil
             end
             
-            local domainId = arg.domainId
             return DomainPOIUtils.checkCanOpenDomainShop(domainId), Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST
         end,
         isSimpleUIPhase = false,
@@ -1323,6 +1345,16 @@ config = {
         unlockSystemType = GEnums.UnlockSystemType.KiteStation,
     },
     
+    WonderBuild = {
+
+        panels = {
+            PanelId.WonderBuild,
+        },
+        isSimpleUIPhase = false,
+        haveSceneCamera = true,
+    },
+    
+    
     WorldLevelPopup = {
 
         panels = {
@@ -2120,6 +2152,133 @@ config = {
         unlockSystemType = GEnums.UnlockSystemType.EquipPresetGroup,
         panels = {
            PanelId.EquipPresetGroup,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    CommonSelectChar = {
+
+        panels = {}, 
+        fov = 15.3818,
+        isSimpleUIPhase = false,
+        disableEffectLodControl = true,
+        haveSceneCamera = true,
+    },
+    
+    
+
+    
+    
+    CardGameBlackjackHud = {
+
+        panels = {
+           PanelId.CardGameBlackjackHud,
+        },
+        isSimpleUIPhase = false,
+        haveSceneCamera = true,
+    },
+    
+    CardGameDoudizhuHud = {
+
+        panels = {
+            PanelId.CardGameLandlordHud,
+        },
+        isSimpleUIPhase = false,
+        haveSceneCamera = true,
+    },
+    
+    CardGameLandlordPlayerGameInfo = {
+
+        panels = {
+           PanelId.CardGameLandlordPlayerGameInfo,
+        },
+        isSimpleUIPhase = true,
+        sceneVisible = true,
+    },
+    
+    
+    CardGameBlackjackShopMain = {
+
+        
+        panels = {
+            PanelId.CardGameBlackjackShopSelect,
+            PanelId.CardGameBlackjackShopMain,
+        },
+        isSimpleUIPhase = false,
+        sceneVisible = true,
+    },
+    
+    
+    CardGameBlackjackPlayerGameInfo = {
+
+        panels = {
+           PanelId.CardGameBlackjackPlayerGameInfo,
+        },
+        isSimpleUIPhase = true,
+        sceneVisible = true,
+    },
+    
+    
+    CardGameBlackjackFinalSettle = {
+
+        panels = {
+           PanelId.CardGameBlackjackFinalSettle,
+        },
+        isSimpleUIPhase = true,
+        sceneVisible = true,
+    },
+    
+    
+    CardGameBlackjackFinalSettleRank = {
+
+        panels = {
+           PanelId.CardGameBlackjackFinalSettleRank,
+        },
+        isSimpleUIPhase = true,
+        sceneVisible = true,
+    },
+    
+    
+
+    
+    
+    MultiplayerMatch = {
+        checkCanOpen = function(arg)
+            return MultiplayerUtils.hasOpenGame(), Language.LUA_FEATURE_NOT_AVAILABLE
+        end,
+
+        panels = {
+           PanelId.MultiplayerMatch,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    MultiplayerMain = {
+        checkCanOpen = function(arg)
+            
+            if arg and arg.fromDialog then
+                return true
+            end
+            return MultiplayerUtils.hasOpenGame(), Language.LUA_FEATURE_NOT_AVAILABLE
+        end,
+
+        fov = 15.3818,
+        panels = {
+           PanelId.MultiplayerMain,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    MultiplayerRoom = {
+        checkCanOpen = function(arg)
+            return MultiplayerUtils.hasOpenGame(), Language.LUA_FEATURE_NOT_AVAILABLE
+        end,
+
+        panels = {
+           PanelId.MultiplayerRoom,
         },
         isSimpleUIPhase = true,
     },

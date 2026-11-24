@@ -23,6 +23,10 @@ SNSFriendDialogContentCell.m_widgetSocialBuildingLeft = HL.Field(HL.Any)
 
 SNSFriendDialogContentCell.m_widgetSocialBuildingRight = HL.Field(HL.Any)
 
+SNSFriendDialogContentCell.m_widgetRoomInvitationLeft = HL.Field(HL.Any)
+
+SNSFriendDialogContentCell.m_widgetRoomInvitationRight = HL.Field(HL.Any)
+
 SNSFriendDialogContentCell.m_showLeft = HL.Field(HL.Boolean) << false
 
 SNSFriendDialogContentCell.m_message = HL.Field(HL.Any)
@@ -123,6 +127,14 @@ SNSFriendDialogContentCell.InitSNSFriendDialogContentCell = HL.Method(HL.Number,
             self.m_curActiveGo = self.m_widgetSocialBuildingRight.gameObject
             self.m_curActiveWeight = self.m_widgetSocialBuildingRight
             self.m_inAnimationType = "sns_friendsociabuilding_leftin"
+        elseif message.type == ChatType.RoomInvitation then
+            if not self.m_widgetRoomInvitationRight then
+                self.m_widgetRoomInvitationRight = self:_CreateWidget("SNSFriendChatRoomInvitation", self.view.rightContent)
+            end
+            self.m_widgetRoomInvitationRight:InitSNSFriendChatRoomInvitation(message)
+            self.m_curActiveGo = self.m_widgetRoomInvitationRight.gameObject
+            self.m_curActiveWeight = self.m_widgetRoomInvitationRight
+            self.m_inAnimationType = "normal"
         end
     else
         self.m_showLeft = true
@@ -185,6 +197,14 @@ SNSFriendDialogContentCell.InitSNSFriendDialogContentCell = HL.Method(HL.Number,
             self.m_curActiveGo = self.m_widgetSocialBuildingLeft.gameObject
             self.m_curActiveWeight = self.m_widgetSocialBuildingLeft
             self.m_inAnimationType = "sns_friendsociabuilding_in"
+        elseif message.type == ChatType.RoomInvitation then
+            if not self.m_widgetRoomInvitationLeft then
+                self.m_widgetRoomInvitationLeft = self:_CreateWidget("SNSFriendChatRoomInvitation", self.view.leftContent)
+            end
+            self.m_widgetRoomInvitationLeft:InitSNSFriendChatRoomInvitation(message)
+            self.m_curActiveGo = self.m_widgetRoomInvitationLeft.gameObject
+            self.m_curActiveWeight = self.m_widgetRoomInvitationLeft
+            self.m_inAnimationType = "normal"
         end
     end
 
@@ -203,8 +223,18 @@ SNSFriendDialogContentCell.UpdateInfoFromServer = HL.Method(HL.Any)<< function(s
     end
 
     local msg = self.m_message
-    if msg.type == ChatType.Blueprint or msg.type == ChatType.SocialBuilding then
-        GameInstance.player.friendChatSystem:QueryAdd(showRoleId, msg.msgIndex, msg.type, msg.bpSharedCode, msg.sbCreatorId)
+    if msg.type == ChatType.RoomInvitation then
+        local state = msg.roomState
+        if not msg.isMatchRoom or msg.roomStateQueried
+            and (state == CS.Proto.MULTIPLAYER_MATCH_ROOM_STATE.Invalid
+                or state == CS.Proto.MULTIPLAYER_MATCH_ROOM_STATE.Closed) then
+            return
+        end
+    end
+    if msg.type == ChatType.Blueprint or msg.type == ChatType.SocialBuilding
+        or msg.type == ChatType.RoomInvitation then
+        local sharedCode = msg.type == ChatType.RoomInvitation and msg.roomStrId or msg.bpSharedCode
+        GameInstance.player.friendChatSystem:QueryAdd(showRoleId, msg.msgIndex, msg.type, sharedCode, msg.sbCreatorId)
     end
 end
 
@@ -216,6 +246,8 @@ SNSFriendDialogContentCell.CheckCanJumpIn = HL.Method().Return(HL.Boolean)<< fun
     if self.m_message.type == ChatType.Blueprint then
         return self.m_curActiveWeight:CheckCanJumpIn()
     elseif self.m_message.type == ChatType.SocialBuilding then
+        return self.m_curActiveWeight:CheckCanJumpIn()
+    elseif self.m_message.type == ChatType.RoomInvitation then
         return self.m_curActiveWeight:CheckCanJumpIn()
     end
     return false
@@ -250,6 +282,8 @@ SNSFriendDialogContentCell.UpdateDataShowInfo = HL.Method()<< function(self)
         self.m_curActiveWeight:UpdateBluePrintShow(self.m_message)
     elseif self.m_message.type == ChatType.SocialBuilding then
         self.m_curActiveWeight:UpdateSocialBuildingShow(self.m_message)
+    elseif self.m_message.type == ChatType.RoomInvitation then
+        self.m_curActiveWeight:UpdateRoomInvitationShow(self.m_message)
     end
 end
 
@@ -264,6 +298,8 @@ SNSFriendDialogContentCell._CloseAllChildWidget = HL.Method()<< function(self)
     self:_CloseOneChildWidget(self.m_widgetBlueprintRight, false)
     self:_CloseOneChildWidget(self.m_widgetSocialBuildingLeft, false)
     self:_CloseOneChildWidget(self.m_widgetSocialBuildingRight, false)
+    self:_CloseOneChildWidget(self.m_widgetRoomInvitationLeft, false)
+    self:_CloseOneChildWidget(self.m_widgetRoomInvitationRight, false)
 end
 
 

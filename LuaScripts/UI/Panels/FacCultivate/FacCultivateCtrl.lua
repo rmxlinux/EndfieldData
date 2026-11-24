@@ -247,25 +247,54 @@ FacCultivateCtrl._BindUI = HL.Method() << function(self)
         end)
         self.m_naviToItemBindingId = UIUtils.bindInputPlayerAction("fac_cultivate_item", function()
             self:SetNaviTarget(self.view.item.view.button)
-            InputManagerInst:ToggleBinding(self.m_naviToItemBindingId, false)
-            InputManagerInst:ToggleBinding(self.m_cancelNaviItemBindingId, true)
-            InputManagerInst:ToggleGroup(self.view.buttonNodeGroup.groupId, false)
         end, self.view.inputGroup.groupId)
         self.m_cancelNaviItemBindingId = UIUtils.bindInputPlayerAction("common_cancel", function()
-            self:ClearNaviTarget()
-            InputManagerInst:ToggleBinding(self.m_naviToItemBindingId, true)
-            InputManagerInst:ToggleBinding(self.m_cancelNaviItemBindingId, false)
-            InputManagerInst:ToggleGroup(self.view.buttonNodeGroup.groupId, true)
+            self:_ExitItemNaviFocus()
         end, self.view.inputGroup.groupId)
-        InputManagerInst:ToggleBinding(self.m_naviToItemBindingId, true)
-        InputManagerInst:ToggleBinding(self.m_cancelNaviItemBindingId, false)
-        InputManagerInst:ToggleGroup(self.view.buttonNodeGroup.groupId, true)
+        self.view.itemPlantNode.onIsTopLayerChanged:AddListener(function()
+            self:_RefreshItemNaviFocusInput()
+        end)
+        self.view.buildingCommon.view.buttonsNaviGroup.onIsTopLayerChanged:AddListener(function()
+            self:_RefreshItemNaviFocusInput()
+        end)
+        self:_RefreshItemNaviFocusInput()
     end
 
     
     self.view.facProgressNode:InitFacProgressNode(1, 1)
 
     self.m_mutateLabelCellCache = UIUtils.genCellCache(self.view.soilNode.tybeState)
+end
+
+FacCultivateCtrl._IsItemNaviFocused = HL.Method().Return(HL.Boolean) << function(self)
+    return self.view.itemPlantNode.IsTopLayer or self.view.buildingCommon.view.buttonsNaviGroup.IsTopLayer
+end
+
+FacCultivateCtrl._RefreshItemNaviFocusInput = HL.Method() << function(self)
+    if self.m_naviToItemBindingId <= 0 then
+        return
+    end
+    local focused = self:_IsItemNaviFocused()
+    InputManagerInst:ToggleBinding(self.m_naviToItemBindingId, not focused)
+    InputManagerInst:ToggleBinding(self.m_cancelNaviItemBindingId, focused)
+    local group = self.view.buttonNodeGroup
+    group.enabled = not focused
+    group:UpdateState()
+end
+
+FacCultivateCtrl._ExitItemNaviFocus = HL.Method() << function(self)
+    local naviMgr = InputManagerInst.controllerNaviManager
+    local itemGroup = self.view.itemPlantNode
+    local buttonsGroup = self.view.buildingCommon.view.buttonsNaviGroup
+    for _ = 1, 2 do
+        if buttonsGroup.IsTopLayer then
+            naviMgr:TryRemoveLayer(buttonsGroup)
+        elseif itemGroup.IsTopLayer then
+            naviMgr:TryRemoveLayer(itemGroup)
+        else
+            break
+        end
+    end
 end
 
 

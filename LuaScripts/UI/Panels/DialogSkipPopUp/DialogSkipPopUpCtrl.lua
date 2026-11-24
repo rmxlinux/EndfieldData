@@ -60,12 +60,14 @@ DialogSkipPopUpCtrl.RefreshSummary = HL.Method(HL.Any) << function(self, summary
     end
 end
 
-DialogSkipPopUpCtrl.SetCloseRecoverAuto = HL.Method() << function(self)
-    self.m_needRecoverAuto = true
+
+DialogSkipPopUpCtrl.SetCloseRecoverAuto = HL.Method(HL.Boolean) << function(self, needRecover)
+    self.m_needRecoverAuto = needRecover
 end
 
 DialogSkipPopUpCtrl._TryRecoverAutoMode = HL.Method() << function(self)
     if self.m_needRecoverAuto then
+        self.m_needRecoverAuto = false
         GameWorld.dialogManager:SetAutoMode(true)
         GameWorld.dialogTimelineManager:SetAutoMode(true)
     end

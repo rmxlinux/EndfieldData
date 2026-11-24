@@ -54,7 +54,17 @@ RichContent.SetContent = HL.Method(HL.Any) << function(self, args)
             contentCell.img.gameObject:SetActive(true)
             local path = RichContent._TrimWithZWSP(v.path)
             path = Utils.getImgGenderDiffPath(path)
-            contentCell.img:LoadSprite(path)
+
+            if v:IsSequence() then
+                
+                contentCell.img:ReleaseSprite()
+                contentCell.seqImg:LoadSequence(path, v.frameCount, v.frameRate)
+            else
+                
+                contentCell.seqImg:ReleaseSequence()
+                contentCell.img:LoadSprite(path)
+            end
+
             local layoutElement = contentCell.img.gameObject:GetComponent(typeof(Unity.UI.LayoutElement))
             
             local contentLayout = self.view.content.gameObject:GetComponent(typeof(Unity.UI.VerticalLayoutGroup))

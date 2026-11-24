@@ -273,7 +273,7 @@ end
 
 AdventureLevelUpCtrl._ClearCache = HL.Method() << function(self)
     if self.m_aniPlayInfo and self.m_aniPlayInfo.updateKey > 0 then
-        LuaUpdate:Remove(self.m_aniPlayInfo.updateKey)
+        self.m_aniPlayInfo.updateKey = self:_RemoveUpdate(self.m_aniPlayInfo.updateKey)
     end
     
     self:_ClearOrRecoverScreen(false)
@@ -367,7 +367,7 @@ AdventureLevelUpCtrl._StartPlayLevelUpAni = HL.Method() << function(self)
             upgradeView.aniWrapper:PlayWithTween("adventurelevelup_diffexptext_out")
         end
         if self.m_aniPlayInfo then
-            self.m_aniPlayInfo.updateKey = LuaUpdate:Add("Tick", function(deltaTime)
+            self.m_aniPlayInfo.updateKey = self:_StartUpdate(function(deltaTime)
                 self:_OnUpdateLevelUpProgressAni(deltaTime)
             end)
         end
@@ -398,8 +398,7 @@ AdventureLevelUpCtrl._OnEndLevelUpProgressAni = HL.Method() << function(self)
     local aniWrapper = self.animationWrapper
     local targetExp = self.m_aniPlayInfo.basicInfo.targetExp
     self:_UpdateUIProgress(self.view.upgradeToast.progressNode, targetExp, targetExp, self.m_aniPlayInfo.basicInfo.maxExp)
-    LuaUpdate:Remove(self.m_aniPlayInfo.updateKey)
-    self.m_aniPlayInfo.updateKey = -1
+    self.m_aniPlayInfo.updateKey = self:_RemoveUpdate(self.m_aniPlayInfo.updateKey)
     logger.info("LevelUp Start Play Levelup")
     AudioManager.PostEvent("Au_UI_Event_AdventureLevelUp")
     aniWrapper:PlayWithTween("adventurelevelup_upgradetoast_levelup", function()
@@ -457,7 +456,7 @@ AdventureLevelUpCtrl._StartPlayNotLevelUpAni = HL.Method() << function(self)
             rewardToast.aniWrapper:PlayWithTween("adventurelevelup_exptoast_diffexptext_out")
         end
         if self.m_aniPlayInfo then
-            self.m_aniPlayInfo.updateKey = LuaUpdate:Add("Tick", function(deltaTime)
+            self.m_aniPlayInfo.updateKey = self:_StartUpdate(function(deltaTime)
                 self:_OnUpdateNotLevelUpProgressAni(deltaTime)
             end)
         end
@@ -490,8 +489,7 @@ AdventureLevelUpCtrl._OnEndNotLevelUpProgressAni = HL.Method() << function(self)
     local targetExp = lvUpInfo.targetExp
     self:_UpdateUIProgress(self.view.rewardToast.progressNode, targetExp, targetExp, lvUpInfo.maxExp)
     self.view.rewardToast.maxLevelText.gameObject:SetActiveIfNecessary(lvUpInfo.isMaxLevel)
-    LuaUpdate:Remove(self.m_aniPlayInfo.updateKey)
-    self.m_aniPlayInfo.updateKey = -1
+    self.m_aniPlayInfo.updateKey = self:_RemoveUpdate(self.m_aniPlayInfo.updateKey)
     aniWrapper:PlayWithTween("adventurelevelup_exptoast_out", function()
         self:_TryPlayUpgrade()
     end)

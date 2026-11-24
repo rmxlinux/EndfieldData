@@ -23,6 +23,7 @@ EnemyDamageTakenInfo.InitEnemyDamageTakenInfo = HL.Method(HL.String) << function
     local _, enemyData = Tables.enemyAttributeTemplateTable:TryGetValue(enemyTemplateId)
     if not enemyData then
         self.m_levelCellCache:Refresh(0)
+        return
     end
     self.m_levelCellCache:Refresh(#ELEMENT_RESISTANCE_DATA, function(cell, index)
         local data = ELEMENT_RESISTANCE_DATA[index]
@@ -34,12 +35,15 @@ EnemyDamageTakenInfo.InitEnemyDamageTakenInfo = HL.Method(HL.String) << function
 end
 
 EnemyDamageTakenInfo._GetDamageTakenLevelText = HL.Method(HL.Number).Return(HL.String) << function(self, damageTakenScalar)
-    for _, data in ipairs(Tables.enemyDamageTakenLevelTable) do
+    local levelName = ''
+    for level = 1, #Tables.enemyDamageTakenLevelTable do
+        local data = Tables.enemyDamageTakenLevelTable[level]
+        levelName = data.name 
         if damageTakenScalar <= data.damageTakenScalar then
-            return data.name
+            break
         end
     end
-    return ''
+    return levelName
 end
 
 HL.Commit(EnemyDamageTakenInfo)

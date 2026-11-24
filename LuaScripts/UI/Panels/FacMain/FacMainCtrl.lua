@@ -222,17 +222,17 @@ FacMainCtrl._ShowPinFormulaChangedToast = HL.Method(HL.String, HL.String) << fun
 
     local isCurrEmpty = string.isEmpty(currId)
     local textId = isCurrEmpty and FORMULA_CANCEL_PIN_TOAST_TEXT_ID or FORMULA_PIN_TOAST_TEXT_ID
+    local descId = isCurrEmpty and lastId or currId
     local formulaDesc = ""
-    if isCurrEmpty then
-        local success, formulaTableData = Tables.factoryMachineCraftTable:TryGetValue(lastId)
-        if success then
-            formulaDesc = formulaTableData.formulaDesc
-        end
-    else
-        local success, formulaTableData = Tables.factoryMachineCraftTable:TryGetValue(currId)
-        if success then
-            formulaDesc = formulaTableData.formulaDesc
-        end
+
+    local formationPin = FactoryUtils.parseFormationPinId(descId)
+    if formationPin ~= nil then
+        local itemData = Tables.itemTable:GetValue(formationPin.toItemId)
+        formulaDesc = itemData.name
+    end
+    local success, formulaTableData = Tables.factoryMachineCraftTable:TryGetValue(descId)
+    if success then
+        formulaDesc = formulaTableData.formulaDesc
     end
 
     Notify(MessageConst.SHOW_TOAST, string.format(Language[textId], formulaDesc))
@@ -323,6 +323,11 @@ FacMainCtrl._UpdatePinFormulaData = HL.Method() << function(self)
 end
 
 FacMainCtrl._LoadPinFormulaData = HL.Method(HL.String).Return(HL.Table) << function(self, formulaId)
+    
+    local formationPin = FactoryUtils.parseFormationPinId(formulaId)
+    if formationPin ~= nil then
+        return self:_LoadPinFormationFormulaData(formationPin)
+    end
     if Tables.factoryMachineCraftTable:ContainsKey(formulaId) then
         return FactoryUtils.parseMachineCraftData(formulaId)
     elseif Tables.factoryHubCraftTable:ContainsKey(formulaId) then
@@ -331,6 +336,29 @@ FacMainCtrl._LoadPinFormulaData = HL.Method(HL.String).Return(HL.Table) << funct
         return FactoryUtils.parseManualCraftData(formulaId)
     end
     return nil
+end
+
+FacMainCtrl._LoadPinFormationFormulaData = HL.Method(HL.Table).Return(HL.Table) << function(self, formationPin)
+    
+    local hasTrans, formationTransData = Tables.factoryFormationTransTable:TryGetValue(formationPin.toItemId)
+    if not hasTrans then
+        return nil
+    end
+    local matched
+    for _, transData in pairs(formationTransData.list) do
+        if transData.formationId == formationPin.formationId and transData.level == formationPin.level then
+            matched = transData
+            break
+        end
+    end
+    if matched == nil then
+        return nil
+    end
+    local buildingId = FactoryUtils.findFormationStakeBuilding(matched.formationId)
+    if string.isEmpty(buildingId) then
+        return nil
+    end
+    return FactoryUtils.parseFormationTransCraftData(matched, buildingId)
 end
 
 FacMainCtrl._GetCurPinFormulaData = HL.Method().Return(HL.Table) << function(self)
@@ -378,6 +406,20 @@ FacMainCtrl._RefreshPinFormulaNode = HL.Method() << function(self)
     if formulaData == nil then
         return
     end
+
+    
+    local isFormationPin = not string.isEmpty(formulaData.formationId)
+    if pinFormulaNode.formationLayout ~= nil then
+        pinFormulaNode.formationLayout.gameObject:SetActive(isFormationPin)
+    end
+    if isFormationPin then
+        if pinFormulaNode.formatioLvNumTxt ~= nil then
+            pinFormulaNode.formatioLvNumTxt.text = string.format(Language.LUA_FAC_FORMATION_LEVEL_FORMAT,
+                formulaData.formationLevel)
+        end
+        pinFormulaNode.formationIcon:LoadSprite(UIConst.UI_SPRITE_FAC_ENVIRONMENT_ICON, formulaData.titleIcon)
+    end
+
     if pinFormulaNode.earlyAccessNode ~= nil then
         local isEarlyAccessBuilding = not string.isEmpty(formulaData.buildingId) and
             FactoryUtils.isSkipUnlockedBuilding(formulaData.buildingId) and
@@ -432,14 +474,26 @@ FacMainCtrl._RefreshPinFormulaNode = HL.Method() << function(self)
         cell.bgImg.gameObject:SetActive(incomeCraft ~= nil)
     end)
 
+    
     local outcomes = formulaData.outcomes
+    if formulaData.byproduct and not string.isEmpty(formulaData.byproduct.id) then
+        outcomes[1].byProductProb = 100 - formulaData.byproduct.prob
+        outcomes[2] = { id = formulaData.byproduct.id, count = formulaData.byproduct.count, byProductProb = formulaData.byproduct.prob }
+        pinFormulaNode.byproductSep.gameObject:SetActive(true)
+    else
+        pinFormulaNode.byproductSep.gameObject:SetActive(false)
+    end
     self.m_pinFormulaOutCells:Refresh(#outcomes, function(cell, index)
         cell.gameObject.name = "outcome" .. index
         cell.outcomeItem:SetEnableHoverTips(not DeviceInfo.usingController)
-        cell.outcomeItem:InitItem(outcomes[index], function(itemBundle)
+        local outcomeBundle = outcomes[index]
+        cell.outcomeItem:InitItem(outcomeBundle, function(itemBundle)
             self:_OnPinItemClick(cell.outcomeItem, itemBundle, false)
         end)
         cell.outcomeItem:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
+        if index == 1 then
+            cell.transform:SetAsFirstSibling()
+        end
     end)
 
     

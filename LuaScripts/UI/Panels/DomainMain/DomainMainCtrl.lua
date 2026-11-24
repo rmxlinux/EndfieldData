@@ -28,6 +28,10 @@ DomainMainCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SETTLEMENT_MODIFY] = '_OnSettlementModify',
     
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnActivityStageUpdate',
+    
+    [MessageConst.ON_WONDER_BUILD_REWARD_CHANGE] = '_OnWonderBuildRewardChange',
+    [MessageConst.ON_WONDER_BUILD_ACCELERATE_START] = '_RefreshWonderBuildAccelerateState',
+    [MessageConst.ON_WONDER_BUILD_ACCELERATE_END] = '_RefreshWonderBuildAccelerateState',
 }
 
 
@@ -39,6 +43,8 @@ DomainMainCtrl.m_unlockDomainIds = HL.Field(HL.Table)
 DomainMainCtrl.m_curDomainInfo = HL.Field(HL.Table)
 
 DomainMainCtrl.m_bulletinInfoList = HL.Field(HL.Table)
+
+DomainMainCtrl.m_wonderBuildPoiInfo = HL.Field(HL.Table)
 
 DomainMainCtrl.m_genPoiCells = HL.Field(HL.Forward("UIListCache"))
 
@@ -85,6 +91,7 @@ DomainMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 DomainMainCtrl.OnShow = HL.Override() << function(self)
+    self:_RefreshWonderBuildAccelerateState()
     if self.m_resumeArg then
         return
     end
@@ -171,6 +178,7 @@ DomainMainCtrl.UpdateData = HL.Method() << function(self)
         poiTypeList = poiTypeList,
         poiInfoList = {},
     }
+    self.m_wonderBuildPoiInfo = nil
     for _, poiType in pairs(poiTypeList) do
         local _, poiCfg = Tables.domainPoiTable:TryGetValue(poiType)
         if not string.isEmpty(poiCfg.phaseId) then
@@ -182,7 +190,11 @@ DomainMainCtrl.UpdateData = HL.Method() << function(self)
                 unlockSystemType = poiCfg.unlockSystemType,
                 openPhaseId = poiCfg.phaseId
             }
-            table.insert(self.m_curDomainInfo.poiInfoList, poiInfo)
+            if poiType == GEnums.DomainPoiType.WonderBuild then
+                self.m_wonderBuildPoiInfo = poiInfo
+            else
+                table.insert(self.m_curDomainInfo.poiInfoList, poiInfo)
+            end
         end
     end
     self:_UpdateSettlementInfo()
@@ -301,7 +313,6 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
         if self.m_interactiveLock then
             return
         end
-        self.m_phase.hasJumpedToOtherPhase = true
         self:_ShowBulletin(false)
         self.view.animationWrapper:ClearTween(false)
         self:SetNavi(false)
@@ -316,7 +327,6 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
             return
         end
         if self.m_curDomainInfo.isStlUnlocked then
-            self.m_phase.hasJumpedToOtherPhase = true
             self.view.animationWrapper:ClearTween(false)
             self:SetNavi(false)
             AudioManager.PostEvent("Au_UI_Menu_RegionDevelopPanel_BlackShadow_Open")
@@ -328,11 +338,53 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
             Notify(MessageConst.SHOW_TOAST, Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST)
         end
     end)
+    self.view.settlementPOICell.btn.customNaviTargetInDirFunc = function(dir)
+        if dir ~= CS.UnityEngine.UI.NaviDirection.Down then
+            return nil
+        end
+        local firstPoiCell = self.m_genPoiCells:Get(1)
+        return firstPoiCell and firstPoiCell.btn or nil
+    end
+    self.view.wonderBuildPOICell.btn.customNaviTargetInDirFunc = function(dir)
+        if dir ~= CS.UnityEngine.UI.NaviDirection.Up then
+            return nil
+        end
+        local lastPoiIndex = #self.m_curDomainInfo.poiInfoList
+        if lastPoiIndex <= 0 then
+            return nil
+        end
+        local lastPoiCell = self.m_genPoiCells:Get(lastPoiIndex)
+        return lastPoiCell and lastPoiCell.btn or nil
+    end
+    self.view.wonderBuildPOICell.btn.onClick:AddListener(function()
+        if self.m_interactiveLock then
+            return
+        end
+        if self.m_wonderBuildPoiInfo == nil then
+            return
+        end
+        local poiInfo = self.m_wonderBuildPoiInfo
+        local isLocked = not Utils.isSystemUnlocked(poiInfo.unlockSystemType) or string.isEmpty(poiInfo.openPhaseId)
+        local checkCanOpenFuncName = DomainPOIUtils.CheckCanOpenPOIFunc[poiInfo.poiType]
+        local isNotCanOpen = DomainPOIUtils[checkCanOpenFuncName] == nil or not DomainPOIUtils[checkCanOpenFuncName](self.m_curDomainId)
+        if isLocked or isNotCanOpen then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST)
+            return
+        end
+        self.view.animationWrapper:ClearTween(false)
+        self:SetNavi(false)
+        AudioManager.PostEvent("Au_UI_Menu_RegionDevelopPanel_BlackShadow_Open")
+        self.view.domainTopMoneyTitle.view.walletBarPlaceholder.view.gameObject:SetActive(false)
+        self.view.decoflyAniWrapper:Play("domainmainfly_in", function()
+            PhaseManager:OpenPhase(PhaseId[poiInfo.openPhaseId], {domainId = self.m_curDomainId, onCloseCB = function()
+                self.view.decoflyAniWrapper:SampleClipAtPercent("domainmainfly_in", 1)
+            end})
+        end)
+    end)
     self.view.poiOverviewBtn.onClick:AddListener(function()
         if self.m_interactiveLock or self.view.bulletinNode.gameObject.activeSelf then
             return
         end
-        self.m_phase.hasJumpedToOtherPhase = true
         self.view.animationWrapper:ClearTween(false)
         self:SetNavi(false)
         AudioManager.PostEvent("Au_UI_Menu_RegionDevelopPanel_BlackShadow_Open")
@@ -418,8 +470,11 @@ DomainMainCtrl.RefreshAllUI = HL.Method() << function(self)
     self.view.changeDomainBtn.gameObject:SetActive(#self.m_unlockDomainIds > 1)
     
     self:_RefreshSettlementCell()
+    self:_RefreshWonderBuildCell()
     
-    self.m_genPoiCells:Refresh(#self.m_curDomainInfo.poiInfoList, function(cell, luaIndex)
+    local poiCellCount = #self.m_curDomainInfo.poiInfoList
+    poiCellCount = poiCellCount + poiCellCount % 2
+    self.m_genPoiCells:Refresh(poiCellCount, function(cell, luaIndex)
         self:_OnRefreshPoiCell(cell, luaIndex)
     end)
     
@@ -451,10 +506,57 @@ DomainMainCtrl._RefreshSettlementCell = HL.Method() << function(self)
     
 end
 
+DomainMainCtrl._RefreshWonderBuildCell = HL.Method() << function(self)
+    self:_RefreshWonderBuildAccelerateState()
+    local poiInfo = self.m_wonderBuildPoiInfo
+    local wbCell = self.view.wonderBuildPOICell
+    if poiInfo == nil then
+        self.view.wonderBuildNode.gameObject:SetActive(false)
+        return
+    end
+    self.view.wonderBuildNode.gameObject:SetActive(true)
+    local isLocked = not Utils.isSystemUnlocked(poiInfo.unlockSystemType) or string.isEmpty(poiInfo.openPhaseId)
+    local checkCanOpenFuncName = DomainPOIUtils.CheckCanOpenPOIFunc[poiInfo.poiType]
+    local isNotCanOpen = DomainPOIUtils[checkCanOpenFuncName] == nil or not DomainPOIUtils[checkCanOpenFuncName](self.m_curDomainId)
+    if isLocked or isNotCanOpen then
+        wbCell.lockState:SetState("LockState")
+        wbCell.upgradeState:SetState("NoneUpgrade")
+        wbCell.redDot:Stop()
+        wbCell.redDot.gameObject:SetActive(false)
+        return
+    end
+    wbCell.lockState:SetState("UnlockState")
+    
+    local getRedDotInfoFuncName = DomainPOIUtils.GetRedDotInfoFunc[poiInfo.poiType]
+    if getRedDotInfoFuncName and DomainPOIUtils[getRedDotInfoFuncName] then
+        local redDotInfo = DomainPOIUtils[getRedDotInfoFuncName](self.m_curDomainId)
+        wbCell.redDot:InitRedDot(redDotInfo.redDotName, redDotInfo.redDotArgs)
+        wbCell.redDot.gameObject:SetActive(true)
+    else
+        wbCell.redDot:Stop()
+        wbCell.redDot.gameObject:SetActive(false)
+    end
+    if RedDotManager:GetRedDotState("WonderBuildCanUpgrade") then
+        wbCell.upgradeState:SetState("CanUpgrade")
+    else
+        wbCell.upgradeState:SetState("NoneUpgrade")
+    end
+end
+
+DomainMainCtrl._RefreshWonderBuildAccelerateState = HL.Method() << function(self)
+    self.view.wonderBuildPOICell.speedNode.gameObject:SetActive(FactoryUtils.isInWonderBuildAccelerateTime())
+end
+
 DomainMainCtrl._OnRefreshPoiCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local poiInfo = self.m_curDomainInfo.poiInfoList[luaIndex]
     cell.gameObject.name = "PoiCell_" .. luaIndex
     cell.redDot.gameObject:SetActive(false)
+    if poiInfo == nil then
+        cell.btn.onClick:RemoveAllListeners()
+        cell.redDot:Stop()
+        cell.lockState:SetState("Empty")
+        return
+    end
     local isLocked = not Utils.isSystemUnlocked(poiInfo.unlockSystemType) or string.isEmpty(poiInfo.openPhaseId)
     local checkCanOpenFuncName = DomainPOIUtils.CheckCanOpenPOIFunc[poiInfo.poiType]
     local isNotCanOpen = DomainPOIUtils[checkCanOpenFuncName] == nil or not DomainPOIUtils[checkCanOpenFuncName](self.m_curDomainId)
@@ -468,7 +570,6 @@ DomainMainCtrl._OnRefreshPoiCell = HL.Method(HL.Any, HL.Number) << function(self
             Notify(MessageConst.SHOW_TOAST, Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST)
             return
         end
-        self.m_phase.hasJumpedToOtherPhase = true
         self.view.animationWrapper:ClearTween(false)
         self:SetNavi(false)
         AudioManager.PostEvent("Au_UI_Menu_RegionDevelopPanel_BlackShadow_Open")
@@ -740,6 +841,10 @@ end
 DomainMainCtrl._OnSettlementModify = HL.Method(HL.Any) << function(self, arg)
     self:_UpdateSettlementInfo()
     self:_RefreshSettlementCell()
+end
+
+DomainMainCtrl._OnWonderBuildRewardChange = HL.Method() << function(self)
+    self:_RefreshWonderBuildCell()
 end
 
 DomainMainCtrl.SetNavi = HL.Method(HL.Boolean) << function(self, enable)

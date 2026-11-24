@@ -5,7 +5,7 @@
     {
       "_position": {
         "x": 480.0,
-        "y": 119.1519
+        "y": 120.0
       },
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "0"
@@ -133,8 +133,8 @@
         },
         "skillData": {
           "_value": {
-            "skillRange": 20.0,
-            "skillID": "eny_0094_hsfly_dash_f",
+            "skillRange": 99.0,
+            "skillID": "eny_0093_hshog_dash_f",
             "cancelSkillExclusive": true
           }
         },
@@ -145,8 +145,8 @@
       },
       "additionalWidth": 270.0,
       "_position": {
-        "x": -1282.299,
-        "y": 1075.875
+        "x": -1266.956,
+        "y": 1169.249
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "6"
@@ -165,8 +165,8 @@
         },
         "skillData": {
           "_value": {
-            "skillRange": 20.0,
-            "skillID": "eny_0094_hsfly_dash_l",
+            "skillRange": 99.0,
+            "skillID": "eny_0093_hshog_dash_l",
             "cancelSkillExclusive": true
           }
         },
@@ -177,8 +177,8 @@
       },
       "additionalWidth": 270.0,
       "_position": {
-        "x": -900.0001,
-        "y": 1073.0
+        "x": -896.3566,
+        "y": 1172.485
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "7"
@@ -251,8 +251,8 @@
         },
         "skillData": {
           "_value": {
-            "skillRange": 20.0,
-            "skillID": "eny_0094_hsfly_dash_f",
+            "skillRange": 99.0,
+            "skillID": "eny_0093_hshog_dash_f",
             "cancelSkillExclusive": true
           }
         },
@@ -263,8 +263,8 @@
       },
       "additionalWidth": 270.0,
       "_position": {
-        "x": -488.4,
-        "y": 1072.4
+        "x": -507.3488,
+        "y": 1165.405
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "10"
@@ -283,8 +283,8 @@
         },
         "skillData": {
           "_value": {
-            "skillRange": 20.0,
-            "skillID": "eny_0094_hsfly_dash_r",
+            "skillRange": 99.0,
+            "skillID": "eny_0093_hshog_dash_r",
             "cancelSkillExclusive": true
           }
         },
@@ -295,28 +295,66 @@
       },
       "additionalWidth": 270.0,
       "_position": {
-        "x": -103.6,
-        "y": 1070.8
+        "x": -98.11179,
+        "y": 1168.642
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "11"
     },
     {
+      "_condition": {
+        "checkMode": 1,
+        "conditions": [
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "checkType": 3,
+            "angle": {
+              "_value": 270.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
+          },
+          {
+            "targetActor": {
+              "_name": "Target",
+              "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
+            },
+            "angle": {
+              "_value": 90.0
+            },
+            "checkList": [],
+            "$type": "Beyond.Gameplay.AI.Condition.CheckAngleToTarget"
+          }
+        ],
+        "$type": "NodeCanvas.Framework.ConditionList"
+      },
+      "additionalWidth": 166.0,
+      "_position": {
+        "x": 483.5246,
+        "y": 429.4212
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
+      "$id": "12"
+    },
+    {
       "childWeights": [
         {
-          "_value": 6.0
+          "_value": 1.0
         },
         {
-          "_value": 4.0
+          "_value": 1.0
         }
       ],
       "failChance": {},
       "_position": {
-        "x": 562.8466,
-        "y": 464.1808
+        "x": 563.8465,
+        "y": 586.1773
       },
       "$type": "NodeCanvas.BehaviourTrees.ProbabilitySelector",
-      "$id": "12"
+      "$id": "13"
     },
     {
       "_action": {
@@ -332,8 +370,8 @@
         },
         "skillData": {
           "_value": {
-            "skillRange": 20.0,
-            "skillID": "eny_0094_hsfly_dash_b",
+            "skillRange": 99.0,
+            "skillID": "eny_0093_hshog_dash_b",
             "cancelSkillExclusive": true
           }
         },
@@ -344,11 +382,11 @@
       },
       "additionalWidth": 270.0,
       "_position": {
-        "x": 161.4,
-        "y": 814.6
+        "x": 153.1352,
+        "y": 812.8099
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "13"
+      "$id": "14"
     },
     {
       "_position": {
@@ -356,7 +394,7 @@
         "y": 747.8992
       },
       "$type": "NodeCanvas.BehaviourTrees.Selector",
-      "$id": "14"
+      "$id": "15"
     },
     {
       "_condition": {
@@ -391,7 +429,7 @@
         "y": 857.5853
       },
       "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
-      "$id": "15"
+      "$id": "16"
     },
     {
       "_action": {
@@ -407,8 +445,8 @@
         },
         "skillData": {
           "_value": {
-            "skillRange": 20.0,
-            "skillID": "eny_0094_hsfly_dash_l",
+            "skillRange": 99.0,
+            "skillID": "eny_0093_hshog_dash_l",
             "cancelSkillExclusive": true
           }
         },
@@ -419,11 +457,11 @@
       },
       "additionalWidth": 270.0,
       "_position": {
-        "x": 535.9999,
-        "y": 1062.4
+        "x": 477.8141,
+        "y": 1073.362
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "16"
+      "$id": "17"
     },
     {
       "_condition": {
@@ -461,38 +499,6 @@
         "y": 855.6473
       },
       "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
-      "$id": "17"
-    },
-    {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagId": 1135958862
-          }
-        },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "6b60bf85-2686-427c-9801-58fd1f09dfdc"
-        },
-        "skillData": {
-          "_value": {
-            "skillRange": 20.0,
-            "skillID": "eny_0094_hsfly_dash_r",
-            "cancelSkillExclusive": true
-          }
-        },
-        "castSkillResult": {},
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
-      },
-      "additionalWidth": 270.0,
-      "_position": {
-        "x": 939.4001,
-        "y": 1064.6
-      },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "18"
     },
     {
@@ -509,8 +515,8 @@
         },
         "skillData": {
           "_value": {
-            "skillRange": 20.0,
-            "skillID": "eny_0094_hsfly_dash_f",
+            "skillRange": 99.0,
+            "skillID": "eny_0093_hshog_dash_r",
             "cancelSkillExclusive": true
           }
         },
@@ -521,8 +527,8 @@
       },
       "additionalWidth": 270.0,
       "_position": {
-        "x": 1383.0,
-        "y": 858.0
+        "x": 946.3228,
+        "y": 1087.927
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "19"
@@ -648,7 +654,7 @@
     },
     {
       "_sourceNode": {
-        "$ref": "12"
+        "$ref": "13"
       },
       "_targetNode": {
         "$ref": "14"
@@ -657,28 +663,10 @@
     },
     {
       "_sourceNode": {
-        "$ref": "14"
+        "$ref": "13"
       },
       "_targetNode": {
         "$ref": "15"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "14"
-      },
-      "_targetNode": {
-        "$ref": "17"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "14"
-      },
-      "_targetNode": {
-        "$ref": "19"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
@@ -693,10 +681,28 @@
     },
     {
       "_sourceNode": {
-        "$ref": "17"
+        "$ref": "15"
       },
       "_targetNode": {
         "$ref": "18"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "16"
+      },
+      "_targetNode": {
+        "$ref": "17"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "18"
+      },
+      "_targetNode": {
+        "$ref": "19"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     }

@@ -200,7 +200,7 @@ ActivityDescriptionPopupCtrl._OnUpdateCalendarCell = HL.Method(HL.Any, HL.Number
     cell.phaseTxt:SetAndResolveTextStyle(self:_GetStageName(luaIndex))
     cell.descriptionTxt:SetAndResolveTextStyle(phase.phaseDesc)
     local timeId = ActivityUtils.getStageShowTimeId(phase)
-    cell.timeText.text = self:_FormatPhaseTimeRange(timeId)
+    cell.timeText.text = self:_FormatPhaseTimeRange(timeId, phase)
     local opened = self:_IsPhaseOpened(timeId)
     cell.nodeStateController:SetState(opened and 'Normal' or 'Lock')
     if cell.lineNode then
@@ -238,7 +238,7 @@ ActivityDescriptionPopupCtrl._CheckCalendarTimeCross = HL.Method() << function(s
     end
 end
 
-ActivityDescriptionPopupCtrl._FormatPhaseTimeRange = HL.Method(HL.String).Return(HL.String) << function(self, timeId)
+ActivityDescriptionPopupCtrl._FormatPhaseTimeRange = HL.Method(HL.String, HL.Opt(HL.Any)).Return(HL.String) << function(self, timeId, phase)
     if string.isEmpty(timeId) then
         return ""
     end
@@ -253,18 +253,19 @@ ActivityDescriptionPopupCtrl._FormatPhaseTimeRange = HL.Method(HL.String).Return
     local timeRange = timeCfg.timeRangeList[serverAreaTypeIndex]
     local timeZoneSeconds = Utils.getServerTimeZoneOffsetSeconds()
     local openStr = Utils.appendUTC(Utils.timestampToDateMDHM(Utils.timeStr2TimeStamp(timeRange.openTime, timeZoneSeconds)))
+    
+    if phase ~= nil and not string.isEmpty(phase.openTimeDesc) then
+        openStr = phase.openTimeDesc
+    end
     if string.isEmpty(timeRange.closeTime) then
         return openStr
     end
     local closeStr = Utils.appendUTC(Utils.timestampToDateMDHM(Utils.timeStr2TimeStamp(timeRange.closeTime, timeZoneSeconds)))
 
     
-    if timeId == "time_activity_timelimited_inn_stage_2calendar" or timeId == "time_activity_contingency_contract_1_stage_2calendar" then
-        closeStr = Language.LUA_ACTIVITY_VESION_END_DESC
+    if phase ~= nil and not string.isEmpty(phase.closeTimeDesc) then
+        closeStr = phase.closeTimeDesc
     end
-
-    
-
 
     return string.format("%s - %s", openStr, closeStr)
 end

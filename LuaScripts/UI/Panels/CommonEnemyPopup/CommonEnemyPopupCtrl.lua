@@ -127,15 +127,18 @@ CommonEnemyPopupCtrl._OnUpdateEnemyCell = HL.Method(GameObject, HL.Number) << fu
 end
 
 CommonEnemyPopupCtrl._Refresh = HL.Method(HL.Any) << function(self, arg)
-    if arg.initSelectEnemyLuaIndex ~= nil then
-        self.m_curSelectEnemyIndex = arg.initSelectEnemyLuaIndex
-    else
-        self.m_curSelectEnemyIndex = 1
-    end
+    self.m_curSelectEnemyIndex = self:_ResolveSelectEnemyIndex(arg.initSelectEnemyLuaIndex)
     self.m_hideDamageTakenInfo = arg.hideDamageTakenInfo or false
 
     self:_RefreshContent()
     self.view.dungeonEnemyScrollList:UpdateCount(#self.m_enemyInfos)
+    self.view.dungeonEnemyScrollList:ScrollToIndex(CSIndex(self.m_curSelectEnemyIndex))
+end
+
+CommonEnemyPopupCtrl._ResolveSelectEnemyIndex = HL.Method(HL.Opt(HL.Number)).Return(HL.Number) << function(
+    self, initSelectEnemyLuaIndex)
+    local selectIndex = initSelectEnemyLuaIndex or 1
+    return math.min(math.max(selectIndex, 1), #self.m_enemyInfos)
 end
 
 CommonEnemyPopupCtrl._OnEnemyCellClick = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)

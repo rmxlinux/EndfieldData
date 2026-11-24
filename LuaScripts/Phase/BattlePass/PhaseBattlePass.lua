@@ -55,6 +55,10 @@ PhaseBattlePass._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)
 end
 
 PhaseBattlePass._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    if InputManagerInst.inChangingInputDevice then
+        
+        Notify(MessageConst.HIDE_COMMON_HOVER_TIP, { noAnimation = true })
+    end
     self.m_storeShowPsStoreLogo = self.m_haveShowPsStoreLogo
     self:HidePsStore()
 end
@@ -224,6 +228,10 @@ PhaseBattlePass._TryPopPanel = HL.Method() << function(self)
             UIManager:Open(panelId)
         end
     end
+end
+
+PhaseBattlePass.IsChangingTab = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_isChanging
 end
 
 PhaseBattlePass.ChangePanel = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, panelId, isRight, arg)

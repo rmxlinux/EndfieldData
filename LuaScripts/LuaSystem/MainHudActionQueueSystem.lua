@@ -4,411 +4,34 @@ local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 MainHudActionQueueSystem = HL.Class('MainHudActionQueueSystem', LuaSystemBase.LuaSystemBase)
 
 
+
+
+
 MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    self.configs = {
-
-        
-        
-        LoginCheck_ImportantActivity_WaitCinematic = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 40,
-            needWait = true,
-            ignoreCinematicInterrupt = true,
-            ignoreMainHudInterrupt = true,
-            finishWhenInterrupt = true,
-            dropWhenChangeScene = true,
-        },
-
-        
-        
-        
-        LoginCheck_ImportantActivity_Top = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 40, 
-            needWait = true,
-            ignoreCinematicInterrupt = true,
-            ignoreMainHudInterrupt = true,
-            finishWhenInterrupt = true,
-            dropWhenChangeScene = true,
-        },
-
-        
-        LoginCheck_CashShopOrderSettle = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 30,
-            needWait = true,
-            ignoreCinematicInterrupt = true,
-            ignoreMainHudInterrupt = true,
-            finishWhenInterrupt = true,
-        },
-        
-        LoginCheck_MonthlypassPopup = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 20,
-            needWait = true,
-            ignoreCinematicInterrupt = true,
-            ignoreMainHudInterrupt = true,
-        },
-        
-        LoginCheck_StartGuide = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 10,
-            needWait = false,
-            ignoreCinematicInterrupt = true,
-            ignoreMainHudInterrupt = true,
-        },
-        
-        LoginCheck_ForceSNS = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 10,
-            needWait = false,
-            ignoreCinematicInterrupt = true,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        LoginCheck_PreventedClearScreenForLevelScripts = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 1,
-            needWait = false,
-            dropWhenChangeScene = true,
-            ignoreCinematicInterrupt = true,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        CinematicBlocker = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 1, 
-            needWait = true,
-            isCinematic = true,
-            dropWhenChangeScene = true,
-        },
-
-        
-        Cinematic = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST, 
-            needWait = true,
-            isCinematic = true,
-            dropWhenChangeScene = true,
-        },
-
-        
-        
-        ChapterPanelWithoutMissionHud =
-        {
-            order = CS.Beyond.MainHudActionQueueConsts.BLOCKER_ORDER,
-            needWait = true,
-            finishWhenInterrupt = true,
-            dropWhenChangeScene = true,
-        },
-
-        
-        
-        MissionHudCompleteBlocker = {
-            order = CS.Beyond.MainHudActionQueueConsts.BLOCKER_ORDER,
-            needWait = true,
-            finishWhenInterrupt = false,
-            dropWhenChangeScene = true,
-        },
-
-        
-        CashShopOrderSettleInterrupt = {
-            order = -0.1,
-            needWait = true,
-            waitForceGuideEnd = true,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        CashShopOrderSettle = {
-            order = 0,
-            needWait = true,
-            waitForceGuideEnd = true,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        MonthlyPassPopup = {
-            order = 0.1,
-            needWait = true,
-            finishWhenInterrupt = true,
-            waitForceGuideEnd = true,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        
-        LoginCheck_ImportantActivity_Fallback = {
-            order = 0.15,
-            needWait = true,
-            finishWhenInterrupt = true,
-            waitForceGuideEnd = true,
-            ignoreMainHudInterrupt = true,
-            ignoreCinematicInterrupt = true,
-            dropWhenChangeScene = true,
-        },
-
-        
-        LoginCheck_Reflow = {
-            order = 0.18,
-            needWait = true,
-            finishWhenInterrupt = true,
-            waitForceGuideEnd = true,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        LoginCheck_ActivityCheckIn = {
-            order = 0.2,
-            needWait = true,
-            finishWhenInterrupt = true,
-            waitForceGuideEnd = true,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        DashBarUpgrade = {
-            order = 0.5,
-            needWait = true,
-            ignoreCinematicInterrupt = true,
-            waitForceGuideEnd = true,
-        },
-
-        
-        FacTechPointGained = {
-            order = 1, 
-            needWait = true,
-            finishWhenInterrupt = true,
-            preloadPanelId = PanelId.FacTechPointGainedToast,
-        },
-
-        
-        CenterRewards = {
-            order = 2, 
-            needWait = true,
-            preloadPanelId = PanelId.RewardsPopupCenter,
-        },
-
-        
-        EquipFormulaRewardPopup = {
-            order = 2, 
-            needWait = true,
-            finishWhenInterrupt = true,
-            preloadPanelId = PanelId.EquipFormulaRewardPopup,
-        },
-
-        
-        WorldLevelPreview = {
-            order = 2.1,
-            needWait = true,
-            finishWhenInterrupt = true,
-            dropWhenChangeScene = true,
-            waitForceGuideEnd = true,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        SettlementToast = {
-            order = 2.5,
-            needWait = true,
-            finishWhenInterrupt = true,
-        },
-
-        
-        ImportantReward = {
-            order = 3, 
-            needWait = true,
-            ignoreCinematicInterrupt = true,
-            preloadPanelId = PanelId.ImportantRewardPopup,
-            waitForceGuideEnd = true,
-        },
-
-        
-        AdventureLevelUp = {
-            order = 4, 
-            needWait = true,
-            finishWhenInterrupt = false,
-            preloadPanelId = PanelId.AdventureLevelUp,
-            waitForceGuideEnd = true,
-        },
-
-        
-        AfterLevelUpSNS = {
-            order = 4.1,
-            needWait = true,
-            dropWhenChangeScene = true,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        PuzzlePickup = {
-            order = 6,
-            needWait = true,
-            finishWhenInterrupt = true,
-            preloadPanelId = PanelId.PuzzlePickupToast,
-        },
-
-        EndingToast = {
-            order = 6,
-            needWait = true,
-            finishWhenInterrupt = true,
-        },
-
-        
-        MissionHudResumeInfo = {
-            order = 7,
-            needWait = false,
-        },
-
-        
-        CommonPOIUpgradeToast = {
-            order = 8,
-            needWait = true,
-            finishWhenInterrupt = true,
-            preloadPanelId = PanelId.CommonPOIUpgradeToast,
-        },
-
-        
-        DomainDepotDeliverToast = {
-            order = 9,
-            needWait = true,
-            finishWhenInterrupt = true,
-            preloadPanelId = PanelId.DomainDepotDeliverToast,
-        },
-
-        
-        DomainUpgrade = {
-            order = 10, 
-            needWait = true,
-            finishWhenInterrupt = true,
-            preloadPanelId = PanelId.DomainUpgrade,
-        },
-
-        
-        AppStoreRatingPopup = {
-            order = 11, 
-            needWait = false,
-            finishWhenInterrupt = true,
-        },
-
-        
-        BackupPowerCheck = {
-            order = 97,
-            needWait = false,
-            ignoreMainHudInterrupt = true,
-        },
-
-        
-        MapRegionToast = {
-            order = 98,
-            needWait = true,
-            finishWhenInterrupt = true,
-            dropWhenChangeScene = true,
-            preloadPanelId = PanelId.MapRegionToast,
-        },
-
-        
-        SpaceshipHudTips = {
-            order = 99, 
-            needWait = true,
-            dropWhenChangeScene = true,
-        },
-
-        
-        SNSNormalNotice = {
-            order = 100,
-            needWait = false,
-            dropWhenChangeScene = true,
-        },
-
-        
-        GetItemToast = {
-            order = 100,
-            needWait = false,
-        },
-
-        
-        FirstGotItem = {
-            order = 100,
-            needWait = false,
-        },
-        UnlockPRTS = {
-            order = 100,
-            needWait = false,
-        },
-        DomainUpgradeToast = {
-            order = 100,
-            needWait = false,
-        },
-        WeeklyRaidEnter = {
-            order = 100,
-            needWait = true,
-            finishWhenInterrupt = false,
-            dropWhenChangeScene = true,
-        },
-        UnlockMusic = {
-            order = 100,
-            needWait = false,
-        },
-    }
-
-    for k, v in pairs(self.configs) do
-        v.name = k
+    local trackConfig = require_ex('LuaSystem/ActionQueueConfig/ActionQueueConfig_MainHud')
+
+    self.configs = {}
+    for tierIndex, tier in ipairs(trackConfig.tiers) do
+        for _, name in ipairs(tier) do
+            local cfg = trackConfig.types[name]
+            if cfg == nil then
+                logger.error("MainHudActionQueueSystem._InitConfigs: tiers 里的", name, "在 types 里找不到")
+            elseif self.configs[name] ~= nil then
+                logger.error("MainHudActionQueueSystem._InitConfigs:", name, "在 tiers 里出现了多次")
+            else
+                cfg.name = name
+                
+                cfg.order = tierIndex
+                self.configs[name] = cfg
+            end
+        end
+    end
+
+    for name, _ in pairs(trackConfig.types) do
+        if self.configs[name] == nil then
+            logger.error("MainHudActionQueueSystem._InitConfigs: types 里的", name, "没有出现在任何一个档位里")
+        end
     end
 end
 
@@ -429,7 +52,8 @@ MainHudActionQueueSystem.m_curShowingActionOrder = HL.Field(HL.Number) << math.m
 MainHudActionQueueSystem.MainHudActionQueueSystem = HL.Constructor() << function(self)
     self:_InitConfigs()
     self.m_pendingRequests = {}
-    self.m_playIgnoreMainHudActionTypes = {}
+    self.m_allowStartOutsideMainHudActionTypes = {}
+    self.m_blockers = {}
     self:RegisterMessage(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, function(arg)
         local name
         if type(arg) == "table" then
@@ -457,10 +81,6 @@ MainHudActionQueueSystem.MainHudActionQueueSystem = HL.Constructor() << function
         end
     end)
 
-    self:RegisterMessage(MessageConst.ON_ONE_COMMON_TASK_REQUEST_FINISH, function()
-        self:_TryAddStartActionCor()
-    end)
-
     
     self:RegisterMessage(MessageConst.INTERRUPT_MAIN_HUD_ACTION_ON_COMMON_BLEND_IN, function()
         self:Interrupt()
@@ -469,22 +89,17 @@ MainHudActionQueueSystem.MainHudActionQueueSystem = HL.Constructor() << function
         self:_TryAddStartActionCor()
     end)
 
-    self:RegisterMessage(MessageConst.COMMON_START_BLOCK_MAIN_HUD_ACTION_QUEUE, function()
-        self:Interrupt()
-    end)
-    self:RegisterMessage(MessageConst.COMMON_END_BLOCK_MAIN_HUD_ACTION_QUEUE, function()
-        self:_TryAddStartActionCor()
-    end)
-
-    self:RegisterMessage(MessageConst.ON_LEAVE_TOWER_DEFENSE_DEFENDING_PHASE, function()
-        self:Interrupt()
-    end)
-    self:RegisterMessage(MessageConst.ON_TOWER_DEFENSE_LEVEL_REWARDS_FINISHED, function()
-        self:_TryAddStartActionCor()
-    end)
     self:RegisterMessage(MessageConst.MAIN_HUD_ACTION_QUEUE_TOGGLE_IGNORE_MAIN_HUD_CS, function(args)
         local actionType, active = unpack(args)
-        self:ToggleActionPlayIgnoreMainHud(actionType, active)
+        self:SetAllowStartOutsideMainHud(actionType, active)
+    end)
+    self:RegisterMessage(MessageConst.MAIN_HUD_ACTION_QUEUE_TOGGLE_BLOCKER_CS, function(args)
+        local name, active = unpack(args)
+        if active then
+            self:AddBlocker(name)
+        else
+            self:RemoveBlocker(name)
+        end
     end)
     self:RegisterMessage(MessageConst.PRE_LEVEL_START, function()
         if Utils.isInBlackbox() or Utils.isInDungeonTrain() then
@@ -515,6 +130,8 @@ MainHudActionQueueSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(H
         type = type,
         action = action,
         getOrder = getOrder,
+        
+        subOrder = 0,
         onDrop = onDrop,
         cfg = cfg,
     }
@@ -550,7 +167,7 @@ MainHudActionQueueSystem._TryCutIn = HL.Method(HL.Table).Return(HL.Boolean) << f
     
     FactoryUtils.exitFactoryRelatedMode()
 
-    if not (GameWorld.worldInfo.inMainHud or self.m_playIgnoreMainHudActionTypes[request.type]) then
+    if not (GameWorld.worldInfo.inMainHud or self.m_allowStartOutsideMainHudActionTypes[request.type]) then
         return false
     end
 
@@ -578,13 +195,14 @@ MainHudActionQueueSystem._SortRequest = HL.Method(HL.Boolean) << function(self, 
     for k, request in ipairs(self.m_pendingRequests) do
         if request.getOrder and (not self.m_isShowing or k > 1) then 
             needSort = true
-            request.order = request.getOrder()
+            
+            request.subOrder = request.getOrder()
         end
     end
     if not needSort then
         return
     end
-    table.sort(self.m_pendingRequests, Utils.genSortFunction({ "order", "id" }, true))
+    table.sort(self.m_pendingRequests, Utils.genSortFunction({ "order", "subOrder", "id" }, true))
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._SortRequest")
 end
 
@@ -636,34 +254,14 @@ MainHudActionQueueSystem._TryStartAction = HL.Method() << function(self)
 
     self.m_startupDelayCor = self:_ClearCoroutine(self.m_startupDelayCor)
 
-    if GameInstance.player.guide.preCheckFinished and GameInstance.player.guide.isInForceGuide and not Utils.isInBlackbox() then
-        
+    local blocker = next(self.m_blockers)
+    if blocker ~= nil then
+        logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._TryStartAction 被阻塞", blocker)
         return
     end
 
     local nextRequestIndex = self:_GetNextRequestIndex(false)
     if not nextRequestIndex then
-        return
-    end
-
-    if GameInstance.player.inventory.isProcessingRewardToastData then
-        
-        return
-    end
-
-    if UIManager:IsShow(PanelId.MissionCompletePop) then
-        return
-    end
-
-    if LuaSystemManager.commonTaskTrackSystem:HasRequest() then
-        return
-    end
-
-    if Utils.isInSettlementDefense() then
-        return
-    end
-
-    if GameInstance.player.innSystem.isInGame then
         return
     end
 
@@ -871,20 +469,51 @@ end
 
 
 
-MainHudActionQueueSystem.m_playIgnoreMainHudActionTypes = HL.Field(HL.Table)
 
-MainHudActionQueueSystem.ToggleActionPlayIgnoreMainHud = HL.Method(HL.String, HL.Boolean) << function(self, actionType, ignoreMainHud)
-    local curIsActive = self.m_playIgnoreMainHudActionTypes[actionType] == true
-    if curIsActive == ignoreMainHud then
+
+MainHudActionQueueSystem.m_blockers = HL.Field(HL.Table)
+
+
+
+
+MainHudActionQueueSystem.AddBlocker = HL.Method(HL.String) << function(self, name)
+    if self.m_blockers[name] then
+        
+        
         return
     end
-    logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.ToggleActionPlayIgnoreMainHud", actionType, ignoreMainHud)
-    if ignoreMainHud then
-        self.m_playIgnoreMainHudActionTypes[actionType] = true
-    else
-        self.m_playIgnoreMainHudActionTypes[actionType] = nil
+    logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.AddBlocker", name)
+    self.m_blockers[name] = true
+end
+
+MainHudActionQueueSystem.RemoveBlocker = HL.Method(HL.String) << function(self, name)
+    if not self.m_blockers[name] then
+        return
     end
-    if ignoreMainHud and not self.m_isShowing and self.m_pendingRequests[1] then
+    logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.RemoveBlocker", name)
+    self.m_blockers[name] = nil
+    self:_TryAddStartActionCor()
+end
+
+
+
+
+
+
+MainHudActionQueueSystem.m_allowStartOutsideMainHudActionTypes = HL.Field(HL.Table)
+
+MainHudActionQueueSystem.SetAllowStartOutsideMainHud = HL.Method(HL.String, HL.Boolean) << function(self, actionType, allowStart)
+    local curIsActive = self.m_allowStartOutsideMainHudActionTypes[actionType] == true
+    if curIsActive == allowStart then
+        return
+    end
+    logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.SetAllowStartOutsideMainHud", actionType, allowStart)
+    if allowStart then
+        self.m_allowStartOutsideMainHudActionTypes[actionType] = true
+    else
+        self.m_allowStartOutsideMainHudActionTypes[actionType] = nil
+    end
+    if allowStart and not self.m_isShowing and self.m_pendingRequests[1] then
         
         self:_TryStartAction()
     end
@@ -896,9 +525,9 @@ MainHudActionQueueSystem._GetNextRequestIndex = HL.Method(HL.Boolean).Return(HL.
         return 1
     else
         
-        if next(self.m_playIgnoreMainHudActionTypes) then
+        if next(self.m_allowStartOutsideMainHudActionTypes) then
             for k, v in ipairs(self.m_pendingRequests) do
-                if self.m_playIgnoreMainHudActionTypes[v.type] then
+                if self.m_allowStartOutsideMainHudActionTypes[v.type] then
                     return k
                 end
             end
@@ -941,7 +570,7 @@ MainHudActionQueueSystem._OnInMainHudChanged = HL.Method(HL.Boolean) << function
         self:_TryAddStartActionCor()
         return
     end
-    if next(self.m_playIgnoreMainHudActionTypes) then
+    if next(self.m_allowStartOutsideMainHudActionTypes) then
         local nextRequestIndex = self:_GetNextRequestIndex(false)
         if nextRequestIndex then 
             if nextRequestIndex == 1 then
@@ -1014,8 +643,8 @@ MainHudActionQueueSystem.GetDebugInfos = HL.Method(HL.Opt(HL.Boolean)).Return(HL
     end
 
     
-    table.insert(infos, "\n--------------- m_playIgnoreMainHudActionTypes ---------------\n")
-    for k, _ in pairs(self.m_playIgnoreMainHudActionTypes) do
+    table.insert(infos, "\n--------------- m_allowStartOutsideMainHudActionTypes ---------------\n")
+    for k, _ in pairs(self.m_allowStartOutsideMainHudActionTypes) do
         table.insert(infos, k)
         table.insert(infos, ", ")
     end
@@ -1027,12 +656,16 @@ MainHudActionQueueSystem.GetDebugInfos = HL.Method(HL.Opt(HL.Boolean)).Return(HL
             GameInstance.player.guide.isInForceGuide,
             Utils.isInBlackbox()
     ))
-    table.insert(infos, string.format("isProcessingRewardToastData=%s, MissionCompletePopPanel=%s, commonTaskTrackSystem:HasRequest=%s, isInSettlementDefense=%s\n",
-            GameInstance.player.inventory.isProcessingRewardToastData,
-            UIManager:IsShow(PanelId.MissionCompletePop),
-            LuaSystemManager.commonTaskTrackSystem:HasRequest(),
-            Utils.isInSettlementDefense()
-    ))
+    table.insert(infos, "m_blockers: ")
+    if next(self.m_blockers) == nil then
+        table.insert(infos, "(空)")
+    else
+        for k, _ in pairs(self.m_blockers) do
+            table.insert(infos, k)
+            table.insert(infos, ", ")
+        end
+    end
+    table.insert(infos, "\n")
 
     table.insert(infos, "</mark>")
 

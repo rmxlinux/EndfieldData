@@ -90,6 +90,9 @@ BuildingCommon._OnFirstTimeInit = HL.Override() << function(self)
         self:_LikeBuilding()
     end)
 
+    self:RegisterMessage(MessageConst.ON_FAC_SOCIAL_BUILDING_LIKED, function(args)
+        self:_OnSocialBuildingLiked(args)
+    end)
     self:RegisterMessage(MessageConst.FAC_ON_MOVE_SHOW_CONTROLLER_MODE_HINT, function(text)
         if text ~= nil then
             self.view.controllerModeHint.gameObject:SetActive(true)
@@ -498,14 +501,21 @@ BuildingCommon._ReportBuilding = HL.Method() << function(self)
 end
 
 BuildingCommon._LikeBuilding = HL.Method() << function(self)
-    FactoryUtils.likeSocialBuilding(self.nodeId, function()
-        if self.m_isDestroyed then
-            return
-        end
-        AudioAdapter.PostEvent("Au_UI_Button_SocialRepair")
-        self.view.socialNodeAnimationWrapper:PlayInAnimation(function()
-            self:_UpdateSocialInfo()
-        end)
+    FactoryUtils.likeSocialBuilding(self.nodeId)
+end
+
+BuildingCommon._OnSocialBuildingLiked = HL.Method(HL.Any) << function(self, args)
+    local chapterId, nodeId = unpack(args)
+    if chapterId ~= Utils.getCurrentChapterId() or nodeId ~= self.nodeId then
+        return
+    end
+    if not self.gameObject.activeInHierarchy then
+        self:_UpdateSocialInfo()
+        return
+    end
+    AudioAdapter.PostEvent("Au_UI_Button_SocialRepair")
+    self.view.socialNodeAnimationWrapper:PlayInAnimation(function()
+        self:_UpdateSocialInfo()
     end)
 end
 

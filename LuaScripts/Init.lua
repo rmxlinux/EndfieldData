@@ -239,6 +239,7 @@ LoadConst = function(reload)
     InputDeviceChangeConst = require_ex("Const/InputDeviceChangeConst", reload)
     
     MessageConst = require_ex("Const/MessageConst", reload)
+    MultiplayerConst = require_ex("Const/MultiplayerConst", reload)
     LevelConst = require_ex("Const/LevelConst", reload)
     FacConst = require_ex("Const/FacConst", reload)
     SpaceshipConst = require_ex("Const/SpaceshipConst", reload)
@@ -300,6 +301,10 @@ SeasonTowerUtils = require_ex("Common/Utils/SeasonTowerUtils")
 GameSettingUtils = require_ex("Common/Utils/GameSettingUtils")
 TyphoeaArcheryUtils = require_ex("Common/Utils/TyphoeaArcheryUtils")
 InnUtils = require_ex("Common/Utils/InnUtils")
+CardGameUtils = require_ex("Common/Utils/CardGameUtils")
+CardGameBlackjackUtils = require_ex("Common/Utils/CardGameBlackjackUtils")
+CardGameDoudizhuUtils = require_ex("Common/Utils/CardGameDoudizhuUtils")
+MultiplayerUtils = require_ex("Common/Utils/MultiplayerUtils")
 HyperTextNaviHelper = require_ex('Common/Utils/UI/HyperTextNaviHelper')
 
 LuaObjectMemoryLeakChecker = require_ex("Common/Core/LuaObjectMemoryLeakChecker")()
@@ -330,6 +335,8 @@ PanelId = UIManager.ids
 PhaseManager = require_ex("Common/Core/PhaseManager")()
 
 PhaseId = PhaseManager.phaseIds
+
+UISceneManager = require_ex("Common/Core/UISceneManager")()
 
 
 UIManager:InitPanelConfigs()
@@ -366,8 +373,15 @@ local function _onDisposeLuaEnv()
         return
     end
     s_luaEnvDisposed = true
-    PhaseManager:_Dispose()
-    LuaSystemManager:ReleaseSystems()
+    
+    local succ, log = xpcall(PhaseManager._Dispose, debug.traceback, PhaseManager)
+    if not succ then
+        logger.critical("_onDisposeLuaEnv PhaseManager:_Dispose failed", log)
+    end
+    succ, log = xpcall(LuaSystemManager.ReleaseSystems, debug.traceback, LuaSystemManager)
+    if not succ then
+        logger.critical("_onDisposeLuaEnv LuaSystemManager:ReleaseSystems failed", log)
+    end
 end
 Register(MessageConst.ON_DISPOSE_LUA_ENV, _onDisposeLuaEnv)
 Register(MessageConst.ON_APPLICATION_QUIT, _onDisposeLuaEnv)

@@ -124,9 +124,11 @@ RedDotManager.OnMessage = HL.Method(HL.Number) << function(self, msgId)
 
     logger.info(ELogChannel.RedDot, "RedDotManager.OnMessage", MessageConst.getMsgName(msgId))
 
+    local visited, order = {}, {}
     for name, _ in pairs(redDots) do
-        self:TriggerUpdate(name)
+        self:_CollectUpdateOrder(name, visited, order)
     end
+    self:_RunUpdateOrder(order)
 end
 
 RedDotManager.GetRedDotState = HL.Method(HL.String, HL.Opt(HL.Any, HL.Number)).Return(HL.Boolean, HL.Opt(HL.Number, HL.Number)) <<
@@ -182,7 +184,43 @@ function(self, name, arg, penetrateLevel)
     return result, redDotType, expireTs
 end
 
+
+
+RedDotManager._CollectUpdateOrder = HL.Method(HL.String, HL.Table, HL.Table) <<
+function(self, name, visited, order)
+    if visited[name] then
+        return
+    end
+    local config = self.configs and self.configs[name]
+    if not config then
+        logger.error("No RedDot", name)
+        return
+    end
+    if not self.m_activeRedDots[name] then
+        return
+    end
+    visited[name] = true
+    if config.fathers then
+        for fatherName, _ in pairs(config.fathers) do
+            self:_CollectUpdateOrder(fatherName, visited, order)
+        end
+    end
+    order[#order + 1] = name
+end
+
+RedDotManager._RunUpdateOrder = HL.Method(HL.Table) << function(self, order)
+    for i = #order, 1, -1 do
+        self:_UpdateRedDotInstances(order[i])
+    end
+end
+
 RedDotManager.TriggerUpdate = HL.Method(HL.String) << function(self, name)
+    local visited, order = {}, {}
+    self:_CollectUpdateOrder(name, visited, order)
+    self:_RunUpdateOrder(order)
+end
+
+RedDotManager._UpdateRedDotInstances = HL.Method(HL.String) << function(self, name)
     local redDot = self.configs and self.configs[name]
     if not redDot then
         logger.error("No RedDot", name)
@@ -227,11 +265,6 @@ RedDotManager.TriggerUpdate = HL.Method(HL.String) << function(self, name)
         end
     end
 
-    if redDot.fathers then
-        for k, _ in pairs(redDot.fathers) do
-            self:TriggerUpdate(k)
-        end
-    end
 end
 
 

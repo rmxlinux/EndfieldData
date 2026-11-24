@@ -142,6 +142,9 @@ WikiDetailBaseCtrl._RefreshLeft = HL.Virtual() << function(self)
         isInitHidden = true,
         wikiGroupShowDataList = self.m_wikiGroupShowDataList,
         onItemClicked = function(wikiEntryShowData)
+            if self.m_wikiEntryShowData.wikiEntryData.id == wikiEntryShowData.wikiEntryData.id then
+                return
+            end
             self.m_wikiEntryShowData = wikiEntryShowData
             if self.m_phase then
                 self.m_phase.m_currentWikiDetailArgs = {

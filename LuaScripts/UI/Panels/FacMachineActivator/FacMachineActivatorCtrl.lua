@@ -27,7 +27,7 @@ local function _GetCurrentConsumeInfo(uiInfo)
     local curConsumeCount = 0
     local inActive = false
     if uiInfo.activatorCost then
-        curConsumeCount = uiInfo.activatorCost.currentBufCnt * 6
+        curConsumeCount = uiInfo.activatorCost.currentBufCnt * FacConst.FAC_RECENT_10S_COUNT_TO_MINUTE_RATE_SCALE
         inActive = uiInfo.activatorCost.inActive
     end
     return curConsumeCount, inActive

@@ -132,7 +132,7 @@ ActivityFreeMonthlyPass3DCtrl._SetUIPos = HL.Method() << function(self)
     local main = self.view.main
     local rect = main.gameObject:GetComponent("RectTransform")
     if self.m_currPageType == PanelType.DailyPopup then
-        if not DeviceInfo.isMobile then  
+        if not DeviceInfo.usingTouch then  
             rect.localPosition = Vector3(80, 50, 200)
             rect.localEulerAngles = Vector3(10, -11.2, -4.5)
         else  
@@ -141,7 +141,7 @@ ActivityFreeMonthlyPass3DCtrl._SetUIPos = HL.Method() << function(self)
         end
         self.view.shopMonthlyPass3DPanel:SetState("Acquire")
     elseif self.m_currPageType == PanelType.Shop then
-        if not DeviceInfo.isMobile then  
+        if not DeviceInfo.usingTouch then  
             rect.localPosition = Vector3(296, 6, 219)
             rect.localEulerAngles = Vector3(10, -11.2, -4.5)
             self.view.shopMonthlyPass3DPanel:SetState("ShopPc")

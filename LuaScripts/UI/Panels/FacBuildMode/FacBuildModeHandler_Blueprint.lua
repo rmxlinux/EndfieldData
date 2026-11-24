@@ -32,6 +32,16 @@ end
 
 
 
+FacBuildModeHandler_Blueprint._GetBlueprintDisplayRange = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local curMode = self:_GetBlueprintMode()
+    if curMode and curMode.blueprint then
+        return curMode.blueprint.sourceRect
+    end
+    return self.m_host.m_buildArgs.range
+end
+
+
+
 
 FacBuildModeHandler_Blueprint.OnEnter = HL.Override(HL.Table) << function(self, args)
     FacBuildModeHandler_Blueprint.Super.OnEnter(self, args)
@@ -218,7 +228,7 @@ end
 FacBuildModeHandler_Blueprint.GetDragFollowInfo = HL.Override().Return(HL.Opt(HL.Table)) << function(self)
     local host = self.m_host
     local curMode = self:_GetBlueprintMode()
-    local range = host.m_buildArgs.range
+    local range = self:_GetBlueprintDisplayRange()
     local needReverse = curMode.preparedDirection % 2 == 1
     local r = self.m_dragFollowInfo
     r.worldPos = self.m_provider:GetPreparedAnchorWorld() 
@@ -251,9 +261,43 @@ FacBuildModeHandler_Blueprint.EvaluatePlacement = HL.Override().Return(HL.Opt(HL
     return r
 end
 
+
+
+local function _ResolveBlueprintHintBuildingId(blueprint)
+    if not blueprint or not blueprint.buildingNodes then
+        return nil
+    end
+    local count = 0
+    local onlyId = nil
+    local fluidId, boxId = nil, nil
+    for _, entry in pairs(blueprint.buildingNodes) do
+        count = count + 1
+        local id = entry and entry.templateId or nil
+        onlyId = id
+        if not string.isEmpty(id) then
+            if Tables.factoryFluidValveTable:ContainsKey(id) then
+                fluidId = id
+            elseif Tables.factoryBoxValveTable:ContainsKey(id) then
+                boxId = id
+            end
+        end
+    end
+    if count == 1 then
+        return onlyId
+    end
+    if fluidId and not boxId then
+        return fluidId
+    end
+    if boxId and not fluidId then
+        return boxId
+    end
+    return nil
+end
+
 FacBuildModeHandler_Blueprint._HintCtx = HL.Method().Return(HL.Table) << function(self)
     local ctx = self.m_hintCtx
-    ctx.buildingId = nil
+    local curMode = self:_GetBlueprintMode()
+    ctx.buildingId = _ResolveBlueprintHintBuildingId(curMode and curMode.blueprint or nil)
     ctx.isBlueprintVariant = true
     ctx.pumpingLiquidItemId = nil
     return ctx
@@ -277,7 +321,7 @@ FacBuildModeHandler_Blueprint.OnPressScreen = HL.Override(HL.Table) << function(
     local dragTargetCenterScreenPos = CameraManager.mainCamera:WorldToScreenPoint(dragTargetCenterPos)
     local halfMinSizeInScreen = host.view.config.MOBILE_MIN_DRAG_SIZE / 2 / host.view.transform.rect.width * Screen.width
     if math.abs(curMousePos.x - dragTargetCenterScreenPos.x) > halfMinSizeInScreen or math.abs(curMousePos.y - dragTargetCenterScreenPos.y) > halfMinSizeInScreen then
-        local range = host.m_buildArgs.range
+        local range = self:_GetBlueprintDisplayRange()
         local targetWorldRect = Unity.Rect()
         targetWorldRect.size = Vector2(range.width, range.height)
         local direction = curMode.preparedDirection
@@ -370,7 +414,7 @@ FacBuildModeHandler_Blueprint._AdjustCameraForBlueprint = HL.Method(HL.Boolean) 
         return
     end
 
-    local range = self.m_host.m_buildArgs.range
+    local range = self:_GetBlueprintDisplayRange()
     if not range then
         return
     end
@@ -383,7 +427,7 @@ end
 FacBuildModeHandler_Blueprint._SetBluePrintSelectGrids = HL.Method(CS.UnityEngine.Vector2Int) << function(self, gridPos)
     local host = self.m_host
     host.m_lastBPGridPos = gridPos
-    local range = host.m_buildArgs.range
+    local range = self:_GetBlueprintDisplayRange()
     local curMode = self:_GetBlueprintMode()
     local dir = curMode.preparedDirection
     local needReverse = dir % 2 == 1

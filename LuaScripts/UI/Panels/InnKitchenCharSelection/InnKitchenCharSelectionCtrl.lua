@@ -301,8 +301,7 @@ InnKitchenCharSelectionCtrl._InitSortAndFilter = HL.Method(HL.Opt(HL.Table)) << 
     end
     self.view.charListNode.sortNode:InitSortNode(sortOptions, function(_optData, isIncremental)
         self.m_isIncremental = isIncremental
-        self:_RebuildDisplayList()
-        self:_RefreshCharList()
+        self:_RebuildAndRefreshCharList()
     end, sortSelectedCsIndex, self.m_isIncremental, true, self.view.charListNode.filterBtn)
 
     
@@ -313,8 +312,7 @@ InnKitchenCharSelectionCtrl._InitSortAndFilter = HL.Method(HL.Opt(HL.Table)) << 
         selectedTags = self.m_selectedFilterTags or {},
         onConfirm = function(selectedTags)
             self.m_selectedFilterTags = selectedTags or {}
-            self:_RebuildDisplayList()
-            self:_RefreshCharList()
+            self:_RebuildAndRefreshCharList()
         end,
         getResultCount = function(selectedTags)
             local oldSelected = self.m_selectedFilterTags
@@ -363,6 +361,16 @@ InnKitchenCharSelectionCtrl._RefreshCharList = HL.Method() << function(self)
     self.view.charListNode.charScrollList:UpdateCount(hasAny and #self.m_displayCharIds or 0)
 end
 
+InnKitchenCharSelectionCtrl._RebuildAndRefreshCharList = HL.Method() << function(self)
+    self:_RebuildDisplayList()
+    self:_RefreshCharList()
+    if not DeviceInfo.usingController then
+        return
+    end
+    self.view.charListNode.charScrollList:ScrollToIndex(0, true)
+    self:_SetFirstCharNaviTarget()
+end
+
 InnKitchenCharSelectionCtrl._OnUpdateCharCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     if not cell then
         return
@@ -392,14 +400,18 @@ InnKitchenCharSelectionCtrl._OnUpdateCharCell = HL.Method(HL.Any, HL.Number) << 
                 isCurrentKitchen = isCurrentKitchen,
                 transform = self.view.charListNode.rectTransform,
                 posType = UIConst.UI_TIPS_POS_TYPE.RightTop,
+                onClose = function()
+                    cell.view.selectNode.gameObject:SetActive(false)
+                end,
             })
+            cell.view.selectNode.gameObject:SetActive(true)
         end,
     })
     if DeviceInfo.usingController then
         local isSelected = selectedIndex ~= nil
         InputManagerInst:SetBindingText(cell.view.button.hoverConfirmBindingId, 
             isSelected and Language.key_hint_kitchen_char_unselect or Language.key_hint_kitchen_char_select)
-        InputManagerInst:ToggleGroup(cell.view.infoButton.groupId, false)
+        InputManagerInst:ToggleGroup(cell.view.infoButton.groupId, cell.view.button.isNaviTarget)
         cell.view.button.onIsNaviTargetChanged = function(isTarget)
             InputManagerInst:ToggleGroup(cell.view.infoButton.groupId, isTarget)
         end

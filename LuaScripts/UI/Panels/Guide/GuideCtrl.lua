@@ -501,14 +501,16 @@ GuideCtrl._SyncInfoAtFirstUIHighlight = HL.Method(HL.Table) << function(self, in
 
     local node = self.view.infoAtFirstUIHighlightDialogNode
     local hasArrow = self.view.infoAtFirstUIHighlightDialogNode.forceArrow.gameObject.activeInHierarchy
+    
+    local dialogTarget = info.is3DUI and info.cell.rectTransform or info.targetTrans
     UIUtils.updateTipsPosition(node.rectTransform,
-        info.targetTrans,
+        dialogTarget,
         self.view.rectTransform, self.uiCamera,
         UIConst.UI_TIPS_POS_TYPE.GuideTips,
         self.m_highlightDialogPadding,
         hasArrow and self.view.config.DIALOG_NODE_ARROW_OFFSET_X or 0
     )
-    self:_SyncUIHighlightDialogArrowState(info.targetTrans)
+    self:_SyncUIHighlightDialogArrowState(dialogTarget)
 
     local isForce = self.m_curStepInfo.type ~= GuideStepType.Weak
     if not isForce then

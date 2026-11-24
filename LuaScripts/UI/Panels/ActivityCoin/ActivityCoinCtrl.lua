@@ -33,7 +33,6 @@ ActivityCoinCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
             end,
         })
     end
-    args.skipReceive = true
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
 
     self.view.taskBtn.button.onClick:RemoveAllListeners()
@@ -89,44 +88,6 @@ ActivityCoinCtrl._RefreshUI = HL.Method() << function(self)
 
     
     self:_RefreshUIOpenText()
-
-    
-    self:_RefreshActivityCommonInfoRewardState()
-end
-
-ActivityCoinCtrl._RefreshActivityCommonInfoRewardState = HL.Method() << function(self)
-    local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
-    local receiveAll = false
-    if activity then
-        receiveAll = activity.receiveAllReward
-    end
-    receiveAll = receiveAll and self:_HasReceivedAllMilestoneRewards() and
-            not self.view.activityCommonInfo.view.config.HIDE_RECEIVE_ALL
-    local gotoNode = self.view.activityCommonInfo.view.gotoNode
-    gotoNode.receiveAllNode.gameObject:SetActive(receiveAll)
-    gotoNode.notReceiveAllNode.gameObject:SetActive(not receiveAll)
-end
-
-ActivityCoinCtrl._HasReceivedAllMilestoneRewards = HL.Method().Return(HL.Boolean) << function(self)
-    local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
-    if not activity then
-        return false
-    end
-
-    local haveCfg, milestoneCfg = Tables.activityRacingDungeonMilestoneTable:TryGetValue(self.m_activityId)
-    if not haveCfg then
-        return false
-    end
-
-    local hasMilestoneReward = false
-    local receivedNodes = activity.receivedMilestoneNodes
-    for nodeId, _ in pairs(milestoneCfg.milestoneMap) do
-        if not receivedNodes:Contains(nodeId) then
-            return false
-        end
-        hasMilestoneReward = true
-    end
-    return hasMilestoneReward
 end
 
 

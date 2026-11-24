@@ -47,6 +47,7 @@ SettlementDefenseFinishCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
         PhaseManager:PopPhase(PhaseId.SettlementDefenseFinish, function()
             SettlementDefenseFinishCtrl.s_cachedPhaseArgs = nil
             GameInstance.player.towerDefenseSystem.systemInDefense = false
+            LuaSystemManager.mainHudActionQueue:RemoveBlocker("SettlementDefense")
             Notify(MessageConst.ON_TOWER_DEFENSE_LEVEL_REWARDS_FINISHED)
         end)
     end)

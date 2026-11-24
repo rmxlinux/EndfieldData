@@ -201,13 +201,12 @@ AppStoreSystem._OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
         logger.error("Gacha character pool info not found, id: " .. tostring(poolId))
         return 
     end
+    if not poolInfo.isChar or poolInfo.type ~= GEnums.CharacterGachaPoolType.Special then
+        return 
+    end
     local hasData, poolData = Tables.gachaCharPoolTable:TryGetValue(poolId)
     if not hasData then
         logger.error("Gacha character pool data not found, id: " .. tostring(poolId))
-        return 
-    end
-
-    if not poolInfo.isChar or poolInfo.type ~= GEnums.CharacterGachaPoolType.Special then
         return 
     end
 

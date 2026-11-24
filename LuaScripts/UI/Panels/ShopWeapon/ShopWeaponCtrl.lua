@@ -82,7 +82,6 @@ ShopWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.m_naviCellTable = {}
     self.m_haveSeenLines = {}
-    LuaSystemManager.cashShopItemPrefabSystem:LoadWeaponCaseCell()
     self:UpdateUpWeapon()
     self:UpdateTimeLimitWeapons()
     self:UpdatePermanentWeapon()
@@ -166,6 +165,7 @@ ShopWeaponCtrl.OnClose = HL.Override() << function(self)
     if self.m_weeklyTimer and self.m_weeklyTimer > 0 then
         self:_ClearTimer(self.m_weeklyTimer)
     end
+    LuaSystemManager.commonPrefabSystem:Release(self)
 end
 
 
@@ -628,11 +628,16 @@ end
 
 ShopWeaponCtrl.UpdatePermanentWeapon = HL.Method() << function(self)
     local _, box, goods = self.m_shopSystem:GetPermanentWeaponShopData()
-    self.m_shopSystem:SortGoodsList(box)
-    self.m_shopSystem:SortGoodsList(goods)
-
-    local boxList = self:_GetGoodsDataInfoList(box)
-    local goodsList = self:_GetGoodsDataInfoList(goods)
+    local boxList = {}
+    if box ~= nil then
+        self.m_shopSystem:SortGoodsList(box)
+        boxList = self:_GetGoodsDataInfoList(box)
+    end
+    local goodsList = {}
+    if goods ~= nil then
+        self.m_shopSystem:SortGoodsList(goods)
+        goodsList = self:_GetGoodsDataInfoList(goods)
+    end
 
     
     local rowCount = (#boxList % 3 > 0) and (math.floor(#boxList / 3) + 1) or math.floor(#boxList / 3)
@@ -680,6 +685,10 @@ ShopWeaponCtrl.UpdatePermanentWeapon = HL.Method() << function(self)
 
         self:_SetupPermanentBoxCell(cell, index, rowCount, useGoodsNumber, boxList, goodsList, setupGoodsFunc, sharedDataList)
     end)
+    
+    if rowCount == 0 then
+        setupGoodsFunc()
+    end
 end
 
 
@@ -811,13 +820,39 @@ ShopWeaponCtrl._OnShopJumpEvent = HL.Method() << function(self)
 end
 
 ShopWeaponCtrl.OnGachaPoolInfoChanged = HL.Method() << function(self)
-    self:UpdateUpWeapon()
-    self:UpdateTimeLimitWeapons()
+    self:_RefreshGachaWeapons()
 end
 
 ShopWeaponCtrl.OnGachaPoolRoleDataChanged = HL.Method() << function(self)
+    self:_RefreshGachaWeapons()
+end
+
+ShopWeaponCtrl._RefreshGachaWeapons = HL.Method() << function(self)
+    local focusedGoodsId = self.m_pendingNaviGoodsId or (self.m_currNaviData and self.m_currNaviData.goodsId)
+    local permanentRows = {}
+    local permanentRoot = self.view.commonWeapons.transform
+    
+    for _, row in ipairs(self.m_naviCellTable) do
+        local firstData = row[1]
+        if firstData and firstData.cell.transform:IsChildOf(permanentRoot) then
+            table.insert(permanentRows, row)
+        end
+    end
+
+    self.m_naviCellTable = {}
     self:UpdateUpWeapon()
     self:UpdateTimeLimitWeapons()
+    for _, row in ipairs(permanentRows) do
+        table.insert(self.m_naviCellTable, row)
+    end
+
+    
+    if self:_TrySetNaviFocusByGoodsId(focusedGoodsId) then
+        return
+    end
+    self.m_currNaviRow = 1
+    self.m_currNaviCol = 1
+    self:_CustomNaviTarget(self.m_firstNaviData)
 end
 
 
@@ -1136,7 +1171,7 @@ ShopWeaponCtrl._GetSingleWeaponCell = HL.Method().Return(HL.Any) << function(sel
     if self.view.singleWeaponCell ~= nil then
         return self.view.singleWeaponCell
     end
-    local prefab = LuaSystemManager.cashShopItemPrefabSystem.weaponCaseCell
+    local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopWeaponCaseCell", self)
     if prefab == nil then
         return
     end
@@ -1151,7 +1186,7 @@ ShopWeaponCtrl._GetDoubleWeaponCell = HL.Method(HL.Number).Return(HL.Any) << fun
     if self.view[name] ~= nil then
         return self.view[name]
     end
-    local prefab = LuaSystemManager.cashShopItemPrefabSystem.weaponCaseCell
+    local prefab = LuaSystemManager.commonPrefabSystem:LoadPrefab("ShopWeaponCaseCell", self)
     if prefab == nil then
         return
     end

@@ -6,35 +6,96 @@
         {
           "actionData": [
             {
-              "$type": "Beyond.Gameplay.Core.Conditions.CheckBuffIdInContextAdvanced+Data, Gameplay.Beyond",
+              "$type": "Beyond.Gameplay.Core.Conditions.OrConditionAction+Data, Gameplay.Beyond",
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
               "serverActionIndex": 0,
-              "blackboardKey": null,
-              "buffIdList": [],
-              "checkType": 1,
-              "query": {
-                "queryType": 0,
-                "tags": [
-                  {
-                    "tagId": 1474064594
-                  },
-                  {
-                    "tagId": -168668661
-                  },
-                  {
-                    "tagId": -430063731
-                  }
-                ]
-              }
+              "conditionList": [
+                {
+                  "actionData": [
+                    {
+                      "$type": "Beyond.Gameplay.Core.Conditions.CheckBuffIdInContextAdvanced+Data, Gameplay.Beyond",
+                      "isEnable": true,
+                      "priorityLevel": 0,
+                      "priorityOffset": 0,
+                      "serverActionIndex": 1,
+                      "blackboardKey": null,
+                      "buffIdList": [],
+                      "checkType": 1,
+                      "query": {
+                        "queryType": 0,
+                        "tags": [
+                          {
+                            "tagId": -168668661
+                          },
+                          {
+                            "tagId": -581786931
+                          },
+                          {
+                            "tagId": -430063731
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "onlyExecuteWhenSourceIsGuard": false,
+                  "onlyExecuteWhenSourceIsMainChar": false
+                },
+                {
+                  "actionData": [
+                    {
+                      "$type": "Beyond.Gameplay.Core.Conditions.CheckBuffIdInContextAdvanced+Data, Gameplay.Beyond",
+                      "isEnable": true,
+                      "priorityLevel": 0,
+                      "priorityOffset": 0,
+                      "serverActionIndex": 2,
+                      "blackboardKey": null,
+                      "buffIdList": [
+                        {
+                          "blackboardKey": null,
+                          "useBlackboardKey": false,
+                          "value": "buff_common_cryst_cryst_frozen_triggered"
+                        },
+                        {
+                          "blackboardKey": null,
+                          "useBlackboardKey": false,
+                          "value": "buff_common_fire_fire_burning_triggered"
+                        },
+                        {
+                          "blackboardKey": null,
+                          "useBlackboardKey": false,
+                          "value": "buff_common_natural_natural_corrupt_triggered"
+                        }
+                      ],
+                      "checkType": 0,
+                      "query": {
+                        "queryType": 0,
+                        "tags": [
+                          {
+                            "tagId": -168668661
+                          },
+                          {
+                            "tagId": -430063731
+                          },
+                          {
+                            "tagId": -581786931
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "onlyExecuteWhenSourceIsGuard": false,
+                  "onlyExecuteWhenSourceIsMainChar": false
+                }
+              ]
             },
             {
               "$type": "Beyond.Gameplay.Core.SaveCollectedBuffBbValue+Data, Gameplay.Beyond",
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 1,
+              "serverActionIndex": 3,
               "blackboardKey": "count",
               "storeKey": "savecount"
             },
@@ -43,7 +104,7 @@
               "isEnable": true,
               "priorityLevel": 0,
               "priorityOffset": 0,
-              "serverActionIndex": 2,
+              "serverActionIndex": 4,
               "alwaysNext": true,
               "conditionAction": {
                 "actionData": [
@@ -52,7 +113,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 3,
+                    "serverActionIndex": 5,
                     "compare": 0,
                     "valueA": {
                       "blackboardKey": "savecount",
@@ -81,7 +142,7 @@
                     "isEnable": true,
                     "priorityLevel": 0,
                     "priorityOffset": 0,
-                    "serverActionIndex": 4,
+                    "serverActionIndex": 6,
                     "addition": {
                       "blackboardKey": null,
                       "useBlackboardKey": false,
@@ -118,6 +179,7 @@
     "value": 0.0
   },
   "applyTags": [],
+  "atbGainModifier": [],
   "attributeModifier": {
     "attributeModifiers": [
       {
@@ -190,6 +252,7 @@
     "showProgressInHpBar": false,
     "showProgressInNormalSkillButton": false,
     "showProgressInUltimateSkillButton": false,
+    "showStackCountInMainCharHpBar": false,
     "showWarningBackground": false,
     "useWeakProgressInNormalSkillButton": false
   },

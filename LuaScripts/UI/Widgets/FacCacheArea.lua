@@ -356,7 +356,7 @@ FacCacheArea.PlayArrowAnimation = HL.Method(HL.Opt(HL.Function)) << function(sel
     if self.m_isActivator then
         self.view.decoActivatorAnimation:PlayWithTween("facconnector_arrow04", callback)
     else
-        self.view.decoArrowAnimation:PlayWithTween("facmac_decoarrow_loop", callback)
+        self.view.decoArrowAnimation:PlayWithTween("facmac_decoarrow_once", callback)
     end
 end
 

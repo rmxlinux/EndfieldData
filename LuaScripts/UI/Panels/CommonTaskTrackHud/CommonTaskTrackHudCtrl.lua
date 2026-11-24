@@ -9,10 +9,19 @@ local Phase = {
     CompleteAllGoal = 4, 
 }
 
-local Category2CommonTaskQueueKey = {
-    ["world_energy_point_small"] = "ForceClearTrackHud",
-    ["world_energy_point"] = "ForceClearTrackHud",
+
+
+
+local PREEMPT_TRACK_HUD_CATEGORIES = {
+    ["world_energy_point_small"] = true,
+    ["world_energy_point"] = true,
 }
+
+
+local function _NeedPreemptTrackHud(subGameId)
+    local success, gameMechanicData = Tables.gameMechanicTable:TryGetValue(subGameId or "")
+    return success and PREEMPT_TRACK_HUD_CATEGORIES[gameMechanicData.gameCategory] == true
+end
 
 local TrackingHudState = {
     None = 0,
@@ -157,17 +166,14 @@ CommonTaskTrackHudCtrl.OnOpenSubGameTrackings = HL.StaticMethod(HL.Any) << funct
     end
 
     CommonTaskTrackHudCtrl.s_trackHudState = TrackingHudState.SubGame
-    local subGameId = GameWorld.worldInfo.curSubGameId
-    local success, gameMechanicData = Tables.gameMechanicTable:TryGetValue(subGameId)
-    local queueKey = nil
-    if success then
-        queueKey = Category2CommonTaskQueueKey[gameMechanicData.gameCategory]
+    if _NeedPreemptTrackHud(GameWorld.worldInfo.curSubGameId) then
+        LuaSystemManager.commonTaskTrackSystem:ClearTrack()
     end
-    if string.isEmpty(queueKey) then
-        LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackHud", doAction, interruptAction)
-    else
-        LuaSystemManager.commonTaskTrackSystem:AddRequest(queueKey, doAction, interruptAction)
+    
+    if GameInstance.mode.hideMissionHud then
+        UIManager:Close(PanelId.MissionHud)
     end
+    LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackHud", doAction, interruptAction)
 end
 
 CommonTaskTrackHudCtrl.OnCloseSubGameTrack = HL.StaticMethod(HL.Table) << function(args)
@@ -218,17 +224,14 @@ CommonTaskTrackHudCtrl.OnOpenLevelScriptCustomTask = HL.StaticMethod() << functi
     end
 
     CommonTaskTrackHudCtrl.s_trackHudState = TrackingHudState.Custom
-    local subGameId = GameWorld.worldInfo.curSubGameId
-    local success, gameMechanicData = Tables.gameMechanicTable:TryGetValue(subGameId or "")
-    local queueKey = nil
-    if success then
-        queueKey = Category2CommonTaskQueueKey[gameMechanicData.gameCategory]
+    if _NeedPreemptTrackHud(GameWorld.worldInfo.curSubGameId) then
+        LuaSystemManager.commonTaskTrackSystem:ClearTrack()
     end
-    if string.isEmpty(queueKey) then
-        LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackHud", doAction, interruptAction)
-    else
-        LuaSystemManager.commonTaskTrackSystem:AddRequest(queueKey, doAction, interruptAction)
+    
+    if GameInstance.mode.hideMissionHud then
+        UIManager:Close(PanelId.MissionHud)
     end
+    LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackHud", doAction, interruptAction)
 end
 
 CommonTaskTrackHudCtrl.OnCloseLevelScriptCustomTask = HL.StaticMethod() << function()

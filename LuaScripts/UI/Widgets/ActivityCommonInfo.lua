@@ -56,7 +56,15 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
     self.m_tagCells:Refresh(#tagIds, function(cell, index)
         local csIndex = CSIndex(index)
         local _,tagInfo = Tables.activityTagTable:TryGetValue(tagIds[csIndex])
-        cell.tagTxt.text = tagInfo.name
+        cell.tagTxt:SetAndResolveTextStyle(tagInfo.name)
+        
+        local bgColor = tagInfo.bgColor
+        if string.isEmpty(bgColor) then
+            bgColor = UIConst.ACTIVITY_TAG_DEFAULT_BG_COLOR
+        elseif string.sub(bgColor, 1, 1) == "#" then
+            bgColor = string.sub(bgColor, 2)
+        end
+        cell.tagBg.color = UIUtils.getColorByString(bgColor)
     end)
 
     
@@ -166,6 +174,30 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
         local id = unpack(stageArgs)
         if id == self.m_activityId then
             self:_InitCalendarNode()
+            self:_RefreshReceiveAllState()
+        end
+    end)
+
+    
+    self:RegisterMessage(MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE, function(taskArgs)
+        local id = unpack(taskArgs)
+        if id == self.m_activityId then
+            self:_RefreshReceiveAllState()
+        end
+    end)
+
+    
+    self:RegisterMessage(MessageConst.ON_ACTIVITY_MILESTONE_REWARD_RECEIVED, function(milestoneArgs)
+        local id = unpack(milestoneArgs)
+        if id == self.m_activityId then
+            self:_RefreshReceiveAllState()
+        end
+    end)
+
+    
+    self:RegisterMessage(MessageConst.ON_BUY_ITEM_SUCC, function()
+        if GameInstance.player.activitySystem:GetActivity(self.m_activityId) then
+            self:_RefreshReceiveAllState()
         end
     end)
 
@@ -257,13 +289,17 @@ ActivityCommonInfo.UpdateRewardInfo = HL.Method(HL.Opt(HL.String)) << function(s
         end)
     end
 
-    
-    if not self.m_skipReceive then
-        local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
-        local receiveAll = activity and activity.receiveAllReward and not self.view.config.HIDE_RECEIVE_ALL
-        self.view.gotoNode.receiveAllNode.gameObject:SetActive(receiveAll)
-        self.view.gotoNode.notReceiveAllNode.gameObject:SetActive(not receiveAll)
+    self:_RefreshReceiveAllState()
+end
+
+ActivityCommonInfo._RefreshReceiveAllState = HL.Method() << function(self)
+    if self.m_skipReceive then
+        return
     end
+    local receiveAll = ActivityUtils.isActivityReceiveAllRewardShown(self.m_activityId)
+        and not self.view.config.HIDE_RECEIVE_ALL
+    self.view.gotoNode.receiveAllNode.gameObject:SetActive(receiveAll)
+    self.view.gotoNode.notReceiveAllNode.gameObject:SetActive(not receiveAll)
 end
 
 ActivityCommonInfo.UpdateDescTxt = HL.Method(HL.String) << function(self, desc)

@@ -1,0 +1,1259 @@
+{
+  "missionId": "sm2l11m1d2",
+  "missionName": {
+    "key": "sm2l11m1_name"
+  },
+  "rewardId": "",
+  "missionType": 10,
+  "baseMissionImportance": 1,
+  "overrideImportance": 0,
+  "sortId": 0,
+  "charId": "",
+  "missionDescription": {},
+  "levelId": "indie_dg020",
+  "scope": 0,
+  "missionChapterBitmask": 2,
+  "skipMissionAcceptAnim": true,
+  "skipMissionCompleteAnim": true,
+  "questDic": {
+    "sm2l11m1d2_q#1": {
+      "questId": "sm2l11m1d2_q#1",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "sm2l11m1_desc_014"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.GameConditionServerPlaceHolder, Gameplay.Beyond",
+            "uniqueId": "1abff46d",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 3
+            },
+            "_progressToCompare": {
+              "constValue": 1
+            }
+          },
+          "description": {
+            "key": "objective_sm2l11m1_15_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.PosTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.SimpleConditionPlayerInsideBox, Gameplay.Beyond",
+                "levelId": "indie_dg020",
+                "boxCenter": {
+                  "x": -1164.374,
+                  "y": 283.203,
+                  "z": -362.8652
+                },
+                "boxRotation": {
+                  "x": 0.0,
+                  "y": 0.3865384,
+                  "z": 0.0,
+                  "w": 0.9222733
+                },
+                "boxSize": {
+                  "x": 18.0,
+                  "y": 8.0,
+                  "z": 20.0
+                },
+                "alwaysFalseWhenPlayerOnRope": false
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 0,
+              "missionTrackIconType": 0,
+              "jumpToCampFireGlobalId": 0,
+              "trackingPos": {
+                "x": -1153.54,
+                "y": 283.1985,
+                "z": -351.1322
+              }
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [],
+      "flowIndex": 0
+    },
+    "sm2l11m1d2_q#2": {
+      "questId": "sm2l11m1d2_q#2",
+      "questType": 0,
+      "objectiveConditionNum": 2,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "sm2l11m1_desc_008"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": true,
+          "condition": {
+            "$type": "Beyond.Gameplay.CombineCondition, Gameplay.Beyond",
+            "uniqueId": "00bfdecb",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "conditionEvalString": "{0}and{1}and{2}",
+            "subConditions": [
+              {
+                "$type": "Beyond.Gameplay.CheckMissionIntProperty, Gameplay.Beyond",
+                "uniqueId": "9a5444b5",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_missionId": {
+                  "paramSource": 1004
+                },
+                "_key": {
+                  "constValue": "mushroom1"
+                },
+                "_comparer": {
+                  "constValue": 0
+                },
+                "_compareValue": {
+                  "constValue": 1
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.CheckMissionIntProperty, Gameplay.Beyond",
+                "uniqueId": "7c95b6d9",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_missionId": {
+                  "paramSource": 1004
+                },
+                "_key": {
+                  "constValue": "mushroom2"
+                },
+                "_comparer": {
+                  "constValue": 0
+                },
+                "_compareValue": {
+                  "constValue": 1
+                }
+              },
+              {
+                "$type": "Beyond.Gameplay.CheckMissionIntProperty, Gameplay.Beyond",
+                "uniqueId": "49e54b4a",
+                "useCurrentScope": false,
+                "scopeMask": 1,
+                "useGraphScope": true,
+                "_missionId": {
+                  "paramSource": 1004
+                },
+                "_key": {
+                  "constValue": "mushroom3"
+                },
+                "_comparer": {
+                  "constValue": 0
+                },
+                "_compareValue": {
+                  "constValue": 1
+                }
+              }
+            ]
+          },
+          "description": {},
+          "useMultipleDescription": true,
+          "multipleDescription": [
+            {
+              "key": "objective_sm2l11m1_28_001"
+            },
+            {
+              "key": "objective_sm2l11m1_21_001"
+            }
+          ],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.MissionAreaTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "isInArea1",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "isInArea2",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "isInArea3",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "mushroom1",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  }
+                ]
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 0,
+              "missionTrackIconType": 0,
+              "jumpToCampFireGlobalId": 0,
+              "missionAreaId": "sm2l11m1_001"
+            },
+            {
+              "$type": "Beyond.Gameplay.MissionAreaTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "isInArea2",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "isInArea1",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "isInArea3",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "mushroom2",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  }
+                ]
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 0,
+              "missionTrackIconType": 0,
+              "jumpToCampFireGlobalId": 0,
+              "missionAreaId": "sm2l11m1_002"
+            },
+            {
+              "$type": "Beyond.Gameplay.MissionAreaTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "isInArea3",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "isInArea2",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "isInArea1",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "mushroom3",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  }
+                ]
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 0,
+              "missionTrackIconType": 0,
+              "jumpToCampFireGlobalId": 0,
+              "missionAreaId": "sm2l11m1_003"
+            },
+            {
+              "$type": "Beyond.Gameplay.PosTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionPlayerInsideSphere, Gameplay.Beyond",
+                    "levelId": "indie_dg020",
+                    "sphereCenter": {
+                      "x": -1102.46,
+                      "y": 287.15,
+                      "z": -298.58
+                    },
+                    "sphereRadius": 5.0,
+                    "alwaysFalseWhenPlayerOnRope": false
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "mushroom1",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "bigmushroom1",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  }
+                ]
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 1,
+              "missionTrackIconType": 1,
+              "jumpToCampFireGlobalId": 0,
+              "trackingPos": {
+                "x": -1157.39,
+                "y": 311.5695,
+                "z": -309.77
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.PosTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionPlayerInsideSphere, Gameplay.Beyond",
+                    "levelId": "indie_dg020",
+                    "sphereCenter": {
+                      "x": -1180.167,
+                      "y": 289.6487,
+                      "z": -418.0263
+                    },
+                    "sphereRadius": 5.0,
+                    "alwaysFalseWhenPlayerOnRope": false
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "mushroom2",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "bigmushroom2",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  }
+                ]
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 1,
+              "missionTrackIconType": 1,
+              "jumpToCampFireGlobalId": 0,
+              "trackingPos": {
+                "x": -1200.5,
+                "y": 309.8097,
+                "z": -397.99
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.PosTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionPlayerInsideSphere, Gameplay.Beyond",
+                    "levelId": "indie_dg020",
+                    "sphereCenter": {
+                      "x": -1239.96,
+                      "y": 290.68,
+                      "z": -364.36
+                    },
+                    "sphereRadius": 5.0,
+                    "alwaysFalseWhenPlayerOnRope": false
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "mushroom3",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "bigmushroom3",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  }
+                ]
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 1,
+              "missionTrackIconType": 1,
+              "jumpToCampFireGlobalId": 0,
+              "trackingPos": {
+                "x": -1202.0,
+                "y": 309.0,
+                "z": -331.87
+              }
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        },
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckCollectibleBitmapsBitTotalCount, Gameplay.Beyond",
+            "uniqueId": "79693916",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_levelId": {
+              "constValue": "indie_dg020"
+            },
+            "_objIds": {
+              "constValue": [
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000001,
+                  "slotId": 0
+                },
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000002,
+                  "slotId": 0
+                },
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000005,
+                  "slotId": 0
+                }
+              ]
+            },
+            "_compareOperator": {
+              "constValue": 3
+            },
+            "_progressToCompare": {
+              "constValue": 98
+            }
+          },
+          "description": {
+            "key": "objective_sm2l11m1_8_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.EnterSweetPieTracking, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "",
+              "guidingArea": 0.0,
+              "playerPosType": 0,
+              "missionTrackIconType": 0,
+              "jumpToCampFireGlobalId": 0
+            },
+            {
+              "$type": "Beyond.Gameplay.PosTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "bigmushroom1",
+                    "compareOperator": 0,
+                    "compareTarget": 1
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "mushroom1",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  }
+                ]
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 1,
+              "missionTrackIconType": 1,
+              "jumpToCampFireGlobalId": 0,
+              "trackingPos": {
+                "x": -1179.8,
+                "y": 290.4529,
+                "z": -272.9429
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.PosTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "bigmushroom2",
+                    "compareOperator": 0,
+                    "compareTarget": 1
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "mushroom2",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  }
+                ]
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 1,
+              "missionTrackIconType": 1,
+              "jumpToCampFireGlobalId": 0,
+              "trackingPos": {
+                "x": -1237.03,
+                "y": 296.0966,
+                "z": -373.31
+              }
+            },
+            {
+              "$type": "Beyond.Gameplay.PosTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": true,
+              "filterCondition": {
+                "$type": "Beyond.Gameplay.CombinedConditionRuntime, Gameplay.Beyond",
+                "conditionOperator": 0,
+                "reverse": false,
+                "subConditions": [
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "bigmushroom3",
+                    "compareOperator": 0,
+                    "compareTarget": 1
+                  },
+                  {
+                    "$type": "Beyond.Gameplay.SimpleConditionCheckMissionVariableInt, Gameplay.Beyond",
+                    "missionId": "sm2l11m1d2",
+                    "missionVarName": "mushroom3",
+                    "compareOperator": 0,
+                    "compareTarget": 0
+                  }
+                ]
+              },
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 1,
+              "missionTrackIconType": 1,
+              "jumpToCampFireGlobalId": 0,
+              "trackingPos": {
+                "x": -1159.74,
+                "y": 285.5229,
+                "z": -338.49
+              }
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "sm2l11m1d2_q#1"
+      ],
+      "flowIndex": 0
+    },
+    "sm2l11m1d2_q#3": {
+      "questId": "sm2l11m1d2_q#3",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "sm2l11m1_desc_016"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.Conditions.OnUIPanelClose, Gameplay.Beyond",
+            "uniqueId": "ff7fcf37",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_panelId": {
+              "constValue": "InventoryMushroom"
+            }
+          },
+          "description": {
+            "key": "objective_sm2l11m1_17_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "sm2l11m1d2_q#6"
+      ],
+      "flowIndex": 0
+    },
+    "sm2l11m1d2_q#3d5": {
+      "questId": "sm2l11m1d2_q#3d5",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "sm2l11m1_desc_016"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.GameConditionServerPlaceHolder, Gameplay.Beyond",
+            "uniqueId": "1ecbcc01",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 3
+            },
+            "_progressToCompare": {
+              "constValue": 1
+            }
+          },
+          "description": {},
+          "useMultipleDescription": true,
+          "multipleDescription": [
+            {
+              "key": "objective_sm2l11m1_9_001"
+            },
+            {
+              "key": "objective_sm2l11m1_18_001"
+            }
+          ],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [],
+          "mapTrackingToMultiDesc": true,
+          "multiDescTrackingInfoList": [
+            {
+              "actualList": [
+                {
+                  "$type": "Beyond.Gameplay.PosTrackingInfo, Gameplay.Beyond",
+                  "useFilterCondition": false,
+                  "sceneId": "indie_dg020",
+                  "guidingArea": 0.0,
+                  "playerPosType": 0,
+                  "missionTrackIconType": 0,
+                  "jumpToCampFireGlobalId": 0,
+                  "trackingPos": {
+                    "x": -1150.927,
+                    "y": 283.853,
+                    "z": -327.799
+                  }
+                }
+              ]
+            },
+            {
+              "actualList": [
+                {
+                  "$type": "Beyond.Gameplay.EntityTrackingInfo, Gameplay.Beyond",
+                  "useFilterCondition": false,
+                  "sceneId": "indie_dg020",
+                  "guidingArea": 0.0,
+                  "playerPosType": 0,
+                  "missionTrackIconType": 0,
+                  "jumpToCampFireGlobalId": 0,
+                  "trackScriptEntity": true,
+                  "entityLogicId": 0,
+                  "scriptId": 10000,
+                  "entitySlotId": 40002
+                }
+              ]
+            }
+          ],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "sm2l11m1d2_q#3"
+      ],
+      "flowIndex": 0
+    },
+    "sm2l11m1d2_q#4": {
+      "questId": "sm2l11m1d2_q#4",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "sm2l11m1_desc_009"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.GameConditionServerPlaceHolder, Gameplay.Beyond",
+            "uniqueId": "fb55acec",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_comparer": {
+              "constValue": 3
+            },
+            "_progressToCompare": {
+              "constValue": 2
+            }
+          },
+          "description": {
+            "key": "objective_sm2l11m1_26_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [
+            {
+              "$type": "Beyond.Gameplay.EntityTrackingInfo, Gameplay.Beyond",
+              "useFilterCondition": false,
+              "sceneId": "indie_dg020",
+              "guidingArea": 0.0,
+              "playerPosType": 0,
+              "missionTrackIconType": 0,
+              "jumpToCampFireGlobalId": 0,
+              "trackScriptEntity": true,
+              "entityLogicId": 0,
+              "scriptId": 10001,
+              "entitySlotId": 40001
+            }
+          ],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "sm2l11m1d2_q#3d5",
+        "sm2l11m1d2_q#5"
+      ],
+      "flowIndex": 0
+    },
+    "sm2l11m1d2_q#5": {
+      "questId": "sm2l11m1d2_q#5",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": false,
+      "descriptionOverride": {
+        "key": "sm2l11m1_desc_008"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": true,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckCollectibleBitmapsBitTotalCount, Gameplay.Beyond",
+            "uniqueId": "4657e9af",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_levelId": {
+              "constValue": "indie_dg020"
+            },
+            "_objIds": {
+              "constValue": [
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000001,
+                  "slotId": 0
+                },
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000002,
+                  "slotId": 0
+                },
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000005,
+                  "slotId": 0
+                },
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000009,
+                  "slotId": 0
+                }
+              ]
+            },
+            "_compareOperator": {
+              "constValue": 3
+            },
+            "_progressToCompare": {
+              "constValue": 99
+            }
+          },
+          "description": {
+            "key": "objective_sm2l11m1_8_001"
+          },
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 0,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "sm2l11m1d2_q#3"
+      ],
+      "flowIndex": 1
+    },
+    "sm2l11m1d2_q#6": {
+      "questId": "sm2l11m1d2_q#6",
+      "questType": 0,
+      "objectiveConditionNum": 1,
+      "rewardId": "",
+      "overrideMissionDesc": true,
+      "descriptionOverride": {
+        "key": "sm2l11m1_desc_008"
+      },
+      "overrideLevelId": false,
+      "levelIdOverride": "",
+      "showMode": 1000,
+      "forceShowHudAnim": false,
+      "ignoreNewQuestAnim": false,
+      "ignoreQuestCompleteAnim": false,
+      "blockQuestSkipToast": false,
+      "needHudUpdateTag": false,
+      "objectiveList": [
+        {
+          "multiple": false,
+          "condition": {
+            "$type": "Beyond.Gameplay.CheckCollectibleBitmapsBitTotalCount, Gameplay.Beyond",
+            "uniqueId": "d39f33f1",
+            "useCurrentScope": false,
+            "scopeMask": 1,
+            "useGraphScope": true,
+            "_levelId": {
+              "constValue": "indie_dg020"
+            },
+            "_objIds": {
+              "constValue": [
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000001,
+                  "slotId": 0
+                },
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000002,
+                  "slotId": 0
+                },
+                {
+                  "useSlotId": false,
+                  "logicId": 51300000005,
+                  "slotId": 0
+                }
+              ]
+            },
+            "_compareOperator": {
+              "constValue": 3
+            },
+            "_progressToCompare": {
+              "constValue": 98
+            }
+          },
+          "description": {},
+          "useMultipleDescription": false,
+          "multipleDescription": [],
+          "showProgressMethod": 2,
+          "muteTrack": false,
+          "mapSubCondition": false,
+          "trackingInfoList": [],
+          "mapTrackingToMultiDesc": false,
+          "multiDescTrackingInfoList": [],
+          "isObjectiveWrapper": false,
+          "wrapperSystemType": 0,
+          "objectiveWrapperStep": 0,
+          "isBlockObjective": false
+        }
+      ],
+      "needItemIds": [],
+      "prevQuestIdList": [
+        "sm2l11m1d2_q#2"
+      ],
+      "flowIndex": 0
+    }
+  },
+  "actionMapRaw": {
+    "dataMap": {
+      "headerList": [],
+      "actionList": [],
+      "getterList": []
+    }
+  },
+  "mainPathQuests": [
+    "sm2l11m1d2_q#1",
+    "sm2l11m1d2_q#2",
+    "sm2l11m1d2_q#6",
+    "sm2l11m1d2_q#3",
+    "sm2l11m1d2_q#3d5",
+    "sm2l11m1d2_q#4"
+  ],
+  "clientActionMapKey": [],
+  "clientActionMapValue": [],
+  "onMissionAcceptId": -1,
+  "onMissionCompletedId": -1,
+  "onMissionFailedId": -1,
+  "properties": [
+    {
+      "key": "isInArea1",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "isInArea2",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "isInArea3",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "mushroom1",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "mushroom2",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "mushroom3",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "hint1",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "hint2",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "hint3",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "hint",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "bigmushroom1",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "bigmushroom2",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    },
+    {
+      "key": "bigmushroom3",
+      "value": {
+        "type": 3,
+        "valueArray": [
+          {
+            "valueBit64": 0,
+            "valueString": ""
+          }
+        ]
+      }
+    }
+  ],
+  "propertyIdToKeyMap": {
+    "1": "isInArea1",
+    "2": "isInArea2",
+    "3": "isInArea3",
+    "4": "mushroom1",
+    "5": "mushroom2",
+    "6": "mushroom3",
+    "7": "hint",
+    "8": "hint1",
+    "9": "hint2",
+    "10": "hint3",
+    "11": "bigmushroom1",
+    "12": "bigmushroom2",
+    "13": "bigmushroom3"
+  },
+  "propertyKeyToIdMap": {
+    "bigmushroom1": 11,
+    "bigmushroom2": 12,
+    "bigmushroom3": 13,
+    "hint": 7,
+    "hint1": 8,
+    "hint2": 9,
+    "hint3": 10,
+    "isInArea1": 1,
+    "isInArea2": 2,
+    "isInArea3": 3,
+    "mushroom1": 4,
+    "mushroom2": 5,
+    "mushroom3": 6
+  },
+  "isWrapperMission": false,
+  "useRewardWrapper": false,
+  "useLevelIdWrapper": false,
+  "overrideDescOnlyConsiderMainPath": true
+}

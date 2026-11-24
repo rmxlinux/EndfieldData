@@ -92,6 +92,7 @@ local GeneralFunctionRoutes = {
     ["ToggleGetAudioSpatial"] = "_ToggleGetValue",
     ["ToggleGetCameraReverseX"] = "_ToggleGetValue",
     ["ToggleGetCameraReverseY"] = "_ToggleGetValue",
+    ["ToggleGetSweetPiePitchReverse"] = "_ToggleGetValue",
     ["ToggleGetEnableAutoAttackTouch"] = "_ToggleGetValue",
     ["ToggleGetEnableAutoAttackGamepad"] = "_ToggleGetValue",
     ["ToggleGetAutoSprint"] = "_ToggleGetValue",
@@ -109,6 +110,7 @@ local GeneralFunctionRoutes = {
     ["ToggleSetAudioSpatial"] = "_ToggleSetValue",
     ["ToggleSetCameraReverseX"] = "_ToggleSetValue",
     ["ToggleSetCameraReverseY"] = "_ToggleSetValue",
+    ["ToggleSetSweetPiePitchReverse"] = "_ToggleSetValue",
     ["ToggleSetEnableAutoAttackTouch"] = "_ToggleSetValue",
     ["ToggleSetEnableAutoAttackGamepad"] = "_ToggleSetValue",
     ["ToggleSetAutoSprint"] = "_ToggleSetValue",
@@ -143,6 +145,8 @@ local GeneralFunctionRoutes = {
 GameSettingCtrl.m_settingChanged = HL.Field(HL.Boolean) << false
 
 GameSettingCtrl.m_tabIndex = HL.Field(HL.Number) << -1
+
+GameSettingCtrl.m_initTabIndex = HL.Field(HL.Number) << INITIAL_TAB_INDEX
 
 GameSettingCtrl.m_tabCells = HL.Field(HL.Forward('UIListCache'))
 
@@ -303,6 +307,7 @@ GameSettingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitLoad()
 
     self:_BuildSettingDataList()
+    self.m_initTabIndex = self:_GetTabIndexById(type(arg) == "table" and arg.tabId or nil)
     self:_InitSettingTabList()
 
     
@@ -459,7 +464,20 @@ GameSettingCtrl._InitSettingTabList = HL.Method() << function(self)
     self.m_tabCells:Refresh(#self.m_tabDataList, function(tabCell, tabIndex)
         self:_RefreshSettingTabCell(tabCell, tabIndex)
     end)
-    self:_RefreshSettingTab(INITIAL_TAB_INDEX, true)
+    self:_RefreshSettingTab(self.m_initTabIndex, true)
+end
+
+
+GameSettingCtrl._GetTabIndexById = HL.Method(HL.Opt(HL.String)).Return(HL.Number) << function(self, tabId)
+    if string.isEmpty(tabId) then
+        return INITIAL_TAB_INDEX
+    end
+    for index, tabData in ipairs(self.m_tabDataList) do
+        if tabData.tabId == tabId then
+            return index
+        end
+    end
+    return INITIAL_TAB_INDEX
 end
 
 GameSettingCtrl._RefreshSettingTabCell = HL.Method(HL.Table, HL.Number) << function(self, tabCell, tabIndex)
@@ -475,7 +493,7 @@ GameSettingCtrl._RefreshSettingTabCell = HL.Method(HL.Table, HL.Number) << funct
     UIUtils.setTabIcons(tabCell,UIConst.UI_SPRITE_GAME_SETTING,spriteName)
 
     
-    tabCell.toggle.isOn = tabIndex == INITIAL_TAB_INDEX
+    tabCell.toggle.isOn = tabIndex == self.m_initTabIndex
     tabCell.toggle.checkIsValueValid = function(isOn)
         if not isOn then
             return true

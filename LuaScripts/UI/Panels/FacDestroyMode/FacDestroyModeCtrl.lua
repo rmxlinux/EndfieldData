@@ -762,7 +762,10 @@ FacDestroyModeCtrl._UpdateBatchActionInteractable = HL.Method() << function(self
 end
 
 FacDestroyModeCtrl._EnterBPMode = HL.Method(HL.Boolean) << function(self, isMove)
-    local range = GameInstance.remoteFactoryManager.batchSelect.selectedRange
+    local bp = LuaSystemManager.factory:GetBlueprintFromBatchSelectTargets()
+    
+    
+    local range = bp and bp.sourceRect or GameInstance.remoteFactoryManager.batchSelect.selectedRange
 
     if not isMove then
         if range.width > Tables.facBlueprintConst.BluePrintXLenMax or range.height > Tables.facBlueprintConst.BluePrintZLenMax then
@@ -785,7 +788,6 @@ FacDestroyModeCtrl._EnterBPMode = HL.Method(HL.Boolean) << function(self, isMove
         end
     end
 
-    local bp = LuaSystemManager.factory:GetBlueprintFromBatchSelectTargets()
     local targets = LuaSystemManager.factory.batchSelectTargets
     local showCreateHint = self.m_args.showCreateHint
     FacDestroyModeCtrl.ExitMode(true, false)

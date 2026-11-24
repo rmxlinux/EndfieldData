@@ -132,7 +132,7 @@ CinematicSystem.EndCinematicQueueItem = HL.Method(HL.Any) << function(self, hand
 end
 
 CinematicSystem.ToggleIgnoreCinematicQueue = HL.Method(HL.Boolean) << function(self, toggle)
-    LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud("Cinematic", toggle)
+    LuaSystemManager.mainHudActionQueue:SetAllowStartOutsideMainHud("Cinematic", toggle)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "CinematicSystem.ToggleIgnoreCinematicQueue", toggle)
 end
 

@@ -3,8 +3,6 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Mission
 local PHASE_ID = PhaseId.Mission
 
-local CHAPTER_ICON_PATH = "Mission/ChapterIconNew"
-local CHAPTER_BG_ICON_PATH = "Mission/ChapterBgIconNew"
 local CHAPTER_CHAR_ICON_PATH = "Mission/ChaptCharIconNew"
 
 local OPTIONAL_TEXT_COLOR = "C7EC59"
@@ -562,8 +560,9 @@ MissionCtrl._TraverseAllMissionCell = HL.Method(HL.Any).Return(HL.Boolean) << fu
             local gameObject = self.view.missionScrollView:Get(csIdx)
             if gameObject then
                 local contentCell = self.m_getMissionCellsFunc(gameObject)
-                if contentCell.missionCell.gameObject.activeSelf then
-                    callback(missionId, contentCell.missionCell)
+                local missionCell = contentCell:GetMissionCell()
+                if missionCell then
+                    callback(missionId, missionCell)
                 end
             end
         elseif t == MissionListCellType_Chapter then
@@ -571,14 +570,14 @@ MissionCtrl._TraverseAllMissionCell = HL.Method(HL.Any).Return(HL.Boolean) << fu
             local gameObject = self.view.missionScrollView:Get(csIdx)
             if gameObject then
                 local contentCell = self.m_getMissionCellsFunc(gameObject)
-                if contentCell.chapterCell.gameObject.activeSelf and contentCell.missionCellCache then
+                if contentCell:GetMissionCell(1) then
                     local missionList = viewInfo.missionList
                     for missionIdx = 1, #missionList do
                         local missionId = missionList[missionIdx].id
                         if missionId == self.m_lastSelectedMissionId then
                             hasLastSelectMission = true
                         end
-                        local missionCell = contentCell.missionCellCache:GetItem(missionIdx)
+                        local missionCell = contentCell:GetMissionCell(missionIdx)
                         if missionCell then
                             callback(missionId, missionCell)
                         end
@@ -713,18 +712,6 @@ MissionCtrl._RefreshMissionList = HL.Method() << function(self)
     self:_RefreshLatestMainChapterTag()
     self:_RefreshEmptyNode()
 
-    self.view.missionScrollView.getCellSize = function(index)
-        local luaIdx = LuaIndex(index)
-        local viewInfo = self.m_missionViewInfo[luaIdx]
-        if viewInfo.type == MissionListCellType_Chapter then
-            return 219 + 112 * #viewInfo.missionList
-        elseif viewInfo.type == MissionListCellType_Mission then
-            return 112
-        elseif viewInfo.type == MissionListCellType_Importance then
-            return 87
-        end
-    end
-
     local firstImportanceFound = false
     for i = 1, #self.m_missionViewInfo do
         local viewInfo = self.m_missionViewInfo[i]
@@ -734,106 +721,16 @@ MissionCtrl._RefreshMissionList = HL.Method() << function(self)
         end
     end
 
+    local refreshMissionCell = function(missionCell, missionId, importance)
+        local missionInfo = self.m_missionSystem:GetMissionInfo(missionId)
+        if missionInfo then
+            self:_SetMissionCellContent(missionCell, missionInfo, importance)
+        end
+    end
     self.view.missionScrollView.onUpdateCell:RemoveAllListeners()
     self.view.missionScrollView.onUpdateCell:AddListener(function(gameObject, index)
-        local luaIndex = LuaIndex(index)
-        local content = self.m_getMissionCellsFunc(gameObject)
-        local viewInfo = self.m_missionViewInfo[luaIndex]
-        if viewInfo.type == MissionListCellType_Chapter then
-            
-            content.chapterCell.gameObject:SetActiveIfNecessary(true)
-            content.missionCell.gameObject:SetActiveIfNecessary(false)
-            content.importanceNode.gameObject:SetActiveIfNecessary(false)
-            local chapterCell = content.chapterCell
-            chapterCell.newChapterTag.gameObject:SetActiveIfNecessary(
-                viewInfo.showNewChapterTag == true)
-            local chapterId = self.m_missionViewInfo[luaIndex].id
-            local chapterInfo = self.m_missionSystem:GetChapterInfo(chapterId)
-            if chapterInfo then
-                if chapterInfo.type == ChapterType.Main then
-                    chapterCell.episodeName:SetAndResolveTextStyle(chapterInfo.episodeName:GetText())
-                    local chapterNumTxt = chapterInfo.chapterNum:GetText()
-                    local episodeNumTxt = chapterInfo.episodeNum:GetText()
-                    local separator = ""
-                    if not string.isEmpty(chapterNumTxt) and not string.isEmpty(episodeNumTxt) then
-                        separator = " - "
-                    end
-                    chapterCell.chapterNumAndEpisodeNum:SetAndResolveTextStyle(chapterNumTxt .. separator .. episodeNumTxt)
-
-                    local chapterConfig = UIConst.CHAPTER_ICON_CONFIGS[chapterInfo.type]
-                    
-                    if not string.isEmpty(chapterInfo.icon) then
-                        chapterCell.icon.gameObject:SetActive(true)
-                        chapterCell.icon:LoadSprite(CHAPTER_ICON_PATH, chapterInfo.icon)
-                    elseif not string.isEmpty(chapterConfig.icon) then
-                        chapterCell.icon.gameObject:SetActive(true)
-                        chapterCell.icon:LoadSprite(CHAPTER_ICON_PATH, chapterConfig.icon)
-                    else
-                        chapterCell.icon.gameObject:SetActive(false)
-                        chapterCell.icon.sprite = nil
-                    end
-                    
-                    if not string.isEmpty(chapterInfo.bgIcon) then
-                        chapterCell.bgIcon.gameObject:SetActive(true)
-                        chapterCell.bgIcon:LoadSprite(CHAPTER_BG_ICON_PATH, chapterInfo.bgIcon)
-                    elseif not string.isEmpty(chapterConfig.bgIcon) then
-                        chapterCell.bgIcon.gameObject:SetActive(true)
-                        chapterCell.bgIcon:LoadSprite(CHAPTER_BG_ICON_PATH, chapterConfig.bgIcon)
-                    else
-                        chapterCell.bgIcon.gameObject:SetActive(false)
-                        chapterCell.bgIcon.sprite = nil
-                    end
-                    chapterCell.titleNode1.gameObject:SetActiveIfNecessary(true)
-                    chapterCell.titleNode2.gameObject:SetActiveIfNecessary(false)
-                else 
-                    chapterCell.titleTxt:SetAndResolveTextStyle(chapterInfo.episodeName:GetText())
-                    chapterCell.titleNode1.gameObject:SetActiveIfNecessary(false)
-                    chapterCell.titleNode2.gameObject:SetActiveIfNecessary(true)
-                end
-
-                
-                local missionList = self.m_missionViewInfo[luaIndex].missionList
-                content.missionCellCache = content.missionCellCache or UIUtils.genCellCache(chapterCell.missionCell)
-                content.missionCellCache:Refresh(#missionList, function(missionCell, luaIndex)
-                    local mission = missionList[luaIndex]
-                    local missionId = mission.id
-                    local missionInfo = self.m_missionSystem:GetMissionInfo(missionId)
-                    local importance = mission.importance
-                    if missionInfo then
-                        self:_SetMissionCellContent(missionCell, missionInfo, importance)
-                    end
-                end)
-            end
-        elseif viewInfo.type == MissionListCellType_Mission then
-            
-            content.chapterCell.gameObject:SetActiveIfNecessary(false)
-            content.missionCell.gameObject:SetActiveIfNecessary(true)
-            content.importanceNode.gameObject:SetActiveIfNecessary(false)
-            local missionCell = content.missionCell
-            local missionId = self.m_missionViewInfo[luaIndex].id
-            local missionInfo = self.m_missionSystem:GetMissionInfo(missionId)
-            local importance = viewInfo.importance
-            if missionInfo then
-                self:_SetMissionCellContent(missionCell, missionInfo, importance)
-            end
-        elseif viewInfo.type == MissionListCellType_Importance then
-            content.chapterCell.gameObject:SetActiveIfNecessary(false)
-            content.missionCell.gameObject:SetActiveIfNecessary(false)
-            content.importanceNode.gameObject:SetActiveIfNecessary(true)
-            content.importanceLayout.gameObject:SetActiveIfNecessary(not viewInfo.isFirstImportance)
-
-            local importance = viewInfo.importance
-            local targetState = "Vital"
-            if importance == MissionImportance.High then
-                targetState = "Vital"
-            elseif importance == MissionImportance.Mid then
-                targetState = "Secondary"
-            elseif importance == MissionImportance.Low then
-                targetState = "Normal"
-            end
-            content.importanceNodeStateController:SetState(targetState)
-        end
-        LayoutRebuilder.ForceRebuildLayoutImmediate(content.transform)
+        local cell = self.m_getMissionCellsFunc(gameObject)
+        cell:InitMissionListCell(self.m_missionViewInfo[LuaIndex(index)], refreshMissionCell)
     end)
     self.view.missionScrollView:UpdateCount(#self.m_missionViewInfo)
 end
@@ -1746,8 +1643,8 @@ MissionCtrl._ChangeSelectedMission = HL.Method(HL.Number) << function(self, offs
                 if missionViewInfo.id == self.m_selectedMissionId then
                     selectedMissionIndex = #missionIdInfoList
                 end
-                if content and content.missionCellCache then
-                    local missionCell = content.missionCellCache:GetItem(kk)
+                if content then
+                    local missionCell = content:GetMissionCell(kk)
                     if missionCell and missionCell.selectBtn == currentTarget then
                         focusedIndex = #missionIdInfoList
                     end
@@ -1758,7 +1655,8 @@ MissionCtrl._ChangeSelectedMission = HL.Method(HL.Number) << function(self, offs
             if v.id == self.m_selectedMissionId then
                 selectedMissionIndex = #missionIdInfoList
             end
-            if content and content.missionCell and content.missionCell.selectBtn == currentTarget then
+            local missionCell = content and content:GetMissionCell()
+            if missionCell and missionCell.selectBtn == currentTarget then
                 focusedIndex = #missionIdInfoList
             end
         end

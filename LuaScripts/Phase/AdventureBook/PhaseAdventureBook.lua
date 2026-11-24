@@ -37,9 +37,9 @@ end
 
 PhaseAdventureBook._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self.m_panelItemDic = {}
-    local arg = self.arg or {}
-    arg.phase = self
-    self.m_bookPanel = self:CreatePhasePanelItem(PanelId.AdventureBook, arg)
+    
+    self.arg = lume.copy(self.arg) or {}
+    self.m_bookPanel = self:CreatePhasePanelItem(PanelId.AdventureBook, self.arg)
     self:_BindControllerHintPlaceHolder()
 end
 
@@ -48,6 +48,8 @@ PhaseAdventureBook._OnRefresh = HL.Override() << function(self)
         return
     end
 
+    
+    self.arg = lume.copy(self.arg)
     Notify(MessageConst.ON_CHANGE_ADVENTURE_BOOK_TAB, self.arg)
 end
 
@@ -56,8 +58,6 @@ end
 
 PhaseAdventureBook._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     Notify(MessageConst.ON_PHASE_ADVENTURE_BOOK_BEHIND)
-    
-    Notify(MessageConst.HIDE_ITEM_TIPS)
 end
 
 PhaseAdventureBook._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -131,9 +131,7 @@ PhaseAdventureBook._OpenTab = HL.Method(HL.Number, HL.Boolean) << function(self,
         panelItem = self.m_panelItemDic[panelId]
         panelItem.uiCtrl:Show()
     else
-        local arg = self.arg or {}
-        arg.phase = self
-        panelItem = self:CreatePhasePanelItem(panelId, arg)
+        panelItem = self:CreatePhasePanelItem(panelId, self.arg or {})
         self.m_panelItemDic[panelId] = panelItem
     end
     local inAniName = changeToLeft and panelItem.uiCtrl.view.config.ANI_IN_RIGHT or panelItem.uiCtrl.view.config.ANI_IN_LEFT
@@ -187,7 +185,6 @@ PhaseAdventureBook.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << func
         arg.adventureStageViewIndex = self.m_curPanelItem.uiCtrl.m_curAdventureStage
         arg.selectedGroupType = self.m_curPanelItem.uiCtrl.m_selectedGroupType
     end
-    arg.phase = nil
     return arg
 end
 

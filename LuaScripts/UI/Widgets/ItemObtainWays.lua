@@ -200,7 +200,7 @@ ItemObtainWays._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.Table) <
     end
 
     
-    local craftInfoList, canCraft = FactoryUtils.getItemCrafts(itemId)
+    local craftInfoList, canCraft = FactoryUtils.getItemCrafts(itemId, false, false, false, false, true)
     local hasFormula = next(craftInfoList) ~= nil
     if canCraft and hasFormula then
         self:_InsertCrafts(obtainInfoList, craftInfoList)
@@ -438,11 +438,13 @@ ItemObtainWays.RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << fun
                 return
             end
             if info.phaseId then
-                if PhaseManager:CheckCanOpenPhase(info.phaseId, info.phaseArgs, false) then
-                    Notify(MessageConst.HIDE_ITEM_TIPS)
-                end
+                local canOpenPhase = PhaseManager:CheckCanOpenPhase(info.phaseId, info.phaseArgs, false)
                 if self.m_onBeforeJump then
                     self.m_onBeforeJump(info.phaseId, info.phaseArgs)
+                end
+                if canOpenPhase then
+                    
+                    Notify(MessageConst.HIDE_ITEM_TIPS)
                 end
                 
                 PhaseManager:GoToPhase(info.phaseId, info.phaseArgs)
@@ -504,16 +506,22 @@ ItemObtainWays._UpdateCraftCell = HL.Method(HL.Table, HL.Table) << function(self
             craftCell.itemCells = UIUtils.genCellCache(craftCell.itemCell)
         end
         local incomeCount = craftInfo.incomes and #craftInfo.incomes or 0
-        local outcomeCount = craftInfo.outcomes and #craftInfo.outcomes or 0
+        
+        local outComeList = craftInfo.outcomes
+        if craftInfo.byproduct and not string.isEmpty(craftInfo.byproduct.id) then
+            outComeList[1].byProductProb = 100 - craftInfo.byproduct.prob
+            outComeList[2] = { id = craftInfo.byproduct.id, count = craftInfo.byproduct.count, byProductProb = craftInfo.byproduct.prob }
+        end
+        local outcomeCount = outComeList and #outComeList or 0
         craftCell.itemCells:Refresh(incomeCount + outcomeCount, function(itemCell, itemIndex)
             local bundle
             if itemIndex <= incomeCount then
                 bundle = craftInfo.incomes[itemIndex]
             else
-                bundle = craftInfo.outcomes[itemIndex - incomeCount]
+                bundle = outComeList[itemIndex - incomeCount]
             end
             if self.view.config.IS_SIMPLE_ITEM then
-                itemCell:InitItemSimple(bundle.id, bundle.count)
+                itemCell:InitItemSimple(bundle.id, bundle.count, bundle.byProductProb)
             else
                 if self.m_onClickItem then
                     itemCell:InitItem(bundle, function()
@@ -530,15 +538,37 @@ ItemObtainWays._UpdateCraftCell = HL.Method(HL.Table, HL.Table) << function(self
             itemCell.gameObject.name = "Item-" .. bundle.id
         end)
         craftCell.arrow.transform:SetSiblingIndex(incomeCount + 1)
+        if craftCell.byproductSep then
+            if craftInfo.byproduct and not string.isEmpty(craftInfo.byproduct.id) then
+                craftCell.byproductSep.transform:SetSiblingIndex(incomeCount + 3)
+                craftCell.byproductSep.gameObject:SetActiveIfNecessary(true)
+            else
+                craftCell.byproductSep.gameObject:SetActiveIfNecessary(false)
+            end
+        end
         craftCell.line.gameObject:SetActive(craftIndex ~= craftCount)
         craftCell.mask.gameObject:SetActive(craftIndex == 1)
         if craftCell.modeLabel ~= nil then
-            local showMode = craftInfo.formulaMode ~= nil and craftInfo.formulaMode ~= FacConst.FAC_FORMULA_MODE_MAP.NORMAL
+            local showMode = (craftInfo.formulaMode ~= nil and craftInfo.formulaMode ~= FacConst.FAC_FORMULA_MODE_MAP.NORMAL) or craftInfo.formationId ~= nil
             craftCell.modeLabel.gameObject:SetActive(showMode)
             if showMode then
-                local _, modeData = Tables.factoryMachineCraftModeTable:TryGetValue(craftInfo.formulaMode)
-                if modeData then
-                    craftCell.modeLabel:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_COMMON, modeData.iconId)
+                if craftInfo.formationId ~= nil then
+                    craftCell.modeLabel:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, "icon_port_" .. craftInfo.formationId)
+                else
+                    local _, modeData = Tables.factoryMachineCraftModeTable:TryGetValue(craftInfo.formulaMode)
+                    if modeData then
+                        craftCell.modeLabel:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_COMMON, modeData.iconId)
+                    end
+                end
+            end
+
+            
+            if craftCell.formationStratumTag ~= nil then
+                if craftInfo.formationId ~= nil then
+                    craftCell.formationStratumTag.gameObject:SetActiveIfNecessary(true)
+                    craftCell.formationLvTxt.text = string.format(Language.LUA_FAC_FORMATION_LEVEL_FORMAT, tostring(craftInfo.formationLevel))
+                else
+                    craftCell.formationStratumTag.gameObject:SetActiveIfNecessary(false)
                 end
             end
         end
@@ -559,7 +589,11 @@ ItemObtainWays._UpdateCraftCell = HL.Method(HL.Table, HL.Table) << function(self
         
         if craftCell.limitedFormulaCtrl then
             if craftInfo.craftId ~= nil then
-                craftCell.limitedFormulaCtrl:SetState(showLimitedFormulaTag and "LimitedTimeEvent" or "Normal")
+                if craftInfo.formationId ~= nil then
+                    craftCell.limitedFormulaCtrl:SetState("Formation")
+                else
+                    craftCell.limitedFormulaCtrl:SetState(showLimitedFormulaTag and "LimitedTimeEvent" or "Normal")
+                end
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag1, craftInfo.craftId)
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag2, craftInfo.craftId)
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag3, craftInfo.craftId)
@@ -577,6 +611,19 @@ ItemObtainWays._UpdateCraftCell = HL.Method(HL.Table, HL.Table) << function(self
                         craftInfo.env ~= nil and
                         craftInfo.env ~= GEnums.FacEnvGenEnvType.None
                 )
+            end
+        end
+
+        
+        if craftCell.formationTitleNode ~= nil then
+            if craftInfo.formationId ~= nil then
+                craftCell.formationTitleNode.gameObject:SetActiveIfNecessary(true)
+                craftCell.formationTitleNode.iconImage:LoadSprite(UIConst.UI_SPRITE_FAC_ENVIRONMENT_ICON, craftInfo.titleIcon)
+                local formationLevelCfg = Tables.factoryFormationLevelTable:GetValue(craftInfo.formationId)
+                local levelName = formationLevelCfg.levels[craftInfo.formationLevel].name
+                craftCell.formationTitleNode.nameTxt.text = levelName
+            else
+                craftCell.formationTitleNode.gameObject:SetActiveIfNecessary(false)
             end
         end
 
@@ -604,7 +651,11 @@ ItemObtainWays._UpdateCraftCell = HL.Method(HL.Table, HL.Table) << function(self
             if not craftCell.addCells then
                 craftCell.addCells = UIUtils.genCellCache(craftCell.add)
             end
-            craftCell.addCells:Refresh(incomeCount + outcomeCount - 2, function(addCell, addCellIndex)
+            local addCount = incomeCount + outcomeCount - 2
+            if outcomeCount == 0 or (craftInfo.byproduct and not string.isEmpty(craftInfo.byproduct.id)) then
+                addCount = incomeCount - 1
+            end
+            craftCell.addCells:Refresh(addCount, function(addCell, addCellIndex)
                 local siblingIndex = 0
                 if addCellIndex <= incomeCount - 1 then
                     siblingIndex = addCellIndex * 2

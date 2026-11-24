@@ -13,6 +13,7 @@ local RESULT_2_REWARDS_CLIP = "dungeonsettlementpopup_change"
 
 local Category2OnBtnLeaveDungeonClickFunc = {
     [DungeonConst.DUNGEON_CATEGORY.HighDifficulty] = '_OnBtnLeaveDungeonClickHighDifficulty',
+    [DungeonConst.DUNGEON_CATEGORY.DoubleBattle] = '_OnBtnLeaveDungeonClickDoubleBattle',
 }
 
 DungeonSettlementPopupCtrl = HL.Class('DungeonSettlementPopupCtrl', uiCtrl.UICtrl)
@@ -266,6 +267,17 @@ DungeonSettlementPopupCtrl._OnBtnLeaveDungeonClickHighDifficulty = HL.Method() <
     self:PlayAnimationOutAndClose()
 end
 
+
+DungeonSettlementPopupCtrl._OnBtnLeaveDungeonClickDoubleBattle = HL.Method() << function(self)
+    local sourceActivity, sourceActivityId = self:_TryGetSourceActivity()
+    if sourceActivity == nil then
+        GameInstance.dungeonManager:LeaveDungeon()
+        return
+    end
+    DungeonUtils.onDungeonLeaveToEntryPanel(self.m_dungeonId, true, sourceActivityId)
+    self:PlayAnimationOutAndClose()
+end
+
 DungeonSettlementPopupCtrl._OnClickSkipGraduallyShow = HL.Method() << function(self)
     if self.m_hasShowResultState then
         self.animationWrapper:SampleClipAtPercent(RESULT_2_REWARDS_CLIP, 1)
@@ -291,52 +303,76 @@ DungeonSettlementPopupCtrl._GetRewardItems = HL.Method().Return(HL.Table) << fun
     local items = {}
     local firstPassRewardPack = GameInstance.player.inventory:ConsumeLatestRewardPackOfType(RewardSourceType.DungeonFirstPass)
     if firstPassRewardPack and firstPassRewardPack.rewardSourceType == RewardSourceType.DungeonFirstPass then
+        local firstPassItemMap = {}
         for _, itemBundle in pairs(firstPassRewardPack.itemBundleList) do
             local _, itemCfg = Tables.itemTable:TryGetValue(itemBundle.id)
             if itemCfg then
-                table.insert(items, {id = itemBundle.id,
-                                     count = itemBundle.count,
-                                     typeId = 4,
-                                     typeTag = DungeonConst.DUNGEON_REWARD_TAG_STATE.First,
-                                     sortId1 = itemCfg.sortId1,
-                                     sortId2 = itemCfg.sortId2,})
+                local item = firstPassItemMap[itemBundle.id]
+                if item then
+                    item.count = item.count + itemBundle.count
+                else
+                    item = {id = itemBundle.id,
+                            count = itemBundle.count,
+                            typeId = 4,
+                            typeTag = DungeonConst.DUNGEON_REWARD_TAG_STATE.First,
+                            sortId1 = itemCfg.sortId1,
+                            sortId2 = itemCfg.sortId2,}
+                    firstPassItemMap[itemBundle.id] = item
+                    table.insert(items, item)
+                end
             end
         end
     end
 
     local extraRewardPack = GameInstance.player.inventory:ConsumeLatestRewardPackOfType(RewardSourceType.DungeonExtraReward)
     if extraRewardPack and extraRewardPack.rewardSourceType == RewardSourceType.DungeonExtraReward then
+        local extraItemMap = {}
         for _, itemBundle in pairs(extraRewardPack.itemBundleList) do
             local _, itemCfg = Tables.itemTable:TryGetValue(itemBundle.id)
             if itemCfg then
-                table.insert(items, {id = itemBundle.id,
-                                     count = itemBundle.count,
-                                     typeId = 3,
-                                     typeTag = DungeonConst.DUNGEON_REWARD_TAG_STATE.Extra,
-                                     sortId1 = itemCfg.sortId1,
-                                     sortId2 = itemCfg.sortId2,})
+                local item = extraItemMap[itemBundle.id]
+                if item then
+                    item.count = item.count + itemBundle.count
+                else
+                    item = {id = itemBundle.id,
+                            count = itemBundle.count,
+                            typeId = 3,
+                            typeTag = DungeonConst.DUNGEON_REWARD_TAG_STATE.Extra,
+                            sortId1 = itemCfg.sortId1,
+                            sortId2 = itemCfg.sortId2,}
+                    extraItemMap[itemBundle.id] = item
+                    table.insert(items, item)
+                end
             end
         end
     end
 
     local mainRewardPack = GameInstance.player.inventory:ConsumeLatestRewardPackOfType(RewardSourceType.DungeonMainReward)
     if mainRewardPack and mainRewardPack.rewardSourceType == RewardSourceType.DungeonMainReward then
+        local mainItemMap = {}
         for _, itemBundle in pairs(mainRewardPack.itemBundleList) do
             local _, itemCfg = Tables.itemTable:TryGetValue(itemBundle.id)
             if itemCfg then
-                local typeTag = self:_TryGetRewardTypeTag(itemBundle.id)
-                local typeId = typeTag == DungeonConst.DUNGEON_REWARD_TAG_STATE.Regular and 2 or 1
-                table.insert(items, {id = itemBundle.id,
-                                     count = itemBundle.count,
-                                     typeId = typeId,
-                                     typeTag = typeTag,
-                                     sortId1 = itemCfg.sortId1,
-                                     sortId2 = itemCfg.sortId2,})
+                local item = mainItemMap[itemBundle.id]
+                if item then
+                    item.count = item.count + itemBundle.count
+                else
+                    local typeTag = self:_TryGetRewardTypeTag(itemBundle.id)
+                    local typeId = typeTag == DungeonConst.DUNGEON_REWARD_TAG_STATE.Regular and 2 or 1
+                    item = {id = itemBundle.id,
+                            count = itemBundle.count,
+                            typeId = typeId,
+                            typeTag = typeTag,
+                            sortId1 = itemCfg.sortId1,
+                            sortId2 = itemCfg.sortId2,}
+                    mainItemMap[itemBundle.id] = item
+                    table.insert(items, item)
+                end
             end
         end
     end
 
-    local sortKeys = UIConst.COMMON_ITEM_SORT_KEYS
+    local sortKeys = lume.copy(UIConst.COMMON_ITEM_SORT_KEYS)
     table.insert(sortKeys, 1, "typeId")
     table.sort(items, Utils.genSortFunction(sortKeys))
     return items
@@ -495,16 +531,16 @@ DungeonSettlementPopupCtrl._UpdateDungeonNameCell = HL.Method(HL.Any) << functio
 end
 
 
-DungeonSettlementPopupCtrl._TryGetSourceActivity = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+DungeonSettlementPopupCtrl._TryGetSourceActivity = HL.Method().Return(HL.Opt(HL.Any, HL.String)) << function(self)
     for aid, activityDungeonData in pairs(Tables.activityDungeonTable) do
         if activityDungeonData and activityDungeonData.gameMap and activityDungeonData.gameMap:ContainsKey(self.m_dungeonId) then
             local activity = GameInstance.player.activitySystem:GetActivity(aid)
             if activity then
-                return activity
+                return activity, aid
             end
         end
     end
-    return nil
+    return nil, nil
 end
 
 

@@ -221,6 +221,7 @@ EquipTechCtrl._CollectEnhanceMaterialResumeState = HL.Method().Return(HL.Table) 
         selectedEnhancedAttrIndex = attrShowInfo and attrShowInfo.enhancedAttrIndex or 0,
         selectedMaterialInstIdList = self.m_selectedMaterialInstIdList,
         selectedMaterialInstId2Index = self.m_selectedMaterialInstId2Index,
+        selectedPrimeItemId = self.m_selectedPrimeItemId,
         materialListMode = self.m_materialListMode,
         selectedManufacturedFilterTags = self.m_selectedManufacturedFilterTags,
         manufacturedFormulaCountMap = self.m_manufacturedFormulaCountMap,
@@ -1352,7 +1353,9 @@ end
 EquipTechCtrl._OnItemChanged = HL.Method(HL.Table) << function(self, args)
     local changedItemId2DiffCount = unpack(args)
 
-    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and self.m_manufacturedCostOwnedCache then
+    if self.view.stateController.currentStateName == STATE_NAME.ENHANCE_MATERIAL and
+        self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and
+        self.m_manufacturedCostOwnedCache then
         local touched = false
         for resourceId, _ in pairs(self.m_manufacturedCostOwnedCache) do
             if changedItemId2DiffCount:ContainsKey(resourceId) then
@@ -1380,7 +1383,9 @@ end
 EquipTechCtrl._OnWalletChanged = HL.Method(HL.Table) << function(self, args)
     local itemId = unpack(args)
     
-    if self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and self.m_manufacturedCostOwnedCache and self.m_manufacturedCostOwnedCache[itemId] ~= nil then
+    if self.view.stateController.currentStateName == STATE_NAME.ENHANCE_MATERIAL and
+        self.m_materialListMode == ENHANCE_MATERIAL_LIST_TYPE.MANUFACTURED and
+        self.m_manufacturedCostOwnedCache and self.m_manufacturedCostOwnedCache[itemId] ~= nil then
         self:_RefreshManufacturedCostOwnedCache()
     end
     local needRefresh = false
@@ -1703,6 +1708,9 @@ EquipTechCtrl.m_selectedMaterialInstIdList = HL.Field(HL.Table)
 
 EquipTechCtrl.m_selectedMaterialInstId2Index = HL.Field(HL.Table)
 
+
+EquipTechCtrl.m_selectedPrimeItemId = HL.Field(HL.String) << ""
+
 EquipTechCtrl.m_enhanceGuaranteeFailedCount = HL.Field(HL.Number) << 0
 
 EquipTechCtrl.m_enhanceGuaranteeMaxFailedCount = HL.Field(HL.Number) << 0
@@ -1760,6 +1768,7 @@ EquipTechCtrl.m_quickFillCurChainId = HL.Field(HL.Int) << 0
 
 EquipTechCtrl._BackToEnhanceTarget = HL.Method() << function(self)
     self.view.stateController:SetState(STATE_NAME.ENHANCE_TARGET)
+    self.m_selectedAttrShowInfoIndex = 0
     self.view.leftBarEnhance.layoutElement.ignoreLayout = false
     self.view.leftBarEnhance.inputGroup.enabled = true
     InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.selectMaterials.listNodeNaviGroup)
@@ -1885,7 +1894,7 @@ EquipTechCtrl._NotifySwitchMaterialModeClearToast = HL.Method() << function(self
             end
         end
     else
-        hasSelection = next(self.m_selectedMaterialInstIdList or {}) ~= nil
+        hasSelection = next(self.m_selectedMaterialInstIdList or {}) ~= nil or self:_IsPrimeSelected()
     end
     if hasSelection then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_CLEAR_WAIT_FOR_PRODUCE)
@@ -1898,6 +1907,7 @@ EquipTechCtrl._SwitchMaterialListMode = HL.Method(HL.String, HL.Opt(HL.Any, HL.T
     self.m_manufacturedChainSelectFormulaId = nil
     self.m_manufacturedAutoSelectChainChanging = false
     self.m_isManufacturedNaviTargetSet = false
+    self.m_selectedPrimeItemId = ""
     
     if not resumeState then
         self.m_selectedMaterialInstIdList = {}
@@ -2580,6 +2590,10 @@ EquipTechCtrl._RefreshManufacturedVisibleCells = HL.Method(HL.Opt(HL.String, HL.
 end
 
 EquipTechCtrl._RefreshManufacturedCostOwnedCache = HL.Method() << function(self)
+    if self.view.stateController.currentStateName ~= STATE_NAME.ENHANCE_MATERIAL then
+        return
+    end
+
     local ownedCache = self.m_manufacturedCostOwnedCache
     if not ownedCache then
         return
@@ -2771,13 +2785,18 @@ EquipTechCtrl._ClearSelectedEnhanceMaterials = HL.Method() << function(self)
         self:_RefreshManufacturedComplementRemind()
         return
     end
-    if not self.m_selectedMaterialInstIdList or #self.m_selectedMaterialInstIdList == 0 then
+    
+    local hasEquipMaterial = self.m_selectedMaterialInstIdList and #self.m_selectedMaterialInstIdList > 0
+    local hasPrime = self:_IsPrimeSelected()
+    if not hasEquipMaterial and not hasPrime then
         return
     end
     self.m_selectedMaterialInstIdList = {}
     self.m_selectedMaterialInstId2Index = {}
+    self.m_selectedPrimeItemId = ""
     self.m_manufacturedFormulaCountMap = {}
     self:_UpdateSelectedMaterialCellsIndex()
+    self:_UpdatePrimeMaterialCellSelections()
     self:_RefreshEnhanceInfo()
 end
 
@@ -2792,6 +2811,9 @@ EquipTechCtrl._GetSelectedEnhanceMaterialCount = HL.Method().Return(HL.Number) <
         return total
     end
     
+    if self:_IsPrimeSelected() then
+        return 1
+    end
     local list = self.m_selectedMaterialInstIdList
     return list and #list or 0
 end
@@ -2987,6 +3009,10 @@ EquipTechCtrl._AutoSelectOwnEnhanceMaterials = HL.Method(HL.Opt(HL.Boolean)) << 
     if not self.m_materialGroups or #self.m_materialGroups == 0 then
         return
     end
+    
+    if self:_IsPrimeSelected() then
+        return
+    end
     local isUserClick = fromUserClick == true
     self.m_selectedMaterialInstIdList = self.m_selectedMaterialInstIdList or {}
     self.m_selectedMaterialInstId2Index = self.m_selectedMaterialInstId2Index or {}
@@ -3051,6 +3077,7 @@ end
 EquipTechCtrl._RefreshEnhanceMaterialList = HL.Method(HL.Opt(HL.Any, HL.Table)) << function(self, resumeState, precomputedGroups)
     self.m_selectedMaterialInstIdList = resumeState and resumeState.selectedMaterialInstIdList or {}
     self.m_selectedMaterialInstId2Index = resumeState and resumeState.selectedMaterialInstId2Index or {}
+    self.m_selectedPrimeItemId = resumeState and resumeState.selectedPrimeItemId or ""
 
     self.m_materialGroups = precomputedGroups or self:_ComputeEnhanceMaterialGroups()
 
@@ -3063,7 +3090,11 @@ EquipTechCtrl._RefreshEnhanceMaterialList = HL.Method(HL.Opt(HL.Any, HL.Table)) 
     end
 
     for _, group in ipairs(self.m_materialGroups) do
-        group.uiCellCount = math.ceil(#group.itemList / MATERIAL_CELL_COUNT_PER_ROW) + 1
+        if group.title == Language.LUA_EQUIP_ENHANCE_MATERIALS_PRIME_TITLE then
+            group.uiCellCount = #group.itemList + 1
+        else
+            group.uiCellCount = math.ceil(#group.itemList / MATERIAL_CELL_COUNT_PER_ROW) + 1
+        end
     end
     self.m_getMaterialGroupCell = self.m_getMaterialGroupCell or UIUtils.genCachedCellFunction(self.view.selectMaterials.itemList)
     self.view.selectMaterials.itemList.getCellSize = function(csIndex)
@@ -3093,15 +3124,22 @@ EquipTechCtrl._RefreshEnhanceMaterialList = HL.Method(HL.Opt(HL.Any, HL.Table)) 
             elseif luaIndex > cellCount and luaIndex <= nextCellCount then
                 targetGroup = group
                 local itemCellCountInGroup = luaIndex - cellCount - 1
-                startIndex = (itemCellCountInGroup - 1) * MATERIAL_CELL_COUNT_PER_ROW + 1
-                endIndex = math.min(startIndex + MATERIAL_CELL_COUNT_PER_ROW - 1, #group.itemList)
+                if group.title == Language.LUA_EQUIP_ENHANCE_MATERIALS_PRIME_TITLE then
+                    
+                    startIndex = itemCellCountInGroup
+                    endIndex = startIndex
+                else
+                    startIndex = (itemCellCountInGroup - 1) * MATERIAL_CELL_COUNT_PER_ROW + 1
+                    endIndex = math.min(startIndex + MATERIAL_CELL_COUNT_PER_ROW - 1, #group.itemList)
+                end
                 break
             end
             cellCount = nextCellCount
         end
         local cell = self.m_getMaterialGroupCell(object)
+        
         cell.gameObject.name = "MaterialGroupCell"
-        self:_UpdateEnhanceMaterialGroupCell(targetGroup, cell, startIndex, endIndex)
+        self:_UpdateEnhanceMaterialGroupCell(targetGroup, cell, startIndex, endIndex, csIndex)
     end)
     local allCellCount = 0
     for _, group in ipairs(self.m_materialGroups) do
@@ -3166,13 +3204,18 @@ EquipTechCtrl._SetSelectMaterialsItemListNaviToFirstFullyVisibleCell = HL.Method
         return true
     end
     local function tryFocusGroupCell(groupCell, requireFull)
-        if not groupCell or groupCell.isTitle or not groupCell.itemCellCache then
+        if not groupCell or groupCell.isTitle or (not groupCell.itemCellCache and not groupCell.primeEnhanceLayout) then
             return false
         end
         if requireFull and not _isRectTransformFullyInsideViewport(groupCell.rectTransform, viewportRt) then
             return false
         end
-        local itemCell = groupCell.itemCellCache:Get(1)
+        local itemCell
+        if groupCell.itemCellCache then
+            itemCell = groupCell.itemCellCache:Get(1)
+        elseif groupCell.primeEnhanceLayout then
+            itemCell = groupCell.primeEnhanceLayout.primeEnhanceMaterialCell
+        end
         if itemCell and itemCell.btn then
             self:SetNaviTarget(itemCell.btn)
             self.m_isEnhanceMaterialNaviTargetSet = true
@@ -3204,7 +3247,12 @@ EquipTechCtrl._FindEnhanceMaterialJumpListLuaIndex = HL.Method(HL.String).Return
         if group.uiCellCount and group.itemList then
             for itemIdx, itemInfo in ipairs(group.itemList) do
                 if itemInfo.id == templateId then
-                    local rowInGroup = math.ceil(itemIdx / MATERIAL_CELL_COUNT_PER_ROW)
+                    local rowInGroup
+                    if group.title == Language.LUA_EQUIP_ENHANCE_MATERIALS_PRIME_TITLE then
+                        rowInGroup = itemIdx
+                    else
+                        rowInGroup = math.ceil(itemIdx / MATERIAL_CELL_COUNT_PER_ROW)
+                    end
                     return cellCount + 1 + rowInGroup
                 end
             end
@@ -3291,16 +3339,129 @@ EquipTechCtrl._CanAddEnhanceIngredient = HL.Method().Return(HL.Boolean) << funct
     return true
 end
 
-EquipTechCtrl._UpdateEnhanceMaterialGroupCell = HL.Method(HL.Table, HL.Table, HL.Number, HL.Number) << function(self, group, cell, startIndex, endIndex)
+EquipTechCtrl._GetEnhanceMaterialNaviTargetOnDown = HL.Method(HL.Number).Return(HL.Opt(CS.UnityEngine.UI.Selectable)) << function(self, csIndex)
+    local itemList = self.view.selectMaterials.itemList
+    for nextCSIndex = csIndex + 1, itemList.count - 1 do
+        local cellGo = itemList:Get(nextCSIndex)
+        if not cellGo then
+            return nil
+        end
+        local groupCell = self.m_getMaterialGroupCell(cellGo)
+        if not groupCell.isTitle then
+            if groupCell.primeEnhanceLayout.gameObject.activeSelf then      
+                return nil
+            end
+            local itemCell = groupCell.itemCellCache:Get(1)
+            return itemCell and itemCell.btn
+        end
+    end
+    return nil
+end
+
+EquipTechCtrl._UpdateEnhanceMaterialGroupCell = HL.Method(HL.Table, HL.Table, HL.Number, HL.Number, HL.Number) << function(self, group, cell, startIndex, endIndex, csIndex)
+    cell.primeEnhanceLayout.primeEnhanceMaterialCell.btn.customNaviTargetInDirFunc = nil
     local isTitle = startIndex == 0 and endIndex == 0
     cell.isTitle = isTitle
+    
+    local isPrimeGroup = not isTitle and group.title == Language.LUA_EQUIP_ENHANCE_MATERIALS_PRIME_TITLE
     cell.titleNode.gameObject:SetActive(isTitle)
-    cell.layout.gameObject:SetActive(not isTitle)
+    cell.layout.gameObject:SetActive(not isTitle and not isPrimeGroup)
+    cell.primeEnhanceLayout.gameObject:SetActive(not isTitle and isPrimeGroup)
     if isTitle then
         cell.titleTxt.text = group.title
         return
     end
     local itemCount = endIndex - startIndex + 1
+    local function bindEnhanceMaterialItemTips(materialCell, itemInfo)
+        materialCell.btnSymbol.onClick:RemoveAllListeners()
+        materialCell.btnSymbol.onClick:AddListener(function()
+            if DeviceInfo.usingController and not self.m_isEnhanceMaterialItemTipsMode then
+                self.m_isEnhanceMaterialItemTipsMode = true
+                self.m_closeEnhanceMaterialItemTipsBindingId = self:BindInputPlayerAction(
+                    "common_back", function()
+                        self:_CloseEnhanceMaterialItemTips()
+                        materialCell.btnSymbolInputGroup.enabled = true
+                    end, self.view.selectMaterials.itemListInputGroup.groupId)
+                Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
+                    panelId = PANEL_ID,
+                    isGroup = true,
+                    id = self.view.selectMaterials.itemListInputGroup.groupId,
+                    hintPlaceholder = self.view.controllerHintPlaceholder,
+                    rectTransform = self.view.selectMaterials.itemListRectTransform,
+                    noHighlight = true,
+                })
+                materialCell.btnSymbolInputGroup.enabled = false
+            end
+            self:_ShowEnhanceMaterialItemTips(itemInfo)
+        end)
+        materialCell.btn.onIsNaviTargetChanged = function(isTarget)
+            materialCell.btnSymbolInputGroup.enabled = isTarget and not self.m_isEnhanceMaterialItemTipsMode
+            if isTarget and self.m_isEnhanceMaterialItemTipsMode then
+                self:_ShowEnhanceMaterialItemTips(itemInfo)
+            end
+        end
+        if DeviceInfo.usingController then
+            materialCell.btnSymbolInputGroup.enabled = false
+        end
+    end
+    if isPrimeGroup then
+        
+        local primeCell = cell.primeEnhanceLayout.primeEnhanceMaterialCell
+        primeCell.btn.customNaviTargetInDirFunc = function(dir)
+            
+            if dir == CS.UnityEngine.UI.NaviDirection.Down then
+                return self:_GetEnhanceMaterialNaviTargetOnDown(csIndex)
+            end
+            return nil
+        end
+        local itemInfo = group.itemList[startIndex]
+        primeCell.gameObject.name = itemInfo.id
+        primeCell.itemInfo = itemInfo
+        primeCell.equipItem:InitEquipItem({
+            itemInteractable = false,
+        })
+        
+        primeCell.item:InitItem({ id = itemInfo.id })
+        
+        if primeCell.equipEnhanceLevelNode then
+            primeCell.equipEnhanceLevelNode.gameObject:SetActive(false)
+        end
+        if primeCell.txtHigh then
+            primeCell.txtHigh.gameObject:SetActive(false)
+        end
+        if primeCell.txtNormal then
+            primeCell.txtNormal.gameObject:SetActive(false)
+        end
+        bindEnhanceMaterialItemTips(primeCell, itemInfo)
+        
+        primeCell.btn.onClick:RemoveAllListeners()
+        primeCell.btn.onClick:AddListener(function()
+            if self.m_selectedPrimeItemId == itemInfo.id then
+                self.m_selectedPrimeItemId = ""
+            else
+                
+                if Utils.getItemCount(itemInfo.id) <= 0 then
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_ENHANCE_PRIME_COUNT_NOT_ENOUGH)
+                    return
+                end
+                self.m_selectedPrimeItemId = itemInfo.id
+                
+                if self.m_selectedMaterialInstIdList and #self.m_selectedMaterialInstIdList > 0 then
+                    self.m_selectedMaterialInstIdList = {}
+                    self.m_selectedMaterialInstId2Index = {}
+                    self:_UpdateSelectedMaterialCellsIndex()
+                end
+            end
+            self:_UpdatePrimeMaterialCellSelections()
+            self:_RefreshEnhanceInfo()
+        end)
+        self:_UpdatePrimeMaterialCellSelection(primeCell)
+        if DeviceInfo.usingController and not self.m_isEnhanceMaterialNaviTargetSet and self.m_materialFastScrollIndex <= 0 then
+            self:SetNaviTarget(primeCell.btn)
+            self.m_isEnhanceMaterialNaviTargetSet = true
+        end
+        return
+    end
     cell.itemCellCache = cell.itemCellCache or UIUtils.genCellCache(cell.enhanceMaterialCell)
     
     cell.itemCellCache:Refresh(itemCount, function(cell, index)
@@ -3319,35 +3480,9 @@ EquipTechCtrl._UpdateEnhanceMaterialGroupCell = HL.Method(HL.Table, HL.Table, HL
             equipInstId = itemInfo.instId,
             itemInteractable = false,
         })
-        cell.btnSymbol.onClick:RemoveAllListeners()
-        cell.btnSymbol.onClick:AddListener(function()
-            if DeviceInfo.usingController and not self.m_isEnhanceMaterialItemTipsMode then
-                self.m_isEnhanceMaterialItemTipsMode = true
-                self.m_closeEnhanceMaterialItemTipsBindingId = self:BindInputPlayerAction(
-                    "common_back", function()
-                        self:_CloseEnhanceMaterialItemTips()
-                        cell.btnSymbolInputGroup.enabled = true
-                    end, self.view.selectMaterials.itemListInputGroup.groupId)
-                Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
-                    panelId = PANEL_ID,
-                    isGroup = true,
-                    id = self.view.selectMaterials.itemListInputGroup.groupId,
-                    hintPlaceholder = self.view.controllerHintPlaceholder,
-                    rectTransform = self.view.selectMaterials.itemListRectTransform,
-                    noHighlight = true,
-                })
-                cell.btnSymbolInputGroup.enabled = false
-            end
-            self:_ShowEnhanceMaterialItemTips(itemInfo)
-        end)
+        bindEnhanceMaterialItemTips(cell, itemInfo)
         cell.txtNormal.gameObject:SetActive(itemInfo.equipEnhanceSuccessProb == EquipTechConst.EEquipEnhanceSuccessProb.Normal)
         cell.txtHigh.gameObject:SetActive(itemInfo.equipEnhanceSuccessProb == EquipTechConst.EEquipEnhanceSuccessProb.High)
-        cell.btn.onIsNaviTargetChanged = function(isTarget)
-            cell.btnSymbolInputGroup.enabled = isTarget and not self.m_isEnhanceMaterialItemTipsMode
-            if isTarget and self.m_isEnhanceMaterialItemTipsMode then
-                self:_ShowEnhanceMaterialItemTips(itemInfo)
-            end
-        end
         cell.btn.onClick:RemoveAllListeners()
         cell.btn.onClick:AddListener(function()
             local instId = itemInfo.instId
@@ -3371,20 +3506,61 @@ EquipTechCtrl._UpdateEnhanceMaterialGroupCell = HL.Method(HL.Table, HL.Table, HL
                 if not self:_CanAddEnhanceIngredient() then
                     return
                 end
+                
+                if self:_IsPrimeSelected() then
+                    self.m_selectedPrimeItemId = ""
+                    self:_UpdatePrimeMaterialCellSelections()
+                end
                 table.insert(self.m_selectedMaterialInstIdList, instId)
                 self.m_selectedMaterialInstId2Index[instId] = #self.m_selectedMaterialInstIdList
                 self:_UpdateMaterialCellSelection(cell)
             end
             self:_RefreshEnhanceInfo()
         end)
-        if DeviceInfo.usingController then
-            cell.btnSymbolInputGroup.enabled = false
-        end
         self:_UpdateMaterialCellSelection(cell)
     end)
     if DeviceInfo.usingController and not self.m_isEnhanceMaterialNaviTargetSet and self.m_materialFastScrollIndex <= 0 then
         self:SetNaviTarget(cell.itemCellCache:Get(1).btn)
         self.m_isEnhanceMaterialNaviTargetSet = true
+    end
+end
+
+
+EquipTechCtrl._IsPrimeSelected = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_selectedPrimeItemId ~= nil and self.m_selectedPrimeItemId ~= ""
+end
+
+
+EquipTechCtrl._UpdatePrimeMaterialCellSelection = HL.Method(HL.Table) << function(self, cell)
+    local isSelected = self:_IsPrimeSelected() and self.m_selectedPrimeItemId == cell.itemInfo.id
+    cell.isSelected = isSelected
+    cell.stateController:SetState(isSelected and "selected" or "normal")
+    if isSelected then
+        cell.selectedIndex = 1
+        cell.numTxt.text = "1"
+    end
+    local itemId = cell.itemInfo.id
+    local remaining = Utils.getItemCount(itemId, true, true)
+    cell.ownNumTxt.text = UIUtils.setCountColor(tostring(remaining), remaining <= 0)
+    if DeviceInfo.usingController then
+        cell.btn.customBindingViewLabelText = cell.isSelected and Language.LUA_EQUIP_ENHANCE_MATERIAL_UNSELECT or Language.LUA_EQUIP_ENHANCE_MATERIAL_SELECT
+    end
+end
+
+
+EquipTechCtrl._UpdatePrimeMaterialCellSelections = HL.Method() << function(self)
+    local itemList = self.view.selectMaterials.itemList
+    for i = 1, itemList.count do
+        local cellGo = itemList:Get(CSIndex(i))
+        if cellGo then
+            local cell = self.m_getMaterialGroupCell(cellGo)
+            if cell and not cell.isTitle and cell.primeEnhanceLayout then
+                local primeCell = cell.primeEnhanceLayout.primeEnhanceMaterialCell
+                if primeCell and primeCell.itemInfo then
+                    self:_UpdatePrimeMaterialCellSelection(primeCell)
+                end
+            end
+        end
     end
 end
 
@@ -3522,14 +3698,16 @@ EquipTechCtrl._RefreshEnhanceInfo = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) <<
 
         local failedCount = self.m_enhanceGuaranteeFailedCount
         local maxFailedCount = self.m_enhanceGuaranteeMaxFailedCount
+        
+        local isPrimeGuaranteed = self:_IsPrimeSelected()
         if maxFailedCount > 0 then
-            local isMustEnhance = failedCount + selectedCount > maxFailedCount
+            local isMustEnhance = isPrimeGuaranteed or failedCount + selectedCount > maxFailedCount
             successRationNode.successNode.gameObject:SetActive(isMustEnhance)
             successRationNode.bgLight.gameObject:SetActive(isMustEnhance)
             successRationNode.numberTxt.text = string.format("%d/%d", failedCount, maxFailedCount)
             successRationNode.slider.value = failedCount / maxFailedCount
 
-            local targetValue = (failedCount + selectedCount) / maxFailedCount
+            local targetValue = isPrimeGuaranteed and 1 or ((failedCount + selectedCount) / maxFailedCount)
             if skipAnim then
                 successRationNode.sliderPreview.value = targetValue
             else
@@ -3572,7 +3750,11 @@ EquipTechCtrl._RefreshEnhanceCostItem = HL.Method() << function(self)
     self:_ComputeEnhanceLimits()
     local selectedCount = self:_GetSelectedEnhanceMaterialCount()
     local isEmpty = selectedCount == 0
+    
+    local isPrimeSelected = self:_IsPrimeSelected()
+    local noCost = isEmpty or isPrimeSelected
     local consumeNode = self.view.middleBar.enhanceAttrNode.consumeNode
+    local consumeItemState = self.view.middleBar.enhanceAttrNode.consumeItemState
     consumeNode.btnIcon.onClick:RemoveAllListeners()
     self.m_isCostItemCountEnough = false
     self.m_costItemIds = {}
@@ -3583,8 +3765,13 @@ EquipTechCtrl._RefreshEnhanceCostItem = HL.Method() << function(self)
         local _, costItemData = Tables.itemTable:TryGetValue(costData.consumeItemId)
         if costItemData then
             table.insert(self.m_costItemIds, costItemData.id)
-            local totalNeedCost = costItemCount * selectedCount
-            self.m_isCostItemCountEnough = not isEmpty and itemCount >= totalNeedCost
+            if isPrimeSelected then
+                
+                self.m_isCostItemCountEnough = true
+            else
+                local totalNeedCost = costItemCount * selectedCount
+                self.m_isCostItemCountEnough = not isEmpty and itemCount >= totalNeedCost
+            end
             consumeNode.imgIcon:LoadSprite(UIConst.UI_SPRITE_ITEM, costItemData.iconId)
             consumeNode.btnIcon.onClick:AddListener(function()
                 Notify(MessageConst.SHOW_ITEM_TIPS, {
@@ -3600,11 +3787,12 @@ EquipTechCtrl._RefreshEnhanceCostItem = HL.Method() << function(self)
     else
         logger.error("EquipTechCtrl._RefreshEnhanceCostItem: costData not found for domainId: " .. self.m_selectedEnhanceEquipItemInfo.equipData.domainId)
     end
-    consumeNode.textExpend.color = isEmpty and self.view.config.COST_EMPTY_COLOR or self.view.config.COST_ENOUGH_COLOR
-    consumeNode.txtCost.color = isEmpty and self.view.config.COST_EMPTY_COLOR or
+    consumeNode.textExpend.color = noCost and self.view.config.COST_EMPTY_COLOR or self.view.config.COST_ENOUGH_COLOR
+    consumeNode.txtCost.color = noCost and self.view.config.COST_EMPTY_COLOR or
         (self.m_isCostItemCountEnough and self.view.config.COST_ENOUGH_COLOR or self.view.config.COST_NOT_ENOUGH_COLOR)
-    consumeNode.txtCost.text = isEmpty and
+    consumeNode.txtCost.text = noCost and
         string.format("--/%d", itemCount) or string.format("%d/%d", costItemCount * selectedCount, itemCount)
+    consumeItemState:SetState(self:_IsPrimeSelected() and "NoPropsRequired" or "PropsRequired")
 end
 
 EquipTechCtrl._OnEnhanceClicked = HL.Method() << function(self)
@@ -3625,7 +3813,10 @@ EquipTechCtrl._OnEnhanceClicked = HL.Method() << function(self)
             return
         end
     else
-        if self.m_selectedMaterialInstIdList == nil or not next(self.m_selectedMaterialInstIdList) then
+        
+        local hasEquipMaterial = self.m_selectedMaterialInstIdList ~= nil and next(self.m_selectedMaterialInstIdList) ~= nil
+        local hasPrime = self:_IsPrimeSelected()
+        if not hasEquipMaterial and not hasPrime then
             return
         end
     end
@@ -3724,7 +3915,7 @@ EquipTechCtrl._EnhanceEquip = HL.Method() << function(self)
 
         self.m_equipTechSystem:EnhanceEquipWithProduce(self.m_selectedEnhanceEquipInstId, formulaIds, counts, chainIds, attrIndex)
     else
-        self.m_equipTechSystem:EnhanceEquip(self.m_selectedEnhanceEquipInstId, self.m_selectedMaterialInstIdList, attrIndex)
+        self.m_equipTechSystem:EnhanceEquip(self.m_selectedEnhanceEquipInstId, self.m_selectedMaterialInstIdList, attrIndex, self.m_selectedPrimeItemId)
     end
 end
 
@@ -3782,19 +3973,24 @@ EquipTechCtrl._OnEquipEnhance = HL.Method(HL.Table) << function(self, args)
 
         self.m_manufacturedFormulaCountMap = {}
     else
-        local sentList = self.m_selectedMaterialInstIdList
-        if sentList then
-            for _, instId in ipairs(sentList) do
-                if CharInfoUtils.getEquipByInstId(instId) then
-                    table.insert(returnedIngredientInstIds, instId)
-                else
-                    table.insert(consumedIngredientInstIds, instId)
+        if self:_IsPrimeSelected() then
+            
+        else
+            local sentList = self.m_selectedMaterialInstIdList
+            if sentList then
+                for _, instId in ipairs(sentList) do
+                    if CharInfoUtils.getEquipByInstId(instId) then
+                        table.insert(returnedIngredientInstIds, instId)
+                    else
+                        table.insert(consumedIngredientInstIds, instId)
+                    end
                 end
             end
+            totalSelectedCount = #consumedIngredientInstIds
         end
-        totalSelectedCount = #consumedIngredientInstIds
         self.m_selectedMaterialInstIdList = {}
         self.m_selectedMaterialInstId2Index = {}
+        self.m_selectedPrimeItemId = ""
     end
 
     local enhanceFailCountDelta

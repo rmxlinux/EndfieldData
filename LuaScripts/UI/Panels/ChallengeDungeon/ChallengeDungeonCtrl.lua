@@ -49,6 +49,7 @@ ChallengeDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData(arg)
     self:_UpdateData()
     self:_RefreshAllUI()
+    self.view.tabList:ScrollToIndex(CSIndex(self.m_info.curSelectSeriesIndex), true)
     
     ActivityUtils.backToMainHudWhenActivityClosed(self, self.m_info.activityId)
 end
@@ -668,6 +669,11 @@ ChallengeDungeonCtrl._AutoNavi = HL.Method() << function(self)
     if seriesInfo and seriesInfo.isUnlock then
         local obj = self.view.dungeonList:Get(self.m_naviCellIndex)
         local firstCell = self.m_getDungeonCellFunc(obj)
+        if not firstCell then
+            self.view.dungeonList:SkipGraduallyShow()
+            obj = self.view.dungeonList:Get(self.m_naviCellIndex)
+            firstCell = self.m_getDungeonCellFunc(obj)
+        end
         if firstCell then
             self:SetNaviTarget(firstCell.naviDecorator)
         end

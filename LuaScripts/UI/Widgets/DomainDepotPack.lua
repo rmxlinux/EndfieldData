@@ -511,7 +511,7 @@ DomainDepotPack._PlayAnimImp = HL.Method() << function(self)
     end
     if self.view[groupName].gameObject.activeInHierarchy == false then
         
-        logger.error(string.format("DomainDepotPack._PlayAnimImp: Group %s is not active, skipping anim: %s", groupName, anim.name))
+        logger.warn(string.format("DomainDepotPack._PlayAnimImp: Group %s is not active, skipping anim: %s", groupName, anim.name))
         anim = nil
         self.m_currentAnim = nil
         self:_PlayAnimImp()

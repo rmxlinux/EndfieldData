@@ -54,6 +54,7 @@ SettlementDefenseFinishFailCtrl._InitAction = HL.Method() << function(self)
             PhaseManager:PopPhase(PHASE_ID, function()
                 SettlementDefenseFinishFailCtrl.s_cachedPhaseArgs = nil
                 GameInstance.player.towerDefenseSystem.systemInDefense = false
+                LuaSystemManager.mainHudActionQueue:RemoveBlocker("SettlementDefense")
                 Notify(MessageConst.ON_TOWER_DEFENSE_LEVEL_REWARDS_FINISHED)
                 if callback then
                     callback()

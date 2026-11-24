@@ -3,7 +3,7 @@ local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.GenderSelect
 PhaseGenderSelect = HL.Class('PhaseGenderSelect', phaseBase.PhaseBase)
 local PHASE_GENDER_SELECT_OBJECT = "GameplayGenderSelect"
-local EnterCutsceneId = "Cutscene_e0m0_1"
+local EnterCutsceneId = "cutscene_e0m0_1"
 local DECO_NORMAL_LOOP_ANIM = "gender_deco_normal_loop"
 local AVAILABLE_SELECTION = {
     None = "none",
@@ -75,7 +75,7 @@ PhaseGenderSelect._OnActivated = HL.Override() << function(self)
 
         self.m_curSelection = AVAILABLE_SELECTION.None
 
-        GameWorld.playerCenterUpdater:SetProxyRef(self.m_sceneObject.view.actor)
+        GameWorld.playerCenterUpdater:SetProxyOverride(self.m_sceneObject.view.actor)
 
         
         logger.info(ELogChannel.GamePlay, "PhaseGenderSelect PlayEnterCutscene")
@@ -370,7 +370,7 @@ PhaseGenderSelect.LeaveGenderSelect = HL.Method() << function(self)
     LuaUpdate:Remove(self.m_genderConfirmCheckUpdateKey)
     local mainCharRoot = GameInstance.playerController.mainCharacter.rootCom
     if mainCharRoot then
-        GameWorld.playerCenterUpdater:SetProxyRef(mainCharRoot.transform);
+        GameWorld.playerCenterUpdater:ClearProxyOverride();
     end
 
     PhaseManager:ExitPhaseFast(PHASE_ID)

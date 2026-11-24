@@ -97,6 +97,7 @@ ActivityTaskCell.InitActivityTaskCell = HL.Method(HL.Any) << function(self, arg)
 
     
     local rewardId = taskConfigInfo.rewardId
+    self.view.rewardItemListNode.gameObject:SetActive(true)
     local rewardCellCache = self.m_rewardCellCache or UIUtils.genCellCache(self.view.rewardItem)
     self.m_rewardCellCache = rewardCellCache
     local rewardBundles = UIUtils.getRewardItems(rewardId)

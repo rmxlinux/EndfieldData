@@ -36,6 +36,8 @@ PhaseDialog2D.m_tempNextIndex = HL.Field(HL.Number) << -1
 
 PhaseDialog2D.m_openedPhaseId = HL.Field(HL.Number) << -1
 
+PhaseDialog2D.m_deferredExitCoroutine = HL.Field(HL.Thread)
+
 PhaseDialog2D._InitNextIndex = HL.StaticMethod() << function()
     PhaseDialog2D.s_nextIndexConfig = {}
     for phaseName, nextIndex in pairs(DialogConst.DIALOG_PHASE_2_NEXT_INDEX) do
@@ -107,7 +109,7 @@ end
 PhaseDialog2D.IsDialogPhaseOpened = HL.StaticMethod(HL.Table) << function(arg)
     local isOpenedContext = unpack(arg)
     local isOpen, phase = PhaseManager:IsOpenAndValid(PHASE_ID)
-    if isOpen then
+    if isOpen and not phase.m_deferredExitCoroutine then
         isOpenedContext.isPhaseOpen = true
         return
     end
@@ -159,7 +161,37 @@ PhaseDialog2D.OpenUI = HL.Method(HL.Table) << function(self, arg)
 end
 
 PhaseDialog2D.OnExitDialog = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
-    self:CloseSelf()
+    if self.m_deferredExitCoroutine then
+        return
+    end
+
+    local fast = arg and unpack(arg)
+    if not fast then
+        self:CloseSelf()
+        return
+    end
+
+    if not PhaseManager:IsOpenAndValid(PHASE_ID) then
+        return
+    end
+    if not PhaseManager:IsInPhaseTransition() then
+        self:ExitSelfFast()
+        return
+    end
+
+    
+    self.m_deferredExitCoroutine = self:_StartCoroutine(function()
+        coroutine.waitCondition(function()
+            return self.m_destroyed
+                or not PhaseManager:IsOpenAndValid(PHASE_ID)
+                or not PhaseManager:IsInPhaseTransition()
+        end)
+
+        self.m_deferredExitCoroutine = nil
+        if not self.m_destroyed and PhaseManager:IsOpenAndValid(PHASE_ID) then
+            self:ExitSelfFast()
+        end
+    end)
 end
 
 PhaseDialog2D._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -167,7 +199,7 @@ PhaseDialog2D._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Ta
 end
 
 PhaseDialog2D.OnDialogPhaseTransitionBackToTop = HL.Method() << function(self)
-    if self.m_openedPhaseId == -1 then
+    if self.m_deferredExitCoroutine or self.m_openedPhaseId == -1 then
         return
     end
 
@@ -227,11 +259,9 @@ PhaseDialog2D._OpenDialogSkipPopUp = HL.Method() << function(self)
     end
 end
 
+
 PhaseDialog2D._HideDialogSkipPopUp = HL.Method() << function(self)
-    local panelItem = self:_GetPanelPhaseItem(PanelId.DialogSkipPopUp)
-    if panelItem then
-        panelItem.uiCtrl:Hide()
-    end
+    self:RemovePhasePanelItemById(PanelId.DialogSkipPopUp)
 end
 
 PhaseDialog2D._SkipDialog = HL.Method() << function(self)

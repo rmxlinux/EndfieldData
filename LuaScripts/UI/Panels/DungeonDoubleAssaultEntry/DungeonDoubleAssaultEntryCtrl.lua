@@ -1,12 +1,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DungeonDoubleAssaultEntry
 local dungeonActivityEntry = require_ex('UI/Panels/DungeonActivityEntry/DungeonActivityEntryCtrl')
-local activityUtils = require_ex('Common/Utils/ActivityUtils')
+local QUICK_SELECT_FORBIDDEN_TYPE = "DungeonDoubleAssaultEntryQuickSelect"
 
 DungeonDoubleAssaultEntryCtrl = HL.Class('DungeonDoubleAssaultEntryCtrl', dungeonActivityEntry.DungeonActivityEntryCtrl)
-
-
-DungeonDoubleAssaultEntryCtrl.m_selectTeamIndexTable = HL.Field(HL.Table)
 
 DungeonDoubleAssaultEntryCtrl.m_skipSameDungeonCellClick = HL.Field(HL.Boolean) << true
 
@@ -30,7 +27,6 @@ DungeonDoubleAssaultEntryCtrl.m_skipSameDungeonCellClick = HL.Field(HL.Boolean) 
 
 
 DungeonDoubleAssaultEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_selectTeamIndexTable = {}
     self.m_skipSameDungeonCellClick = false
 
     
@@ -45,6 +41,26 @@ DungeonDoubleAssaultEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
 
     DungeonDoubleAssaultEntryCtrl.Super.OnCreate(self, arg)
 
+    
+    if GameInstance.dungeonManager.inDungeon and arg.enterDungeonCallback then
+        self.m_enterDungeonCallback = arg.enterDungeonCallback
+    end
+
+    if GameInstance.dungeonManager.inDungeon then
+        PhaseManager:AddPhaseForbiddenOverrideConfig(QUICK_SELECT_FORBIDDEN_TYPE, {
+            [PhaseId.CharFormation] = {
+                forbid = false
+            },
+        })
+    end
+
+    if arg.onCloseCallback then
+        self.view.btnClose.onClick:RemoveAllListeners()
+        self.view.btnClose.onClick:AddListener(function()
+            arg.onCloseCallback()
+        end)
+    end
+
     if DeviceInfo.usingController then
         self.view.dungeonCommonInfo.view.hardTog.customBindingViewLabelText = Language.LUA_DOUBLE_ASSAULT_SWITCH_FULL_POWER_MODE_HINT
         self.view.dungeonCommonInfo.view.fakeHardTogBtn.customBindingViewLabelText = Language.LUA_DOUBLE_ASSAULT_SWITCH_FULL_POWER_MODE_HINT
@@ -56,47 +72,9 @@ DungeonDoubleAssaultEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
         return
     end
 
-    for i, id in ipairs(self.m_dungeons) do
-        self:_InitSelectTeamData(id)
-    end
-
     self.view.helpBtn.onClick:RemoveAllListeners()
     self.view.helpBtn.onClick:AddListener(function()
         UIManager:Open(PanelId.InstructionBook, "activity_dungeon_actmonster")
-    end)
-
-    self.view.editCharBtn.onClick:RemoveAllListeners()
-    self.view.editCharBtn.onClick:AddListener(function()
-        local selectedTeamData = self:_EnsureSelectTeamData(self.m_curSelectedDungeonId)
-        if selectedTeamData == nil then
-            logger.error("双人突袭未初始化当前关卡配队数据，gameId:" .. self.m_curSelectedDungeonId)
-            return
-        end
-        UIManager:Open(PanelId.DoubleAssaultCharSelPopup,
-            { activityId = self.m_activityId,
-              gameId = self.m_curSelectedDungeonId,
-              teamIndex = selectedTeamData[1],
-              onSelect = function(selectedTeamIndex, teamIndex)
-                  self.m_selectTeamIndexTable[self.m_curSelectedDungeonId] = { selectedTeamIndex, teamIndex }
-                  self:_RefreshCharBtnState()
-              end })
-    end)
-
-    self.view.systemCharBtn.onClick:RemoveAllListeners()
-    self.view.systemCharBtn.onClick:AddListener(function()
-        local selectedTeamData = self:_EnsureSelectTeamData(self.m_curSelectedDungeonId)
-        if selectedTeamData == nil then
-            logger.error("双人突袭未初始化当前关卡配队数据，gameId:" .. self.m_curSelectedDungeonId)
-            return
-        end
-        UIManager:Open(PanelId.DoubleAssaultCharSelPopup,
-            { activityId = self.m_activityId,
-              gameId = self.m_curSelectedDungeonId,
-              teamIndex = selectedTeamData[1],
-              onSelect = function(selectedTeamIndex, teamIndex)
-                  self.m_selectTeamIndexTable[self.m_curSelectedDungeonId] = { selectedTeamIndex, teamIndex }
-                  self:_RefreshCharBtnState()
-              end })
     end)
 
     self.view.dungeonCommonInfo:SetOpenCharFormationCallback(function(gameId)
@@ -109,9 +87,7 @@ DungeonDoubleAssaultEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
         else
             self.m_curSelectedDungeonId = Tables.dungeonRaid2NormalTable[self.m_curSelectedDungeonId]
         end
-        self:_EnsureSelectTeamData(self.m_curSelectedDungeonId)
         self:UpdateInfo()
-        self:_RefreshCharBtnState()
         if isOn then
             AudioAdapter.PostEvent("Au_UI_Toast_HighDifficultyHint")
         end
@@ -119,7 +95,10 @@ DungeonDoubleAssaultEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
 
     for i, id in ipairs(self.m_dungeons) do
         if self:_IsSameDungeon(id) then
-            self:_OnDungeonCellClick(self.m_genCells:Get(i), i, id)
+            local cell = self.m_genCells:Get(i)
+            self:_OnDungeonCellClick(cell, i, id)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.dungeonNode.transform)
+            self.view.dungeonNode:AutoScrollToRectTransform(cell.gameObject.transform, true)
             break
         end
     end
@@ -137,11 +116,6 @@ DungeonDoubleAssaultEntryCtrl._IsSameDungeon = HL.Override(HL.String).Return(HL.
     end
     local hasRaid, raidDungeonId = Tables.dungeonNormal2RaidTable:TryGetValue(dungeonId)
     return hasRaid and raidDungeonId == self.m_curSelectedDungeonId
-end
-
-DungeonDoubleAssaultEntryCtrl._InitSelectTeamData = HL.Method(HL.String) << function(self, dungeonId)
-    local firstTeamId = activityUtils.getDoubleAssaultDefaultTeamId(dungeonId)
-    self.m_selectTeamIndexTable[dungeonId] = { 1, firstTeamId }
 end
 
 
@@ -203,61 +177,50 @@ DungeonDoubleAssaultEntryCtrl.GetDefaultSelectedDungeonId = HL.Override().Return
     return ""
 end
 
-DungeonDoubleAssaultEntryCtrl._EnsureSelectTeamData = HL.Method(HL.String).Return(HL.Table) << function(self, dungeonId)
-    if string.isEmpty(dungeonId) then
-        return nil
-    end
-
-    local selectedTeamData = self.m_selectTeamIndexTable[dungeonId]
-    if selectedTeamData == nil then
-        self:_InitSelectTeamData(dungeonId)
-        selectedTeamData = self.m_selectTeamIndexTable[dungeonId]
-    end
-    return selectedTeamData
-end
-
 DungeonDoubleAssaultEntryCtrl._OpenDoubleAssaultCharFormation = HL.Method(HL.String) << function(self, dungeonId)
     local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     if not activity then
         return
     end
-    local selectedTeamData = self:_EnsureSelectTeamData(self.m_curSelectedDungeonId)
-    if selectedTeamData == nil then
-        logger.error("双人突袭未初始化当前关卡配队数据，gameId:" .. self.m_curSelectedDungeonId)
-        return
+    local hasNormal, normalDungeonId = Tables.dungeonRaid2NormalTable:TryGetValue(dungeonId)
+    if not hasNormal then
+        normalDungeonId = dungeonId
     end
-
-    local selectedTeamIndex = selectedTeamData[1]
-    local teamId = selectedTeamData[2]
-    if string.isEmpty(teamId) then
-        logger.error("双人突袭当前选择配队为空，gameId:" .. self.m_curSelectedDungeonId .. "，selectedTeamIndex:" .. tostring(selectedTeamIndex))
-        return
+    local dungeonNumId = CS.Beyond.Cfg.Tables.gameMechanicsIdToNum:GetValue(normalDungeonId)
+    local _, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
+    local teamId = subGameData.teamConfigIds[1]
+    local activityId = self.m_activityId
+    
+    local getSavedTeam = function()
+        local charInstIds = {}
+        local currentActivity = GameInstance.player.activitySystem:GetActivity(activityId)
+        local hasTeam, setting = currentActivity.presetTeamSettings:TryGetValue(dungeonNumId)
+        if hasTeam then
+            for _, charId in cs_pairs(setting.charTeam) do
+                table.insert(charInstIds, charId:GetCharInstId())
+            end
+        end
+        return charInstIds
     end
-
-    LuaSystemManager.uiRestoreSystem:AddRequest(dungeonId)
-    if selectedTeamIndex == 1 then
-        local comboSkillOrder = activity.comboSkillOrder
-        local activityId = self.m_activityId
-        PhaseManager:GoToPhase(PhaseId.CharFormation, {
-            dungeonId = self.m_curSelectedDungeonId,
-            presetTeamId = teamId,
-            initCharInstIdList = activity.charTeam,
-            customSetTeamCallback = function(charInstIdList)
-                GameInstance.player.activitySystem:SendActivitySetTeam(activityId, charInstIdList)
-            end,
-            getComboSkill = function()
-                return comboSkillOrder
-            end,
-            comboSkillSaveCallback = function(comboSkillCharList)
-                GameInstance.player.activitySystem:SendSetComboSkillOrder(activityId, comboSkillCharList)
-            end,
-        })
-        return
-    end
-
+    
     PhaseManager:GoToPhase(PhaseId.CharFormation, {
         dungeonId = dungeonId,
         presetTeamId = teamId,
+        pinTrialCandidates = true,
+        forbidDeadChar = true,
+        enterDungeonCallback = self.m_enterDungeonCallback,
+        getInitCharInstIdList = getSavedTeam,
+        customSetTeamCallback = function(charInstIds)
+            local _, sendingPhase = PhaseManager:IsOpen(PhaseId.CharFormation)
+            GameInstance.player.activitySystem:SendActivitySetPresetTeam(activityId, normalDungeonId, teamId,
+                charInstIds, function()
+                    local isOpen, phase = PhaseManager:IsOpenAndValid(PhaseId.CharFormation)
+                    
+                    if isOpen and phase == sendingPhase and phase.arg.getInitCharInstIdList == getSavedTeam then
+                        phase:ReloadCustomTeam()
+                    end
+                end)
+        end,
     })
 end
 
@@ -293,45 +256,8 @@ DungeonDoubleAssaultEntryCtrl._OnDungeonCellClick = HL.Override(HL.Any, HL.Numbe
     local prevSelectedDungeonId = self.m_curSelectedDungeonId
     DungeonDoubleAssaultEntryCtrl.Super._OnDungeonCellClick(self, cell, index, finalDungeonId)
     if autoPickHard then
-        self:_EnsureSelectTeamData(finalDungeonId)
         if self.m_curSelectedDungeonId ~= prevSelectedDungeonId then
             AudioAdapter.PostEvent("Au_UI_Toast_HighDifficultyHint")
-        end
-    end
-    self:_RefreshCharBtnState()
-end
-
-DungeonDoubleAssaultEntryCtrl._RefreshCharBtnState = HL.Method() << function(self)
-    local selectedTeamData = self:_EnsureSelectTeamData(self.m_curSelectedDungeonId)
-    if selectedTeamData == nil then
-        return
-    end
-    local selectedTeamIndex = selectedTeamData[1]
-    local teamId = selectedTeamData[2]
-    local isSystemTeam = selectedTeamIndex ~= 1
-
-    if self.view == nil or IsNull(self.view.editCharBtn) or IsNull(self.view.systemCharBtn) then
-        return
-    end
-    self.view.editCharBtn.gameObject:SetActive(not isSystemTeam)
-    self.view.systemCharBtn.gameObject:SetActive(isSystemTeam)
-
-    if isSystemTeam and not string.isEmpty(teamId) then
-        if IsNull(self.view.systemTxt) or IsNull(self.view.charImage1) or IsNull(self.view.charImage2) then
-            return
-        end
-        self.view.systemTxt.text = string.format(Language.LUA_ACT_DOUBLE_ASSAULT_CHAR_SEL_TEAM_NAME, string.char(string.byte('A') + selectedTeamIndex - 2))
-        local _, teamCfg = Tables.charTeamTable:TryGetValue(teamId)
-        if teamCfg and teamCfg.presetCharList.Count >= 2 then
-            local presetCharId1 = teamCfg.presetCharList[0]
-            local charPresetData1 = Tables.charPresetTable:GetValue(presetCharId1)
-            local templateId1 = CS.Beyond.Gameplay.CharUtils.GetCharTemplateId(charPresetData1.charId)
-            self.view.charImage1:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD, UIConst.UI_CHAR_HEAD_PREFIX .. templateId1)
-
-            local presetCharId2 = teamCfg.presetCharList[1]
-            local charPresetData2 = Tables.charPresetTable:GetValue(presetCharId2)
-            local templateId2 = CS.Beyond.Gameplay.CharUtils.GetCharTemplateId(charPresetData2.charId)
-            self.view.charImage2:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD, UIConst.UI_CHAR_HEAD_PREFIX .. templateId2)
         end
     end
 end
@@ -371,31 +297,8 @@ DungeonDoubleAssaultEntryCtrl._MarkCurrentSelectedAsViewed = HL.Override(HL.Any)
     ActivityUtils.setFalseNewDoubleAssaultDungeon(normalDungeonId)
 end
 
-DungeonDoubleAssaultEntryCtrl.GetRecoverPopupStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
-    local isOpen = UIManager:IsOpen(PanelId.DoubleAssaultCharSelPopup)
-    if isOpen then
-        return { popupType = "CharSel" }
-    end
-    return DungeonDoubleAssaultEntryCtrl.Super.GetRecoverPopupStateArg(self)
-end
-
-DungeonDoubleAssaultEntryCtrl.TryRecoverPopupState = HL.Override(HL.Any) << function(self, popupState)
-    if popupState ~= nil and popupState.popupType == "CharSel" then
-        local selectedTeamData = self:_EnsureSelectTeamData(self.m_curSelectedDungeonId)
-        if selectedTeamData then
-            UIManager:Open(PanelId.DoubleAssaultCharSelPopup, {
-                activityId = self.m_activityId,
-                gameId = self.m_curSelectedDungeonId,
-                teamIndex = selectedTeamData[1],
-                onSelect = function(selectedTeamIndex, teamIndex)
-                    self.m_selectTeamIndexTable[self.m_curSelectedDungeonId] = { selectedTeamIndex, teamIndex }
-                    self:_RefreshCharBtnState()
-                end
-            })
-        end
-        return
-    end
-    DungeonDoubleAssaultEntryCtrl.Super.TryRecoverPopupState(self, popupState)
+DungeonDoubleAssaultEntryCtrl.OnClose = HL.Override() << function(self)
+    PhaseManager:RemovePhaseForbiddenOverrideConfig(QUICK_SELECT_FORBIDDEN_TYPE)
 end
 
 

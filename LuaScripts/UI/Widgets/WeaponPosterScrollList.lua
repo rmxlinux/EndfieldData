@@ -356,6 +356,14 @@ WeaponPosterScrollList._RefreshItemList = HL.Method(HL.Table, HL.Boolean, HL.Num
     if selects then
         self:ShowSelectItems(selects)
     end
+    if DeviceInfo.usingController and not isEmpty then
+        
+        self.view.scrollList:ScrollToIndex(0, true)
+        local firstObj = self.view.scrollList:Get(0)
+        if firstObj then
+            self:SetNaviTarget(self.m_getItemBtn(self.m_getItemCell(firstObj)))
+        end
+    end
 end
 
 WeaponPosterScrollList._RefreshItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
@@ -389,8 +397,7 @@ WeaponPosterScrollList._RefreshItemCell = HL.Method(HL.Userdata, HL.Number) << f
             itemBtn.customBindingViewLabelText = self.m_arg.clickItemControllerHintText
         end
     end
-    local selected = index == 1
-    self.m_setItemSelected(listCell, selected)
+    self.m_setItemSelected(listCell, false)
 end
 
 WeaponPosterScrollList._OnFilterConfirm = HL.Method(HL.Table) << function(self, tags)

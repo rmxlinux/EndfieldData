@@ -19,6 +19,10 @@ local HIDE_CRAFT_TREE_GROUP_TABLE =
     wiki_group_building_logistic = true,
 }
 
+local FORMATION_DETAIL_CELL_COUNT = 2
+local FORMATION_DETAIL_STATE = "FormationDetail"
+local FORMATION_SUPERIMPOSE_STATE = "FormationSuperimpose"
+
 
 
 WikiBuildingCtrl.s_overrideMessages = HL.StaticField(HL.Table) << {
@@ -97,6 +101,23 @@ WikiBuildingCtrl._RefreshRight = HL.Override() << function(self)
 
     self:_RefreshDetail(itemId)
 
+    local buildingData = FactoryUtils.getItemBuildingData(itemId)
+    if not buildingData or buildingData.type ~= GEnums.FacBuildingType.FormationStake then
+        view.tabNode.gameObject:SetActiveIfNecessary(false)
+        view.itemDetail.gameObject:SetActiveIfNecessary(true)
+        view.formationDetail.gameObject:SetActiveIfNecessary(false)
+    else
+        view.tabNode.gameObject:SetActiveIfNecessary(true)
+        self:_RefreshFormationDetail(buildingData)
+        
+        local showFormationGen = view.attributesTab.isOn
+        view.itemDetail.gameObject:SetActiveIfNecessary(not showFormationGen)
+        view.formationDetail.gameObject:SetActiveIfNecessary(showFormationGen)
+        view.itemObtainWaysForWiki.gameObject:SetActiveIfNecessary(
+            showFormationGen and view.itemObtainWaysForWiki.gameObject.activeSelf)
+    end
+
+
     local isFocusEnabled = self.m_obtainCellCache:GetCount() > 0 or
         ((view.itemObtainWaysForWiki.m_obtainCells:GetCount() > 0 or view.itemObtainWaysForWiki.view.emptyNode.gameObject.activeSelf) and
         view.itemObtainWaysForWiki.view.gameObject.activeSelf)
@@ -108,6 +129,8 @@ WikiBuildingCtrl.m_craftCellCache = HL.Field(HL.Forward("UIListCache"))
 
 WikiBuildingCtrl.m_obtainCellCache = HL.Field(HL.Forward("UIListCache"))
 
+WikiBuildingCtrl.m_formationCellCache = HL.Field(HL.Forward("UIListCache"))
+
 
 
 WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
@@ -118,6 +141,10 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
 
     local view = self.view.right.itemDetail
 
+    
+    
+    
+    
     
     
     
@@ -139,23 +166,38 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
                 local craftInfos = FactoryUtils.getBuildingCrafts(buildingData.id, nil, nil, modeData.modeName)
                 local _, modeTypeData = Tables.factoryMachineCraftModeTable:TryGetValue(modeData.modeName)
                 if modeTypeData and craftInfos and next(craftInfos) then
-                    
-                    local tempTL = {}
-                    local temp = {}
-                    for _, craftInfo in ipairs(craftInfos) do
-                        if FactoryUtils.isTimeLimitedFormula(craftInfo.craftId) then
-                            table.insert(tempTL, craftInfo)
-                        else
-                            table.insert(temp, craftInfo)
+                    local firstCraftInfo = craftInfos[1]
+                    if firstCraftInfo and not string.isEmpty(firstCraftInfo.wikiModeTitle) then
+                        for _, craftInfo in ipairs(craftInfos) do
+                            table.insert(modeInfos, {
+                                modeType = modeData.modeName,
+                                craftInfos = { craftInfo },
+                                sortId = craftInfo.wikiModeSort,
+                                subSort = craftInfo.wikiModeSubSort,
+                                titleIcon = craftInfo.titleIcon,
+                                wikiModeTitle = craftInfo.wikiModeTitle,
+                                isFormationStakeMode = true,
+                            })
                         end
+                    else
+                        
+                        local tempTL = {}
+                        local temp = {}
+                        for _, craftInfo in ipairs(craftInfos) do
+                            if FactoryUtils.isTimeLimitedFormula(craftInfo.craftId) then
+                                table.insert(tempTL, craftInfo)
+                            else
+                                table.insert(temp, craftInfo)
+                            end
+                        end
+                        for _, craftInfo in ipairs(temp) do
+                            table.insert(tempTL, craftInfo)
+                        end
+                        table.insert(modeInfos, { modeType = modeData.modeName, craftInfos = tempTL, sortId = modeTypeData.sortId })
                     end
-                    for _, craftInfo in ipairs(temp) do
-                        table.insert(tempTL, craftInfo)
-                    end
-                    table.insert(modeInfos, { modeType = modeData.modeName, craftInfos = tempTL, sortId = modeTypeData.sortId })
                 end
             end
-            table.sort(modeInfos, Utils.genSortFunction({ "sortId" }, true))
+            table.sort(modeInfos, Utils.genSortFunction({ "sortId", "subSort" }, true))
         else
             local craftInfos = FactoryUtils.getBuildingCrafts(buildingData.id)
             if craftInfos and next(craftInfos) then
@@ -170,69 +212,90 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
     end
     self.m_obtainCellCache:Refresh(modeInfoCount, function(obtainCell, index)
         local modeInfo = modeInfos[index]
-        obtainCell.titleNode.gameObject:SetActive(modeInfoCount > 1)
+        local isFormationStakeMode = modeInfo.isFormationStakeMode == true
+        obtainCell.stateController:SetState(isFormationStakeMode and "Formation" or "Normal")
+        obtainCell.titleNode.gameObject:SetActive(isFormationStakeMode or modeInfoCount > 1)
         obtainCell.titleNodeToggle:SetIsOnWithoutNotify(true)
+        obtainCell.titleNodeToggle.interactable = not isFormationStakeMode
         obtainCell.content.gameObject:SetActive(true)
         
-        if modeInfoCount > 1 then
+        local titleIconPath
+        local titleIconName
+        if isFormationStakeMode then
+            obtainCell.nameTxt.text = modeInfo.wikiModeTitle
+            titleIconPath = UIConst.UI_SPRITE_FAC_ENVIRONMENT_ICON
+            titleIconName = modeInfo.titleIcon
+        elseif modeInfoCount > 1 then
             local _, modeData = Tables.factoryMachineCraftModeTable:TryGetValue(modeInfo.modeType)
             if modeData then
                 obtainCell.nameTxt.text = modeData.machineModeTypeName
-                local hasIcon = not string.isEmpty(modeData.iconId)
-                obtainCell.titleImg.gameObject:SetActive(hasIcon)
-                if hasIcon then
-                    obtainCell.titleImg:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_COMMON, modeData.iconId)
-                end
+                titleIconPath = UIConst.UI_SPRITE_FAC_BUILDING_COMMON
+                titleIconName = modeData.iconId
             end
         end
-        obtainCell.titleNodeToggle.onIsNaviTargetChanged = function(isTarget)
-            if isTarget then
-                self.view.right.scrollRect:ScrollToNaviTarget(obtainCell.titleNodeToggle)
-                Notify(MessageConst.HIDE_ITEM_TIPS)
-            end
-        end
-        obtainCell.titleNodeToggle.useExplicitNaviSelect = true
-        if lastCraftFirstSelectable and obtainCell.titleNodeToggle.isActiveAndEnabled then
-            obtainCell.titleNodeToggle.banExplicitOnUp = false
-            obtainCell.titleNodeToggle:SetExplicitSelectOnUp(lastCraftFirstSelectable)
-            lastCraftFirstSelectable.useExplicitNaviSelect = true
-            lastCraftFirstSelectable.banExplicitOnLeft = true
-            lastCraftFirstSelectable.banExplicitOnRight = true
-            lastCraftFirstSelectable.banExplicitOnUp = true
-            lastCraftFirstSelectable.banExplicitOnDown = false
-            lastCraftFirstSelectable:SetExplicitSelectOnDown(obtainCell.titleNodeToggle)
-        else
-            obtainCell.titleNodeToggle.banExplicitOnUp = true
-        end
-        if obtainCell.titleNodeToggle.isActiveAndEnabled and lastCraftNaviGroup then
-            obtainCell.titleNaviGroup.naviPartnerOnUp:Clear()
-            obtainCell.titleNaviGroup.naviPartnerOnDown:Clear()
-            lastCraftNaviGroup.naviPartnerOnDown:Add(obtainCell.titleNaviGroup)
-            obtainCell.titleNaviGroup.naviPartnerOnUp:Add(lastCraftNaviGroup)
-            lastCraftNaviGroup = obtainCell.titleNaviGroup
+        local hasTitleIcon = titleIconPath ~= nil and titleIconName ~= nil
+            and not string.isEmpty(titleIconPath) and not string.isEmpty(titleIconName)
+        obtainCell.titleImg.gameObject:SetActive(hasTitleIcon)
+        if hasTitleIcon then
+            obtainCell.titleImg:LoadSprite(titleIconPath, titleIconName)
         end
         obtainCell.titleNodeToggle.onValueChanged:RemoveAllListeners()
-        obtainCell.titleNodeToggle.onValueChanged:AddListener(function(isOn)
-            if DeviceInfo.usingController then
-                for i = 1, obtainCell.m_craftCellCache:GetCount() do
-                    local craftCell = obtainCell.m_craftCellCache:GetItem(i)
-                    InputManagerInst:ToggleBinding(craftCell.view.pinBtn.view.pinToggle.toggleBindingId, false)
+        if isFormationStakeMode then
+            obtainCell.titleNodeToggle.useExplicitNaviSelect = false
+            obtainCell.titleNodeToggle.onIsNaviTargetChanged = nil
+            obtainCell.titleNodeToggle.banExplicitOnUp = true
+            obtainCell.titleNodeToggle.banExplicitOnDown = true
+            obtainCell.titleNaviGroup.naviPartnerOnUp:Clear()
+            obtainCell.titleNaviGroup.naviPartnerOnDown:Clear()
+        else
+            obtainCell.titleNodeToggle.onIsNaviTargetChanged = function(isTarget)
+                if isTarget then
+                    self.view.right.scrollRect:ScrollToNaviTarget(obtainCell.titleNodeToggle)
+                    Notify(MessageConst.HIDE_ITEM_TIPS)
                 end
             end
-
-            local preToggleIsOn = false
-            local preObtainCell = self.m_obtainCellCache:Get(index - 1)
-            if preObtainCell then
-                preToggleIsOn = preObtainCell.titleNodeToggle.isOn
+            obtainCell.titleNodeToggle.useExplicitNaviSelect = true
+            if lastCraftFirstSelectable and obtainCell.titleNodeToggle.isActiveAndEnabled then
+                obtainCell.titleNodeToggle.banExplicitOnUp = false
+                obtainCell.titleNodeToggle:SetExplicitSelectOnUp(lastCraftFirstSelectable)
+                lastCraftFirstSelectable.useExplicitNaviSelect = true
+                lastCraftFirstSelectable.banExplicitOnLeft = true
+                lastCraftFirstSelectable.banExplicitOnRight = true
+                lastCraftFirstSelectable.banExplicitOnUp = true
+                lastCraftFirstSelectable.banExplicitOnDown = false
+                lastCraftFirstSelectable:SetExplicitSelectOnDown(obtainCell.titleNodeToggle)
+            else
+                obtainCell.titleNodeToggle.banExplicitOnUp = true
             end
-            obtainCell.titleNodeToggle.banExplicitOnUp = not preToggleIsOn
-
-            local nextObtainCell = self.m_obtainCellCache:Get(index + 1)
-            if nextObtainCell then
-                nextObtainCell.titleNodeToggle.banExplicitOnUp = not isOn
+            if obtainCell.titleNodeToggle.isActiveAndEnabled and lastCraftNaviGroup then
+                obtainCell.titleNaviGroup.naviPartnerOnUp:Clear()
+                obtainCell.titleNaviGroup.naviPartnerOnDown:Clear()
+                lastCraftNaviGroup.naviPartnerOnDown:Add(obtainCell.titleNaviGroup)
+                obtainCell.titleNaviGroup.naviPartnerOnUp:Add(lastCraftNaviGroup)
+                lastCraftNaviGroup = obtainCell.titleNaviGroup
             end
-            obtainCell.titleNodeToggle.banExplicitOnDown = not isOn
-        end)
+            obtainCell.titleNodeToggle.onValueChanged:AddListener(function(isOn)
+                if DeviceInfo.usingController then
+                    for i = 1, obtainCell.m_craftCellCache:GetCount() do
+                        local craftCell = obtainCell.m_craftCellCache:GetItem(i)
+                        InputManagerInst:ToggleBinding(craftCell.view.pinBtn.view.pinToggle.toggleBindingId, false)
+                    end
+                end
+
+                local preToggleIsOn = false
+                local preObtainCell = self.m_obtainCellCache:Get(index - 1)
+                if preObtainCell then
+                    preToggleIsOn = preObtainCell.titleNodeToggle.isOn
+                end
+                obtainCell.titleNodeToggle.banExplicitOnUp = not preToggleIsOn
+
+                local nextObtainCell = self.m_obtainCellCache:Get(index + 1)
+                if nextObtainCell then
+                    nextObtainCell.titleNodeToggle.banExplicitOnUp = not isOn
+                end
+                obtainCell.titleNodeToggle.banExplicitOnDown = not isOn
+            end)
+        end
 
         if not obtainCell.m_craftCellCache then
             obtainCell.m_craftCellCache = UIUtils.genCellCache(obtainCell.craftCell)
@@ -246,6 +309,9 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
             craftCell:InitCraftCell(craftInfo, self.m_itemTipsPosInfo, function(cell)
                 self:_OnClickRightItemCell(cell, craftCell.view)
             end)
+            if isFormationStakeMode then
+                craftCell.view.arrow.gameObject:SetActive(false)
+            end
 
             local useBGNode = false
 
@@ -279,8 +345,9 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
                 craftCell.view.selectableNaviGroup.naviPartnerOnDown:Clear()
                 if lastCraftNaviGroup then
                     if index == 1 then
-                        if not obtainCell.titleNodeToggle.isActiveAndEnabled then
-                            lastCraftNaviGroup.naviPartnerOnDown:Add(craftCell.view.selectableNaviGroup)
+                        if isFormationStakeMode or not obtainCell.titleNodeToggle.isActiveAndEnabled then
+                            lastCraftNaviGroup.naviPartnerOnDown:Add(isFormationStakeMode
+                                and self.view.right.formationDetail.selectableNaviGroup or craftCell.view.selectableNaviGroup)
                             craftCell.view.selectableNaviGroup.naviPartnerOnUp:Add(lastCraftNaviGroup)
                         end
                     else
@@ -318,7 +385,7 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
                 
             end
         end)
-        if firstItemSelectable and obtainCell.titleNodeToggle.isActiveAndEnabled then
+        if firstItemSelectable and not isFormationStakeMode and obtainCell.titleNodeToggle.isActiveAndEnabled then
             obtainCell.titleNodeToggle.banExplicitOnDown = false
             obtainCell.titleNodeToggle:SetExplicitSelectOnDown(firstItemSelectable)
             firstItemSelectable.useExplicitNaviSelect = true
@@ -341,6 +408,130 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
     view.emptyText.gameObject:SetActive(modeInfoCount == 0 and string.isEmpty(desc))
     view.descTxt.gameObject:SetActive(not string.isEmpty(desc))
     view.descTxt:SetAndResolveTextStyle(desc)
+end
+
+WikiBuildingCtrl._RefreshFormationDetail = HL.Method(HL.Userdata) << function(self, buildingData)
+    local view = self.view.right.formationDetail
+    if not view then
+        return
+    end
+    local hasFormationStakeData, formationStakeData = Tables.factoryFormationStakeTable:TryGetValue(buildingData.id)
+    if not hasFormationStakeData then
+        view.gameObject:SetActive(false)
+        return
+    end
+
+    view.gameObject:SetActive(true)
+    local scrollRect = self.view.right.scrollRect
+    view.selectableNaviGroup.onSetLayerSelectedTarget:RemoveAllListeners()
+    view.selectableNaviGroup.onSetLayerSelectedTarget:AddListener(function(target)
+        if target then
+            scrollRect:ScrollToNaviTarget(target)
+            Notify(MessageConst.HIDE_ITEM_TIPS)
+        end
+    end)
+    local detailData = FactoryUtils.getFormationStakeWikiDetailData(formationStakeData)
+    if not self.m_formationCellCache then
+        self.m_formationCellCache = UIUtils.genCellCache(view.formationCell)
+    end
+    self.m_formationCellCache:Refresh(FORMATION_DETAIL_CELL_COUNT, function(formationCell, index)
+        if index == 1 then
+            formationCell.stateController:SetState(FORMATION_DETAIL_STATE)
+            if not formationCell.m_obtainCellCache then
+                formationCell.m_obtainCellCache = UIUtils.genCellCache(formationCell.obtainCell)
+            end
+            formationCell.m_obtainCellCache:Refresh(#detailData.transGroups, function(obtainCell, transIndex)
+                local transGroup = detailData.transGroups[transIndex]
+                local _, formationData = Tables.factoryFormationTable:TryGetValue(transGroup.formationId)
+                local attrName = formationData and formationData.attrName or ""
+                obtainCell.nameTxt.text = formationData.name
+                obtainCell.titleImg.gameObject:SetActive(true)
+                obtainCell.titleImg:LoadSprite(UIConst.UI_SPRITE_FAC_ENVIRONMENT_ICON, transGroup.levels[1].titleIcon)
+                obtainCell.gameObject.name = "FormationDetail_" .. transGroup.toItemId
+                if transIndex == 1 then
+                    
+                    local obtainWays = self.view.right.itemObtainWaysForWiki.m_obtainCells
+                    local lastObtainCell = obtainWays:Get(obtainWays:GetCount())
+                    local lastCraftCell = lastObtainCell and lastObtainCell.craftCells:Get(lastObtainCell.craftCells:GetCount())
+                    local materialItem = lastCraftCell and lastCraftCell.itemCells:Get(1)
+                    local selectable = obtainCell.inputBindingGroupNaviDecorator
+                    selectable.useExplicitNaviSelect = materialItem ~= nil
+                    selectable.banExplicitOnUp = false
+                    selectable.banExplicitOnDown = true
+                    selectable.banExplicitOnLeft = true
+                    selectable.banExplicitOnRight = true
+                    selectable:SetExplicitSelectOnUp(materialItem and materialItem.view.button or nil)
+                end
+                obtainCell.descTxt.text = string.format(Language.LUA_WIKI_BUILDING_FORMATION_DETAIL_DESC,
+                    FactoryUtils.getFormationEffectIntervalText(), attrName)
+                if obtainCell.m_formationStackingCache then
+                    obtainCell.m_formationStackingCache:Refresh(0)
+                end
+
+                if not obtainCell.m_levelDescTxtCache then
+                    obtainCell.m_levelDescTxtCache = UIUtils.genCellCache(obtainCell.levelDescTxt, function(item)
+                        return item.gameObject:GetComponent("UIText")
+                    end)
+                end
+                obtainCell.m_levelDescTxtCache:Refresh(#transGroup.levels, function(levelDescTxt, levelIndex)
+                    local transData = transGroup.levels[levelIndex]
+                    local levelCfg = Tables.factoryFormationLevelTable:GetValue(transData.formationId).levels[transData.level]
+                    levelDescTxt.text = string.format(Language.LUA_WIKI_BUILDING_FORMATION_LEVEL_CHANCE,
+                        levelCfg.name,
+                        FactoryUtils.getFormationChanceText(transData.transChance))
+                end)
+
+                local craftInfo = {
+                    incomes = { { id = formationStakeData.consumeItem } },
+                    outcomes = {},
+                    consumeRate = formationStakeData.consumeRate,
+                    craftId = transGroup.toItemId,
+                }
+                obtainCell.craftCell.view.outcomeItem = obtainCell.craftCell.view.outcomeItemBlack
+                obtainCell.craftCell.view.incomeItem = obtainCell.craftCell.view.incomeItemBlack
+                obtainCell.craftCell:InitCraftCell(craftInfo, self.m_itemTipsPosInfo, function(cell)
+                    self:_OnClickRightItemCell(cell, obtainCell.craftCell.view)
+                end)
+                FactoryUtils.initFormationIcon(obtainCell.craftCell.view.icon, transGroup.formationId)
+                if obtainCell.craftCell.view.formationNameTxt then
+                    obtainCell.craftCell.view.formationNameTxt.text = attrName
+                end
+                obtainCell.craftCell.transform:SetAsLastSibling()
+            end)
+        else
+            formationCell.stateController:SetState(FORMATION_SUPERIMPOSE_STATE)
+            if not formationCell.m_obtainCellCache then
+                formationCell.m_obtainCellCache = UIUtils.genCellCache(formationCell.obtainCell)
+            end
+            formationCell.m_obtainCellCache:Refresh(#detailData.superimposeInfos > 0 and 1 or 0, function(obtainCell)
+                obtainCell.gameObject.name = "FormationSuperimpose"
+                if obtainCell.m_levelDescTxtCache then
+                    obtainCell.m_levelDescTxtCache:Refresh(0)
+                end
+                if not obtainCell.m_formationStackingCache then
+                    obtainCell.m_formationStackingCache = UIUtils.genCellCache(obtainCell.formationStacking)
+                end
+                obtainCell.m_formationStackingCache:Refresh(#detailData.superimposeInfos, function(formationStacking, stackIndex)
+                    local info = detailData.superimposeInfos[stackIndex]
+                    formationStacking.gameObject.name = info.isLevelUp and ("FormationLevelUp_" .. info.formationId)
+                        or ("FormationCombination_" .. info.targetFormationId)
+                    if info.isLevelUp then
+                        FactoryUtils.initFormationIcon(formationStacking.initemIcon1.view.icon, info.formationId)
+                        FactoryUtils.initFormationIcon(formationStacking.inItemIcon2.view.icon, info.formationId)
+                        FactoryUtils.initFormationIcon(formationStacking.outItemIcon.view.icon, info.formationId)
+                        formationStacking.formationLvTag.gameObject:SetActive(true)
+                    else
+                        local sourceFormationId1 = info.sourceFormationIds[1]
+                        local sourceFormationId2 = info.sourceFormationIds[2] or sourceFormationId1
+                        FactoryUtils.initFormationIcon(formationStacking.initemIcon1.view.icon, sourceFormationId1)
+                        FactoryUtils.initFormationIcon(formationStacking.inItemIcon2.view.icon, sourceFormationId2)
+                        FactoryUtils.initFormationIcon(formationStacking.outItemIcon.view.icon, info.targetFormationId)
+                        formationStacking.formationLvTag.gameObject:SetActive(false)
+                    end
+                end)
+            end)
+        end
+    end)
 end
 
 WikiBuildingCtrl._RefreshModel = HL.Method(HL.Opt(HL.Boolean)) << function(self, playInAnim)

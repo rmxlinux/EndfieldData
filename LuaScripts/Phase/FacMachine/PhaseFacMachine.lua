@@ -9,6 +9,7 @@ PhaseFacMachine = HL.Class('PhaseFacMachine', phaseBase.PhaseBase)
 PhaseFacMachine.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_OPEN_BUILDING_PANEL] = {'OpenBuildingPanel', false},
     [MessageConst.FAC_OPEN_BUILDING_PANEL_ALTER] = {'OpenBuildingPanelAlter', false}, 
+    [MessageConst.FAC_OPEN_FORMATION_ZONE_PANEL] = {'OpenFormationZonePanel', false},
     [MessageConst.FAC_OPEN_LOGISTIC_PANEL] = {'OpenLogisticPanel', false},
     [MessageConst.FAC_OPEN_NEAREST_BUILDING_PANEL] = {'OpenNearestBuildingPanel', false},
 }
@@ -23,6 +24,8 @@ local ReservePanelIds = {
 
 local NeedClosePanelIds = {
     PanelId.Formula,
+    PanelId.FormationFormula,
+    PanelId.FacFormationStakeSelect,
     PanelId.FacMarkerManagePopup,
     PanelId.FacPendingSubmitPopup,
 }
@@ -134,6 +137,19 @@ PhaseFacMachine.OpenBuildingPanelAlter = HL.StaticMethod(HL.Table) << function(a
     })
 end
 
+
+PhaseFacMachine.OpenFormationZonePanel = HL.StaticMethod(HL.Any) << function(formationZoneInfo)
+    Notify(MessageConst.FAC_BUILD_EXIT_CUR_MODE, true)
+    PhaseManager:OpenPhase(PHASE_ID, {
+        
+        formationZoneArg = {
+            chapterId = formationZoneInfo.chapterId,
+            mapId = formationZoneInfo.mapId,
+            cube = formationZoneInfo.data.cube,
+        },
+    })
+end
+
 PhaseFacMachine.OpenLogisticPanel = HL.StaticMethod(HL.Table) << function(args)
     local buildingSyncNode = FactoryUtils.getBuildingNodeHandler(args.nodeId)
 
@@ -198,6 +214,14 @@ end
 
 PhaseFacMachine._OnInit = HL.Override() << function(self)
     PhaseFacMachine.Super._OnInit(self)
+
+    
+    if self.arg.formationZoneArg then
+        self.curPanelId = PanelId.FacFormationZone
+        self.m_panelArg = self.arg.formationZoneArg
+        self.m_isHalfPanel = false
+        return
+    end
 
     local nodeId = self.arg.nodeId
     self.curNodeId = nodeId
@@ -418,32 +442,47 @@ PhaseFacMachine.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL
     end
 end
 
+
+
+
+PhaseFacMachine._IsBuildingNodeUnavailable = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean) << function(self, shouldLog)
+    local uiInfo = self.m_panelArg and self.m_panelArg.uiInfo
+    if uiInfo == nil then
+        return false
+    end
+    local nodeHandler = uiInfo.nodeHandler
+    local chapterId = Utils.getCurrentChapterId()
+    local nodeStillExists = FactoryUtils.getBuildingNodeHandler(self.curNodeId, chapterId) ~= nil
+    if nodeHandler ~= nil and nodeHandler.valid and not string.isEmpty(nodeHandler.templateId) and nodeStillExists then
+        return false
+    end
+    if shouldLog then
+        logger.error("[FacMachine] Abort TransitionIn, building node unavailable", self.curNodeId, chapterId,
+            nodeHandler ~= nil, nodeHandler and nodeHandler.valid, nodeStillExists)
+    end
+    return true
+end
+
 PhaseFacMachine._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     
-    
-    local uiInfo = self.m_panelArg and self.m_panelArg.uiInfo
-    if uiInfo ~= nil then
-        local nodeHandler = uiInfo.nodeHandler
-        local chapterId = Utils.getCurrentChapterId()
-        local nodeStillExists = FactoryUtils.getBuildingNodeHandler(self.curNodeId, chapterId) ~= nil
-        if nodeHandler == nil or not nodeHandler.valid or string.isEmpty(nodeHandler.templateId) or not nodeStillExists then
-            logger.error("[FacMachine] Abort TransitionIn, building node unavailable", self.curNodeId, chapterId,
-                nodeHandler ~= nil, nodeHandler and nodeHandler.valid, nodeStillExists)
-            PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
-            return
-        end
+    if self:_IsBuildingNodeUnavailable(true) then
+        return
     end
 
     self.m_isDoingOut = false
     local reservePanelIds = self.m_isHalfPanel and ReservePanelIds or nil
     self.m_hidePanelKey = UIManager:ClearScreen(reservePanelIds)
 
-    CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnUnitUiOpened(self.curNodeId, self.m_panelBuildingDataId)
+    
+    if not self.arg.formationZoneArg then
+        CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnUnitUiOpened(self.curNodeId, self.m_panelBuildingDataId)
+    end
     self.curPanelItem = self:CreatePhasePanelItem(self.curPanelId, self.m_panelArg)
     self:_TryRecoverInventoryArea()
     self:_TryRecoverFacSourceDetails()
     self:_TryRecoverFriendRequest()
     self:_TryRecoverFormula()
+    self:_TryRecoverFormationPanel()
     self:_TryRecoverInstructionBook()
     self:_TryRecoverFacPendingSubmitPopup()
 
@@ -467,7 +506,10 @@ PhaseFacMachine._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)
             UIManager:Close(panelId)
         end
     end
-    CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnUnitUiClosed(self.curNodeId, self.m_panelBuildingDataId)
+    
+    if not self.arg.formationZoneArg then
+        CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnUnitUiClosed(self.curNodeId, self.m_panelBuildingDataId)
+    end
 end
 
 PhaseFacMachine._DoPhaseTransitionOutAfterItems = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -499,6 +541,7 @@ PhaseFacMachine.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << functio
     arg.needRecoverFriendRequest = self:_ShouldRecoverFriendRequest()
     arg.needRecoverFacSourceDetails = self:_ShouldRecoverFacSourceDetails()
     arg.formulaArg = self:_GetFormulaRecoverArg()
+    arg.formationPanelArg = self:_GetFormationPanelRecoverArg()
     arg.facPendingSubmitPopupArg = self:_GetFacPendingSubmitPopupRecoverArg()
     local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
     if self.curPanelId == PanelId.FacHUB and isOpen and instructionCtrl:IsShow() and instructionCtrl.id == "fac_hub_offline" and PhaseManager:GetTopPhaseId() == PHASE_ID then
@@ -520,6 +563,59 @@ PhaseFacMachine._GetFormulaRecoverArg = HL.Method().Return(HL.Opt(HL.Any)) << fu
         return nil
     end
     return formulaCtrl:GetRecoverStateArg(self.curNodeId, self.m_panelBuildingDataId)
+end
+
+PhaseFacMachine._GetFormationPanelRecoverArg = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return nil
+    end
+    if self.curPanelId == PanelId.FacFormationStake then
+        for _, panelId in ipairs({ PanelId.FacFormationStakeSelect, PanelId.FormationFormula }) do
+            local isOpen, ctrl = UIManager:IsOpen(panelId)
+            if isOpen and ctrl:IsShow() then
+                return { panelId = panelId, arg = ctrl:GetRecoverStateArg() }
+            end
+        end
+        return nil
+    end
+    if self.curPanelId == PanelId.FacFormationZone then
+        local isOpen, ctrl = UIManager:IsOpen(PanelId.FormationFormula)
+        if isOpen and ctrl:IsShow() then
+            return { panelId = PanelId.FormationFormula, arg = ctrl:GetRecoverStateArg() }
+        end
+    end
+    return nil
+end
+
+PhaseFacMachine._TryRecoverFormationPanel = HL.Method().Return(HL.Boolean) << function(self)
+    local recoverState = self.arg and self.arg.formationPanelArg
+    if recoverState == nil or PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return true
+    end
+    if self.curPanelId == PanelId.FacFormationStake then
+        
+        local arg = recoverState.arg
+        if recoverState.panelId == PanelId.FacFormationStakeSelect then
+            arg.uiInfo = self.curUIInfo
+        else
+            arg.nodeHandler = self.curUIInfo.nodeHandler
+        end
+        UIManager:AutoOpen(recoverState.panelId, arg)
+        self.arg.formationPanelArg = nil
+        return true
+    end
+    if self.curPanelId ~= PanelId.FacFormationZone or recoverState.panelId ~= PanelId.FormationFormula then
+        self.arg.formationPanelArg = nil
+        return true
+    end
+    
+    local zoneCtrl = self.curPanelItem and self.curPanelItem.uiCtrl
+    if zoneCtrl == nil or not zoneCtrl:TryPrepareFormationFormulaRecover(recoverState.arg) then
+        return false
+    end
+    UIManager:AutoOpen(PanelId.FormationFormula, recoverState.arg)
+    self.arg.formationPanelArg = nil
+    return true
 end
 
 PhaseFacMachine._GetFacPendingSubmitPopupRecoverArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
@@ -750,6 +846,10 @@ end
 
 
 PhaseFacMachine._OnActivated = HL.Override() << function(self)
+    if self:_IsBuildingNodeUnavailable() then
+        self:ExitSelfFast()
+        return
+    end
     self:_StartFbAndTickUpdate()
     if self.m_panelBuildingDataId and not self.m_isDoingOut then
         CS.Beyond.Gameplay.Conditions.OnBuildingPanelOpen.Trigger(self.m_panelBuildingDataId, true)

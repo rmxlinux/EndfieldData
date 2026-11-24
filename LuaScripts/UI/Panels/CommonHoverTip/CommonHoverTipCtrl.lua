@@ -37,6 +37,7 @@ end
 
 
 
+
 CommonHoverTipCtrl._OnShowTip = HL.StaticMethod(HL.Table) << function(args)
     if DeviceInfo.usingTouch then
         return
@@ -122,10 +123,12 @@ CommonHoverTipCtrl._ShowTip = HL.Method(HL.Table) << function(self, args)
         end)
     else
         self.m_coroutine = self:_StartCoroutine(function()
-            while true do
+            
+            while self:_IsOwnerValid(args.owner) do
                 UIUtils.updateTipsPosition(self.view.tipContent.transform, args.targetRect, self.view.rectTransform, self.uiCamera, posType, args.padding)
                 coroutine.step()
             end
+            self:_OnHideTip({ noAnimation = true })
         end)
     end
     self:ToTop()
@@ -137,12 +140,17 @@ CommonHoverTipCtrl._OnHideTip = HL.Method(HL.Opt(HL.Table)) << function(self, ar
         self.m_delayCoroutine = nil
     end
 
+    local noAnimation = args ~= nil and args.noAnimation == true
     if not self.m_isShown then
+        
+        if noAnimation and self.view.tipContent.gameObject.activeSelf then
+            self.view.tipContent:ClearTween(false)
+            self:_HideTipContent()
+        end
         return
     end
     self.m_isShown = false
 
-    local noAnimation = args ~= nil and args.noAnimation == true
     if noAnimation then
         self:_HideTipContent()
     else
@@ -157,6 +165,17 @@ CommonHoverTipCtrl._HideTipContent = HL.Method() << function(self)
     if self.m_coroutine ~= nil then
         self.m_coroutine = self:_ClearCoroutine(self.m_coroutine)
     end
+end
+
+
+CommonHoverTipCtrl._IsOwnerValid = HL.Method(HL.Opt(CS.Beyond.UI.UIButton)).Return(HL.Boolean) << function(self, owner)
+    if owner == nil then
+        return true
+    end
+    if IsNull(owner) or not owner.gameObject.activeInHierarchy then
+        return false
+    end
+    return owner.groupId <= 0 or owner.groupEnabled
 end
 
 

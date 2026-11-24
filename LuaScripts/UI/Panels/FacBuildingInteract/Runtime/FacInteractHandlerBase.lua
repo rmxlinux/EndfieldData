@@ -104,6 +104,8 @@
 
 
 
+
+
 local function clearTable(tbl)
     for key in pairs(tbl) do
         tbl[key] = nil
@@ -144,7 +146,13 @@ local function copyResolvedTarget(source, target)
     target.gridPos = source.gridPos
     target.subBuildingIndex = -1
     target.pendingSlotId = source.pendingSlotId or 0
-    if source.type == FacConst.FAC_INTERACT_TARGET_TYPE.Building then
+    if source.type == FacConst.FAC_INTERACT_TARGET_TYPE.FormationZone then
+        target.formationZoneInfo = source.formationZoneInfo
+        target.identity = source.identity
+        target.logicWorldPos = source.logicWorldPos
+        target.cube = source.cube
+        target.option = { formationZoneInfo = source.formationZoneInfo }
+    elseif source.type == FacConst.FAC_INTERACT_TARGET_TYPE.Building then
         target.option = { buildingNodeId = source.nodeId }
     else
         target.option = {
@@ -168,6 +176,11 @@ local function fillHighlight(target, identity, position, offsetY, rotation, scal
     return target
 end
 
+local function getFormationZoneInteractName(formationZoneInfo)
+    local levelCfg = Tables.factoryFormationLevelTable:GetValue(formationZoneInfo.formationId).levels[formationZoneInfo.data.level]
+    return levelCfg.name
+end
+
 FacInteractHandlerBase = HL.Class('FacInteractHandlerBase')
 
 
@@ -182,6 +195,7 @@ FacInteractHandlerBase.m_interactPresentationModel = HL.Field(HL.Table) << funct
             _building = {},
             _pipe = {},
             _belt = {},
+            _formationZone = {},
         },
         scene = {
             pendingSlotIds = {},
@@ -189,6 +203,7 @@ FacInteractHandlerBase.m_interactPresentationModel = HL.Field(HL.Table) << funct
             _subBuilding = {},
             _pipe = {},
             _belt = {},
+            _formationZone = {},
             _controllerEmptyGrid = {},
         },
         options = {},
@@ -296,6 +311,7 @@ FacInteractHandlerBase._ResetPresentationModel = HL.Method(HL.Table).Return(HL.T
     targetSet.building = nil
     targetSet.pipe = nil
     targetSet.belt = nil
+    targetSet.formationZone = nil
     for i = #targetSet.overlapBuildings, 1, -1 do
         targetSet.overlapBuildings[i] = nil
     end
@@ -572,12 +588,32 @@ FacInteractHandlerBase._BuildCommonPresentation = HL.Method(HL.Table, HL.Table, 
         end
     end
 
+    local formationZone = copyResolvedTarget(output.formationZone, targetSet._formationZone)
+    if formationZone then
+        formationZone.name = getFormationZoneInteractName(formationZone.formationZoneInfo)
+        targetSet.formationZone = formationZone
+        local cube = formationZone.cube
+        local zoneHighlight = fillHighlight(
+            scene._formationZone,
+            "formationZone:" .. formationZone.identity,
+            formationZone.logicWorldPos,
+            0.2,
+            Vector3.zero,
+            Vector3(cube.width, 1, cube.depth)
+        )
+        if isTopView then
+            scene.hover = zoneHighlight
+        end
+    end
+
     if output.primaryTarget == output.pipe then
         targetSet.primary = pipe
     elseif output.primaryTarget == output.building then
         targetSet.primary = building
     elseif output.primaryTarget == output.belt then
         targetSet.primary = belt
+    elseif output.primaryTarget == output.formationZone then
+        targetSet.primary = formationZone
     end
 
     
@@ -615,6 +651,7 @@ FacInteractHandlerBase._BuildCommonPresentation = HL.Method(HL.Table, HL.Table, 
         self:_BuildBuildingOptions(model, building, buildingData, isBuilding, isHub, isUdPipe, scene.subBuilding, policy)
         self:_BuildPipeOptions(model, pipe, policy)
         self:_BuildBeltOptions(model, belt, input, policy)
+        self:_BuildFormationZoneOptions(model, formationZone, policy)
     end
 
     local approachNodeId
@@ -880,6 +917,24 @@ FacInteractHandlerBase._BuildBeltOptions = HL.Method(HL.Table, HL.Any, HL.Table,
             sortId = -200,
         }, nodeId .. ":all")
     end
+end
+
+
+FacInteractHandlerBase._BuildFormationZoneOptions = HL.Method(HL.Table, HL.Any, HL.Table)
+        << function(self, model, formationZone, policy)
+    if not formationZone or policy.destroyMode then
+        return
+    end
+    local info = formationZone.formationZoneInfo
+    local capturedInfo = info
+    self:_AddOption(model, FacConst.FAC_INTERACT_OPTION_SOURCE_ID.FormationZone, {
+        text = getFormationZoneInteractName(info),
+        icon = FacConst.FAC_INTERACT_ICON.Common,
+        sortId = 250,
+        action = function()
+            self.m_host:ExecuteInteract({ formationZoneInfo = capturedInfo })
+        end,
+    }, formationZone.identity)
 end
 
 

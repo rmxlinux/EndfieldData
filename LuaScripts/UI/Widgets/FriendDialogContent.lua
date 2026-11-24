@@ -85,6 +85,10 @@ FriendDialogContent._OnFirstTimeInit = HL.Override() << function(self)
         self:_FriendChatUpdateSocialBuilding(args)
     end)
 
+    self:RegisterMessage(MessageConst.FRIEND_CHAT_UPDATE_MATCH_ROOM_INVITE, function(args)
+        self:_FriendChatUpdateMatchRoomInvite(args)
+    end)
+
     self:RegisterMessage(MessageConst.FRIEND_CHAT_SCROLL_LIST_TO_INDEX, function(args)
         self:_DialogScrollToIndex(args)
     end)
@@ -104,6 +108,13 @@ end
 
 
 FriendDialogContent._FriendChatUpdateSocialBuilding = HL.Method(HL.Any) << function(self, args)
+    local targetRoleId, msgIndex = unpack(args)
+    if targetRoleId == self.m_showRoleId then
+        self:UpdateMessagesByMsgIndex(msgIndex)
+    end
+end
+
+FriendDialogContent._FriendChatUpdateMatchRoomInvite = HL.Method(HL.Any) << function(self, args)
     local targetRoleId, msgIndex = unpack(args)
     if targetRoleId == self.m_showRoleId then
         self:UpdateMessagesByMsgIndex(msgIndex)
@@ -138,7 +149,7 @@ FriendDialogContent._OnRecvSendChatNotify = HL.Method(HL.Any) << function(self, 
 end
 
 FriendDialogContent.OnFriendRemakeNameModify = HL.Method() << function(self)
-    self:UpdateNameInfos()
+    self:RefreshNameText()
 end
 
 
@@ -300,17 +311,20 @@ end
 
 FriendDialogContent.UpdateFriendInfo = HL.Method(HL.Any) << function(self, friendInfo)
     self.m_friendInfo = friendInfo
-    self:UpdateNameInfos()
+    self.m_curWindowMsgMaxIndex = -1
+    self.m_showRoleId = friendInfo and friendInfo.roleId or 0
+    GameInstance.player.friendChatSystem:SetLuaShowRoleId(self.m_showRoleId)
+    if friendInfo ~= nil then
+        self.view.friendDialogueSendArea:UpdateShowRoleId(self.m_showRoleId)
+    end
+    self:RefreshNameText()
 end
 
 
-FriendDialogContent.UpdateNameInfos = HL.Method() << function(self)
+FriendDialogContent.RefreshNameText = HL.Method() << function(self)
     local friendInfo = self.m_friendInfo
-    self.m_curWindowMsgMaxIndex = -1
     
     if friendInfo == nil then
-        self.m_showRoleId = 0
-        GameInstance.player.friendChatSystem:SetLuaShowRoleId(self.m_showRoleId)
         self.view.pS5NameNode.gameObject:SetActive(false)
         self.view.psNameTxt.text = ""  
         self.view.notesNameTxt.text = ""  
@@ -318,10 +332,6 @@ FriendDialogContent.UpdateNameInfos = HL.Method() << function(self)
         self.view.nameMarkPost.text = ""  
         self.view.personalityTxt.text = ""  
     else
-        self.m_showRoleId = friendInfo.roleId
-        GameInstance.player.friendChatSystem:SetLuaShowRoleId(self.m_showRoleId)
-        self.view.friendDialogueSendArea:UpdateShowRoleId(self.m_showRoleId)
-
         self.view.pS5NameNode.gameObject:SetActive(not string.isEmpty(friendInfo.psName))
         self.view.psNameTxt.text = friendInfo.psName
 

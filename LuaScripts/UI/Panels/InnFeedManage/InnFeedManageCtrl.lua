@@ -14,7 +14,7 @@ InnFeedManageCtrl = HL.Class('InnFeedManageCtrl', uiCtrl.UICtrl)
 InnFeedManageCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_WALLET_CHANGED] = "_OnWalletChanged",
     [MessageConst.ON_RANCH_PRODUCT_UPDATED] = "_OnRanchProductUpdated",
-    [MessageConst.ON_RANCH_HARVEST_SUCC] = "_OnHarvestSuccess",
+    [MessageConst.ON_ITEM_COUNT_CHANGED_FOR_TOAST] = "_OnHarvestSuccess",
     [MessageConst.ON_COMMON_POI_LEVEL_CHANGE_PERFORM_START] = "_OnStableUnlocked",
 }
 InnFeedManageCtrl.m_ranchId = HL.Field(HL.String) << ""
@@ -28,6 +28,7 @@ InnFeedManageCtrl.m_rewardNaviGroup = HL.Field(CS.Beyond.UI.UISelectableNaviGrou
 InnFeedManageCtrl.m_instructionShown  = HL.Field(HL.Boolean) << false
 InnFeedManageCtrl.m_unlockReshowDelayTimer = HL.Field(HL.Number) << -1
 InnFeedManageCtrl.m_openedFromInteractive = HL.Field(HL.Boolean) << false
+InnFeedManageCtrl.m_waitingHarvestItemToast = HL.Field(HL.Boolean) << false
 
 
 InnFeedManageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -43,6 +44,7 @@ InnFeedManageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 InnFeedManageCtrl.OnClose = HL.Override() << function(self)
+    self.m_waitingHarvestItemToast = false
     if self.m_unlockReshowDelayTimer > 0 then
         self:_ClearTimer(self.m_unlockReshowDelayTimer)
         self.m_unlockReshowDelayTimer = -1
@@ -96,6 +98,7 @@ InnFeedManageCtrl._InitUI = HL.Method() << function(self)
             Notify(MessageConst.SHOW_TOAST, Language.LUA_RANCH_HARVEST_EMPTY_TOAST)
             return
         end
+        self.m_waitingHarvestItemToast = true
         ranchSystem:SendRanchProductTake(self.m_ranchId)
     end)
 
@@ -293,8 +296,26 @@ InnFeedManageCtrl._OnStableUnlocked = HL.Method(HL.Any) << function(self, arg)
 end
 
 InnFeedManageCtrl._OnHarvestSuccess = HL.Method(HL.Any) << function(self, arg)
-    
-    local _, items = unpack(arg)
+    if not self.m_waitingHarvestItemToast then
+        return
+    end
+    local itemId2DiffCount = unpack(arg)
+    if not itemId2DiffCount then
+        return
+    end
+    local items = {}
+    for itemId, diffCount in pairs(itemId2DiffCount) do
+        if diffCount > 0 then
+            table.insert(items, {
+                id = itemId,
+                count = diffCount,
+            })
+        end
+    end
+    if #items == 0 then
+        return
+    end
+    self.m_waitingHarvestItemToast = false
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
         items = items,
     })

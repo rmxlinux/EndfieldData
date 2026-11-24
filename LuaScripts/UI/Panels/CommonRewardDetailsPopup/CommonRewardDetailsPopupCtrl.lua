@@ -27,6 +27,7 @@ CommonRewardDetailsPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
+
 CommonRewardDetailsPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.closeBtn.onClick:AddListener(function()
         self:_OnCloseBtnClick()
@@ -60,6 +61,13 @@ CommonRewardDetailsPopupCtrl._OnCloseBtnClick = HL.Method() << function(self)
 end
 
 CommonRewardDetailsPopupCtrl._InitRewardDetails = HL.Method() << function(self)
+    local gameMechanicsId = self.m_args.gameMechanicsId
+    local showMoreRewardHint = false
+    if not string.isEmpty(gameMechanicsId) then
+        showMoreRewardHint = Tables.gameMechanicTable[gameMechanicsId].hasDirectPassRelation
+    end
+    self.view.moreRewardHintText.gameObject:SetActive(showMoreRewardHint)
+
     self:_InitFirstPartRewards()
     self:_InitSecondPartRewards()
 end

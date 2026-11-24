@@ -3,6 +3,9 @@ local PANEL_ID = PanelId.Inventory
 InventoryCtrl = HL.Class('InventoryCtrl', uiCtrl.UICtrl)
 
 
+local FREEZE_HOLDER_KEY = "@Inventory"
+
+
 
 
 
@@ -144,11 +147,15 @@ InventoryCtrl.OnShow = HL.Override() << function(self)
 
     if Utils.isInFight() then
         
-        self:PlayAnimationOutWithCallback(function()
-            self.m_opened = false
-            PhaseManager:ExitPhaseFast(PhaseId.Inventory)
-        end)
-        return
+        
+        local _, phase = PhaseManager:IsOpen(PhaseId.Inventory)
+        if not phase or phase.state == PhaseConst.EPhaseState.Activated then
+            self:PlayAnimationOutWithCallback(function()
+                self.m_opened = false
+                PhaseManager:ExitPhaseFast(PhaseId.Inventory)
+            end)
+            return
+        end
     end
 
     if Utils.isInSafeZone() then
@@ -1411,20 +1418,12 @@ InventoryCtrl._RefreshWeekRaidBottomNode = HL.Method() << function(self)
 end
 
 
-InventoryCtrl.m_timeScaleHandler = HL.Field(HL.Number) << 0
-
 InventoryCtrl._FreezeWorld = HL.Method() << function(self)
-    self:_ResumeWorld()
-    self.m_timeScaleHandler = Utils.FreezeWorldByUI()
-    GameWorld.subGameManager:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
+    UIWorldFreezeManager:AddFreezeHolder(FREEZE_HOLDER_KEY, true)
 end
 
 InventoryCtrl._ResumeWorld = HL.Method() << function(self)
-    if self.m_timeScaleHandler > 0 then
-        Utils.ResumeWorldByUI(self.m_timeScaleHandler)
-        self.m_timeScaleHandler = 0
-        GameWorld.subGameManager:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
-    end
+    UIWorldFreezeManager:RemoveFreezeHolder(FREEZE_HOLDER_KEY)
 end
 
 

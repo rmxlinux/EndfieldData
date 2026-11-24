@@ -53,7 +53,12 @@ DungeonCommonSelectionCell.InitDungeonCommonSelectionCell = HL.Method(HL.String,
 
     self:_UpdateState()
 
-    self.view.redDot:InitRedDot("DungeonReadNormal", {dungeonId}, nil, self:GetUICtrl().view.redDotScrollRect)
+    
+    if Tables.HighDifficultyGameIdToSeriesIdTable:ContainsKey(dungeonId) then
+        self.view.redDot:InitRedDot("")
+    else
+        self.view.redDot:InitRedDot("DungeonReadNormal", {dungeonId}, nil, self:GetUICtrl().view.redDotScrollRect)
+    end
 
     
     local inRelief = DungeonUtils.isDungeonCostStamina(dungeonId) and ActivityUtils.hasStaminaReduceCount()

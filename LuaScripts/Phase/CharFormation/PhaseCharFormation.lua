@@ -132,7 +132,7 @@ PhaseCharFormation.m_preCharInfoList = HL.Field(HL.Table)
 
 PhaseCharFormation.m_lastPostGlitchEventTime = HL.Field(HL.Number) << 0
 
-PhaseCharFormation.m_hideCamCor = HL.Field(HL.Thread)
+
 
 
 
@@ -203,30 +203,20 @@ PhaseCharFormation._OnRefresh = HL.Override() << function(self)
 end
 
 PhaseCharFormation.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
-    if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
-        if not PhaseManager:IsPhaseHaveSceneCamera(anotherPhaseId) then
-            CameraManager:EnableUIModelCullingMask(true, "charFormation")
-        end
-    end
-
     if transitionType == PhaseConst.EPhaseState.TransitionIn and not fastMode then
-        
         UIManager:PreloadPanelAsset(PanelId.CharFormation, PHASE_ID)
     end
     if not fastMode and (transitionType == PhaseConst.EPhaseState.TransitionIn or transitionType == PhaseConst.EPhaseState.TransitionOut) then
         coroutine.waitCondition(function()
             return true
         end, coroutine.TailTick)
-        
-        
         Notify(MessageConst.PREPARE_BLOCK_GLITCH_TRANSITION)
         coroutine.waitForRenderDone()
         coroutine.step()
     end
 
     if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
-        self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
-        self.m_sceneObject.view.light.gameObject:SetActive(true)
+        UISceneManager:Activate(self.m_uiSceneId)
     end
 end
 
@@ -241,19 +231,13 @@ PhaseCharFormation._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Tabl
     end
 end
 
-
 PhaseCharFormation._OnActivated = HL.Override() << function(self)
-    
     self:_InitPhaseItems()
-    
     UIManager:Hide(PanelId.Touch)
     self:_PlayTeamVoice()
     self:_HideSkillTip()
     self:_InitControllerSlotSelectedState()
 
-    self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
-    self.m_sceneObject.view.light.gameObject:SetActive(true)
-    CameraManager:EnableUIModelCullingMask(true, "charFormation")
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
@@ -270,29 +254,13 @@ PhaseCharFormation._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Tab
     end
 end
 
-
 PhaseCharFormation._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    if PhaseManager:IsPhaseHaveSceneCamera(args and args.anotherPhaseId) then
-        CameraManager:EnableUIModelCullingMask(false, "charFormation")
-    end
-
-    self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
-    local isRecovering = PhaseManager.isRecovering
-    self.m_hideCamCor = self:_StartCoroutine(function()
-        if not isRecovering then
-            coroutine.wait(1)
-        end
-        CameraManager:EnableUIModelCullingMask(false, "charFormation")
-        self.m_sceneObject.view.light.gameObject:SetActive(false)
-    end)
 end
 
 PhaseCharFormation._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    CameraManager:EnableUIModelCullingMask(true, "charFormation")
 end
 
 PhaseCharFormation._OnDestroy = HL.Override() << function(self)
-    CameraManager:EnableUIModelCullingMask(false, "charFormation")
     if self.m_tickKey > 0 then
         LuaUpdate:Remove(self.m_tickKey)
         self.m_tickKey = -1
@@ -377,7 +345,7 @@ PhaseCharFormation._ProcessArgs = HL.Method() << function(self)
     end
 
     
-    if self.arg.customSetTeamCallback ~= nil and (self.arg.getComboSkill == nil or self.arg.comboSkillSaveCallback == nil) then
+    if string.isEmpty(self.arg.presetTeamId) and self.arg.customSetTeamCallback ~= nil and (self.arg.getComboSkill == nil or self.arg.comboSkillSaveCallback == nil) then
         logger.error(string.format(
             "[CharFormation] customSetTeamCallback 已自定义成员保存，但 getComboSkill/comboSkillSaveCallback 未成对传入，可能会与成员数据错位。dungeonId=%s",
             tostring(self.arg.dungeonId)))
@@ -385,25 +353,28 @@ PhaseCharFormation._ProcessArgs = HL.Method() << function(self)
 
     
     
+    self.m_defaultSetTeamCallback = nil
     local specialTeamType = DungeonUtils.getSpecialTeamType(self.arg.dungeonId)
     if specialTeamType and self.arg.customSetTeamCallback == nil then
-        local TeamInfo = GameInstance.player.charBag:GetSpecialTeamByType(specialTeamType)
-        self.arg.initCharInstIdList = {}
-
-        if TeamInfo then    
-            for _, charInstId in pairs(TeamInfo.memberList) do
-                table.insert(self.arg.initCharInstIdList, charInstId)
+        
+        if not isRecover then
+            local teamInfo = GameInstance.player.charBag:GetSpecialTeamByType(specialTeamType)
+            self.arg.initCharInstIdList = {}
+            if teamInfo then    
+                for _, charInstId in pairs(teamInfo.memberList) do
+                    table.insert(self.arg.initCharInstIdList, charInstId)
+                end
             end
         end
 
-        self.arg.customSetTeamCallback = function(charInstIds)
+        self.m_defaultSetTeamCallback = function(charInstIds)
             GameInstance.player.charBag:SetSpecialTeam(specialTeamType, charInstIds)
         end
     end
 
     
     if not isRecover then
-        if not string.isEmpty(self.arg.presetTeamId) or self.arg.initCharInstIdList ~= nil then
+        if not string.isEmpty(self.arg.presetTeamId) or self.arg.initCharInstIdList ~= nil or self.arg.getInitCharInstIdList then
             self.arg.lockedTeamData = self:_GenerateLockedFormationData(self.arg.presetTeamId)
         elseif not string.isEmpty(self.arg.dungeonId) then
             local hasValue
@@ -506,7 +477,15 @@ end
 
 PhaseCharFormation._InitGameObject = HL.Method() << function(self)
     if not self.m_sceneObject then
-        self.m_sceneObject = self:CreatePhaseGOItem(PHASE_CHAR_FORMATION_GAME_OBJECT)
+        self.m_sceneObject = self:CreateUIScene(PHASE_CHAR_FORMATION_GAME_OBJECT, {
+            skipSetActive = true,
+            onDeactivate = function()
+                self.m_sceneObject.view.light.gameObject:SetActive(false)
+            end,
+            onActivate = function()
+                self.m_sceneObject.view.light.gameObject:SetActive(true)
+            end,
+        })
         self:RefreshCameraController(CameraIndex.Team)
 
         self.m_sceneObject.view.cameraAnimWrapper:ClearTween()
@@ -559,6 +538,13 @@ PhaseCharFormation.OnCharListSingleSelect = HL.Method(HL.Any) << function(self, 
     end
 
     local slotIndex = cellInfo.slotIndex
+    
+    for index, char in pairs(self.m_tmpTeam) do
+        if index ~= self.m_singleCharIndex and char.templateId == cellInfo.templateId then
+            slotIndex = index
+            break
+        end
+    end
     
     local info = {
         charInstId = instId,
@@ -686,6 +672,9 @@ PhaseCharFormation.OnEnterMultiSelect = HL.Method(HL.Opt(HL.Any)) << function(se
 end
 
 PhaseCharFormation.OnCharListConfirm = HL.Method(HL.Any) << function(self, teamNum)
+    if not self:_CheckForbidDeadChar() then
+        return
+    end
     local res = self:_TrySendSetSquad()
     if res then
         self:_PlayCharListVoice()
@@ -694,6 +683,9 @@ PhaseCharFormation.OnCharListConfirm = HL.Method(HL.Any) << function(self, teamN
 end
 
 PhaseCharFormation.OnConfirmSingleChar = HL.Method(HL.Any) << function(self, teamNum)
+    if not self:_CheckForbidDeadChar() then
+        return
+    end
     self.m_tmpTeam = nil
     local res = self:_TrySendSetSquad()
     if res then
@@ -707,6 +699,9 @@ PhaseCharFormation.OnUnEquipIndex = HL.Method() << function(self)
     
     if #self.m_tmpTeam == 1 then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_CAN_NOT_UNEQUIP)
+        return
+    end
+    if not self:_CheckForbidDeadChar(self.m_singleCharIndex) then
         return
     end
     table.remove(self.m_tmpTeam, self.m_singleCharIndex)
@@ -1675,12 +1670,13 @@ PhaseCharFormation._TrySendSetSquad = HL.Method().Return(HL.Boolean, HL.Number) 
                 table.insert(self.m_lockedTeamData.chars, charInfo)
             end
             self:_RefreshTeamChars()
-            if self.arg.customSetTeamCallback then
+            local setTeamCallback = self.arg.customSetTeamCallback or self.m_defaultSetTeamCallback
+            if setTeamCallback then
                 local charInstIds = {}
                 for _, charInfo in pairs(self.m_lockedTeamData.chars) do
                     table.insert(charInstIds, charInfo.charInstId)
                 end
-                self.arg.customSetTeamCallback(charInstIds)
+                setTeamCallback(charInstIds)
             end
         end)
         return true, 0
@@ -1763,6 +1759,19 @@ PhaseCharFormation._CheckTeamCanFight = HL.Method().Return(HL.Boolean, HL.Any) <
 
     return hasAlive, toast
 
+end
+
+PhaseCharFormation._CheckForbidDeadChar = HL.Method(HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, excludeIndex)
+    if not self.arg.forbidDeadChar then
+        return true
+    end
+    for index, charInfo in pairs(self.m_tempMultiSelectCharInfoList or self.m_curTeam) do
+        if index ~= excludeIndex and CharInfoUtils.isCharDead(charInfo.charInstId) then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_CHAR_FORMATION_DEAD_TOAST)
+            return false
+        end
+    end
+    return true
 end
 
 PhaseCharFormation._SendChangeActiveSquad = HL.Method(HL.Opt(HL.Boolean)) << function(self, ignoreCheck)
@@ -2119,6 +2128,7 @@ end
 
 
 PhaseCharFormation.m_lockedTeamData = HL.Field(HL.Table)
+PhaseCharFormation.m_defaultSetTeamCallback = HL.Field(HL.Function)
 
 local _GenerateLockedCharInfo  = function(charInstId)
     local csCharInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
@@ -2126,6 +2136,7 @@ local _GenerateLockedCharInfo  = function(charInstId)
         return {
             charInstId = charInstId,
             charId = csCharInfo.templateId,
+            isTrail = csCharInfo.charType == GEnums.CharType.Trial,
         }
     end
     return nil
@@ -2135,17 +2146,24 @@ end
 PhaseCharFormation._GenerateLockedFormationData = HL.Method(HL.Any).Return(HL.Table) << function(self, teamConfigId)
     
     local lockedTeamData = CharInfoUtils.getLockedFormationData(teamConfigId, true)
-    if self.arg.initCharInstIdList then 
+    
+    local initCharInstIdList = self.arg.initCharInstIdList
+    if self.arg.getInitCharInstIdList then
+        initCharInstIdList = self.arg.getInitCharInstIdList()
+        lockedTeamData.lockedTeamMemberCount = 0
+        lockedTeamData.hasReplaceable = false
+    end
+    if initCharInstIdList then 
         lockedTeamData.chars = {}
-        if type(self.arg.initCharInstIdList) == "table" then
-            for _, charInstId in pairs(self.arg.initCharInstIdList) do
+        if type(initCharInstIdList) == "table" then
+            for _, charInstId in pairs(initCharInstIdList) do
                 local charInfo = _GenerateLockedCharInfo(charInstId)
                 if charInfo then
                     table.insert(lockedTeamData.chars, charInfo)
                 end
             end
         else
-            for _, charInstId in cs_pairs(self.arg.initCharInstIdList) do
+            for _, charInstId in cs_pairs(initCharInstIdList) do
                 local charInfo = _GenerateLockedCharInfo(charInstId)
                 if charInfo then
                     table.insert(lockedTeamData.chars, charInfo)
@@ -2192,6 +2210,19 @@ PhaseCharFormation._GenerateLockedFormationData = HL.Method(HL.Any).Return(HL.Ta
         end
     end
     return lockedTeamData
+end
+
+
+PhaseCharFormation.ReloadCustomTeam = HL.Method() << function(self)
+    self.m_tempMultiSelectCharInfoList = nil
+    self.m_lockedTeamData.chars = {}
+    for _, charInstId in ipairs(self.arg.getInitCharInstIdList()) do
+        local charInfo = _GenerateLockedCharInfo(charInstId)
+        if charInfo then
+            table.insert(self.m_lockedTeamData.chars, charInfo)
+        end
+    end
+    self:_BackToTeamSet(false)
 end
 
 

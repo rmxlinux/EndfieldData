@@ -159,11 +159,7 @@ GeneralAbilityCtrl.m_mobileIsInCancelCircle = HL.Field(HL.Boolean) << false
 
 GeneralAbilityCtrl.m_mobileUseAbilityFlag = HL.Field(HL.Boolean) << true
 
-GeneralAbilityCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
-
-GeneralAbilityCtrl.m_screenOutFlag = HL.Field(HL.Boolean) << false
-
-GeneralAbilityCtrl.m_needLateRecoverScreen = HL.Field(HL.Boolean) << false
+GeneralAbilityCtrl.m_screenOutRequest = HL.Field(HL.Table)
 
 GeneralAbilityCtrl.m_controllerTick = HL.Field(HL.Number) << -1
 
@@ -210,8 +206,10 @@ GeneralAbilityCtrl.m_blockedGasOrLiquidInteract = HL.Field(HL.Boolean) << false
 
 
 GeneralAbilityCtrl.s_messages = HL.StaticField(HL.Table) << {
+    [MessageConst.ON_FAC_SOCIAL_BUILDING_LIKED] = "_OnSocialBuildingLiked",
     [MessageConst.GENERAL_ABILITY_SYSTEM_CHANGED] = '_OnSystemChanged',
     [MessageConst.GENERAL_ABILITY_FORBID_SELECT_CHANGED] = '_OnForbidSelectChanged',
+    [MessageConst.FORBID_SYSTEM_CHANGED] = '_OnForbidSystemChanged',
     [MessageConst.TEMP_ABILITY_SYSTEM_CHANGED] = '_OnTempAbilityChanged',
     [MessageConst.GENERAL_ABILITY_SYSTEM_FORCE_SELECT] = '_OnForceSelectAbility',
     [MessageConst.ON_ENTER_LIQUID_POOL_NEARBY_AREA] = '_OnEnterLiquidPoolNearbyArea',
@@ -241,6 +239,10 @@ GeneralAbilityCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 GeneralAbilityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    
+    self.view.hoverAbilityNameTxt.text = ""
+    self.view.middleStateCtrl:SetState(SelectingMidState.InitialState)
+
     self.m_selectorCancelBinding = self:BindInputPlayerAction(SELECTOR_CANCEL_ACTION_ID, function()
         self:_OnBackButtonClicked()
     end)
@@ -251,13 +253,13 @@ GeneralAbilityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     InputManagerInst:ToggleBinding(self.m_selectorCancelBinding, false)
     InputManagerInst:ToggleBinding(self.m_selectorClickBinding, false)
 
-    self.view.selectedAbilityButton.onPressStart:AddListener(function()
+    self.view.selectedAbilityButton.onPressStart:AddListener(function(eventData)
         if Utils.isCurSquadAllDead() then
             
             return
         end
         self.startPress = true      
-        self:_StartPress()
+        self:_StartPress(eventData ~= nil)
     end)
 
     self.view.selectedAbilityButton.onPressEnd:AddListener(function()
@@ -310,6 +312,16 @@ GeneralAbilityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 GeneralAbilityCtrl.OnClose = HL.Override() << function(self)
+    
+    self.view.middleAnim:ClearTween(false)
+    self.view.selectorAnim:ClearTween(false)
+    self:_ForceResetSelectorRuntimeState()
+
+    
+    self:_ClearRPress()
+    self:_RemovePCTick()
+    self:_RemoveControllerTick()
+    self.m_mobileSelectorTick = LuaUpdate:Remove(self.m_mobileSelectorTick)
     if self.m_triggerTickHandle ~= -1 then
         self.m_triggerTickHandle = LuaUpdate:Remove(self.m_triggerTickHandle)
     end
@@ -375,6 +387,16 @@ GeneralAbilityCtrl._OnForbidSelectChanged = HL.Method() << function(self)
     end
 end
 
+GeneralAbilityCtrl._OnForbidSystemChanged = HL.Method(HL.Table) << function(self, args)
+    local forbidType = unpack(args)
+    if forbidType ~= ForbidType.ForbidUseGeneralAbility then
+        return
+    end
+    
+    self:_UpdateGasAndFluidInteractState()
+    self:_RefreshGasAndWaterTipShownState()
+end
+
 GeneralAbilityCtrl._UpdateSelectedType = HL.Method() << function(self)
     self:_InitSelectedType()
 end
@@ -388,6 +410,7 @@ GeneralAbilityCtrl._OnTempAbilityChanged = HL.Method() << function(self)
     self:_InitAbilityData()
     if self.m_unLockNormalNum ~= 0 or self:_IsHaveTempAbility() then
         self:_UpdateSelectorCellInfo(self.m_tempSelectCell, MAX_SELECTED_LUA_ID)
+        self:_RefreshTempAbilityDeco()
         if self.m_isSelectorShown then
             self.m_mobileHoverAbilityIndex = INVALID_ABILITY_TYPE
             self.m_controllerHoverIndex = INVALID_ABILITY_TYPE
@@ -405,9 +428,20 @@ GeneralAbilityCtrl._OnTempAbilityChanged = HL.Method() << function(self)
             self.m_pcHoverIndex = INVALID_ABILITY_TYPE
         end
         self.m_isValid = false  
+        self:_RefreshTempAbilityDeco()
         self:_RefreshMainVisible()
     end
 
+end
+
+
+GeneralAbilityCtrl._RefreshTempAbilityDeco = HL.Method() << function(self)
+    if self.m_tempRightDecoCell == nil then
+        return
+    end
+    local tempData = self.m_abilityDataList[MAX_SELECTED_LUA_ID]
+    local selected = tempData ~= nil and tempData.type == self.m_selectedAbilityType
+    self:_RefreshDecoVisible(MAX_SELECTED_LUA_ID, self.m_tempRightDecoCell, selected)
 end
 
 GeneralAbilityCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
@@ -515,9 +549,14 @@ end
 local CustomAbilityType = CS.Beyond.Gameplay.CustomAbilityType
 local CustomAbilityType2ValidateKeepAbilityAfterChangeInputDeviceType = {
     [CustomAbilityType.TyphoeaArchery] = "_TyphoeaArcheryValidateKeepAbilityByChangeInputDeviceType",
+    [CustomAbilityType.SweetPie] = "_SweetPieValidateKeepAbilityByChangeInputDeviceType",
 }
 
 GeneralAbilityCtrl._TyphoeaArcheryValidateKeepAbilityByChangeInputDeviceType = HL.Method().Return(HL.Boolean) << function(self)
+    return true
+end
+
+GeneralAbilityCtrl._SweetPieValidateKeepAbilityByChangeInputDeviceType = HL.Method().Return(HL.Boolean) << function(self)
     return true
 end
 
@@ -983,8 +1022,8 @@ GeneralAbilityCtrl._OnSelectByType = HL.Method(HL.Number) << function(self, type
             local isGet = false
             local textVal = nil
             local toastText = nil
-            if data.abilityRuntimeData.forbidReasonTextId ~= nil and #data.abilityRuntimeData.forbidReasonTextId > 0 then
-                toastText = data.abilityRuntimeData.forbidReasonTextId
+            if data.abilityRuntimeData.forbidSelectToastId ~= nil and #data.abilityRuntimeData.forbidSelectToastId > 0 then
+                toastText = data.abilityRuntimeData.forbidSelectToastId
             else
                 toastText = BAN_MAP_TOAST
             end
@@ -1144,6 +1183,13 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
         return
     end
 
+    if isShown then
+        
+        self.view.middleStateCtrl:SetState(SelectingMidState.InitialState)
+        self.m_mobileHoverCancelFlag = false
+        self.m_hoverSelectorType = INVALID_ABILITY_TYPE
+    end
+
     UIUtils.PlayAnimationAndToggleActive(self.view.middleAnim, isShown)
     UIUtils.PlayAnimationAndToggleActive(self.view.selectorAnim, isShown, function()
         GameInstance.player.generalAbilitySystem.isInSelectMode = isShown
@@ -1187,7 +1233,7 @@ end
 
 
 GeneralAbilityCtrl._ForceResetSelectorRuntimeState = HL.Method() << function(self)
-    local needReset = self.startPress or self.m_isSelectorShown or self.m_screenOutFlag
+    local needReset = self.startPress or self.m_isSelectorShown or self.m_screenOutRequest ~= nil
         or GameInstance.player.generalAbilitySystem.isInSelectMode
         or GameInstance.player.generalAbilitySystem.isRPressed
     if not needReset then
@@ -1260,7 +1306,6 @@ GeneralAbilityCtrl._InitPCTick = HL.Method() << function(self)
     self.m_pcArrowAngle = CONTROLLER_INVALID_ANGLE
     self.m_lastPcArrowAngle = CONTROLLER_INVALID_ANGLE
     self.m_pcHoverIndex = INVALID_ABILITY_TYPE
-    self.m_needLateRecoverScreen = false
 
     self.m_pcTick = LuaUpdate:Add("Tick", function(deltaTime)
         if self:IsShow() then
@@ -1335,44 +1380,53 @@ end
 
 
 GeneralAbilityCtrl._CheckRecoverScreen = HL.Method(HL.Boolean) << function(self, isShown)
-    if isShown and not self.m_screenOutFlag then
+    if isShown and self.m_screenOutRequest == nil then
         if not GameInstance.player.systemActionConflictManager:TryStartSystemAction(Const.PowerPoleFastTravelActionConflictName) then
             return
         end
 
-        self.m_needLateRecoverScreen = false
-        self.m_screenOutFlag = true
         self.m_screenOutVersion = self.m_screenOutVersion + 1
+        
+        local request = { clearScreenKey = -1, needRecover = false, actionPending = true, version = self.m_screenOutVersion }
+        self.m_screenOutRequest = request
         UIManager:ClearScreenWithOutAnimation(function(clearScreenKey)
-            self.m_screenOutCallbackVersion = self.m_screenOutCallbackVersion + 1
-            self.m_clearScreenKey = clearScreenKey
-            if self.m_needLateRecoverScreen then
-                self:_RecoverScreen()
+            if request.version == self.m_screenOutVersion then
+                self.m_screenOutCallbackVersion = request.version
             end
-            GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.PowerPoleFastTravelActionConflictName)
+            request.clearScreenKey = clearScreenKey
+            if request.needRecover then
+                self:_RecoverScreen(request)
+            end
+            if request.actionPending then
+                request.actionPending = false
+                GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.PowerPoleFastTravelActionConflictName)
+            end
         end, { PANEL_ID, PanelId.Joystick })
 
-        TimerManager:StartTimer(1,function()
-            self.m_screenOutCallbackVersion = self.m_screenOutVersion
+        self:_StartTimer(1, function()
+            if request.version == self.m_screenOutVersion then
+                self.m_screenOutCallbackVersion = request.version
+            end
         end)
     end
-    if not isShown then
-        GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.PowerPoleFastTravelActionConflictName)
-    end
 
-    if not isShown and self.m_screenOutFlag then
-        self.m_screenOutFlag = false
-        if self.m_clearScreenKey > 0 then
-            self:_RecoverScreen()
-        else
-            self.m_needLateRecoverScreen = true
+    if not isShown and self.m_screenOutRequest ~= nil then
+        local request = self.m_screenOutRequest
+        self.m_screenOutRequest = nil
+        request.needRecover = true
+        if request.actionPending then
+            request.actionPending = false
+            GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.PowerPoleFastTravelActionConflictName)
         end
+        self:_RecoverScreen(request)
     end
 end
 
-GeneralAbilityCtrl._RecoverScreen = HL.Method() << function(self)
-    UIManager:RecoverScreen(self.m_clearScreenKey)
-    self.m_clearScreenKey = -1
+GeneralAbilityCtrl._RecoverScreen = HL.Method(HL.Table) << function(self, request)
+    if request.clearScreenKey > 0 then
+        UIManager:RecoverScreen(request.clearScreenKey)
+        request.clearScreenKey = -1
+    end
 end
 
 
@@ -1597,13 +1651,14 @@ GeneralAbilityCtrl._SetSelectedType = HL.Method(HL.Number, HL.Boolean) << functi
     end
 end
 
-GeneralAbilityCtrl._StartPress = HL.Method() << function(self)
+GeneralAbilityCtrl._StartPress = HL.Method(HL.Boolean) << function(self, isPointerInput)
     self:_ClearRPress()
     GameInstance.player.generalAbilitySystem.isRPressed = true
     self.m_pressRTime = 0
 
     local isOpen, guideCtrl = UIManager:IsOpen(PanelId.Guide)
-    if isOpen then
+    
+    if isOpen or not isPointerInput then
         self.m_pressStartPos = nil
     else
         self.m_pressStartPos = self.view.selectedAbilityButton.curPressPos
@@ -1776,7 +1831,11 @@ GeneralAbilityCtrl._UpdateGasAndFluidInteractState = HL.Method() << function(sel
     end
 
     local data = self.m_abilityDataMap[fluidType]
-    if data ~= nil and data.isForbidSelect then
+    
+    local _, forbidUseParams = Utils.isForbiddenWithReason(ForbidType.ForbidUseGeneralAbility)
+    local isForbidUse = forbidUseParams ~= nil and forbidUseParams:IsStyleForbidden(ForbidStyle.FluidInteract)
+    if isForbidUse or not GameInstance.player.generalAbilitySystem:CheckCanSelect(fluidType)
+        or (data ~= nil and data.isForbidSelect) then
         self.m_blockedGasOrLiquidInteract = true
         return
     end
@@ -1847,7 +1906,6 @@ GeneralAbilityCtrl._MobileClearSelectorState = HL.Method() << function(self)
 
     self.m_mobileIsInCancelCircle = false
     self.m_mobileUseAbilityFlag = true
-    self.m_needLateRecoverScreen = false
     for index = 1, self.view.config.CELL_MAX_COUNT do
         local cell = self.m_abilityCells:GetItem(index)
         self:_RefreshCellHoverState(cell, index, false)
@@ -1939,7 +1997,6 @@ end
 GeneralAbilityCtrl._InitControllerTick = HL.Method() << function(self)
     self.m_currentArrowAngle = CONTROLLER_INVALID_ANGLE
     self.m_controllerHoverIndex = INVALID_ABILITY_TYPE
-    self.m_needLateRecoverScreen = false
 
     self.m_controllerTick = LuaUpdate:Add("Tick", function(deltaTime)
         if self:IsShow() then
@@ -2015,12 +2072,15 @@ end
 
 GeneralAbilityCtrl.OnActiveBuildingLike = HL.Method(HL.Any) << function(self, args)
     local nodeId = unpack(args)
-    FactoryUtils.likeSocialBuilding(nodeId, function()
-        if self.m_interactFacNodeId ~= nodeId then
-            return 
-        end
-        FactoryUtils.updateBuildingLikeAbilityState(nodeId)
-    end)
+    FactoryUtils.likeSocialBuilding(nodeId)
+end
+
+GeneralAbilityCtrl._OnSocialBuildingLiked = HL.Method(HL.Any) << function(self, args)
+    local chapterId, nodeId = unpack(args)
+    if chapterId ~= Utils.getCurrentChapterId() or self.m_interactFacNodeId ~= nodeId then
+        return 
+    end
+    FactoryUtils.updateBuildingLikeAbilityState(nodeId)
 end
 
 

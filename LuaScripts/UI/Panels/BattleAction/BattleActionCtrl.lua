@@ -356,7 +356,18 @@ do
         self:RefreshSkills()
     end
 
+    
+    BattleActionCtrl.ApplyThrowModeToMainHud = HL.StaticMethod() << function()
+        local inThrowMode = GameWorld.battle.inThrowMode
+        Notify(MessageConst.TOGGLE_PLAYER_JUMP, {"throw_mode", inThrowMode})
+        Notify(MessageConst.DISABLE_MAIN_HUD_CONTROLLER_INDICATOR, {"inThrowMode", inThrowMode})
+        if inThrowMode then
+            Notify(MessageConst.RELEASE_MAIN_HUD_ATTACK_INPUT)
+        end
+    end
+
     BattleActionCtrl.OnChangeThrowMode = HL.StaticMethod(HL.Table) << function(args)
+        BattleActionCtrl.ApplyThrowModeToMainHud()
         local isOpen, ctrl = UIManager:IsOpen(PanelId.BattleAction)
         if isOpen then
             
@@ -473,7 +484,7 @@ do
         end
         local luaIndex = LuaIndex(unpack(arg))
         local skillCell = self.m_skillCellList[luaIndex]
-        if not skillCell.gameObject.activeSelf then
+        if not skillCell.gameObject.activeSelf or not skillCell.normalButton.groupEnabled then
             return
         end
         skillCell:OnPressSkillStart()
@@ -555,7 +566,7 @@ do
                     local charIndex = CS.Beyond.UI.BattleControllerInputController.instance:TryPressControllerIndicatorWhenSkillButtonJustPressed()
                     if charIndex >= 0 then
                         local skillCell = self.m_skillCellList[LuaIndex(charIndex)]
-                        if skillCell.gameObject.activeSelf then
+                        if skillCell.gameObject.activeSelf and skillCell.normalButton.groupEnabled then
                             skillCell:OnPressSkillStart()
                         end
                     end

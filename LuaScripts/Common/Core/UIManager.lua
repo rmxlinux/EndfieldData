@@ -8,6 +8,7 @@ local PlaneDistance = CS.Beyond.UI.UIConst.SCREEN_SPACE_CAMERA_PANEL_DISTANCE
 
 
 local g_clearScreenDebugInfos = {}
+local CANVAS_HIDE_BLOCK_INPUT_REASON = "CanvasHide"
 
 
 local function formatClearScreenStack(stack)
@@ -204,11 +205,6 @@ UIManager.UIManager = HL.Constructor() << function(self)
     local uiRedDotAsset = self.m_resourceLoader:LoadGameObject(UIConst.UI_RED_DOT_ANIMATION_PATH)
     local uiRedDotObj = CSUtils.CreateObject(uiRedDotAsset, self.uiRoot)
     CS.Beyond.UI.UIRedDotAnimation.instance:Init(uiRedDotObj)
-
-    
-    local charHeadGlowAsset = self.m_resourceLoader:LoadGameObject(UIConst.UI_CHAR_HEAD_GLOW_ANIMATION_PATH)
-    local charHeadGlowObj = CSUtils.CreateObject(charHeadGlowAsset, self.uiRoot)
-    CS.Beyond.UI.UICharHeadGlowAnimation.instance:Init(charHeadGlowObj)
 
     
     addMetaIndex(self.cfgs, function(_, k)
@@ -1158,12 +1154,7 @@ UIManager._InternalShow = HL.Method(HL.Number) << function(self, panelId)
         self:ToggleBlockObtainWaysJump(cfg.name, true, exceptIds)
     end
 
-    local luaPanel = ctrl.view.luaPanel
-    
-    
-    if not luaPanel.blockWhileAnim or luaPanel.animationInFinished then
-        luaPanel:RecoverAllInput() 
-    end
+    ctrl.view.luaPanel:RecoverAllInput(CANVAS_HIDE_BLOCK_INPUT_REASON)
 
     ctrl:OnShow()
     
@@ -1255,6 +1246,18 @@ UIManager._InternalHide = HL.Method(HL.Number) << function(self, panelId)
         return
     end
 
+    
+    
+    
+    
+    
+    if ctrl.animationWrapper then
+        ctrl.animationWrapper:ClearTween()
+    end
+    if not self:IsOpen(panelId) or self:IsInternalHidden(panelId) then
+        return
+    end
+
     local cfg = ctrl.panelCfg
     ctrl:OnHide()
     
@@ -1264,7 +1267,7 @@ UIManager._InternalHide = HL.Method(HL.Number) << function(self, panelId)
     if cfg.useCanvasHide then
         ctrl.view.gameObject:SetLayerRecursive(UIConst.HIDE_LAYER)
         ctrl.view.panelCanvas.enabled = false
-        ctrl.view.luaPanel:BlockAllInput() 
+        ctrl.view.luaPanel:BlockAllInput(CANVAS_HIDE_BLOCK_INPUT_REASON)
         ctrl.view.luaPanel.enabled = false
         if ctrl.animationWrapper then
             ctrl.animationWrapper.enabled = false
@@ -1313,6 +1316,7 @@ end
 
 
 UIManager.ClearScreen = HL.Method(HL.Opt(HL.Table)).Return(HL.Opt(HL.Number)) << function(self, exceptPanelIds)
+    self:_FinishClearScreenImmediately()
     if self.m_inClearScreen then
         logger.error("清屏中，不能额外操作")
         return -1
@@ -1380,7 +1384,46 @@ UIManager.m_curClearScreenKey = HL.Field(HL.Number) << -1
 
 UIManager.m_waitClearPanels = HL.Field(HL.Table)
 
+
+UIManager.m_clearScreenFinishAct = HL.Field(HL.Function)
+
+
+
+UIManager._FinishClearScreenImmediately = HL.Method() << function(self)
+    if not self.m_inClearScreen then
+        return
+    end
+
+    local waitPanelIds = {}
+    for panelId, _ in pairs(self.m_waitClearPanels) do
+        table.insert(waitPanelIds, panelId)
+    end
+
+    for _, panelId in ipairs(waitPanelIds) do
+        local uiCtrl = self.m_openedPanels[panelId]
+        if uiCtrl ~= nil and uiCtrl.animationWrapper ~= nil then
+            uiCtrl.animationWrapper:ClearTween(true)
+        end
+    end
+
+    
+    for _, panelId in ipairs(waitPanelIds) do
+        if self.m_waitClearPanels[panelId] then
+            self.m_waitClearPanels[panelId] = nil
+            if not self:IsInternalHidden(panelId) then
+                self:_InternalHide(panelId)
+            end
+        end
+    end
+
+    local finishAct = self.m_clearScreenFinishAct
+    if finishAct then
+        finishAct()
+    end
+end
+
 UIManager.ClearScreenWithOutAnimation = HL.Method(HL.Function, HL.Opt(HL.Table)) << function(self, callback, exceptPanelIds)
+    self:_FinishClearScreenImmediately()
     if self.m_inClearScreen then
         logger.error("清屏中，不能额外操作")
         callback(-1)
@@ -1394,20 +1437,32 @@ UIManager.ClearScreenWithOutAnimation = HL.Method(HL.Function, HL.Opt(HL.Table))
     logger.info("UIManager.ClearScreenWithOutAnimation", clearScreenKey)
 
     self.m_ignoreBlockOrderUpdate = true
+
+    local finished = false
+    local finishAct = function()
+        if finished then
+            return
+        end
+        finished = true
+        self.m_clearScreenFinishAct = nil
+        self.m_ignoreBlockOrderUpdate = false
+        self:CalcOtherSystemPropertyByPanelOrder()
+        self.m_inClearScreen = false
+        self.m_curClearScreenKey = -1
+        callback(clearScreenKey)
+    end
+    self.m_clearScreenFinishAct = finishAct
+
+    self.m_waitClearPanels = {}
     local count = #panelIds
     if count == 0 then
         
         TimerManager:StartTimer(0, function()
-            self.m_ignoreBlockOrderUpdate = false
-            self:CalcOtherSystemPropertyByPanelOrder()
-            self.m_inClearScreen = false
-            self.m_curClearScreenKey = -1
-            callback(clearScreenKey)
+            finishAct()
         end, true, self)
         return
     end
 
-    self.m_waitClearPanels = {}
     for _, v in ipairs(panelIds) do
         local panelId = v 
         local uiCtrl = self.m_openedPanels[panelId]
@@ -1423,8 +1478,11 @@ UIManager.ClearScreenWithOutAnimation = HL.Method(HL.Function, HL.Opt(HL.Table))
             
             self.m_waitClearPanels[panelId] = true
             uiCtrl:PlayAnimationOutWithCallback(function()
-                self:_InternalHide(panelId)
+                if not self.m_waitClearPanels[panelId] then
+                    return
+                end
                 self.m_waitClearPanels[panelId] = nil
+                self:_InternalHide(panelId)
             end)
         end
     end
@@ -1444,11 +1502,7 @@ UIManager.ClearScreenWithOutAnimation = HL.Method(HL.Function, HL.Opt(HL.Table))
                 end
             end
             if allDone then
-                self.m_ignoreBlockOrderUpdate = false
-                self:CalcOtherSystemPropertyByPanelOrder()
-                self.m_inClearScreen = false
-                self.m_curClearScreenKey = -1
-                callback(clearScreenKey)
+                finishAct()
                 break
             end
         end
@@ -1982,10 +2036,7 @@ UIManager.RestoreShownPanelVisibilityIfNeeded = HL.Method(HL.Number) << function
 
     self:_RestorePanelVisibleComponents(ctrl, false)
 
-    local luaPanel = ctrl.view.luaPanel
-    if not luaPanel.blockWhileAnim or luaPanel.animationInFinished then
-        luaPanel:RecoverAllInput()
-    end
+    ctrl.view.luaPanel:RecoverAllInput(CANVAS_HIDE_BLOCK_INPUT_REASON)
 end
 
 
@@ -2049,35 +2100,77 @@ end
 
 
 
+
+local function _RunDisposeStep(stepName, action)
+    local succ, log = xpcall(action, debug.traceback)
+    if not succ then
+        logger.critical("UIManager.Dispose failed", stepName, log)
+    end
+end
+
 UIManager.Dispose = HL.Method() << function(self)
+    
+    CS.Beyond.UI.UIAnimationWrapper.openAudioLocks:Clear()
     CS.Beyond.UI.LuaPanel.s_openedLuaPanels:Clear()
-    self:ResetUICameraFOV()
-    self.m_worldUICanvasScaleHelper.onScreenSizeChanged:RemoveListener(self.m_onScreenSizeChangedCallback)
-    self.m_uiCanvasScaleHelper.onCanvasChanged:RemoveListener(self.m_onCanvasChangedCallback)
-    TimerManager:ClearAllTimer(self)
-    self:_CloseAllUI(false)
-    self:OnToggleUiAction({ true })
-    InputManagerInst:DeleteGroup(self.persistentInputBindingKey)
+    _RunDisposeStep("ResetUICameraFOV", function()
+        self:ResetUICameraFOV()
+    end)
+    _RunDisposeStep("RemoveScreenSizeListener", function()
+        self.m_worldUICanvasScaleHelper.onScreenSizeChanged:RemoveListener(self.m_onScreenSizeChangedCallback)
+    end)
+    _RunDisposeStep("RemoveCanvasListener", function()
+        self.m_uiCanvasScaleHelper.onCanvasChanged:RemoveListener(self.m_onCanvasChangedCallback)
+    end)
+    _RunDisposeStep("ClearAllTimer", function()
+        TimerManager:ClearAllTimer(self)
+    end)
+    _RunDisposeStep("CloseAllUI", function()
+        self:_CloseAllUI(false)
+    end)
+    _RunDisposeStep("ToggleUiAction", function()
+        self:OnToggleUiAction({ true })
+    end)
+    _RunDisposeStep("DeletePersistentInputGroup", function()
+        InputManagerInst:DeleteGroup(self.persistentInputBindingKey)
+    end)
     
     
-    InputManagerInst.controllerNaviManager:ResetStateForUIDispose()
+    _RunDisposeStep("ResetNaviState", function()
+        InputManagerInst.controllerNaviManager:ResetStateForUIDispose()
+    end)
     if self.uiNode ~= nil then
-        CSUtils.ClearUIComponents(self.uiNode.gameObject)
-        GameObject.DestroyImmediate(self.uiNode.gameObject)
+        _RunDisposeStep("ClearUINode", function()
+            CSUtils.ClearUIComponents(self.uiNode.gameObject)
+        end)
+        _RunDisposeStep("DestroyUINode", function()
+            GameObject.DestroyImmediate(self.uiNode.gameObject)
+        end)
         self.uiNode = nil
     end
     if self.worldObjectRoot ~= nil then
-        CSUtils.ClearUIComponents(self.worldObjectRoot.gameObject)
-        GameObject.DestroyImmediate(self.worldObjectRoot.gameObject)
+        _RunDisposeStep("ClearWorldObjectRoot", function()
+            CSUtils.ClearUIComponents(self.worldObjectRoot.gameObject)
+        end)
+        _RunDisposeStep("DestroyWorldObjectRoot", function()
+            GameObject.DestroyImmediate(self.worldObjectRoot.gameObject)
+        end)
         self.worldObjectRoot = nil
     end
-    CS.Beyond.UI.UIRedDotAnimation.instance:UnInit()
-    CS.Beyond.UI.UICharHeadGlowAnimation.instance:UnInit()
-    self.m_resourceLoader:DisposeAllHandles()
-    if CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader ~= nil then
-        CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader:Dispose()
-        CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader = nil
-    end
+    _RunDisposeStep("UIRedDotAnimation", function()
+        CS.Beyond.UI.UIRedDotAnimation.instance:UnInit()
+    end)
+    _RunDisposeStep("UICharHeadGlowAnimation", function()
+        CS.Beyond.UI.UICharHeadGlowAnimation.instance:UnInit()
+    end)
+    _RunDisposeStep("ResourceLoader", function()
+        self.m_resourceLoader:DisposeAllHandles()
+    end)
+    _RunDisposeStep("DynamicFontAssetLoader", function()
+        if CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader ~= nil then
+            CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader:Dispose()
+            CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader = nil
+        end
+    end)
     CS.Beyond.UI.LuaPanel.s_openedLuaPanels:Clear()
 end
 
@@ -2404,6 +2497,9 @@ UIManager.OnToggleUiAction = HL.Method(HL.Table) << function(self, arg)
         CameraManager:AddUICamCullingMaskConfig("UIManager", UIConst.LAYERS.Nothing)
         self:_ToggleUIInputBinding(false, "TOGGLE_UI_ACTION")
     end
+
+    
+    UIWorldFreezeManager:SetUILayerHidden(not isShow)
 
     Notify(MessageConst.AFTER_TOGGLE_UI_ACTION, arg)
 end

@@ -99,6 +99,7 @@ CGCtrl.PlayCG = HL.Method(HL.String, HL.String, HL.Opt(HL.Any, HL.Any)) << funct
         end)
         dynamicMaskData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn
         dynamicMaskData.maskType = beforeMaskData.maskType
+        dynamicMaskData.customMaskType = beforeMaskData.customMaskType
         dynamicMaskData.audioBlackScreenBehaviour = beforeMaskData.audioBlackScreenBehaviour
         dynamicMaskData.waitHide = true
 
@@ -148,6 +149,7 @@ CGCtrl.LoadAndPlayCG = HL.Method(HL.String, HL.String, HL.Opt(HL.Any)) << functi
                     end)
                     if maskData then
                         dynamicMaskData.maskType = maskData.maskType
+                        dynamicMaskData.customMaskType = maskData.customMaskType
                     end
                     dynamicMaskData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeOut
                     GameAction.ShowBlackScreen(dynamicMaskData)
@@ -238,6 +240,7 @@ CGCtrl.AsyncStop = HL.Method(HL.Any, HL.Boolean) << function(self, maskData, isS
     )
     dynamicMaskData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn
     dynamicMaskData.maskType = maskData.maskType
+    dynamicMaskData.customMaskType = maskData.customMaskType
     dynamicMaskData.callback = maskData.endCallback
     dynamicMaskData.audioBlackScreenBehaviour = maskData.audioBlackScreenBehaviour
 
@@ -262,6 +265,7 @@ CGCtrl.AsyncStop = HL.Method(HL.Any, HL.Boolean) << function(self, maskData, isS
         )
         shotDownMaskData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeOut
         shotDownMaskData.maskType = maskData.maskType
+        shotDownMaskData.customMaskType = maskData.customMaskType
         shotDownMaskData.audioBlackScreenBehaviour = maskData.audioBlackScreenBehaviour
         GameAction.ShowBlackScreen(shotDownMaskData)
     end

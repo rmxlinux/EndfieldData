@@ -321,7 +321,7 @@ function(self, barCell, args, isInit, showBg)
             fullBgTrans.pivot = args.rectTransform.pivot
         end
         fullBgTrans.position = args.transform.position
-        if DeviceInfo.isMobile then
+        if DeviceInfo.isMobileUser then
             local curMarginSize = (self.view.transform.rect.width - args.rectTransform.rect.width) / 2
             if fullBgTrans.pivot.x == 0 then
                 

@@ -6,7 +6,7 @@ FacMinerCtrl = HL.Class('FacMinerCtrl', uiCtrl.UICtrl)
 
 local MAX_MINE_PROGRESS_EFFICIENCY = 100
 
-local ARROW_ANIMATION_NAME = "facmac_decoarrow_loop"
+local ARROW_ANIMATION_NAME = "facmac_decoarrow_once"
 
 
 

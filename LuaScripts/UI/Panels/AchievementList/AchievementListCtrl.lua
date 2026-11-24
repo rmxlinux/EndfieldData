@@ -840,10 +840,16 @@ AchievementListCtrl._CalcAchievementCondition = HL.Method(HL.Any, HL.Any, HL.Any
 end
 
 AchievementListCtrl._SetFilter = HL.Method(HL.Number) << function(self, filterType)
+    local restoreRightFocus = DeviceInfo.usingController and self.view.rightNaviGroup.IsTopLayer
     self.m_filterType = filterType
     self:_LoadFilteredData()
     self:_ResetSelectIndex()
     self:_RenderViews(true)
+    if restoreRightFocus then
+        
+        local target = self.m_filteredDataCount > 0 and self.view.rightNaviGroup.getDefaultSelectableFunc()
+        self:SetNaviTarget(target or self.m_filterCellCache:GetItem(self.m_filterType).toggle)
+    end
 end
 
 AchievementListCtrl._SetSearchKey = HL.Method(HL.String) << function(self, searchKey)

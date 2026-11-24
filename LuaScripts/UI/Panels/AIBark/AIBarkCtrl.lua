@@ -15,6 +15,7 @@ AIBarkCtrl = HL.Class('AIBarkCtrl', uiCtrl.UICtrl)
 AIBarkCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.STOP_AI_BARK] = 'AudioStopSingleAIBark',
+    [MessageConst.STOP_ALL_AI_BARK] = '_OnAllAIBarkInterrupted',
     [MessageConst.ON_SCENE_LOAD_START] = 'StopAllAIBark', 
     [MessageConst.ALL_CHARACTER_DEAD] = 'StopAllAIBark', 
     [MessageConst.ON_TELEPORT_SQUAD] = 'StopAllAIBark', 
@@ -107,6 +108,21 @@ AIBarkCtrl.StopAllAIBark = HL.Method(HL.Opt(HL.Any)) << function(self, _)
             self:_DoStopSingleAIBark(targetIndex)
         end
     end
+end
+
+AIBarkCtrl._OnAllAIBarkInterrupted = HL.Method(HL.Opt(HL.Any)) << function(self, _)
+    local count = #self.m_curPlayingBarks
+    self:_ClearTimeoutTimer()
+    for i = count, 1, -1 do
+        
+        self.m_curPlayingBarks[i].needStopVoice = false
+        self:_DoStopSingleAIBark(i, false, true)
+    end
+    self:_ClearTween()
+    for _, cell in ipairs(self.m_waitingTable) do
+        cell.animationWrapper:ClearTween(false)
+    end
+    self:_CacheAllWaiting()
 end
 
 AIBarkCtrl.OnShow = HL.Override() << function(self)

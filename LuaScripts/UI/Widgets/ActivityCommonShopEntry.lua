@@ -12,6 +12,12 @@ ActivityCommonShopEntry._OnFirstTimeInit = HL.Override() << function(self)
             self:_RefreshUI()
         end
     end)
+    
+    self:RegisterMessage(MessageConst.ON_BUY_ITEM_SUCC, function()
+        if GameInstance.player.activitySystem:GetActivity(self.m_activityId) then
+            self:_RefreshUI()
+        end
+    end)
 end
 
 ActivityCommonShopEntry.InitActivityShopEntry = HL.Method(HL.Any) << function(self, arg)
@@ -53,7 +59,7 @@ ActivityCommonShopEntry._InitUI = HL.Method() << function(self)
     end
     
     if shopCfg then
-        self.shopText.text = shopCfg.name
+        self.view.shopText.text = shopCfg.name
     end
     
     self.view.redDot:InitRedDot("ActivityCommonShopEntry", self.m_activityId)
@@ -62,8 +68,20 @@ end
 ActivityCommonShopEntry._RefreshUI = HL.Method() << function(self)
     local showUI = self:_CheckLifecycleState()
     self.view.gameObject:SetActive(showUI)
+    if not showUI then
+        return
+    end
+    self:_RefreshFinishState()
+end
+
+ActivityCommonShopEntry._RefreshFinishState = HL.Method() << function(self)
+    if not self.view.stateController then
+        return
+    end
+    local _, shopGroupId = Tables.activityId2ShopGroupId:TryGetValue(self.m_activityId)
+    local isFinish = shopGroupId and self.view.config.CAN_SWITCH_FINISH_STATE and ActivityUtils.isShopGroupAllGoodsSoldOut(shopGroupId)
+    self.view.stateController:SetState(isFinish and "Finish" or "Normal")
 end
 
 HL.Commit(ActivityCommonShopEntry)
 return ActivityCommonShopEntry
-

@@ -502,6 +502,7 @@ UsableItemChestCtrl._BuildChooseItemPage = HL.Method(HL.Opt(HL.Table)) << functi
     local rewardIdCount = itemChestData.rewardIdList.Count
     self.m_optionsCount = rewardIdCount
 
+    local needFocusSelectedReward = DeviceInfo.usingController
     panel.m_cellCache:Refresh(rewardIdCount, function(itemCell, index)
         local rewardId = itemChestData.rewardIdList[CSIndex(index)]
         itemCell.rewardId = rewardId
@@ -565,6 +566,10 @@ UsableItemChestCtrl._BuildChooseItemPage = HL.Method(HL.Opt(HL.Table)) << functi
         InputManagerInst:SetBindingText(
             bindingId,
             InputManagerInst:GetActionText("show_item_tips"))
+        if needFocusSelectedReward and self.m_chosenRewardIds[rewardId] then
+            needFocusSelectedReward = false
+            self:SetNaviTarget(itemCell.button)
+        end
     end)
 end
 

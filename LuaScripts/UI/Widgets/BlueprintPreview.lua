@@ -6,6 +6,9 @@ BlueprintPreview = HL.Class('BlueprintPreview', UIWidgetBase)
 
 
 local uiSizePerUnit = 128
+local CubeInt = CS.Beyond.Gameplay.RemoteFactory.CubeInt
+local VoxelUtil = CS.Beyond.Gameplay.RemoteFactory.VoxelUtil
+local FormationZoneTypes = CS.Beyond.Gameplay.Factory.FormationZoneTypes
 
 
 BlueprintPreview.m_csBP = HL.Field(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprint)
@@ -14,9 +17,21 @@ BlueprintPreview.m_nodeCellCache = HL.Field(LuaNodeCache)
 
 BlueprintPreview.m_conveyorCellCache = HL.Field(LuaNodeCache) 
 
+BlueprintPreview.m_formationFrameCellCache = HL.Field(LuaNodeCache) 
+
+BlueprintPreview.m_showingFormationFrameCells = HL.Field(HL.Table)
+
 BlueprintPreview.m_showingCellDic = HL.Field(HL.Table) 
 
 BlueprintPreview.m_previewHelper = HL.Field(CS.Beyond.UI.BlueprintPreviewHelper)
+
+BlueprintPreview.m_previewOriginX = HL.Field(HL.Number) << 0
+
+BlueprintPreview.m_previewOriginZ = HL.Field(HL.Number) << 0
+
+BlueprintPreview.m_previewWidth = HL.Field(HL.Number) << 0
+
+BlueprintPreview.m_previewHeight = HL.Field(HL.Number) << 0
 
 BlueprintPreview.m_canEdit = HL.Field(HL.Boolean) << false
 
@@ -110,11 +125,82 @@ local function GetBuildingGridRect(entry, bData, extendX, extendZ)
     return minX, minY, sw, sd
 end
 
+local function ResolveFormationStakePortData(range, width, depth)
+    local edgeFace, edgePos
+    if range.x >= width then
+        edgeFace = 1
+        edgePos = range.z + (range.depth - 1) / 2
+    elseif range.x + range.width <= 0 then
+        edgeFace = 3
+        edgePos = range.z + (range.depth - 1) / 2
+    elseif range.z >= depth then
+        edgeFace = 0
+        edgePos = range.x + (range.width - 1) / 2
+    else
+        edgeFace = 2
+        edgePos = range.x + (range.width - 1) / 2
+    end
+    if edgeFace == 0 then
+        return edgeFace, Vector2(edgePos + 0.5, depth)
+    elseif edgeFace == 1 then
+        return edgeFace, Vector2(width, edgePos + 0.5)
+    elseif edgeFace == 2 then
+        return edgeFace, Vector2(edgePos + 0.5, 0)
+    end
+    return edgeFace, Vector2(0, edgePos + 0.5)
+end
+
+local function PrepareFormationFrameLineImgCache(cell)
+    if not cell.m_lineImgCache then
+        cell.m_lineImgCache = CommonCache(function()
+            local obj = CSUtils.CreateObject(cell.magicFrameImg.gameObject, cell.transform)
+            obj.gameObject.name = "FormationLineImg"
+            return obj.gameObject:GetComponent("UIImage")
+        end, function(img)
+            img.gameObject:SetActive(true)
+        end, function(img)
+            img.gameObject:SetActive(false)
+        end)
+        cell.m_showingLineImgs = {}
+    else
+        for _, img in ipairs(cell.m_showingLineImgs) do
+            cell.m_lineImgCache:Cache(img)
+        end
+        cell.m_showingLineImgs = {}
+    end
+end
+
+local function GenFormationFrameLines(cell, group, previewCenter, previewOriginX, previewOriginZ)
+    PrepareFormationFrameLineImgCache(cell)
+    for _, link in ipairs(group.links) do
+        local lineCenter = Vector2(link.lineCenter.x - previewOriginX, link.lineCenter.y - previewOriginZ) * uiSizePerUnit
+        local portPos = Vector2(link.portPos.x - previewOriginX, link.portPos.y - previewOriginZ) * uiSizePerUnit
+        local delta = portPos - lineCenter
+        local halfHeight = delta.magnitude
+        if halfHeight > 0 then
+            local img = cell.m_lineImgCache:Get()
+            img:LoadSpriteWithOutFormat(FacConst.BLUEPRINT_PREVIEW_FORMATION_LINK_LINE)
+            img.type = CS.UnityEngine.UI.Image.Type.Simple
+            img.transform.anchorMin = Vector2(0.5, 0.5)
+            img.transform.anchorMax = Vector2(0.5, 0.5)
+            img.transform.pivot = Vector2(0.5, 0.5)
+            local lineHeight = halfHeight * 2
+            img.transform.sizeDelta = Vector2(lineHeight / FacConst.BLUEPRINT_PREVIEW_FORMATION_LINK_LINE_HEIGHT_RATIO, lineHeight)
+            img.transform.anchoredPosition = lineCenter - previewCenter * uiSizePerUnit
+            img.transform.localEulerAngles = Vector3(0, 0, math.deg(math.atan(delta.y, delta.x)) - 90)
+            img.transform.localScale = Vector3(1, 1, 1)
+            img.transform:SetAsFirstSibling()
+            table.insert(cell.m_showingLineImgs, img)
+        end
+    end
+end
 
 
 BlueprintPreview._OnFirstTimeInit = HL.Override() << function(self)
     self.m_nodeCellCache = LuaNodeCache(self.view.nodeCell, self.view.content)
     self.m_conveyorCellCache = LuaNodeCache(self.view.conveyorCell, self.view.content)
+    self.m_formationFrameCellCache = LuaNodeCache(self.view.formationFrameCell, self.view.content)
+    self.m_showingFormationFrameCells = {}
     self.m_previewHelper = CS.Beyond.UI.BlueprintPreviewHelper()
     self.view.maskBtn.onClick:AddListener(function()
         self:_OnClick()
@@ -157,9 +243,13 @@ BlueprintPreview.InitBlueprintPreview = HL.Method(CS.Beyond.Gameplay.RemoteFacto
             end
         end
     end
+    for _, cell in ipairs(self.m_showingFormationFrameCells) do
+        self.m_formationFrameCellCache:Cache(cell)
+    end
 
     self.m_csBP = csBP
     self.m_showingCellDic = {}
+    self.m_showingFormationFrameCells = {}
     self.m_changedIcons = {}
     self.m_canEdit = canEdit
     self.m_bpAbnormalIconHelper = bpAbnormalIconHelper
@@ -172,7 +262,23 @@ BlueprintPreview.InitBlueprintPreview = HL.Method(CS.Beyond.Gameplay.RemoteFacto
 
     
     local range = self.m_csBP.sourceRect
-    local bpUISize = Vector2(range.width, range.height) * uiSizePerUnit
+    local previewMinX = 0
+    local previewMinZ = 0
+    local previewMaxX = range.width
+    local previewMaxZ = range.height
+    for _, group in ipairs(self:_CollectBlueprintFormationZoneGroups()) do
+        local cube = group.cube
+        previewMinX = math.min(previewMinX, cube.x)
+        previewMinZ = math.min(previewMinZ, cube.z)
+        previewMaxX = math.max(previewMaxX, cube.x + cube.width)
+        previewMaxZ = math.max(previewMaxZ, cube.z + cube.depth)
+    end
+    self.m_previewOriginX = previewMinX
+    self.m_previewOriginZ = previewMinZ
+    self.m_previewWidth = previewMaxX - previewMinX
+    self.m_previewHeight = previewMaxZ - previewMinZ
+
+    local bpUISize = Vector2(self.m_previewWidth, self.m_previewHeight) * uiSizePerUnit
     self.view.content.transform.sizeDelta = bpUISize
     local viewSize = self.view.scrollRect.transform.rect.size - Vector2(100, 100) 
     local widthRatio = viewSize.x / bpUISize.x
@@ -188,24 +294,24 @@ BlueprintPreview.InitBlueprintPreview = HL.Method(CS.Beyond.Gameplay.RemoteFacto
     
     local curMaxShowingCount = self.view.scrollRect.transform.rect.size / (uiSizePerUnit * scaleValue)
     local bgWidth, bgHeight
-    if curMaxShowingCount.x > range.width then
+    if curMaxShowingCount.x > self.m_previewWidth then
         bgWidth = math.ceil(curMaxShowingCount.x)
         
-        bgWidth = bgWidth + (bgWidth + range.width) % 2
+        bgWidth = bgWidth + (bgWidth + self.m_previewWidth) % 2
     else
-        bgWidth = range.width + 2
+        bgWidth = self.m_previewWidth + 2
     end
-    if curMaxShowingCount.y > range.height then
+    if curMaxShowingCount.y > self.m_previewHeight then
         bgHeight = math.ceil(curMaxShowingCount.y)
         
-        bgHeight = bgHeight + (bgHeight + range.height) % 2
+        bgHeight = bgHeight + (bgHeight + self.m_previewHeight) % 2
     else
-        bgHeight = range.height + 2
+        bgHeight = self.m_previewHeight + 2
     end
     self.view.gridImg.transform.sizeDelta = Vector2(bgWidth, bgHeight) * uiSizePerUnit
     self.view.gridImg.transform:SetAsFirstSibling()
 
-    self.m_previewHelper:SetSize(range.width, range.height)
+    self.m_previewHelper:SetSize(self.m_previewWidth, self.m_previewHeight)
     self.m_nextTargetId = 1
     self.m_id2Cell = {}
 
@@ -271,6 +377,9 @@ BlueprintPreview.InitBlueprintPreview = HL.Method(CS.Beyond.Gameplay.RemoteFacto
         end)
         self.view.controllerMouse.anchoredPosition = Vector2(self.view.scrollRectRectTransform.rect.size.x * 1/2, self.view.scrollRectRectTransform.rect.size.y * 1/2)
     end
+
+    
+    self:_GenFormationFrames()
 end
 
 
@@ -308,13 +417,14 @@ BlueprintPreview._GenPreviewBuilding = HL.Method(CS.Beyond.Gameplay.RemoteFactor
     local nodeUISize = gridSize * uiSizePerUnit
     cell.transform.sizeDelta = swappedGridSize * uiSizePerUnit 
     local pos = entry.worldSpatial.worldPosition
-    cell.transform.anchoredPosition = Vector2(pos.x, pos.z) * uiSizePerUnit
+    local previewPos = Vector2(pos.x - self.m_previewOriginX, pos.z - self.m_previewOriginZ)
+    cell.transform.anchoredPosition = previewPos * uiSizePerUnit
     cell.bg.transform.sizeDelta = nodeUISize
     cell.bg.transform.localEulerAngles = Vector3(0, 0, Face2RotZForBuilding[spatial.face]) 
 
     local minX = lume.round(pos.x - swappedGridSize.x / 2)
     local minY = lume.round(pos.z - swappedGridSize.y / 2)
-    self.m_previewHelper:BatchAddGridValue(minX, minY, swappedGridSize.x, swappedGridSize.y, info.id)
+    self.m_previewHelper:BatchAddGridValue(minX - self.m_previewOriginX, minY - self.m_previewOriginZ, swappedGridSize.x, swappedGridSize.y, info.id)
 
     local bgPath, isDefaultBuilding
     if isBuilding then
@@ -400,6 +510,9 @@ BlueprintPreview._GenDefaultBuildingBG = HL.Method(CS.Beyond.Gameplay.RemoteFact
             
             self:_GenDefaultBuildingFallbackPorts(cell, group, bData.range.width, bData.range.depth)
         end
+    end
+    if bData.type == GEnums.FacBuildingType.FormationStake then
+        self:_GenFormationStakePorts(entry, cell, bData)
     end
 
     local needWaist = not edgeHasPort[1] and not edgeHasPort[3]
@@ -619,6 +732,145 @@ BlueprintPreview._GenDefaultBuildingFallbackPorts = HL.Method(HL.Table, HL.Table
     end
 end
 
+BlueprintPreview._GenFormationStakePorts = HL.Method(CS.Beyond.Gameplay.RemoteFactory.BlueprintBuildingEntry, HL.Table, HL.Any) << function(self, entry, cell, bData)
+    local formationStakeCfg = Tables.factoryFormationStakeTable[entry.templateId]
+    local _, formationStakeInfo = entry.info:TryGetValue(GEnums.FCComponentPos.FormationStake)
+    local selectedFormationIds = formationStakeInfo.selectedFormationIds
+    local width = bData.range.width
+    local depth = bData.range.depth
+    for i = 0, formationStakeCfg.ranges.Count - 1 do
+        local range = formationStakeCfg.ranges[i]
+        local formationId = selectedFormationIds[i]
+        local imgPath = FacConst.BLUEPRINT_PREVIEW_GET_FORMATION_STAKE_PORT_IMG_PATH(formationId)
+        local edgeFace, portPos = ResolveFormationStakePortData(range, width, depth)
+        local img = cell.m_imgCache:Get()
+        img:LoadSpriteWithOutFormat(imgPath)
+        img:SetNativeSizeIgnoreRefScale()
+        img.type = CS.UnityEngine.UI.Image.Type.Simple
+        if edgeFace == 0 then
+            img.transform.anchoredPosition = portPos * uiSizePerUnit
+            img.transform.localEulerAngles = Vector3(0, 0, 0)
+        elseif edgeFace == 1 then
+            img.transform.anchoredPosition = portPos * uiSizePerUnit
+            img.transform.localEulerAngles = Vector3(0, 0, 270)
+        elseif edgeFace == 2 then
+            img.transform.anchoredPosition = portPos * uiSizePerUnit
+            img.transform.localEulerAngles = Vector3(0, 0, 180)
+        elseif edgeFace == 3 then
+            img.transform.anchoredPosition = portPos * uiSizePerUnit
+            img.transform.localEulerAngles = Vector3(0, 0, 90)
+        end
+        table.insert(cell.m_showingImgs, img)
+    end
+end
+
+BlueprintPreview._CollectBlueprintFormationZoneGroups = HL.Method().Return(HL.Table) << function(self)
+    local groupDic = {}
+    local result = {}
+    local mingFormationId = FacConst.FAC_FORMATION_ZONE_TYPE_TO_ID[FormationZoneTypes.MING]
+    local huiFormationId = FacConst.FAC_FORMATION_ZONE_TYPE_TO_ID[FormationZoneTypes.HUI]
+
+    for _, entry in pairs(self.m_csBP.buildingNodes) do
+        local isBuilding, bData = Tables.factoryBuildingTable:TryGetValue(entry.templateId)
+        if isBuilding and bData.type == GEnums.FacBuildingType.FormationStake then
+            local formationStakeCfg = Tables.factoryFormationStakeTable[entry.templateId]
+            local _, formationStakeInfo = entry.info:TryGetValue(GEnums.FCComponentPos.FormationStake)
+            local selectedFormationIds = formationStakeInfo.selectedFormationIds
+            local position = entry.spatial.position
+            local translation = Unity.Vector3Int(position.x, position.y, position.z)
+            for slot = 0, formationStakeCfg.ranges.Count - 1 do
+                local formationId = selectedFormationIds[slot]
+                local range = formationStakeCfg.ranges[slot]
+                local localCube = CubeInt(range.x, range.y, range.z, range.width, range.height, range.depth)
+                local worldCube = VoxelUtil.CubeTranslate(VoxelUtil.CubeRotationY(localCube, entry.spatial.face), translation)
+                local key = string.format("%d_%d_%d_%d_%d_%d", worldCube.x, worldCube.y, worldCube.z, worldCube.width, worldCube.height, worldCube.depth)
+                local group = groupDic[key]
+                if not group then
+                    group = {
+                        cube = worldCube,
+                        mingCount = 0,
+                        huiCount = 0,
+                        links = {},
+                    }
+                    groupDic[key] = group
+                    table.insert(result, group)
+                end
+                if formationId == mingFormationId then
+                    group.mingCount = group.mingCount + 1
+                elseif formationId == huiFormationId then
+                    group.huiCount = group.huiCount + 1
+                end
+                local buildingCenter = entry.worldSpatial.worldPosition
+                local formationCenter = Vector2(worldCube.x + worldCube.width / 2, worldCube.z + worldCube.depth / 2)
+                local _, localPortPos = ResolveFormationStakePortData(range, bData.range.width, bData.range.depth)
+                
+                local portOffset = localPortPos - Vector2(bData.range.width / 2, bData.range.depth / 2)
+                if entry.spatial.face == 1 then
+                    portOffset = Vector2(portOffset.y, -portOffset.x)
+                elseif entry.spatial.face == 2 then
+                    portOffset = Vector2(-portOffset.x, -portOffset.y)
+                elseif entry.spatial.face == 3 then
+                    portOffset = Vector2(-portOffset.y, portOffset.x)
+                end
+                local portPos = Vector2(buildingCenter.x + portOffset.x, buildingCenter.z + portOffset.y)
+                
+                local lineCenter = Vector2((buildingCenter.x + formationCenter.x) / 2, (buildingCenter.z + formationCenter.y) / 2)
+                table.insert(group.links, {
+                    lineCenter = lineCenter,
+                    portPos = portPos,
+                })
+            end
+        end
+    end
+
+    return result
+end
+
+BlueprintPreview._GenFormationFrames = HL.Method() << function(self)
+    local zoneGroups = self:_CollectBlueprintFormationZoneGroups()
+    for _, group in ipairs(zoneGroups) do
+        local isEmpty = group.mingCount == 0 and group.huiCount == 0
+        local formationId, level
+        if not isEmpty then
+            if group.mingCount > 0 and group.huiCount > 0 then
+                formationId = FacConst.FAC_FORMATION_ZONE_TYPE_TO_ID[FormationZoneTypes.HENG]
+                level = group.mingCount >= 2 and group.huiCount >= 2 and 2 or 1
+            elseif group.mingCount > 0 then
+                formationId = FacConst.FAC_FORMATION_ZONE_TYPE_TO_ID[FormationZoneTypes.MING]
+                level = math.min(group.mingCount, 4)
+            else
+                formationId = FacConst.FAC_FORMATION_ZONE_TYPE_TO_ID[FormationZoneTypes.HUI]
+                level = math.min(group.huiCount, 4)
+            end
+        end
+
+        local cell = self.m_formationFrameCellCache:Get()
+        local cube = group.cube
+        local size = Vector2(cube.width, cube.depth) * uiSizePerUnit
+        cell.transform.anchorMin = Vector2.zero
+        cell.transform.anchorMax = Vector2.zero
+        cell.transform.pivot = Vector2(0.5, 0.5)
+        cell.transform.sizeDelta = size
+        local previewCenter = Vector2(cube.x - self.m_previewOriginX + cube.width / 2, cube.z - self.m_previewOriginZ + cube.depth / 2)
+        cell.transform.anchoredPosition = previewCenter * uiSizePerUnit
+        cell.transform.localEulerAngles = Vector3(0, 0, 0)
+        cell.transform.localScale = Vector3(1, 1, 1)
+        cell.stateController:SetState(isEmpty and "Empty" or "Normal")
+        if not isEmpty then
+            cell.magicFrameImg:LoadSpriteWithOutFormat(FacConst.BLUEPRINT_PREVIEW_FORMATION_FRAME_BG_BY_FORMATION_ID[formationId])
+            cell.stratumTxt.text = string.format(Language.LUA_WIKI_BUILDING_FORMATION_LEVEL_FORMAT, tostring(level))
+        end
+        GenFormationFrameLines(cell, group, previewCenter, self.m_previewOriginX, self.m_previewOriginZ)
+        table.insert(self.m_showingFormationFrameCells, cell)
+    end
+
+    
+    for _, cell in ipairs(self.m_showingFormationFrameCells) do
+        cell.transform:SetAsLastSibling()
+    end
+    self.view.gridImg.transform:SetAsFirstSibling()
+end
+
 
 
 
@@ -649,6 +901,7 @@ BlueprintPreview._GenPreviewConveyor = HL.Method(CS.Beyond.Gameplay.RemoteFactor
 
     local imgs = isBelt and FacConst.BLUEPRINT_PREVIEW_BELT_IMGS or FacConst.BLUEPRINT_PREVIEW_PIPE_IMGS
     self:_PrepareCellImgCache(cell)
+    local previewOffset = Vector2(self.m_previewOriginX, self.m_previewOriginZ)
     for k, v in ipairs(info.segInfos) do
         
         local img = cell.m_imgCache:Get()
@@ -659,7 +912,7 @@ BlueprintPreview._GenPreviewConveyor = HL.Method(CS.Beyond.Gameplay.RemoteFactor
         if v.length then
             
             img:LoadSpriteWithOutFormat(imgs.normal)
-            local centerGridPos = v.startPoint + Vector2(0.5, 0.5) + (v.length - 1) / 2 * Face2Vector2[v.startFace]
+            local centerGridPos = v.startPoint - previewOffset + Vector2(0.5, 0.5) + (v.length - 1) / 2 * Face2Vector2[v.startFace]
             img.transform.anchoredPosition = centerGridPos * uiSizePerUnit
             img.transform.sizeDelta = Vector2(v.length, 1) * uiSizePerUnit
             img.transform.localEulerAngles = Vector3(0, 0, Face2RotZForConveyor[v.startFace])
@@ -669,17 +922,17 @@ BlueprintPreview._GenPreviewConveyor = HL.Method(CS.Beyond.Gameplay.RemoteFactor
             local minY = math.min(v.startPoint.y, endPoint.y)
             local sizeX = math.abs(v.startPoint.x - endPoint.x) + 1
             local sizeY = math.abs(v.startPoint.y - endPoint.y) + 1
-            self.m_previewHelper:BatchAddGridValue(minX, minY, sizeX, sizeY, info.id)
+            self.m_previewHelper:BatchAddGridValue(minX - self.m_previewOriginX, minY - self.m_previewOriginZ, sizeX, sizeY, info.id)
         else
             
             local imgInfo = FacConst.BLUEPRINT_PREVIEW_CORNER_DIC[v.startFace][v.endFace]
             img:LoadSpriteWithOutFormat(imgInfo[1] and imgs.corner1 or imgs.corner2)
-            local centerGridPos = v.startPoint + Vector2(0.5, 0.5)
+            local centerGridPos = v.startPoint - previewOffset + Vector2(0.5, 0.5)
             img.transform.anchoredPosition = centerGridPos * uiSizePerUnit
             img.transform.sizeDelta = Vector2(uiSizePerUnit, uiSizePerUnit)
             img.transform.localEulerAngles = Vector3(0, 0, imgInfo[2])
 
-            self.m_previewHelper:AddGridValue(v.startPoint.x, v.startPoint.y, info.id)
+            self.m_previewHelper:AddGridValue(v.startPoint.x - self.m_previewOriginX, v.startPoint.y - self.m_previewOriginZ, info.id)
         end
         
     end
@@ -1373,7 +1626,7 @@ BlueprintPreview._UpdateHoverPos = HL.Method() << function(self)
     local mousePos = InputManager.mousePosition:XY() 
     local rect = CSUtils.RectTransformToScreenRect(self.view.content.transform, self:GetUICtrl().uiCamera) 
     local relativePos = mousePos - rect.min
-    local gridScreenSize = rect.width / self.m_csBP.sourceRect.width
+    local gridScreenSize = rect.width / self.m_previewWidth
     local gridPos = relativePos / gridScreenSize
     gridPos = Vector2(math.floor(gridPos.x), math.floor(gridPos.y))
     local id1, id2 = self.m_previewHelper:GetGridValue(gridPos.x, gridPos.y)
