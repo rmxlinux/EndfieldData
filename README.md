@@ -1,10 +1,10 @@
 《明日方舟：终末地》TableCfg、Lua、ExtendData和JsonData部分的数据备份。
 
 使用脚本生成。目前只靠手动更新。
-当前数据文件更新日期为2026/11/25。已支持终末地1.7版本。
+当前数据文件更新日期为2026/11/27。已支持终末地1.7版本。
 
 This repository is a data backup for Arknights: Endfield.
 
 TableCfg Lua ExtendData JsonData
 
-Last Updated: 25th Nov 2026
+Last Updated: 27th Nov 2026
